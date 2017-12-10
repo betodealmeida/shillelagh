@@ -1,0 +1,33 @@
+start = sql_stmt_list
+
+sql_stmt_list = ( whitespace ( sql_stmt )? whitespace semicolon )+
+
+whitespace = ~"[ \t\n\r]*"
+semicolon = ';'
+
+sql_stmt = select_stmt
+
+select_stmt = select_core
+
+select_core = SELECT result_column
+
+SELECT = whitespace "SELECT"
+
+result_column = whitespace expr
+
+expr = value
+
+value = literal_value
+
+literal_value = numeric_literal
+
+numeric_literal =
+  ( ( ( ( digit )+ ( decimal_point ( digit )+ )? )
+      / ( decimal_point ( digit )+ ) ) ( E ( plus / minus )? ( digit )+ )? )
+
+digit = ~"[0-9]"
+decimal_point = dot
+E = 'E'
+plus = '+'
+minus = '-'
+dot = '.'
