@@ -26,6 +26,10 @@ class Cursor:
         self.host = host
         self.port = port
 
+        # the default source has a single row with no columns, so we can do
+        # things like SELECT 1 from it
+        self.source = iter([{}])
+
         self.results = []
 
     def execute(self, query):
