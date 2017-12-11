@@ -20,7 +20,7 @@ AUTHOR = 'Beto Dealmeida'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'parsimonious',
+    'lrparsing',
 ]
 
 development_extras = [
@@ -72,7 +72,8 @@ class UploadCommand(Command):
             pass
 
         self.status('Building Source and Wheel (universal) distribution…')
-        os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
+        os.system(
+            '{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
 
         self.status('Uploading the package to PyPi via Twine…')
         os.system('twine upload dist/*')
