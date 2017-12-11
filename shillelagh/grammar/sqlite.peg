@@ -3,7 +3,7 @@ start = sql_stmt_list
 sql_stmt_list = ( whitespace ( sql_stmt )? whitespace semicolon )+
 
 whitespace = ~"[ \t\n\r]*"
-semicolon = ';'
+semicolon = ";"
 
 sql_stmt = select_stmt
 
@@ -19,15 +19,18 @@ expr = value
 
 value = literal_value
 
-literal_value = numeric_literal
+literal_value = ( numeric_literal / string_literal )
 
 numeric_literal =
   ( ( ( ( digit )+ ( decimal_point ( digit )+ )? )
       / ( decimal_point ( digit )+ ) ) ( E ( plus / minus )? ( digit )+ )? )
 
+string_literal = "'" (escape_char / ~"[^']")* "'"
+escape_char = "\\"
+
 digit = ~"[0-9]"
 decimal_point = dot
-E = 'E'
-plus = '+'
-minus = '-'
-dot = '.'
+E = "E"
+plus = "+"
+minus = "-"
+dot = "."

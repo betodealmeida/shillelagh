@@ -1,1 +1,2 @@
-
+setuptools==38.2.4
+parsimonious==0.8.0

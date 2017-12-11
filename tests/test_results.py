@@ -26,11 +26,18 @@ def docstring(test):
 class ResultsTestSuite(unittest.TestCase):
 
     @docstring
-    def test_simple(self):
+    def test_numeric_literal(self):
         """
         SELECT 1;
         """
         return [(1,)]
+
+    @docstring
+    def test_string_literal(self):
+        """
+        SELECT 'a';
+        """
+        return [('a',)]
 
 
 if __name__ == '__main__':

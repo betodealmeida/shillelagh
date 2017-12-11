@@ -1,6 +1,4 @@
-from .grammar import grammar
-
-from parsimonious.nodes import NodeVisitor
+from shillelagh.grammar import grammar, SQLVisitor
 
 
 apilevel = '2.0'
@@ -32,17 +30,10 @@ class Cursor:
 
     def execute(self, query):
         tree = grammar.parse(query.strip())
-        self.results = SQLVisitor().visit(tree).results()
+        visitor = SQLVisitor()
+        visitor.visit(tree)
+        self.results = visitor.results
         return self
 
     def fetchall(self):
         return self.results
-
-
-class SQLVisitor(NodeVisitor):
-
-    def results(self):
-        return []
-
-    def visit_whitespace(self, node, children):
-        return str(node.text)
