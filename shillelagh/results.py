@@ -11,7 +11,7 @@ class ResultsBuilder:
         self.source = iter([{}])
 
     def get_results(self):
-        pass
+        return Sqlite3Grammar.repr_parse_tree(self.parse_tree)
 
 
 def get_results(query):
