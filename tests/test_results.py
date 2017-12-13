@@ -35,7 +35,7 @@ class ResultsTestSuite(unittest.TestCase):
     @docstring
     def test_string_literal(self):
         """
-        SELECT 'a';
+        SELECT 1, 'string', identifier;
         """
         return [('a',)]
 

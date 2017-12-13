@@ -10,19 +10,24 @@ grammar = Grammar(peg.decode())
 class SQLVisitor(NodeVisitor):
 
     def __init__(self):
-        self.results = []
+        self.source = iter([{}])
+        self.result_columns = []
 
-    def visit_whitespace(self, node, visited_children):
-        return str(node.text)
-
-    def visit_select_core(self, node, visited_children):
-        self.results.append((self.visit(node.children[1]),))
+    @property
+    def results(self):
+        return [
+            tuple(
+                result_column(row)
+                for result_column in self.result_columns
+            )
+            for row in self.source
+        ]
 
     def visit_result_column(self, node, visited_children):
         return self.visit(node.children[1])
 
     def visit_expr(self, node, visited_children):
-        return self.visit(node.children[0])
+        return self.visit(node.children[1])
 
     def visit_value(self, node, visited_children):
         return self.visit(node.children[0])
@@ -31,7 +36,7 @@ class SQLVisitor(NodeVisitor):
         return self.visit(node.children[0])
 
     def visit_numeric_literal(self, node, visited_children):
-        return int_or_float(node.text)
+        self.result_columns.append(lambda row: int_or_float(node.text))
 
     def visit_string_literal(self, node, visited_children):
         return self.visit(node.children[1])
