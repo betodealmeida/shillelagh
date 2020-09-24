@@ -124,9 +124,7 @@ class Cursor:
             elif operation in {"lt", "le"} and end > dt:
                 end = dt
             elif operation == "eq":
-                exact.add(dt)
-            else:
-                raise Exception(f"Unknown operation: {operation}")
+                exact_matches.add(dt)
 
         if len(exact_matches) > 1:
             self.data = []
@@ -160,7 +158,6 @@ connection = apsw.Connection("dbfile")
 cursor = connection.cursor()
 connection.createmodule("weatherapi", WeatherAPI())
 
-# Arguments to module - all directories in sys.path
 try:
     cursor.execute(
         "create virtual table bodega_bay using weatherapi(94923, f426b51ea9aa4e4ab68190907202309)"
@@ -185,5 +182,5 @@ WHERE bodega_bay.ts > '2020-09-20 12:00'
 AND channel_mission_bay.ts > '2020-09-20 12:00'
 AND channel_mission_bay.temperature < bodega_bay.temperature
 """
-for row in cursor.execute(sql):
-    print(row)
+# for row in cursor.execute(sql):
+#    print(row)
