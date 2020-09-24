@@ -248,7 +248,7 @@ class WeatherAPI(StaticVirtualTable):
         self.location = location
         self.api_key = api_key
 
-    def get_data(self, bounds) -> Iterator[Dict[str, Any]]:
+    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Dict[str, Any]]:
         ts_range = bounds["ts"]
         today = date.today()
         start = ts_range.start.date() if ts_range.start else today - timedelta(days=7)
