@@ -198,34 +198,35 @@ class Cursor:
 
         bounds = compact_bounds(all_bounds)
 
-        column_names = ["rowid"] + [column[0] for column in self.table.columns]
-        self.data = [
-            tuple(row[name] for name in column_names)
+        column_names = [column[0] for column in self.table.columns]
+        self.data = (
+            tuple(row[name] for name in ["rowid"] + column_names)
             for row in self.table.get_data(bounds)
-        ]
-        self.pos = 0
+        )
+        self.Next()
 
     def Eof(self):
-        return self.pos >= len(self.data)
+        return self.eof
 
     def Rowid(self):
-        return self.data[self.pos][0]
+        return self.current_row[0]
 
     def Column(self, col):
-        return self.data[self.pos][1 + col]
+        return self.current_row[1 + col]
 
     def Next(self):
-        self.pos += 1
+        try:
+            self.current_row = next(self.data)
+            self.eof = False
+        except StopIteration:
+            self.eof = True
 
     def Close(self):
         pass
 
 
-def get_columns(cls) -> str:
-    return [
-        t
-        for t in inspect.getmembers(cls, lambda attribute: isinstance(attribute, Type))
-    ]
+def get_columns(cls) -> List[Tuple[str, Type]]:
+    return inspect.getmembers(cls, lambda attribute: isinstance(attribute, Type))
 
 
 def get_create_table(tablename: str, columns) -> str:
@@ -248,8 +249,8 @@ class WeatherAPI(StaticVirtualTable):
         self.api_key = api_key
 
     def get_data(self, bounds) -> Iterator[Dict[str, Any]]:
-        today = date.today()
         ts_range = bounds.get("ts")
+        today = date.today()
         start = ts_range.start.date() if ts_range.start else today - timedelta(days=7)
         end = ts_range.end.date() if ts_range.end else today
 
