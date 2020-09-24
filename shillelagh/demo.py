@@ -249,13 +249,16 @@ class WeatherAPI(StaticVirtualTable):
         self.api_key = api_key
 
     def get_data(self, bounds) -> Iterator[Dict[str, Any]]:
-        ts_range = bounds.get("ts")
+        ts_range = bounds["ts"]
         today = date.today()
         start = ts_range.start.date() if ts_range.start else today - timedelta(days=7)
         end = ts_range.end.date() if ts_range.end else today
 
         while start <= end:
-            url = f"https://api.weatherapi.com/v1/history.json?key={self.api_key}&q={self.location}&dt={start}"
+            url = (
+                f"https://api.weatherapi.com/v1/history.json?key={self.api_key}"
+                f"&q={self.location}&dt={start}"
+            )
             response = requests.get(url)
             if response.ok:
                 payload = response.json()
