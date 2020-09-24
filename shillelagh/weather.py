@@ -182,5 +182,5 @@ WHERE bodega_bay.ts > '2020-09-20 12:00'
 AND channel_mission_bay.ts > '2020-09-20 12:00'
 AND channel_mission_bay.temperature < bodega_bay.temperature
 """
-# for row in cursor.execute(sql):
-#    print(row)
+for row in cursor.execute(sql):
+    print(row)

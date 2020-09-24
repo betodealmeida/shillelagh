@@ -1,10 +1,14 @@
 import inspect
 import json
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
 from enum import Enum
+from typing import Any
+from typing import Dict
+from typing import List
 from typing import Iterator
 from typing import Optional
 from typing import Tuple
@@ -31,6 +35,18 @@ operator_map = {
 SUPPORTED_OPERATIONS = set(operator_map.keys())
 
 
+class Filter:
+    pass
+
+
+@dataclass
+class Range(Filter):
+    start: Optional[Any]
+    end: Optional[Any]
+    include_start: bool
+    include_end: bool
+
+
 class Order(Enum):
     ASCENDING = "ascending"
     DESCENDING = "descending"
@@ -38,8 +54,10 @@ class Order(Enum):
 
 
 class Type:
-    def __init__(self, indexed: bool, order: Order = Order.NONE, exact: bool = False):
-        self.indexed = indexed
+    def __init__(
+        self, indexes: List[Filter], order: Order = Order.NONE, exact: bool = False
+    ):
+        self.indexes = indexes
         self.order = order
         self.exact = exact
 
@@ -47,9 +65,17 @@ class Type:
 class DateTime(Type):
     type = "TIMESTAMP"
 
+    @staticmethod
+    def parse(value):
+        return dateutil.parser.parse(value)
+
 
 class Float(Type):
     type = "REAL"
+
+    @staticmethod
+    def parse(value):
+        return float(value)
 
 
 class VirtualTable:
@@ -74,8 +100,7 @@ class StaticVirtualTable(VirtualTable):
     Connect = Create
 
     def BestIndex(self, constraints, orderbys):
-        # we only care about column types
-        columns = [column[1] for column in self.columns]
+        column_types = [column[1] for column in self.columns]
 
         index_number = 42
         indexes = []
@@ -83,9 +108,10 @@ class StaticVirtualTable(VirtualTable):
         filter_index = 0
         constraints_used = []
         for column_index, operation in constraints:
-            column = columns[column_index]
-            if column.indexed and operation in SUPPORTED_OPERATIONS:
-                constraints_used.append((filter_index, column.exact))
+            column_type = column_types[column_index]
+            # TODO: different support ops depending on filter type
+            if column_type.indexes and operation in SUPPORTED_OPERATIONS:
+                constraints_used.append((filter_index, column_type.exact))
                 filter_index += 1
                 indexes.append((column_index, operator_map[operation]))
             else:
@@ -95,7 +121,7 @@ class StaticVirtualTable(VirtualTable):
 
         orderby_consumed = True
         for column_index, descending in orderbys:
-            column = columns[column_index]
+            column = column_types[column_index]
             if (
                 column.order == Order.NONE
                 or (column.order == Order.DESCENDING) == descending
@@ -123,7 +149,6 @@ class StaticVirtualTable(VirtualTable):
 
 
 def compact_bounds(all_bounds):
-    print(all_bounds)
     bounds = {}
     for name, constraints in all_bounds.items():
         start = end = None
@@ -153,9 +178,8 @@ def compact_bounds(all_bounds):
             exact_match = exact_matches[0]
             continue
 
-        bounds[name] = start, include_start, end, include_end
+        bounds[name] = Range(start, end, include_start, include_end)
 
-    print(bounds)
     return bounds
 
 
@@ -168,12 +192,17 @@ class Cursor:
 
         all_bounds = defaultdict(set)
         for (column_index, operator), constraint in zip(indexes, constraintargs):
-            column_name = self.table.columns[column_index][0]
-            all_bounds[column_name].add((operator, constraint))
+            column_name, column_type = self.table.columns[column_index]
+            value = column_type.parse(constraint)
+            all_bounds[column_name].add((operator, value))
 
         bounds = compact_bounds(all_bounds)
 
-        self.data = list(self.table.get_data(bounds))
+        column_names = ["rowid"] + [column[0] for column in self.table.columns]
+        self.data = [
+            tuple(row[name] for name in column_names)
+            for row in self.table.get_data(bounds)
+        ]
         self.pos = 0
 
     def Eof(self):
@@ -211,23 +240,18 @@ def get_create_table(tablename: str, columns) -> str:
 
 class WeatherAPI(StaticVirtualTable):
 
-    ts = DateTime(indexed=True, order=Order.ASCENDING, exact=False)
-    temperature = Float(indexed=False)
+    ts = DateTime(indexes=[Range], order=Order.ASCENDING, exact=False)
+    temperature = Float(indexes=[])
 
     def __init__(self, location: str, api_key: str):
         self.location = location
         self.api_key = api_key
 
-    def get_data(self, bounds) -> Iterator[Tuple[datetime, float]]:
-        start, include_start, end, include_end = bounds.get(
-            "ts", (None, True, None, True)
-        )
-
+    def get_data(self, bounds) -> Iterator[Dict[str, Any]]:
         today = date.today()
-        start = (
-            dateutil.parser.parse(start).date() if start else today - timedelta(days=7)
-        )
-        end = dateutil.parser.parse(end).date() if end else today
+        ts_range = bounds.get("ts")
+        start = ts_range.start.date() if ts_range.start else today - timedelta(days=7)
+        end = ts_range.end.date() if ts_range.end else today
 
         while start <= end:
             url = f"https://api.weatherapi.com/v1/history.json?key={self.api_key}&q={self.location}&dt={start}"
@@ -235,10 +259,13 @@ class WeatherAPI(StaticVirtualTable):
             if response.ok:
                 payload = response.json()
                 hourly_data = payload["forecast"]["forecastday"][0]["hour"]
-                for i, data in enumerate(hourly_data):
-                    yield i, dateutil.parser.parse(data["time"]).isoformat(), data[
-                        "temp_c"
-                    ]
+                for record in hourly_data:
+                    dt = dateutil.parser.parse(record["time"])
+                    yield {
+                        "rowid": int(dt.timestamp()),
+                        "ts": dt.isoformat(),
+                        "temperature": record["temp_c"],
+                    }
 
             start += timedelta(days=1)
 
@@ -248,14 +275,24 @@ if __name__ == "__main__":
     cursor = connection.cursor()
     connection.createmodule("weatherapi", WeatherAPI)
 
-    try:
-        cursor.execute(
-            "create virtual table bodega_bay using weatherapi(94923, f426b51ea9aa4e4ab68190907202309)"
-        )
-    except apsw.SQLError:
-        pass
+    cursor.execute(
+        "CREATE VIRTUAL TABLE bodega_bay USING weatherapi(94923, f426b51ea9aa4e4ab68190907202309)"
+    )
+    cursor.execute(
+        "CREATE VIRTUAL TABLE san_mateo USING weatherapi(94401, f426b51ea9aa4e4ab68190907202309)"
+    )
 
-    for row in cursor.execute(
-        "SELECT * FROM bodega_bay WHERE ts >= '2020-09-23T02:00:00'"
-    ):
+    sql = "SELECT * FROM bodega_bay WHERE ts >= '2020-09-24T02:00:00'"
+    for row in cursor.execute(sql):
+        print(row)
+
+    sql = """
+SELECT * FROM bodega_bay
+JOIN san_mateo
+ON bodega_bay.ts = san_mateo.ts
+WHERE bodega_bay.ts > '2020-09-20T12:00:00'
+AND san_mateo.ts > '2020-09-20T12:00:00'
+AND san_mateo.temperature < bodega_bay.temperature
+    """
+    for row in cursor.execute(sql):
         print(row)
