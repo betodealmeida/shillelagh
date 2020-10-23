@@ -1,34 +1,31 @@
-from dataclasses import dataclass
-from typing import Any, Optional, Set
+from typing import Any, Optional, Set, Tuple
 
 import apsw
 
 
-@dataclass
 class Filter:
 
     operators: Set[int] = set()
 
     @classmethod
-    def build(cls, operations: Set[Tuple[int, Any]]) -> Filter:
+    def build(cls, operations: Set[Tuple[int, Any]]) -> "Filter":
         raise NotImplementedError("Subclass must implement `build`")
 
 
-@dataclass
 class Impossible(Filter):
     """Custom Filter return when impossible conditions are passed."""
 
     pass
 
 
-@dataclass
 class Equal(Filter):
-
-    value: Any
 
     operators: Set[int] = {
         apsw.SQLITE_INDEX_CONSTRAINT_EQ,
     }
+
+    def __init__(self, value: Any):
+        self.value = value
 
     @classmethod
     def build(cls, operations: Set[Tuple[int, Any]]) -> Filter:
@@ -39,13 +36,18 @@ class Equal(Filter):
         return cls(values.pop())
 
 
-@dataclass
 class Range(Filter):
-
-    start: Optional[Any]
-    end: Optional[Any]
-    include_start: bool
-    include_end: bool
+    def __init__(
+        self,
+        start: Optional[Any],
+        end: Optional[Any],
+        include_start: bool,
+        include_end: bool,
+    ):
+        self.start = start
+        self.end = end
+        self.include_start = include_start
+        self.include_end = include_end
 
     operators: Set[int] = {
         apsw.SQLITE_INDEX_CONSTRAINT_EQ,

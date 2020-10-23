@@ -7,7 +7,7 @@ import requests_cache
 
 from shillelagh.table import VirtualTable
 from shillelagh.types import DateTime, Float, Order
-from shillelagh.filters import Range
+from shillelagh.filters import Filter, Range
 
 
 requests_cache.install_cache(
@@ -17,8 +17,8 @@ requests_cache.install_cache(
 
 class WeatherAPI(VirtualTable):
 
-    ts = DateTime(indexes=[Range], order=Order.ASCENDING, exact=False)
-    temperature = Float(indexes=[])
+    ts = DateTime(filters=[Range], order=Order.ASCENDING, exact=False)
+    temperature = Float()
 
     def __init__(self, location: str, api_key: str):
         self.location = location

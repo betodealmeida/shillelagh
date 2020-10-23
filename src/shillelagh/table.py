@@ -1,10 +1,11 @@
 import inspect
 import json
 from collections import defaultdict
-from typing import Any, DefaultDict, Dict, Iterator, Tuple, Type
+from typing import Any, DefaultDict, Dict, Iterator, List, Tuple, Type
 
 import apsw
 
+from shillelagh.filters import Filter
 from shillelagh.types import Constraint, Order, Row, Type
 
 
@@ -17,14 +18,14 @@ class VirtualTable:
         dbname: str,
         tablename: str,
         *args: str,
-    ) -> Tuple[str, VirtualTable]:
+    ) -> Tuple[str, "VirtualTable"]:
         instance = cls(*args)
         create_table: str = instance.get_create_table(tablename)
         return create_table, instance
 
     def get_columns(self) -> Dict[str, Type]:
         return dict(
-            inspect.getmembers(cls, lambda attribute: isinstance(attribute, Type))
+            inspect.getmembers(self, lambda attribute: isinstance(attribute, Type))
         )
 
     def get_create_table(self, tablename: str) -> str:
@@ -37,6 +38,9 @@ class VirtualTable:
     ) -> Tuple[List[Constraint], int, str, bool, int]:
         column_types = list(self.get_columns().values())
 
+        index_number = 42
+        estimated_cost = 666
+
         # indexes is a list of pairs of column index and the operation used to filter
         # it, eg, (2, apsw.SQLITE_INDEX_CONSTRAINT_GT)
         indexes: List[Tuple[int, int]] = []
@@ -45,7 +49,7 @@ class VirtualTable:
         filter_index = 0
         for column_index, operator in constraints:
             column_type = column_types[column_index]
-            for class_in column_type.filters:
+            for class_ in column_type.filters:
                 if operator in class_.operators:
                     constraints_used.append((filter_index, column_type.exact))
                     filter_index += 1
@@ -76,7 +80,7 @@ class VirtualTable:
             estimated_cost,
         )
 
-    def open(self) -> Cursor:
+    def open(self) -> "Cursor":
         return Cursor(self)
 
     def disconnect(self) -> None:
@@ -90,12 +94,6 @@ class VirtualTable:
 
     def get_data(bounds: Dict[str, Filter]) -> Iterator[Row]:
         raise NotImplementedError("Subclasses must implement `get_data`")
-
-
-def consolidate_contraints(
-    filters: List[Type[Filter]], operator: int, value: Any
-) -> Filter:
-    pass
 
 
 class Cursor:
@@ -128,7 +126,6 @@ class Cursor:
                 raise Exception("No valid filter found")
             bounds[column_name] = class_.build(operations)
 
-        column_names = [column_name for column_name, column_type in columns]
         self.data = (
             tuple(row[name] for name in ["rowid"] + column_names)
             for row in self.table.get_data(bounds)

@@ -4,7 +4,7 @@ from shillelagh.adapters.weatherapi import WeatherAPI
 
 
 if __name__ == "__main__":
-    connection = apsw.Connection("dbfile")
+    connection = apsw.Connection("weatherapi.db")
     cursor = connection.cursor()
     connection.createmodule("weatherapi", WeatherAPI)
 
