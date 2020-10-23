@@ -1,4 +1,7 @@
-from typing import Any, Optional, Set, Tuple
+from typing import Any
+from typing import Optional
+from typing import Set
+from typing import Tuple
 
 import apsw
 

@@ -1,12 +1,21 @@
 import inspect
 import json
 from collections import defaultdict
-from typing import Any, DefaultDict, Dict, Iterator, List, Tuple, Type
+from typing import Any
+from typing import cast
+from typing import DefaultDict
+from typing import Dict
+from typing import Iterator
+from typing import List
+from typing import Set
+from typing import Tuple
 
 import apsw
-
+from shillelagh.fields import Field
+from shillelagh.fields import Order
 from shillelagh.filters import Filter
-from shillelagh.types import Constraint, Order, Row, Type
+from shillelagh.types import Constraint
+from shillelagh.types import Row
 
 
 class VirtualTable:
@@ -23,9 +32,9 @@ class VirtualTable:
         create_table: str = instance.get_create_table(tablename)
         return create_table, instance
 
-    def get_columns(self) -> Dict[str, Type]:
+    def get_columns(self) -> Dict[str, Field]:
         return dict(
-            inspect.getmembers(self, lambda attribute: isinstance(attribute, Type))
+            inspect.getmembers(self, lambda attribute: isinstance(attribute, Field)),
         )
 
     def get_create_table(self, tablename: str) -> str:
@@ -34,7 +43,7 @@ class VirtualTable:
         return f"CREATE TABLE {tablename} ({formatted_columns})"
 
     def best_index(
-        self, constraints: Tuple[int, int], orderbys: Tuple[int, bool]
+        self, constraints: List[Tuple[int, int]], orderbys: List[Tuple[int, bool]],
     ) -> Tuple[List[Constraint], int, str, bool, int]:
         column_types = list(self.get_columns().values())
 
@@ -92,7 +101,7 @@ class VirtualTable:
     Open = open
     Disconnect = Destroy = disconnect
 
-    def get_data(bounds: Dict[str, Filter]) -> Iterator[Row]:
+    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
         raise NotImplementedError("Subclasses must implement `get_data`")
 
 
@@ -101,9 +110,9 @@ class Cursor:
         self.table = table
 
     def filter(
-        self, indexnumber: int, indexname: str, constraintargs: List[Any]
+        self, indexnumber: int, indexname: str, constraintargs: List[Any],
     ) -> None:
-        columns: Dict[str, Type] = self.table.get_columns()
+        columns: Dict[str, Field] = self.table.get_columns()
         column_names: List[str] = list(columns.keys())
         indexes: List[Tuple[int, int]] = json.loads(indexname)
 
@@ -136,7 +145,7 @@ class Cursor:
         return self.at_eof
 
     def rowid(self) -> int:
-        return self.current_row[0]
+        return cast(int, self.current_row[0])
 
     def column(self, col) -> Any:
         return self.current_row[1 + col]

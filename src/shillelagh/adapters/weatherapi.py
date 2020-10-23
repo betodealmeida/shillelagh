@@ -1,17 +1,23 @@
-from datetime import date, datetime, timedelta
-from typing import Any, Dict, Iterator
+from datetime import date
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import Iterator
 
 import dateutil.parser
 import requests
 import requests_cache
-
+from shillelagh.fields import DateTime
+from shillelagh.fields import Float
+from shillelagh.fields import Order
+from shillelagh.filters import Filter
+from shillelagh.filters import Range
 from shillelagh.table import VirtualTable
-from shillelagh.types import DateTime, Float, Order
-from shillelagh.filters import Filter, Range
 
 
 requests_cache.install_cache(
-    cache_name="weatherapi_cache", backend="sqlite", expire_after=180
+    cache_name="weatherapi_cache", backend="sqlite", expire_after=180,
 )
 
 
