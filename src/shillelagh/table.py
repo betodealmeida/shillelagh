@@ -15,6 +15,7 @@ from shillelagh.fields import Field
 from shillelagh.fields import Order
 from shillelagh.filters import Filter
 from shillelagh.types import Constraint
+from shillelagh.types import Index
 from shillelagh.types import Row
 
 
@@ -39,8 +40,8 @@ class VirtualTable:
 
     def get_create_table(self, tablename: str) -> str:
         columns = self.get_columns()
-        formatted_columns = ", ".join(f"{k} {v.type}" for (k, v) in columns.items())
-        return f"CREATE TABLE {tablename} ({formatted_columns})"
+        formatted_columns = ", ".join(f'"{k}" {v.type}' for (k, v) in columns.items())
+        return f'CREATE TABLE "{tablename}" ({formatted_columns})'
 
     def best_index(
         self, constraints: List[Tuple[int, int]], orderbys: List[Tuple[int, bool]],
@@ -50,10 +51,7 @@ class VirtualTable:
         index_number = 42
         estimated_cost = 666
 
-        # indexes is a list of pairs of column index and the operation used to filter
-        # it, eg, (2, apsw.SQLITE_INDEX_CONSTRAINT_GT)
-        indexes: List[Tuple[int, int]] = []
-
+        indexes: List[Index] = []
         constraints_used: List[Constraint] = []
         filter_index = 0
         for column_index, operator in constraints:
@@ -114,7 +112,7 @@ class Cursor:
     ) -> None:
         columns: Dict[str, Field] = self.table.get_columns()
         column_names: List[str] = list(columns.keys())
-        indexes: List[Tuple[int, int]] = json.loads(indexname)
+        indexes: List[Index] = json.loads(indexname)
 
         all_bounds: DefaultDict[str, Set[Tuple[int, Any]]] = defaultdict(set)
         for (column_index, operator), constraint in zip(indexes, constraintargs):

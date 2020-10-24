@@ -1,19 +1,24 @@
+import sys
+
 import apsw
 from shillelagh.adapters.weatherapi import WeatherAPI
 
 
 if __name__ == "__main__":
+    api_key = sys.argv[0]
+
     connection = apsw.Connection("weatherapi.db")
     cursor = connection.cursor()
     connection.createmodule("weatherapi", WeatherAPI)
 
     cursor.execute(
-        "CREATE VIRTUAL TABLE bodega_bay USING weatherapi(94923, f426b51ea9aa4e4ab68190907202309)",
+        f"CREATE VIRTUAL TABLE IF NOT EXISTS bodega_bay USING weatherapi(94923, {api_key})",
     )
     cursor.execute(
-        "CREATE VIRTUAL TABLE san_mateo USING weatherapi(94401, f426b51ea9aa4e4ab68190907202309)",
+        f"CREATE VIRTUAL TABLE IF NOT EXISTS san_mateo USING weatherapi(94401, {api_key})",
     )
 
+    # TODO: use datetime functions?
     sql = "SELECT * FROM bodega_bay WHERE ts >= '2020-10-20T12:00:00'"
     for row in cursor.execute(sql):
         print(row)

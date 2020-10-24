@@ -18,3 +18,6 @@ Constraint = Union[None, int, Tuple[int, bool]]
 
 # A row of data
 Row = Dict[str, Any]
+
+# An index is a tuple with a column index and an operator to filter it
+Index = Tuple[int, int]
