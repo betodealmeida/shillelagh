@@ -1,7 +1,6 @@
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
-from typing import Any
 from typing import Dict
 from typing import Iterator
 
@@ -14,6 +13,7 @@ from shillelagh.fields import Order
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.table import VirtualTable
+from shillelagh.types import Row
 
 
 requests_cache.install_cache(
@@ -30,7 +30,7 @@ class WeatherAPI(VirtualTable):
         self.location = location
         self.api_key = api_key
 
-    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Dict[str, Any]]:
+    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
         ts_range = bounds["ts"]
         today = date.today()
         start = ts_range.start.date() if ts_range.start else today - timedelta(days=7)

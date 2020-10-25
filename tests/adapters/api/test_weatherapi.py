@@ -1,8 +1,7 @@
 import os
-from unittest.mock import Mock
 
 import apsw
-from shillelagh.adapters.weatherapi import WeatherAPI
+from shillelagh.adapters.api.weatherapi import WeatherAPI
 
 
 def test_weatherapi(requests_mock):

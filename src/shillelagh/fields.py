@@ -23,6 +23,16 @@ class Field:
         self.order = order
         self.exact = exact
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Field):
+            return NotImplemented
+
+        return (
+            self.filters == other.filters
+            and self.order == other.order
+            and self.exact == other.exact
+        )
+
 
 class Integer(Field):
     type = "INTEGER"

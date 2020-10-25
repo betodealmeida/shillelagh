@@ -1,7 +1,7 @@
 import sys
 
 import apsw
-from shillelagh.adapters.weatherapi import WeatherAPI
+from shillelagh.adapters.api.weatherapi import WeatherAPI
 
 
 if __name__ == "__main__":

@@ -1,12 +1,14 @@
 import inspect
 import json
 from collections import defaultdict
+from functools import lru_cache
 from typing import Any
 from typing import cast
 from typing import DefaultDict
 from typing import Dict
 from typing import Iterator
 from typing import List
+from typing import Optional
 from typing import Set
 from typing import Tuple
 
@@ -33,6 +35,7 @@ class VirtualTable:
         create_table: str = instance.get_create_table(tablename)
         return create_table, instance
 
+    @lru_cache
     def get_columns(self) -> Dict[str, Field]:
         return dict(
             inspect.getmembers(self, lambda attribute: isinstance(attribute, Field)),
@@ -93,14 +96,23 @@ class VirtualTable:
     def disconnect(self) -> None:
         pass
 
+    def update_insert_row(self, rowid: Optional[int], fields: Tuple[Any, ...]) -> int:
+        column_names = ["rowid"] + list(self.get_columns().keys())
+        row = dict(zip(column_names, [rowid] + list(fields)))
+        return self.insert_row(row)
+
     # apsw expects these method names
     Create = Connect = create
     BestIndex = best_index
     Open = open
     Disconnect = Destroy = disconnect
+    UpdateInsertRow = update_insert_row
 
     def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
         raise NotImplementedError("Subclasses must implement `get_data`")
+
+    def insert_row(self, row: Row) -> int:
+        raise NotImplementedError("Subclasses must implement `insert_row`")
 
 
 class Cursor:
