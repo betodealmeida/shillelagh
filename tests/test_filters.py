@@ -1,20 +1,20 @@
-import apsw
 import pytest
 from shillelagh.filters import Equal
 from shillelagh.filters import Impossible
+from shillelagh.filters import Operator
 from shillelagh.filters import Range
 
 
 def test_equal():
-    operations = {(apsw.SQLITE_INDEX_CONSTRAINT_EQ, 10)}
+    operations = {(Operator.EQ, 10)}
     filter_ = Equal.build(operations)
     assert filter_.value == 10
 
 
 def test_equal_multiple_value():
     operations = {
-        (apsw.SQLITE_INDEX_CONSTRAINT_EQ, 10),
-        (apsw.SQLITE_INDEX_CONSTRAINT_EQ, 10),
+        (Operator.EQ, 10),
+        (Operator.EQ, 10),
     }
     filter_ = Equal.build(operations)
     assert filter_.value == 10
@@ -22,8 +22,8 @@ def test_equal_multiple_value():
 
 def test_equal_check():
     operations = {
-        (apsw.SQLITE_INDEX_CONSTRAINT_EQ, 10),
-        (apsw.SQLITE_INDEX_CONSTRAINT_EQ, 10),
+        (Operator.EQ, 10),
+        (Operator.EQ, 10),
     }
     filter_ = Equal.build(operations)
     assert filter_.check(10)
@@ -32,8 +32,8 @@ def test_equal_check():
 
 def test_equal_impossible():
     operations = {
-        (apsw.SQLITE_INDEX_CONSTRAINT_EQ, 10),
-        (apsw.SQLITE_INDEX_CONSTRAINT_EQ, 20),
+        (Operator.EQ, 10),
+        (Operator.EQ, 20),
     }
     filter_ = Equal.build(operations)
     assert isinstance(filter_, Impossible)
@@ -41,11 +41,11 @@ def test_equal_impossible():
 
 def test_range():
     operations = {
-        (apsw.SQLITE_INDEX_CONSTRAINT_GT, 0),
-        (apsw.SQLITE_INDEX_CONSTRAINT_LT, 10),
-        (apsw.SQLITE_INDEX_CONSTRAINT_GT, 2),
-        (apsw.SQLITE_INDEX_CONSTRAINT_LE, 4),
-        (apsw.SQLITE_INDEX_CONSTRAINT_GE, 2),
+        (Operator.GT, 0),
+        (Operator.LT, 10),
+        (Operator.GT, 2),
+        (Operator.LE, 4),
+        (Operator.GE, 2),
     }
     filter_ = Range.build(operations)
     assert filter_.start == 2
@@ -56,12 +56,12 @@ def test_range():
 
 def test_range_equal():
     operations = {
-        (apsw.SQLITE_INDEX_CONSTRAINT_GT, 0),
-        (apsw.SQLITE_INDEX_CONSTRAINT_EQ, 3),
-        (apsw.SQLITE_INDEX_CONSTRAINT_LT, 10),
-        (apsw.SQLITE_INDEX_CONSTRAINT_GT, 2),
-        (apsw.SQLITE_INDEX_CONSTRAINT_LE, 4),
-        (apsw.SQLITE_INDEX_CONSTRAINT_GE, 2),
+        (Operator.GT, 0),
+        (Operator.EQ, 3),
+        (Operator.LT, 10),
+        (Operator.GT, 2),
+        (Operator.LE, 4),
+        (Operator.GE, 2),
     }
     filter_ = Range.build(operations)
     assert filter_.start == 3
@@ -72,12 +72,12 @@ def test_range_equal():
 
 def test_range_equal_impossible():
     operations = {
-        (apsw.SQLITE_INDEX_CONSTRAINT_GT, 0),
-        (apsw.SQLITE_INDEX_CONSTRAINT_EQ, 13),
-        (apsw.SQLITE_INDEX_CONSTRAINT_LT, 10),
-        (apsw.SQLITE_INDEX_CONSTRAINT_GT, 2),
-        (apsw.SQLITE_INDEX_CONSTRAINT_LE, 4),
-        (apsw.SQLITE_INDEX_CONSTRAINT_GE, 2),
+        (Operator.GT, 0),
+        (Operator.EQ, 13),
+        (Operator.LT, 10),
+        (Operator.GT, 2),
+        (Operator.LE, 4),
+        (Operator.GE, 2),
     }
     filter_ = Range.build(operations)
     assert isinstance(filter_, Impossible)
@@ -86,10 +86,10 @@ def test_range_equal_impossible():
 def test_range_include():
     # use list instead of set to define order
     operations = [
-        (apsw.SQLITE_INDEX_CONSTRAINT_GE, 2),
-        (apsw.SQLITE_INDEX_CONSTRAINT_GT, 2),
-        (apsw.SQLITE_INDEX_CONSTRAINT_LE, 4),
-        (apsw.SQLITE_INDEX_CONSTRAINT_LT, 4),
+        (Operator.GE, 2),
+        (Operator.GT, 2),
+        (Operator.LE, 4),
+        (Operator.LT, 4),
     ]
     filter_ = Range.build(operations)
     assert filter_.start == 2

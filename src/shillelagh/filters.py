@@ -1,14 +1,21 @@
+from enum import Enum
 from typing import Any
 from typing import Optional
 from typing import Set
 from typing import Tuple
 
-import apsw
+
+class Operator(Enum):
+    EQ = "=="
+    GE = ">="
+    GT = ">"
+    LE = "<="
+    LT = "<"
 
 
 class Filter:
 
-    operators: Set[int] = set()
+    operators: Set[Operator] = set()
 
     @classmethod
     def build(cls, operations: Set[Tuple[int, Any]]) -> "Filter":
@@ -26,8 +33,8 @@ class Impossible(Filter):
 
 class Equal(Filter):
 
-    operators: Set[int] = {
-        apsw.SQLITE_INDEX_CONSTRAINT_EQ,
+    operators: Set[Operator] = {
+        Operator.EQ,
     }
 
     def __init__(self, value: Any):
@@ -58,12 +65,12 @@ class Range(Filter):
         self.include_start = include_start
         self.include_end = include_end
 
-    operators: Set[int] = {
-        apsw.SQLITE_INDEX_CONSTRAINT_EQ,
-        apsw.SQLITE_INDEX_CONSTRAINT_GE,
-        apsw.SQLITE_INDEX_CONSTRAINT_GT,
-        apsw.SQLITE_INDEX_CONSTRAINT_LE,
-        apsw.SQLITE_INDEX_CONSTRAINT_LT,
+    operators: Set[Operator] = {
+        Operator.EQ,
+        Operator.GE,
+        Operator.GT,
+        Operator.LE,
+        Operator.LT,
     }
 
     @classmethod
@@ -77,19 +84,19 @@ class Range(Filter):
             new_include_start = include_start
             new_include_end = include_end
 
-            if operator == apsw.SQLITE_INDEX_CONSTRAINT_EQ:
+            if operator == Operator.EQ:
                 new_start = new_end = value
                 new_include_start = new_include_end = True
-            elif operator == apsw.SQLITE_INDEX_CONSTRAINT_GE:
+            elif operator == Operator.GE:
                 new_start = value
                 new_include_start = True
-            elif operator == apsw.SQLITE_INDEX_CONSTRAINT_GT:
+            elif operator == Operator.GT:
                 new_start = value
                 new_include_start = False
-            elif operator == apsw.SQLITE_INDEX_CONSTRAINT_LE:
+            elif operator == Operator.LE:
                 new_end = value
                 new_include_end = True
-            elif operator == apsw.SQLITE_INDEX_CONSTRAINT_LT:
+            elif operator == Operator.LT:
                 new_end = value
                 new_include_end = False
             else:

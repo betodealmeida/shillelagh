@@ -15,8 +15,18 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.fields import Field
 from shillelagh.fields import Order
 from shillelagh.filters import Filter
+from shillelagh.filters import Operator
 from shillelagh.types import Constraint
 from shillelagh.types import Index
+
+
+operator_map = {
+    apsw.SQLITE_INDEX_CONSTRAINT_EQ: Operator.EQ,
+    apsw.SQLITE_INDEX_CONSTRAINT_GE: Operator.GE,
+    apsw.SQLITE_INDEX_CONSTRAINT_GT: Operator.GT,
+    apsw.SQLITE_INDEX_CONSTRAINT_LE: Operator.LE,
+    apsw.SQLITE_INDEX_CONSTRAINT_LT: Operator.LT,
+}
 
 
 class VTModule:
@@ -59,13 +69,14 @@ class VTTable:
         indexes: List[Index] = []
         constraints_used: List[Constraint] = []
         filter_index = 0
-        for column_index, operator in constraints:
+        for column_index, sqlite_index_constraint in constraints:
+            operator = operator_map[sqlite_index_constraint]
             column_type = column_types[column_index]
             for class_ in column_type.filters:
                 if operator in class_.operators:
                     constraints_used.append((filter_index, column_type.exact))
                     filter_index += 1
-                    indexes.append((column_index, operator))
+                    indexes.append((column_index, sqlite_index_constraint))
                     break
             else:
                 # no indexes supported in this column
@@ -128,7 +139,10 @@ class VTCursor:
         indexes: List[Index] = json.loads(indexname)
 
         all_bounds: DefaultDict[str, Set[Tuple[int, Any]]] = defaultdict(set)
-        for (column_index, operator), constraint in zip(indexes, constraintargs):
+        for (column_index, sqlite_index_constraint), constraint in zip(
+            indexes, constraintargs,
+        ):
+            operator = operator_map[sqlite_index_constraint]
             column_name = column_names[column_index]
             column_type = columns[column_name]
             value = column_type.parse(constraint)
