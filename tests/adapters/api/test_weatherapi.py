@@ -22,7 +22,7 @@ def test_weatherapi(requests_mock):
     }
     requests_mock.get(url, json=payload)
 
-    connection = apsw.Connection("weatherapi.sqlite")
+    connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
     connection.createmodule("weatherapi", VTModule(WeatherAPI))
     cursor.execute(
@@ -33,7 +33,6 @@ def test_weatherapi(requests_mock):
     data = list(cursor.execute(sql))
     assert data == [(20.1, "2020-10-20T12:00:00")]
 
-    os.unlink("weatherapi.sqlite")
     try:
         os.unlink("weatherapi_cache.sqlite")
     except FileNotFoundError:
@@ -60,7 +59,7 @@ def test_weatherapi_api_error(requests_mock):
     url2 = "https://api.weatherapi.com/v1/history.json?key=f426b51ea9aa4e4ab68190907202309&q=94923&dt=2020-10-21"
     requests_mock.get(url2, status_code=404)
 
-    connection = apsw.Connection("weatherapi.sqlite")
+    connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
     connection.createmodule("weatherapi", VTModule(WeatherAPI))
     cursor.execute(
@@ -74,7 +73,6 @@ def test_weatherapi_api_error(requests_mock):
         (20.2, "2020-10-20T13:00:00"),
     ]
 
-    os.unlink("weatherapi.sqlite")
     try:
         os.unlink("weatherapi_cache.sqlite")
     except FileNotFoundError:

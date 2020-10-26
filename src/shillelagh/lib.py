@@ -111,7 +111,7 @@ def analyse(data: Iterator[Row]) -> Tuple[int, Dict[str, Order], Dict[str, Field
 
 
 def update_order(
-    current_order: Order, previous: Any, current: Any, num_rows: int
+    current_order: Order, previous: Any, current: Any, num_rows: int,
 ) -> Order:
     try:
         if num_rows == 2:

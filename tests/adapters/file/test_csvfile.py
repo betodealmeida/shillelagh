@@ -100,11 +100,11 @@ def test_csvfile_get_data_invalid_filter(mocker):
     assert str(excinfo.value) == "Invalid filter"
 
 
-def test_csvfile(mocker):
-    mocker.patch("builtins.open", mock_open(read_data=contents))
-    mocker.patch("shillelagh.adapters.file.csvfile.os.replace")
+def test_csvfile(fs):
+    with open("test.csv", "w") as fp:
+        fp.write(contents)
 
-    connection = apsw.Connection("csvfile.sqlite")
+    connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
     connection.createmodule("csvfile", VTModule(CSVFile))
     cursor.execute(f"CREATE VIRTUAL TABLE test USING csvfile(test.csv)")
@@ -113,4 +113,36 @@ def test_csvfile(mocker):
     data = list(cursor.execute(sql))
     assert data == [(12.0, 13.3, "Platinum_St"), (13.0, 12.1, "Kodiak_Trail")]
 
-    os.unlink("csvfile.sqlite")
+    sql = """INSERT INTO test ("index", temperature, site) VALUES (14, 10.1, 'New_Site')"""
+    cursor.execute(sql)
+    sql = 'SELECT * FROM test WHERE "index" > 11'
+    data = list(cursor.execute(sql))
+    assert data == [
+        (12.0, 13.3, "Platinum_St"),
+        (13.0, 12.1, "Kodiak_Trail"),
+        (14.0, 10.1, "New_Site"),
+    ]
+
+    sql = "DELETE FROM test WHERE site = 'Kodiak_Trail'"
+    cursor.execute(sql)
+    sql = 'SELECT * FROM test WHERE "index" > 11'
+    data = list(cursor.execute(sql))
+    assert data == [
+        (12.0, 13.3, "Platinum_St"),
+        (14.0, 10.1, "New_Site"),
+    ]
+
+    connection.close()
+
+    # test garbage collection
+    with open("test.csv") as fp:
+        updated_contents = fp.read()
+    assert (
+        updated_contents
+        == """"index","temperature","site"
+10.0,15.2,"Diamond_St"
+11.0,13.1,"Blacktail_Loop"
+12.0,13.3,"Platinum_St"
+14.0,10.1,"New_Site"
+"""
+    )

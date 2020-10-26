@@ -12,41 +12,41 @@ def test_equal():
 
 
 def test_equal_multiple_value():
-    operations = {
+    operations = [
         (Operator.EQ, 10),
         (Operator.EQ, 10),
-    }
+    ]
     filter_ = Equal.build(operations)
     assert filter_.value == 10
 
 
 def test_equal_check():
-    operations = {
+    operations = [
         (Operator.EQ, 10),
         (Operator.EQ, 10),
-    }
+    ]
     filter_ = Equal.build(operations)
     assert filter_.check(10)
     assert not filter_.check(20)
 
 
 def test_equal_impossible():
-    operations = {
+    operations = [
         (Operator.EQ, 10),
         (Operator.EQ, 20),
-    }
+    ]
     filter_ = Equal.build(operations)
     assert isinstance(filter_, Impossible)
 
 
 def test_range():
-    operations = {
+    operations = [
         (Operator.GT, 0),
         (Operator.LT, 10),
         (Operator.GT, 2),
         (Operator.LE, 4),
         (Operator.GE, 2),
-    }
+    ]
     filter_ = Range.build(operations)
     assert filter_.start == 2
     assert filter_.end == 4
@@ -55,14 +55,14 @@ def test_range():
 
 
 def test_range_equal():
-    operations = {
+    operations = [
         (Operator.GT, 0),
         (Operator.EQ, 3),
         (Operator.LT, 10),
         (Operator.GT, 2),
         (Operator.LE, 4),
         (Operator.GE, 2),
-    }
+    ]
     filter_ = Range.build(operations)
     assert filter_.start == 3
     assert filter_.end == 3
@@ -71,20 +71,19 @@ def test_range_equal():
 
 
 def test_range_equal_impossible():
-    operations = {
+    operations = [
         (Operator.GT, 0),
         (Operator.EQ, 13),
         (Operator.LT, 10),
         (Operator.GT, 2),
         (Operator.LE, 4),
         (Operator.GE, 2),
-    }
+    ]
     filter_ = Range.build(operations)
     assert isinstance(filter_, Impossible)
 
 
 def test_range_include():
-    # use list instead of set to define order
     operations = [
         (Operator.GE, 2),
         (Operator.GT, 2),

@@ -1,16 +1,21 @@
 import pytest
+from shillelagh.fields import Float
+from shillelagh.fields import Integer
+from shillelagh.fields import Order
+from shillelagh.fields import String
+from shillelagh.lib import analyse
 from shillelagh.lib import DELETED
 from shillelagh.lib import RowIDManager
 
 
-def test_row_id_empty_range():
+def test_row_id_manager_empty_range():
     with pytest.raises(Exception) as excinfo:
         RowIDManager([])
 
     assert str(excinfo.value) == "Argument `ranges` cannot be empty"
 
 
-def test_row_id():
+def test_row_id_manager():
     manager = RowIDManager([range(0, 6)])
     assert list(manager) == [0, 1, 2, 3, 4, 5]
 
@@ -61,3 +66,19 @@ def test_row_id():
         DELETED,
         DELETED,
     ]
+
+
+def test_analyse():
+    data = [
+        {"int": 1, "float": 10.0, "str": "Alice"},
+        {"int": 3, "float": 9.5, "str": "Bob"},
+        {"int": 2, "float": 8.0, "str": "Charlie"},
+    ]
+    num_rows, order, types = analyse(data)
+    assert num_rows == 3
+    assert order == {
+        "int": Order.NONE,
+        "float": Order.DESCENDING,
+        "str": Order.ASCENDING,
+    }
+    assert types == {"int": Integer, "float": Float, "str": String}

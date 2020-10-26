@@ -18,6 +18,7 @@ from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.lib import analyse
 from shillelagh.lib import RowIDManager
+from shillelagh.lib import update_order
 from shillelagh.types import Row
 
 
@@ -45,9 +46,7 @@ class CSVFile(Adapter):
 
         self.columns = {
             column_name: types[column_name](
-                filters=[Range],
-                order=order[column_name],
-                exact=True,
+                filters=[Range], order=order[column_name], exact=True,
             )
             for column_name in column_names
         }
@@ -75,8 +74,7 @@ class CSVFile(Adapter):
                     op = operator.ge if filter_.include_start else operator.gt
                     filters.append(
                         lambda row, value=filter_.start, i=column_index, op=op: op(
-                            row[i],
-                            value,
+                            row[i], value,
                         ),
                     )
 
@@ -84,8 +82,7 @@ class CSVFile(Adapter):
                     op = operator.le if filter_.include_end else operator.lt
                     filters.append(
                         lambda row, value=filter_.end, i=column_index, op=op: op(
-                            row[i],
-                            value,
+                            row[i], value,
                         ),
                     )
 
@@ -102,6 +99,7 @@ class CSVFile(Adapter):
         # append row
         column_names = list(self.get_columns().keys())
         with open(self.path, "a") as fp:
+            fp.write("\n")
             writer = csv.writer(fp, quoting=csv.QUOTE_NONNUMERIC)
             writer.writerow([row[column_name] for column_name in column_names])
 
