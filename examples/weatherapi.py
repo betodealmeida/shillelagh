@@ -19,10 +19,10 @@ if __name__ == "__main__":
     connection.createmodule("weatherapi", VTModule(WeatherAPI))
 
     cursor.execute(
-        f"CREATE VIRTUAL TABLE IF NOT EXISTS bodega_bay USING weatherapi(94923, {api_key})",
+        f"CREATE VIRTUAL TABLE bodega_bay USING weatherapi(94923, {api_key})",
     )
     cursor.execute(
-        f"CREATE VIRTUAL TABLE IF NOT EXISTS san_mateo USING weatherapi(94401, {api_key})",
+        f"CREATE VIRTUAL TABLE san_mateo USING weatherapi(94401, {api_key})",
     )
 
     # TODO: use datetime functions?

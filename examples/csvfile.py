@@ -6,7 +6,7 @@ if __name__ == "__main__":
     connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
     connection.createmodule("csvfile", VTModule(CSVFile))
-    cursor.execute(f"CREATE VIRTUAL TABLE IF NOT EXISTS test USING csvfile(test.csv)")
+    cursor.execute(f"CREATE VIRTUAL TABLE test USING csvfile(test.csv)")
 
     sql = 'SELECT * FROM test WHERE "index" > 11'
     print(sql)
