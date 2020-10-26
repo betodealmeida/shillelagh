@@ -36,7 +36,7 @@ In addition, we declare that the results from filtering ``ts`` are not exact. Th
 
     SELECT * FROM weatherapi WHERE ts > '2020-01-01T12:00:00' AND ts < '2020-01-02T12:00:00'
 
-In this case, the adapter is going to download **all data** for the days 2020-01-01 and 2020-01-02, and pass them to the SQL engine to narrow it down to between noon in each day. We could do that filtering our selves in the adapter, but since we're not discarding a lot of data it's ok.
+In this case, the adapter is going to download **all data** for the days 2020-01-01 and 2020-01-02, and pass them to the SQL engine to narrow it down to between noon in each day. We could do that filtering ourselves in the adapter, but since we're not discarding a lot of data it's ok.
 
 For ``temperature`` we simply declare it as float, since we can't use temperature values to pre-filter data in the API.
 
