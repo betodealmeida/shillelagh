@@ -70,7 +70,7 @@ class VTTable:
         constraints_used: List[Constraint] = []
         filter_index = 0
         for column_index, sqlite_index_constraint in constraints:
-            operator = operator_map[sqlite_index_constraint]
+            operator = operator_map.get(sqlite_index_constraint)
             column_type = column_types[column_index]
             for class_ in column_type.filters:
                 if operator in class_.operators:
@@ -138,11 +138,11 @@ class VTCursor:
         column_names: List[str] = list(columns.keys())
         indexes: List[Index] = json.loads(indexname)
 
-        all_bounds: DefaultDict[str, Set[Tuple[int, Any]]] = defaultdict(set)
+        all_bounds: DefaultDict[str, Set[Tuple[Operator, Any]]] = defaultdict(set)
         for (column_index, sqlite_index_constraint), constraint in zip(
             indexes, constraintargs,
         ):
-            operator = operator_map[sqlite_index_constraint]
+            operator = operator_map.get(sqlite_index_constraint)
             column_name = column_names[column_index]
             column_type = columns[column_name]
             value = column_type.parse(constraint)

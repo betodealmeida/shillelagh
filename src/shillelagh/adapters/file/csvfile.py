@@ -21,6 +21,17 @@ from shillelagh.lib import RowIDManager
 from shillelagh.types import Row
 
 
+class RowTracker:
+    def __init__(self, iterable: Iterator[Row]):
+        self.iterable = iterable
+        self.law_row: Optional[Row] = None
+
+    def __iter__(self) -> Iterator[Row]:
+        for row in self.iterable:
+            self.last_row = row
+            yield row
+
+
 class CSVFile(Adapter):
     def __init__(self, path: str):
         self.path = Path(path)
@@ -29,15 +40,20 @@ class CSVFile(Adapter):
             reader = csv.reader(fp, quoting=csv.QUOTE_NONNUMERIC)
             column_names = next(reader)
             data = (dict(zip(column_names, row)) for row in reader)
-            num_rows, order, types = analyse(data)
+            row_tracker = RowTracker(data)
+            num_rows, order, types = analyse(row_tracker)
 
-        self.row_id_manager = RowIDManager([range(0, num_rows + 1)])
         self.columns = {
             column_name: types[column_name](
-                filters=[Range], order=order[column_name], exact=True,
+                filters=[Range],
+                order=order[column_name],
+                exact=True,
             )
             for column_name in column_names
         }
+        self.last_row = row_tracker.last_row
+        self.num_rows = num_rows
+        self.row_id_manager = RowIDManager([range(0, num_rows + 1)])
 
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
@@ -59,7 +75,8 @@ class CSVFile(Adapter):
                     op = operator.ge if filter_.include_start else operator.gt
                     filters.append(
                         lambda row, value=filter_.start, i=column_index, op=op: op(
-                            row[i], value,
+                            row[i],
+                            value,
                         ),
                     )
 
@@ -67,7 +84,8 @@ class CSVFile(Adapter):
                     op = operator.le if filter_.include_end else operator.lt
                     filters.append(
                         lambda row, value=filter_.end, i=column_index, op=op: op(
-                            row[i], value,
+                            row[i],
+                            value,
                         ),
                     )
 
@@ -87,11 +105,23 @@ class CSVFile(Adapter):
             writer = csv.writer(fp, quoting=csv.QUOTE_NONNUMERIC)
             writer.writerow([row[column_name] for column_name in column_names])
 
+        # update order
+        for column_name, column_type in self.columns.items():
+            column_type.order = update_order(
+                current_order=column_type.order,
+                previous=self.last_row[column_name],
+                current=row[column_name],
+                num_rows=self.num_rows,
+            )
+        self.last_row = row
+        self.num_rows += 1
+
         return row_id
 
     def delete_row(self, row_id: int) -> None:
         # mark row as deleted
         self.row_id_manager.delete(row_id)
+        self.num_rows -= 1
 
     def close(self) -> None:
         # garbage collect

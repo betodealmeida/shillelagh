@@ -1,5 +1,4 @@
 import inspect
-from functools import lru_cache
 from typing import Dict
 from typing import Iterator
 
@@ -9,7 +8,6 @@ from shillelagh.types import Row
 
 
 class Adapter:
-    @lru_cache
     def get_columns(self) -> Dict[str, Field]:
         return dict(
             inspect.getmembers(self, lambda attribute: isinstance(attribute, Field)),

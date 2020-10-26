@@ -1,4 +1,5 @@
 import itertools
+from typing import Any
 from typing import Dict
 from typing import Iterator
 from typing import List
@@ -81,19 +82,12 @@ def analyse(data: Iterator[Row]) -> Tuple[int, Dict[str, Order], Dict[str, Field
             # determine order
             if previous_row:
                 previous = previous_row[column_name]
-                try:
-                    if i == 1:
-                        order[column_name] = (
-                            Order.ASCENDING if value >= previous else Order.DESCENDING
-                        )
-                    elif order[column_name] == Order.NONE:
-                        pass
-                    elif order[column_name] == Order.ASCENDING and value < previous:
-                        order[column_name] = Order.NONE
-                    elif order[column_name] == Order.DESCENDING and value > previous:
-                        order[column_name] = Order.NONE
-                except TypeError:
-                    order[column_name] = Order.NONE
+                order[column_name] = update_order(
+                    current_order=order.get(column_name, Order.NONE),
+                    previous=previous,
+                    current=value,
+                    num_rows=i + 1,
+                )
 
             # determine types
             if types.get(column_name) == String:
@@ -114,3 +108,21 @@ def analyse(data: Iterator[Row]) -> Tuple[int, Dict[str, Order], Dict[str, Field
     num_rows = i + 1
 
     return num_rows, order, types
+
+
+def update_order(
+    current_order: Order, previous: Any, current: Any, num_rows: int
+) -> Order:
+    try:
+        if num_rows == 2:
+            return Order.ASCENDING if current >= previous else Order.DESCENDING
+        elif (
+            current_order == Order.NONE
+            or (current_order == Order.ASCENDING and current < previous)
+            or (current_order == Order.DESCENDING and current > previous)
+        ):
+            return Order.NONE
+    except TypeError:
+        return Order.NONE
+
+    return current_order
