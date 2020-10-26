@@ -3,8 +3,8 @@ from unittest.mock import mock_open
 
 import apsw
 import pytest
-
 from shillelagh.adapters.file.csvfile import CSVFile
+from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.fields import Float
 from shillelagh.fields import Order
 from shillelagh.fields import String
@@ -21,9 +21,9 @@ contents = '''"index","temperature","site"
 def test_csvfile_get_columns(mocker):
     mocker.patch("builtins.open", mock_open(read_data=contents))
 
-    instance = CSVFile("test.csv")
+    adapter = CSVFile("test.csv")
 
-    assert instance.get_columns() == {
+    assert adapter.get_columns() == {
         "index": Float(filters=[Range], order=Order.ASCENDING, exact=True),
         "temperature": Float(filters=[Range], order=Order.NONE, exact=True),
         "site": String(filters=[Range], order=Order.NONE, exact=True),
@@ -37,10 +37,10 @@ def test_csvfile_different_types(mocker):
 "test"'''
     mocker.patch("builtins.open", mock_open(read_data=contents))
 
-    instance = CSVFile("test.csv")
+    adapter = CSVFile("test.csv")
 
-    assert instance.get_columns() == {
-        "a": String(filters=[Range], order=Order.NONE, exact=True)
+    assert adapter.get_columns() == {
+        "a": String(filters=[Range], order=Order.NONE, exact=True),
     }
 
 
@@ -51,66 +51,63 @@ def test_csvfile_unordered(mocker):
 1"""
     mocker.patch("builtins.open", mock_open(read_data=contents))
 
-    instance = CSVFile("test.csv")
+    adapter = CSVFile("test.csv")
 
-    assert instance.get_columns() == {
-        "a": String(filters=[Range], order=Order.NONE, exact=True)
+    assert adapter.get_columns() == {
+        "a": String(filters=[Range], order=Order.NONE, exact=True),
     }
 
 
 def test_csvfile_get_data(mocker):
     mocker.patch("builtins.open", mock_open(read_data=contents))
 
-    instance = CSVFile("test.csv")
+    adapter = CSVFile("test.csv")
 
-    assert list(instance.get_data({})) == [
+    assert list(adapter.get_data({})) == [
         {"rowid": 0, "index": 10.0, "temperature": 15.2, "site": "Diamond_St"},
         {"rowid": 1, "index": 11.0, "temperature": 13.1, "site": "Blacktail_Loop"},
         {"rowid": 2, "index": 12.0, "temperature": 13.3, "site": "Platinum_St"},
         {"rowid": 3, "index": 13.0, "temperature": 12.1, "site": "Kodiak_Trail"},
     ]
 
-    assert list(instance.get_data({"index": Range(11, None, False, False)})) == [
+    assert list(adapter.get_data({"index": Range(11, None, False, False)})) == [
         {"rowid": 2, "index": 12.0, "temperature": 13.3, "site": "Platinum_St"},
         {"rowid": 3, "index": 13.0, "temperature": 12.1, "site": "Kodiak_Trail"},
     ]
 
-    assert list(instance.get_data({"index": Range(None, 11, False, True)})) == [
+    assert list(adapter.get_data({"index": Range(None, 11, False, True)})) == [
         {"rowid": 0, "index": 10.0, "temperature": 15.2, "site": "Diamond_St"},
         {"rowid": 1, "index": 11.0, "temperature": 13.1, "site": "Blacktail_Loop"},
     ]
 
     assert list(
-        instance.get_data(
+        adapter.get_data(
             {
                 "index": Range(None, 11, False, True),
                 "temperature": Range(14, None, False, False),
-            }
-        )
-    ) == [
-        {"rowid": 0, "index": 10.0, "temperature": 15.2, "site": "Diamond_St"},
-    ]
+            },
+        ),
+    ) == [{"rowid": 0, "index": 10.0, "temperature": 15.2, "site": "Diamond_St"}]
 
 
 def test_csvfile_get_data_invalid_filter(mocker):
     mocker.patch("builtins.open", mock_open(read_data=contents))
 
-    instance = CSVFile("test.csv")
+    adapter = CSVFile("test.csv")
     with pytest.raises(Exception) as excinfo:
-        next(instance.get_data({"index": Equal(11)}))
+        next(adapter.get_data({"index": Equal(11)}))
 
     assert str(excinfo.value) == "Invalid filter"
 
 
 def test_csvfile(mocker):
     mocker.patch("builtins.open", mock_open(read_data=contents))
+    mocker.patch("shillelagh.adapters.file.csvfile.os.replace")
 
     connection = apsw.Connection("csvfile.sqlite")
     cursor = connection.cursor()
-    connection.createmodule("csvfile", CSVFile)
-    cursor.execute(
-        f"CREATE VIRTUAL TABLE test USING csvfile(test.csv)",
-    )
+    connection.createmodule("csvfile", VTModule(CSVFile))
+    cursor.execute(f"CREATE VIRTUAL TABLE test USING csvfile(test.csv)")
 
     sql = 'SELECT * FROM test WHERE "index" > 11'
     data = list(cursor.execute(sql))

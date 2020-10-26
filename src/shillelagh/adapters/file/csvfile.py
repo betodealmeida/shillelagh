@@ -3,6 +3,7 @@ import operator
 import os
 from functools import reduce
 from pathlib import Path
+from typing import cast
 from typing import Dict
 from typing import Iterator
 from typing import Optional
@@ -78,7 +79,7 @@ class CSVFile(Adapter):
 
     def insert_row(self, row: Row) -> int:
         row_id: Optional[int] = row.pop("rowid")
-        row_id = self.row_id_manager.insert(row_id)
+        row_id = cast(int, self.row_id_manager.insert(row_id))
 
         # append row
         column_names = list(self.get_columns().keys())

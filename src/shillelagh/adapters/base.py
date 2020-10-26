@@ -1,6 +1,7 @@
 import inspect
 from functools import lru_cache
-from typing import Dict, Iterator
+from typing import Dict
+from typing import Iterator
 
 from shillelagh.fields import Field
 from shillelagh.filters import Filter
@@ -29,4 +30,4 @@ class Adapter:
         self.insert_row(row)
 
     def close(self) -> None:
-        raise NotImplementedError("Subclasses must implement `close`")
+        pass

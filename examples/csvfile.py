@@ -1,13 +1,12 @@
 import apsw
-
 from shillelagh.adapters.file.csvfile import CSVFile
-from shillelagh.backends.apsw.table import VTModule
+from shillelagh.backends.apsw.vt import VTModule
 
 if __name__ == "__main__":
     connection = apsw.Connection("csvfile.sqlite")
     cursor = connection.cursor()
     connection.createmodule("csvfile", VTModule(CSVFile))
-    cursor.execute(f"CREATE VIRTUAL TABLE IF NOT EXISTS test USING csvfile(test.csv)",)
+    cursor.execute(f"CREATE VIRTUAL TABLE IF NOT EXISTS test USING csvfile(test.csv)")
 
     sql = 'SELECT * FROM test WHERE "index" > 11'
     print(sql)

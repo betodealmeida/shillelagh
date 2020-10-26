@@ -8,6 +8,7 @@ from typing import List
 from typing import Optional
 from typing import Set
 from typing import Tuple
+from typing import Type
 
 import apsw
 from shillelagh.adapters.base import Adapter
@@ -19,7 +20,7 @@ from shillelagh.types import Index
 
 
 class VTModule:
-    def __init__(self, adapter: Adapter):
+    def __init__(self, adapter: Type[Adapter]):
         self.adapter = adapter
 
     def Create(
@@ -102,7 +103,7 @@ class VTTable:
     def UpdateInsertRow(self, rowid: Optional[int], fields: Tuple[Any, ...]) -> int:
         column_names = ["rowid"] + list(self.adapter.get_columns().keys())
         row = dict(zip(column_names, [rowid] + list(fields)))
-        return self.adapter.insert_row(row)
+        return cast(int, self.adapter.insert_row(row))
 
     def UpdateDeleteRow(self, rowid: int) -> None:
         self.adapter.delete_row(rowid)

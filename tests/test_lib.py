@@ -1,5 +1,4 @@
 import pytest
-
 from shillelagh.lib import DELETED
 from shillelagh.lib import RowIDManager
 
@@ -15,19 +14,19 @@ def test_row_id():
     manager = RowIDManager([range(0, 6)])
     assert list(manager) == [0, 1, 2, 3, 4, 5]
 
-    manager.add()
+    manager.insert()
     assert list(manager) == [0, 1, 2, 3, 4, 5, 6]
 
-    manager.add(7)
+    manager.insert(7)
     assert list(manager) == [0, 1, 2, 3, 4, 5, 6, 7]
     assert manager.ranges == [range(0, 8)]
 
-    manager.add(9)
+    manager.insert(9)
     assert list(manager) == [0, 1, 2, 3, 4, 5, 6, 7, 9]
     assert manager.ranges == [range(0, 8), range(9, 10)]
 
     with pytest.raises(Exception) as excinfo:
-        manager.add(5)
+        manager.insert(5)
     assert str(excinfo.value) == "Row ID 5 already present"
 
     manager.delete(9)

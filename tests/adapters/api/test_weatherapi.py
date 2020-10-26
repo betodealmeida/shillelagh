@@ -2,6 +2,7 @@ import os
 
 import apsw
 from shillelagh.adapters.api.weatherapi import WeatherAPI
+from shillelagh.backends.apsw.vt import VTModule
 
 
 def test_weatherapi(requests_mock):
@@ -23,7 +24,7 @@ def test_weatherapi(requests_mock):
 
     connection = apsw.Connection("weatherapi.sqlite")
     cursor = connection.cursor()
-    connection.createmodule("weatherapi", WeatherAPI)
+    connection.createmodule("weatherapi", VTModule(WeatherAPI))
     cursor.execute(
         f"CREATE VIRTUAL TABLE bodega_bay USING weatherapi(94923, f426b51ea9aa4e4ab68190907202309)",
     )
@@ -61,7 +62,7 @@ def test_weatherapi_api_error(requests_mock):
 
     connection = apsw.Connection("weatherapi.sqlite")
     cursor = connection.cursor()
-    connection.createmodule("weatherapi", WeatherAPI)
+    connection.createmodule("weatherapi", VTModule(WeatherAPI))
     cursor.execute(
         f"CREATE VIRTUAL TABLE bodega_bay USING weatherapi(94923, f426b51ea9aa4e4ab68190907202309)",
     )

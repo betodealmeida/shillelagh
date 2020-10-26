@@ -2,6 +2,7 @@ import sys
 
 import apsw
 from shillelagh.adapters.api.weatherapi import WeatherAPI
+from shillelagh.backends.apsw.vt import VTModule
 
 
 if __name__ == "__main__":
@@ -9,7 +10,7 @@ if __name__ == "__main__":
 
     connection = apsw.Connection("weatherapi.db")
     cursor = connection.cursor()
-    connection.createmodule("weatherapi", WeatherAPI)
+    connection.createmodule("weatherapi", VTModule(WeatherAPI))
 
     cursor.execute(
         f"CREATE VIRTUAL TABLE IF NOT EXISTS bodega_bay USING weatherapi(94923, {api_key})",

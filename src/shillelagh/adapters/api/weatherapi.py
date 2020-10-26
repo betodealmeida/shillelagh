@@ -7,12 +7,12 @@ from typing import Iterator
 import dateutil.parser
 import requests
 import requests_cache
+from shillelagh.adapters.base import Adapter
 from shillelagh.fields import DateTime
 from shillelagh.fields import Float
 from shillelagh.fields import Order
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
-from shillelagh.table import VirtualTable
 from shillelagh.types import Row
 
 
@@ -21,7 +21,7 @@ requests_cache.install_cache(
 )
 
 
-class WeatherAPI(VirtualTable):
+class WeatherAPI(Adapter):
 
     ts = DateTime(filters=[Range], order=Order.ASCENDING, exact=False)
     temperature = Float()
