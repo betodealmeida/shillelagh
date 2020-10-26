@@ -1,55 +1,56 @@
-import inspect
 import json
 from collections import defaultdict
-from functools import lru_cache
 from typing import Any
 from typing import cast
 from typing import DefaultDict
 from typing import Dict
-from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Set
 from typing import Tuple
 
 import apsw
+from shillelagh.adapters.base import Adapter
 from shillelagh.fields import Field
 from shillelagh.fields import Order
 from shillelagh.filters import Filter
 from shillelagh.types import Constraint
 from shillelagh.types import Index
-from shillelagh.types import Row
 
 
-class VirtualTable:
-    @classmethod
-    def create(
-        cls,
+class VTModule:
+    def __init__(self, adapter: Adapter):
+        self.adapter = adapter
+
+    def Create(
+        self,
         connection: apsw.Connection,
         modulename: str,
         dbname: str,
         tablename: str,
         *args: str,
-    ) -> Tuple[str, "VirtualTable"]:
-        instance = cls(*args)
-        create_table: str = instance.get_create_table(tablename)
-        return create_table, instance
+    ) -> Tuple[str, "VTTable"]:
+        adapter = self.adapter(*args)
+        table = VTTable(adapter)
+        create_table: str = table.get_create_table(tablename)
+        return create_table, table
 
-    @lru_cache
-    def get_columns(self) -> Dict[str, Field]:
-        return dict(
-            inspect.getmembers(self, lambda attribute: isinstance(attribute, Field)),
-        )
+    Connect = Create
+
+
+class VTTable:
+    def __init__(self, adapter: Adapter):
+        self.adapter = adapter
 
     def get_create_table(self, tablename: str) -> str:
-        columns = self.get_columns()
+        columns = self.adapter.get_columns()
         formatted_columns = ", ".join(f'"{k}" {v.type}' for (k, v) in columns.items())
         return f'CREATE TABLE "{tablename}" ({formatted_columns})'
 
-    def best_index(
+    def BestIndex(
         self, constraints: List[Tuple[int, int]], orderbys: List[Tuple[int, bool]],
     ) -> Tuple[List[Constraint], int, str, bool, int]:
-        column_types = list(self.get_columns().values())
+        column_types = list(self.adapter.get_columns().values())
 
         index_number = 42
         estimated_cost = 666
@@ -90,46 +91,38 @@ class VirtualTable:
             estimated_cost,
         )
 
-    def open(self) -> "Cursor":
-        return Cursor(self)
+    def Open(self) -> "VTCursor":
+        return VTCursor(self.adapter)
 
-    def disconnect(self) -> None:
-        return self.close()
+    def Disconnect(self) -> None:
+        self.adapter.close()
 
-    def update_insert_row(self, rowid: Optional[int], fields: Tuple[Any, ...]) -> int:
-        column_names = ["rowid"] + list(self.get_columns().keys())
+    Destroy = Disconnect
+
+    def UpdateInsertRow(self, rowid: Optional[int], fields: Tuple[Any, ...]) -> int:
+        column_names = ["rowid"] + list(self.adapter.get_columns().keys())
         row = dict(zip(column_names, [rowid] + list(fields)))
-        return self.insert_row(row)
+        return self.adapter.insert_row(row)
 
-    def update_delete_row(self, rowid: int) -> None:
-        return self.delete_row(rowid)
+    def UpdateDeleteRow(self, rowid: int) -> None:
+        self.adapter.delete_row(rowid)
 
-    # apsw expects these method names
-    Create = Connect = create
-    BestIndex = best_index
-    Open = open
-    Disconnect = Destroy = disconnect
-    UpdateInsertRow = update_insert_row
-    UpdateDeleteRow = update_delete_row
-
-    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
-        raise NotImplementedError("Subclasses must implement `get_data`")
-
-    def insert_row(self, row: Row) -> int:
-        raise NotImplementedError("Subclasses must implement `insert_row`")
-
-    def delete_row(self, rowid: int) -> None:
-        raise NotImplementedError("Subclasses must implement `delete_row`")
+    def UpdateChangeRow(
+        self, rowid: int, newrowid: int, fields: Tuple[Any, ...],
+    ) -> None:
+        column_names = ["rowid"] + list(self.adapter.get_columns().keys())
+        row = dict(zip(column_names, [newrowid] + list(fields)))
+        self.adapter.update_row(rowid, row)
 
 
-class Cursor:
-    def __init__(self, table: VirtualTable):
-        self.table = table
+class VTCursor:
+    def __init__(self, adapter: Adapter):
+        self.adapter = adapter
 
-    def filter(
+    def Filter(
         self, indexnumber: int, indexname: str, constraintargs: List[Any],
     ) -> None:
-        columns: Dict[str, Field] = self.table.get_columns()
+        columns: Dict[str, Field] = self.adapter.get_columns()
         column_names: List[str] = list(columns.keys())
         indexes: List[Index] = json.loads(indexname)
 
@@ -154,33 +147,25 @@ class Cursor:
 
         self.data = (
             tuple(row[name] for name in ["rowid"] + column_names)
-            for row in self.table.get_data(bounds)
+            for row in self.adapter.get_data(bounds)
         )
-        self.next()
+        self.Next()
 
-    def eof(self) -> bool:
-        return self.at_eof
+    def Eof(self) -> bool:
+        return self.eof
 
-    def rowid(self) -> int:
+    def Rowid(self) -> int:
         return cast(int, self.current_row[0])
 
-    def column(self, col) -> Any:
+    def Column(self, col) -> Any:
         return self.current_row[1 + col]
 
-    def next(self) -> None:
+    def Next(self) -> None:
         try:
             self.current_row = next(self.data)
-            self.at_eof = False
+            self.eof = False
         except StopIteration:
-            self.at_eof = True
+            self.eof = True
 
-    def close(self) -> None:
+    def Close(self) -> None:
         pass
-
-    # apsw expects these method names
-    Filter = filter
-    Eof = eof
-    Rowid = rowid
-    Column = column
-    Next = next
-    Close = close

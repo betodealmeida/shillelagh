@@ -7,6 +7,7 @@ from typing import Dict
 from typing import Iterator
 from typing import Optional
 
+from shillelagh.adapters.base import Adapter
 from shillelagh.fields import Field
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
@@ -14,64 +15,21 @@ from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
+from shillelagh.lib import analyse
 from shillelagh.lib import RowIDManager
-from shillelagh.table import VirtualTable
 from shillelagh.types import Row
 
 
-class CSVFile(VirtualTable):
+class CSVFile(Adapter):
     def __init__(self, path: str):
         self.path = Path(path)
 
-        self.analyse()
-
-    def analyse(self) -> None:
         with open(self.path) as fp:
             reader = csv.reader(fp, quoting=csv.QUOTE_NONNUMERIC)
             column_names = next(reader)
-            order = {column_name: Order.NONE for column_name in column_names}
-            types = {column_name: Float for column_name in column_names}
+            data = (dict(zip(column_names, row)) for row in reader)
+            num_rows, order, types = analyse(data)
 
-            previous_row = None
-            for i, row in enumerate(reader):
-                # determine types
-                for column_name, value in zip(column_names, row):
-                    if types[column_name] == String:
-                        continue
-                    elif type(value) == str:
-                        types[column_name] = String
-
-                # determine order
-                if previous_row:
-                    for column_name, previous, current in zip(
-                        column_names, previous_row, row,
-                    ):
-                        try:
-                            # on the 2nd row we can determine the potential order
-                            if i == 1:
-                                order[column_name] = (
-                                    Order.ASCENDING
-                                    if current >= previous
-                                    else Order.DESCENDING
-                                )
-                            elif order[column_name] == Order.NONE:
-                                continue
-                            elif (
-                                order[column_name] == Order.ASCENDING
-                                and current < previous
-                            ):
-                                order[column_name] = Order.NONE
-                            elif (
-                                order[column_name] == Order.DESCENDING
-                                and current > previous
-                            ):
-                                order[column_name] = Order.NONE
-                        except TypeError:
-                            order[column_name] = Order.NONE
-
-                previous_row = row
-
-        num_rows = i + 1
         self.row_id_manager = RowIDManager([range(0, num_rows + 1)])
         self.columns = {
             column_name: types[column_name](
@@ -120,8 +78,9 @@ class CSVFile(VirtualTable):
 
     def insert_row(self, row: Row) -> int:
         row_id: Optional[int] = row.pop("rowid")
-        row_id = self.row_id_manager.add(row_id)
+        row_id = self.row_id_manager.insert(row_id)
 
+        # append row
         column_names = list(self.get_columns().keys())
         with open(self.path, "a") as fp:
             writer = csv.writer(fp, quoting=csv.QUOTE_NONNUMERIC)
@@ -130,6 +89,7 @@ class CSVFile(VirtualTable):
         return row_id
 
     def delete_row(self, row_id: int) -> None:
+        # mark row as deleted
         self.row_id_manager.delete(row_id)
 
     def close(self) -> None:
