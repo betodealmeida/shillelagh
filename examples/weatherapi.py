@@ -1,3 +1,4 @@
+import os
 import sys
 from datetime import datetime
 from datetime import timedelta
@@ -39,3 +40,5 @@ if __name__ == "__main__":
     """
     for row in cursor.execute(sql):
         print(row)
+
+    os.unlink("weatherapi_cache.sqlite")
