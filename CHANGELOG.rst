@@ -2,7 +2,8 @@
 Changelog
 =========
 
-Version 0.1 - 2020-10-XX
+Version 0.1 - 2020-10-26
 ========================
 
-- Initial release
+- WeatherAPI and CSVFile adapters
+- APSW backend
