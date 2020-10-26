@@ -1,6 +1,8 @@
 import csv
 import operator
+import os
 from functools import reduce
+from pathlib import Path
 from typing import Dict
 from typing import Iterator
 from typing import Optional
@@ -12,13 +14,14 @@ from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
+from shillelagh.lib import RowIDManager
 from shillelagh.table import VirtualTable
 from shillelagh.types import Row
 
 
 class CSVFile(VirtualTable):
     def __init__(self, path: str):
-        self.path = path
+        self.path = Path(path)
 
         self.analyse()
 
@@ -68,7 +71,8 @@ class CSVFile(VirtualTable):
 
                 previous_row = row
 
-        self.num_rows = i + 1
+        num_rows = i + 1
+        self.row_id_manager = RowIDManager([range(0, num_rows + 1)])
         self.columns = {
             column_name: types[column_name](
                 filters=[Range], order=order[column_name], exact=True,
@@ -83,7 +87,7 @@ class CSVFile(VirtualTable):
         with open(self.path) as fp:
             reader = csv.reader(fp, quoting=csv.QUOTE_NONNUMERIC)
             column_names = ["rowid"] + next(reader)
-            data = ([i, *row] for i, row in enumerate(reader))
+            data = ([i, *row] for i, row in zip(self.row_id_manager, reader) if i != -1)
 
             filters = []
             for column_name, filter_ in bounds.items():
@@ -116,15 +120,28 @@ class CSVFile(VirtualTable):
 
     def insert_row(self, row: Row) -> int:
         row_id: Optional[int] = row.pop("rowid")
-        if row_id is not None:
-            raise Exception("Unable to set a custom rowid")
-        row_id = self.num_rows
+        row_id = self.row_id_manager.add(row_id)
 
         column_names = list(self.get_columns().keys())
         with open(self.path, "a") as fp:
             writer = csv.writer(fp, quoting=csv.QUOTE_NONNUMERIC)
             writer.writerow([row[column_name] for column_name in column_names])
 
-        self.num_rows += 1
-
         return row_id
+
+    def delete_row(self, row_id: int) -> None:
+        self.row_id_manager.delete(row_id)
+
+    def close(self) -> None:
+        # garbage collect
+        with open(self.path) as fp:
+            reader = csv.reader(fp, quoting=csv.QUOTE_NONNUMERIC)
+            column_names = next(reader)
+            data = (row for i, row in zip(self.row_id_manager, reader) if i != -1)
+
+            with open(self.path.with_suffix(".csv.bak"), "w") as copy:
+                writer = csv.writer(copy, quoting=csv.QUOTE_NONNUMERIC)
+                writer.writerow(column_names)
+                writer.writerows(data)
+
+        os.replace(self.path.with_suffix(".csv.bak"), self.path)

@@ -94,12 +94,15 @@ class VirtualTable:
         return Cursor(self)
 
     def disconnect(self) -> None:
-        pass
+        return self.close()
 
     def update_insert_row(self, rowid: Optional[int], fields: Tuple[Any, ...]) -> int:
         column_names = ["rowid"] + list(self.get_columns().keys())
         row = dict(zip(column_names, [rowid] + list(fields)))
         return self.insert_row(row)
+
+    def update_delete_row(self, rowid: int) -> None:
+        return self.delete_row(rowid)
 
     # apsw expects these method names
     Create = Connect = create
@@ -107,12 +110,16 @@ class VirtualTable:
     Open = open
     Disconnect = Destroy = disconnect
     UpdateInsertRow = update_insert_row
+    UpdateDeleteRow = update_delete_row
 
     def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
         raise NotImplementedError("Subclasses must implement `get_data`")
 
     def insert_row(self, row: Row) -> int:
         raise NotImplementedError("Subclasses must implement `insert_row`")
+
+    def delete_row(self, rowid: int) -> None:
+        raise NotImplementedError("Subclasses must implement `delete_row`")
 
 
 class Cursor:
