@@ -1,4 +1,6 @@
 import sys
+from datetime import datetime
+from datetime import timedelta
 
 import apsw
 from shillelagh.adapters.api.weatherapi import WeatherAPI
@@ -6,9 +8,12 @@ from shillelagh.backends.apsw.vt import VTModule
 
 
 if __name__ == "__main__":
-    api_key = sys.argv[0]
+    three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%dT12:00:00")
 
-    connection = apsw.Connection("weatherapi.db")
+    # sign up for an API key at https://www.weatherapi.com/my/
+    api_key = sys.argv[1]
+
+    connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
     connection.createmodule("weatherapi", VTModule(WeatherAPI))
 
@@ -20,16 +25,16 @@ if __name__ == "__main__":
     )
 
     # TODO: use datetime functions?
-    sql = "SELECT * FROM bodega_bay WHERE ts >= '2020-10-20T12:00:00'"
+    sql = f"SELECT * FROM bodega_bay WHERE ts >= '{three_days_ago}'"
     for row in cursor.execute(sql):
         print(row)
 
-    sql = """
+    sql = f"""
     SELECT * FROM bodega_bay
     JOIN san_mateo
     ON bodega_bay.ts = san_mateo.ts
-    WHERE bodega_bay.ts > '2020-10-20T12:00:00'
-    AND san_mateo.ts > '2020-10-20T12:00:00'
+    WHERE bodega_bay.ts >= '{three_days_ago}'
+    AND san_mateo.ts >= '{three_days_ago}'
     AND san_mateo.temperature < bodega_bay.temperature
     """
     for row in cursor.execute(sql):

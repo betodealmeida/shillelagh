@@ -99,7 +99,6 @@ class CSVFile(Adapter):
         # append row
         column_names = list(self.get_columns().keys())
         with open(self.path, "a") as fp:
-            fp.write("\n")
             writer = csv.writer(fp, quoting=csv.QUOTE_NONNUMERIC)
             writer.writerow([row[column_name] for column_name in column_names])
 

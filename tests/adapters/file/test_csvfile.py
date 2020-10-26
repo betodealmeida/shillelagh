@@ -11,11 +11,12 @@ from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Range
 
-contents = '''"index","temperature","site"
+contents = """"index","temperature","site"
 10,15.2,"Diamond_St"
 11,13.1,"Blacktail_Loop"
 12,13.3,"Platinum_St"
-13,12.1,"Kodiak_Trail"'''
+13,12.1,"Kodiak_Trail"
+"""
 
 
 def test_csvfile_get_columns(mocker):

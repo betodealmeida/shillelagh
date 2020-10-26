@@ -3,7 +3,7 @@ from shillelagh.adapters.file.csvfile import CSVFile
 from shillelagh.backends.apsw.vt import VTModule
 
 if __name__ == "__main__":
-    connection = apsw.Connection("csvfile.sqlite")
+    connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
     connection.createmodule("csvfile", VTModule(CSVFile))
     cursor.execute(f"CREATE VIRTUAL TABLE IF NOT EXISTS test USING csvfile(test.csv)")
