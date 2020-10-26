@@ -50,23 +50,21 @@ class RowIDManager:
 
     def delete(self, row_id: int) -> None:
         for i, r in enumerate(self.ranges):
-            if not r.start <= row_id < r.stop:
-                continue
+            if r.start <= row_id < r.stop:
+                if r.start == r.stop - 1:
+                    self.ranges[i] = DELETED
+                elif row_id == r.start:
+                    self.ranges[i] = range(r.start + 1, r.stop)
+                    self.ranges.insert(i, DELETED)
+                elif row_id == r.stop - 1:
+                    self.ranges[i] = range(r.start, r.stop - 1)
+                    self.ranges.insert(i + 1, DELETED)
+                else:
+                    self.ranges[i] = range(r.start, row_id)
+                    self.ranges.insert(i + 1, range(row_id + 1, r.stop))
+                    self.ranges.insert(i + 1, DELETED)
 
-            if r.start == r.stop - 1:
-                self.ranges[i] = DELETED
-            elif row_id == r.start:
-                self.ranges[i] = range(r.start + 1, r.stop)
-                self.ranges.insert(i, DELETED)
-            elif row_id == r.stop - 1:
-                self.ranges[i] = range(r.start, r.stop - 1)
-                self.ranges.insert(i + 1, DELETED)
-            else:
-                self.ranges[i] = range(r.start, row_id)
-                self.ranges.insert(i + 1, range(row_id + 1, r.stop))
-                self.ranges.insert(i + 1, DELETED)
-
-            return
+                return
 
         raise Exception(f"Row ID {row_id} not found")
 
