@@ -109,8 +109,14 @@ def analyse(data: Iterator[Row]) -> Tuple[int, Dict[str, Order], Dict[str, Field
 
 
 def update_order(
-    current_order: Order, previous: Any, current: Any, num_rows: int,
+    current_order: Order,
+    previous: Any,
+    current: Any,
+    num_rows: int,
 ) -> Order:
+    if num_rows < 2 or previous is None:
+        return Order.NONE
+
     try:
         if num_rows == 2:
             return Order.ASCENDING if current >= previous else Order.DESCENDING

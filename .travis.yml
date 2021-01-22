@@ -9,9 +9,9 @@ virtualenv:
 matrix:
   fast_finish: true
   include:
-    - python: 3.8
-      env: DISTRIB="ubuntu" TOX_PYTHON_VERSION="py38" COVERAGE="true"
-    - env: DISTRIB="conda" PYTHON_VERSION="3.8" COVERAGE="false"
+    - python: 3.9
+      env: DISTRIB="ubuntu" TOX_PYTHON_VERSION="py39" COVERAGE="true"
+    - env: DISTRIB="conda" PYTHON_VERSION="3.9" COVERAGE="false"
 install:
   - source tests/travis_install.sh
   - pip install -r requirements.txt

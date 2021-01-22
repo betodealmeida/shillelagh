@@ -26,7 +26,7 @@ class Filter:
 
 
 class Impossible(Filter):
-    """Custom Filter return when impossible conditions are passed."""
+    """Custom Filter returned when impossible conditions are passed."""
 
     pass
 
@@ -110,7 +110,6 @@ class Range(Filter):
             # update start and end by tightening up range
             if start is None or new_start >= start:
                 if new_start == start:
-                    print(include_start, new_include_start)
                     if include_start and not new_include_start:
                         include_start = False
                 else:

@@ -17,7 +17,9 @@ from shillelagh.types import Row
 
 
 requests_cache.install_cache(
-    cache_name="weatherapi_cache", backend="sqlite", expire_after=180,
+    cache_name="weatherapi_cache",
+    backend="sqlite",
+    expire_after=180,
 )
 
 

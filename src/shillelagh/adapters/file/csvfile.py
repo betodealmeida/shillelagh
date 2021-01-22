@@ -25,7 +25,7 @@ from shillelagh.types import Row
 class RowTracker:
     def __init__(self, iterable: Iterator[Row]):
         self.iterable = iterable
-        self.law_row: Optional[Row] = None
+        self.last_row: Optional[Row] = None
 
     def __iter__(self) -> Iterator[Row]:
         for row in self.iterable:
@@ -46,7 +46,9 @@ class CSVFile(Adapter):
 
         self.columns = {
             column_name: types[column_name](
-                filters=[Range], order=order[column_name], exact=True,
+                filters=[Range],
+                order=order[column_name],
+                exact=True,
             )
             for column_name in column_names
         }
@@ -74,7 +76,8 @@ class CSVFile(Adapter):
                     op = operator.ge if filter_.include_start else operator.gt
                     filters.append(
                         lambda row, value=filter_.start, i=column_index, op=op: op(
-                            row[i], value,
+                            row[i],
+                            value,
                         ),
                     )
 
@@ -82,7 +85,8 @@ class CSVFile(Adapter):
                     op = operator.le if filter_.include_end else operator.lt
                     filters.append(
                         lambda row, value=filter_.end, i=column_index, op=op: op(
-                            row[i], value,
+                            row[i],
+                            value,
                         ),
                     )
 
@@ -101,17 +105,17 @@ class CSVFile(Adapter):
         with open(self.path, "a") as fp:
             writer = csv.writer(fp, quoting=csv.QUOTE_NONNUMERIC)
             writer.writerow([row[column_name] for column_name in column_names])
+        self.num_rows += 1
 
         # update order
         for column_name, column_type in self.columns.items():
             column_type.order = update_order(
                 current_order=column_type.order,
-                previous=self.last_row[column_name],
+                previous=self.last_row[column_name] if self.last_row else None,
                 current=row[column_name],
                 num_rows=self.num_rows,
             )
         self.last_row = row
-        self.num_rows += 1
 
         return row_id
 

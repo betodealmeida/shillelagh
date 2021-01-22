@@ -59,7 +59,9 @@ class VTTable:
         return f'CREATE TABLE "{tablename}" ({formatted_columns})'
 
     def BestIndex(
-        self, constraints: List[Tuple[int, int]], orderbys: List[Tuple[int, bool]],
+        self,
+        constraints: List[Tuple[int, int]],
+        orderbys: List[Tuple[int, bool]],
     ) -> Tuple[List[Constraint], int, str, bool, int]:
         column_types = list(self.adapter.get_columns().values())
 
@@ -120,7 +122,10 @@ class VTTable:
         self.adapter.delete_row(rowid)
 
     def UpdateChangeRow(
-        self, rowid: int, newrowid: int, fields: Tuple[Any, ...],
+        self,
+        rowid: int,
+        newrowid: int,
+        fields: Tuple[Any, ...],
     ) -> None:
         column_names = ["rowid"] + list(self.adapter.get_columns().keys())
         row = dict(zip(column_names, [newrowid] + list(fields)))
@@ -132,7 +137,10 @@ class VTCursor:
         self.adapter = adapter
 
     def Filter(
-        self, indexnumber: int, indexname: str, constraintargs: List[Any],
+        self,
+        indexnumber: int,
+        indexname: str,
+        constraintargs: List[Any],
     ) -> None:
         columns: Dict[str, Field] = self.adapter.get_columns()
         column_names: List[str] = list(columns.keys())
@@ -140,7 +148,8 @@ class VTCursor:
 
         all_bounds: DefaultDict[str, Set[Tuple[Operator, Any]]] = defaultdict(set)
         for (column_index, sqlite_index_constraint), constraint in zip(
-            indexes, constraintargs,
+            indexes,
+            constraintargs,
         ):
             operator = operator_map.get(sqlite_index_constraint)
             column_name = column_names[column_index]
