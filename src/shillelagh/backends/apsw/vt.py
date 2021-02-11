@@ -164,7 +164,9 @@ class VTCursor:
         for column_name, operations in all_bounds.items():
             column_type = columns[column_name]
             operators = {operation[0] for operation in operations}
+            print(column_type.filters)
             for class_ in column_type.filters:
+                print(class_.operators, operators)
                 if all(operator in class_.operators for operator in operators):
                     break
             else:

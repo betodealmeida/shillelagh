@@ -5,6 +5,7 @@ import apsw
 import pytest
 from shillelagh.adapters.base import Adapter
 from shillelagh.adapters.file.csvfile import CSVFile
+from shillelagh.adapters.file.csvfile import RowTracker
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.db import connect
 from shillelagh.fields import Float
@@ -177,3 +178,10 @@ def test_dispatch(mocker, fs):
     sql = """SELECT * FROM 'csv://test.csv' WHERE "index" > 11"""
     data = list(cursor.execute(sql))
     assert data == [(12.0, 13.3, "Platinum_St"), (13.0, 12.1, "Kodiak_Trail")]
+
+
+def test_row_tracker():
+    rows = [{"col0_": 1}, {"col0_": 2}]
+    row_tracker = RowTracker(iter(rows))
+    assert next(row_tracker) == {"col0_": 1}
+    assert next(row_tracker) == {"col0_": 2}
