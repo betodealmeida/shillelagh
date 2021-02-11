@@ -5,6 +5,7 @@ import apsw
 import pytest
 from shillelagh.adapters.file.csvfile import CSVFile
 from shillelagh.backends.apsw.vt import VTModule
+from shillelagh.db import connect
 from shillelagh.fields import Float
 from shillelagh.fields import Order
 from shillelagh.fields import String
@@ -150,3 +151,15 @@ def test_csvfile(fs):
 14.0,10.1,"New_Site"
 """
     )
+
+
+def test_dispatch(fs):
+    with open("test.csv", "w") as fp:
+        fp.write(contents)
+
+    connection = connect(":memory:", ["csv"])
+    cursor = connection.cursor()
+
+    sql = """SELECT * FROM 'csv://test.csv' WHERE "index" > 11"""
+    data = list(cursor.execute(sql))
+    assert data == [(12.0, 13.3, "Platinum_St"), (13.0, 12.1, "Kodiak_Trail")]

@@ -1,14 +1,17 @@
 import csv
 import operator
 import os
+import urllib.parse
 from functools import reduce
 from pathlib import Path
 from typing import cast
 from typing import Dict
 from typing import Iterator
 from typing import Optional
+from typing import Tuple
 
 from shillelagh.adapters.base import Adapter
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
@@ -34,6 +37,16 @@ class RowTracker:
 
 
 class CSVFile(Adapter):
+
+    scheme = "csv"
+
+    @staticmethod
+    def parse_uri(uri: str) -> Tuple[str]:
+        parsed = urllib.parse.urlparse(uri)
+
+        # netloc is populated for relative paths, path for absolute
+        return (parsed.path or parsed.netloc,)
+
     def __init__(self, path: str):
         self.path = Path(path)
 
