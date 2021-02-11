@@ -1,5 +1,4 @@
 import inspect
-import urllib.parse
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -18,17 +17,13 @@ T = TypeVar("T", bound="Adapter")
 
 
 class Adapter:
-
-    scheme: Optional[str] = None
+    @staticmethod
+    def supports(uri: str) -> bool:
+        raise NotImplementedError("Subclasses must implement `supports`")
 
     @classmethod
     def from_uri(cls: Type[T], uri: str) -> T:
-        parsed = urllib.parse.urlparse(uri)
-        if not parsed.scheme == cls.scheme:
-            raise ProgrammingError(f"Invalid scheme: {parsed.scheme}")
-
         args = cls.parse_uri(uri)
-
         return cls(*args)
 
     @staticmethod

@@ -34,6 +34,9 @@ class WeatherAPI(Adapter):
 
     def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
         ts_range = bounds["ts"]
+        if not isinstance(ts_range, Range):
+            raise Exception("Invalid filter")
+
         today = date.today()
         start = ts_range.start.date() if ts_range.start else today - timedelta(days=7)
         end = ts_range.end.date() if ts_range.end else today

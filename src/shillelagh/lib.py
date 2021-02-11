@@ -5,6 +5,7 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Type
 
 from shillelagh.fields import Field
 from shillelagh.fields import Float
@@ -69,10 +70,12 @@ class RowIDManager:
         raise Exception(f"Row ID {row_id} not found")
 
 
-def analyse(data: Iterator[Row]) -> Tuple[int, Dict[str, Order], Dict[str, Field]]:
+def analyse(
+    data: Iterator[Row],
+) -> Tuple[int, Dict[str, Order], Dict[str, Type[Field]]]:
     """Compute number of rows, order and types."""
     order: Dict[str, Order] = {}
-    types: Dict[str, Field] = {}
+    types: Dict[str, Type[Field]] = {}
 
     previous_row = None
     for i, row in enumerate(data):

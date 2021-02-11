@@ -198,4 +198,4 @@ def test_cursor_with_constraints_invalid_filter():
     with pytest.raises(Exception) as excinfo:
         cursor.Filter(42, f"[[1, {apsw.SQLITE_INDEX_CONSTRAINT_MATCH}]]", ["Alice"])
 
-    assert str(excinfo.value) == "No valid filter found"
+    assert str(excinfo.value) == "Invalid constraint passed: 64"

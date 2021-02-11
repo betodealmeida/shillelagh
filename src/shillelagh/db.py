@@ -1,46 +1,70 @@
 import urllib.parse
+from functools import wraps
 from typing import Any
+from typing import Callable
+from typing import cast
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
+from typing import Type
+from typing import TypeVar
 
 import apsw
 from pkg_resources import iter_entry_points
-
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.vt import VTModule
-from shillelagh.exceptions import Error, NotSupportedError, ProgrammingError
+from shillelagh.exceptions import CursorClosedError
+from shillelagh.exceptions import Error
+from shillelagh.exceptions import NotSupportedError
+from shillelagh.exceptions import ProgrammingError
 
 NO_SUCH_TABLE = "SQLError: no such table: "
 
+F = TypeVar("F", bound=Callable[..., Any])
 
-def check_closed(f):
-    """Decorator that checks if connection/cursor is closed."""
+Description = Optional[
+    Tuple[
+        str,
+        str,
+        Optional[str],
+        Optional[str],
+        Optional[str],
+        Optional[str],
+        Optional[str],
+    ]
+]
 
-    def g(self, *args, **kwargs):
+
+def check_closed(method: F) -> F:
+    """Decorator that checks if a connection or cursor is closed."""
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
         if self.closed:
-            raise Error("{klass} already closed".format(klass=self.__class__.__name__))
-        return f(self, *args, **kwargs)
+            raise ProgrammingError(f"{self.__class__.__name__} already closed")
+        return method(self, *args, **kwargs)
 
-    return g
+    return cast(F, wrapper)
 
 
-def check_result(f):
+def check_result(method: F) -> F:
     """Decorator that checks if the cursor has results from `execute`."""
 
-    def g(self, *args, **kwargs):
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
         if self._results is None:
-            raise Error("Called before `execute`")
-        return f(self, *args, **kwargs)
+            raise ProgrammingError("Called before `execute`")
+        return method(self, *args, **kwargs)
 
-    return g
+    return cast(F, wrapper)
 
 
 class Cursor(object):
 
     """Connection cursor."""
 
-    def __init__(self, cursor: "apsw.Cursor", adapters: List[Adapter]):
+    def __init__(self, cursor: "apsw.Cursor", adapters: List[Type[Adapter]]):
         self._cursor = cursor
         self._adapters = adapters
 
@@ -54,25 +78,33 @@ class Cursor(object):
         self.closed = False
 
         # this is updated only after a query
-        self.description = None
+        self.description: Description = None
 
         # this is set to a list of rows after a successful query
-        self._results = None
+        self._results: Optional[List[Any]] = None
 
-    @property
+    @property  # type: ignore
     @check_result
     @check_closed
     def rowcount(self) -> int:
-        return len(self._results)
+        # results can't be None because of `check_result`
+        results = cast(List[Any], self._results)
+        return len(results)
 
     @check_closed
     def close(self) -> None:
         """Close the cursor."""
+        if self.closed:
+            raise CursorClosedError("Cursor already closed")
         self._cursor.close()
         self.closed = True
 
     @check_closed
-    def execute(self, operation: str, parameters: Optional[Dict[str, Any]] = None):
+    def execute(
+        self,
+        operation: str,
+        parameters: Optional[Dict[str, Any]] = None,
+    ) -> "Cursor":
         if not self.in_transaction:
             self._cursor.execute("BEGIN")
             self.in_transaction = True
@@ -81,9 +113,8 @@ class Cursor(object):
         query = apply_parameters(operation, parameters or {})
         try:
             self._cursor.execute(query)
+            self.description = self._get_description()
             self._results = list(self._cursor)
-            # XXX fix type
-            self.description = self._cursor.getdescription() + (None,) * 5
         except apsw.SQLError as exc:
             message = exc.args[0]
             if not message.startswith(NO_SUCH_TABLE):
@@ -95,23 +126,30 @@ class Cursor(object):
 
             # try again
             self._cursor.execute(query)
+            self.description = self._get_description()
             self._results = list(self._cursor)
-            # XXX fix type
-            self.description = self._cursor.getdescription() + (None,) * 5
 
         return self
 
     def _create_table(self, uri: str) -> None:
-        scheme = urllib.parse.urlparse(uri).scheme
-        if scheme not in self._adapters:
-            raise ProgrammingError(f"Invalid scheme: {scheme}")
-        adapter = self._adapters[scheme]
+        for adapter in self._adapters:
+            if adapter.supports(uri):
+                break
+        else:
+            raise ProgrammingError(f"Unsupported table: {uri}")
 
         table_name = uri.replace("'", "''")
         args = ", ".join(adapter.parse_uri(uri))
         self._cursor.execute(
-            f"CREATE VIRTUAL TABLE '{table_name}' USING {adapter.__name__}({args})"
+            f"CREATE VIRTUAL TABLE '{table_name}' USING {adapter.__name__}({args})",
         )
+
+    def _get_description(self):
+        # XXX convert type from string to object
+        try:
+            return self._cursor.getdescription() + (None,) * 5
+        except apsw.ExecutionCompleteError:
+            return None
 
     @check_closed
     def executemany(self, operation, seq_of_parameters=None):
@@ -173,17 +211,17 @@ class Connection(object):
 
     """Connection to a Google Spreadsheet."""
 
-    def __init__(self, path: str, adapters: Dict[str, Adapter]):
+    def __init__(self, path: str, adapters: List[Type[Adapter]]):
         # create underlying APSW connection
         self._connection = apsw.Connection(path)
 
         # register adapters
-        for name, adapter in adapters.items():
-            self._connection.createmodule(name, VTModule(adapter))
+        for adapter in adapters:
+            self._connection.createmodule(adapter.__name__, VTModule(adapter))
         self._adapters = adapters
 
         self.closed = False
-        self.cursors = []
+        self.cursors: List[Cursor] = []
 
     @check_closed
     def close(self) -> None:
@@ -192,7 +230,7 @@ class Connection(object):
         for cursor in self.cursors:
             try:
                 cursor.close()
-            except Error:
+            except CursorClosedError:
                 pass  # already closed
 
     @check_closed
@@ -221,7 +259,9 @@ class Connection(object):
 
     @check_closed
     def execute(
-        self, operation: str, parameters: Optional[Dict[str, Any]] = None
+        self,
+        operation: str,
+        parameters: Optional[Dict[str, Any]] = None,
     ) -> Cursor:
         cursor = self.cursor()
         return cursor.execute(operation, parameters)
@@ -243,12 +283,11 @@ def connect(path: str, adapters: Optional[str] = None) -> Connection:
         >>> curs.execute("SELECT * FROM 'csv:///path/to/file.csv'")
 
     """
-    print(list(iter_entry_points("shillelagh.adapter")))
-    enabled_adapters = {
-        adapter.name: adapter.load()
+    enabled_adapters = [
+        adapter.load()
         for adapter in iter_entry_points("shillelagh.adapter")
         if adapters is None or adapter.name in adapters
-    }
+    ]
     return Connection(path, enabled_adapters)
 
 
@@ -259,7 +298,7 @@ def apply_parameters(operation: str, parameters: Dict[str, Any]) -> str:
 
 def escape(value: Any) -> str:
     if value == "*":
-        return value
+        return cast(str, value)
     elif isinstance(value, str):
         return "'{}'".format(value.replace("'", "''"))
     elif isinstance(value, bool):
