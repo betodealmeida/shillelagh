@@ -23,7 +23,9 @@ from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
+from shillelagh.types import NUMBER
 from shillelagh.types import Row
+from shillelagh.types import STRING
 
 
 class MockEntryPoint:
@@ -158,9 +160,9 @@ def test_description(mocker):
 
     cursor.execute('SELECT * FROM "dummy://"')
     assert cursor.description == [
-        ("age", "REAL", None, None, None, None, None),
-        ("name", "TEXT", None, None, None, None, None),
-        ("pets", "INTEGER", None, None, None, None, None),
+        ("age", NUMBER, None, None, None, None, True),
+        ("name", STRING, None, None, None, None, True),
+        ("pets", NUMBER, None, None, None, None, True),
     ]
 
 

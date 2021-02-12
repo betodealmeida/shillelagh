@@ -1,21 +1,17 @@
 """Exceptions for DB API 2.0"""
 
 
-class StandardError(Exception):
-    """Base class for warnings and errors."""
-
-
-class Warning(StandardError):
+class Warning(Exception):
     """
     Important warnings like data truncations while inserting.
 
     Exception raised for important warnings like data truncations
     while inserting, etc. It must be a subclass of the Python
-    StandardError (defined in the module exceptions).
+    exceptions.StandardError (defined in the module exceptions).
     """
 
 
-class Error(StandardError):
+class Error(Exception):
     """
     Base class of all other error exceptions.
 

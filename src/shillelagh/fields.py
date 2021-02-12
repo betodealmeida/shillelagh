@@ -9,6 +9,12 @@ from typing import Type
 
 import dateutil.parser
 from shillelagh.filters import Filter
+from shillelagh.types import BINARY
+from shillelagh.types import DATETIME
+from shillelagh.types import DBAPIType
+from shillelagh.types import NUMBER
+from shillelagh.types import ROWID
+from shillelagh.types import STRING
 
 
 class Order(Enum):
@@ -19,7 +25,8 @@ class Order(Enum):
 
 class Field:
 
-    type: Optional[str] = None
+    type = ""
+    db_api_type = DBAPIType
 
     def __init__(
         self,
@@ -48,6 +55,7 @@ class Field:
 
 class Integer(Field):
     type = "INTEGER"
+    db_api_type = NUMBER
 
     @staticmethod
     def parse(value: Any) -> int:
@@ -56,6 +64,7 @@ class Integer(Field):
 
 class Float(Field):
     type = "REAL"
+    db_api_type = NUMBER
 
     @staticmethod
     def parse(value: Any) -> float:
@@ -64,6 +73,7 @@ class Float(Field):
 
 class String(Field):
     type = "TEXT"
+    db_api_type = STRING
 
     @staticmethod
     def parse(value: Any) -> str:
@@ -72,7 +82,22 @@ class String(Field):
 
 class DateTime(Field):
     type = "TIMESTAMP"
+    db_api_type = DATETIME
 
     @staticmethod
     def parse(value: Any) -> datetime:
         return dateutil.parser.parse(value)
+
+
+class Blob(Field):
+    type = "BLOB"
+    db_api_type = BINARY
+
+    @staticmethod
+    def parse(value: Any) -> bytes:
+        return bytes(value)
+
+
+type_map = {
+    field.type: field.db_api_type for field in {Integer, Float, String, DateTime, Blob}
+}

@@ -1,3 +1,4 @@
+from shillelagh.fields import Blob
 from shillelagh.fields import Field
 from shillelagh.fields import Integer
 from shillelagh.fields import Order
@@ -17,3 +18,7 @@ def test_comparison():
 def test_integer():
     assert Integer.parse(1) == 1
     assert Integer.parse("1") == 1
+
+
+def test_blob():
+    assert Blob.parse(1) == b"\x00"

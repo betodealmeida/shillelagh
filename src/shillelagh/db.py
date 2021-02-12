@@ -17,22 +17,18 @@ from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import Error
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
+from shillelagh.fields import type_map
+from shillelagh.types import BINARY
+from shillelagh.types import DBAPIType
+from shillelagh.types import Description
+
+apilevel = "2.0"
+threadsafety = 2
+paramstyle = "pyformat"
 
 NO_SUCH_TABLE = "SQLError: no such table: "
 
 F = TypeVar("F", bound=Callable[..., Any])
-
-Description = Optional[
-    Tuple[
-        str,
-        str,
-        Optional[str],
-        Optional[str],
-        Optional[str],
-        Optional[str],
-        Optional[str],
-    ]
-]
 
 
 def check_closed(method: F) -> F:
@@ -57,6 +53,10 @@ def check_result(method: F) -> F:
         return method(self, *args, **kwargs)
 
     return cast(F, wrapper)
+
+
+def get_type_code(type_name: str) -> Type[DBAPIType]:
+    return type_map.get(type_name, BINARY)
 
 
 class Cursor(object):
@@ -142,12 +142,24 @@ class Cursor(object):
             f'CREATE VIRTUAL TABLE "{table_name}" USING {adapter.__name__}({args})',
         )
 
-    def _get_description(self):
-        # XXX convert type from string to object
+    def _get_description(self) -> Description:
         try:
-            return [desc + (None,) * 5 for desc in self._cursor.getdescription()]
+            description = self._cursor.getdescription()
         except apsw.ExecutionCompleteError:
             return None
+
+        return [
+            (
+                name,
+                get_type_code(type_name),
+                None,
+                None,
+                None,
+                None,
+                True,
+            )
+            for name, type_name in description
+        ]
 
     @check_closed
     def executemany(self, operation, seq_of_parameters=None):
