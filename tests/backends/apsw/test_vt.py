@@ -52,6 +52,20 @@ class DummyAdapter(Adapter):
         self.data = [row for row in self.data if row["rowid"] != row_id]
 
 
+class DummyAdapterNoFilters(DummyAdapter):
+
+    age = Float()
+    name = String()
+    pets = Integer()
+
+
+class DummyAdapterOnlyEqual(DummyAdapter):
+
+    age = Float(filters=[Equal], order=Order.NONE, exact=True)
+    name = String(filters=[Equal], order=Order.ASCENDING, exact=True)
+    pets = Integer()
+
+
 def test_vt_module():
     table = VTTable(DummyAdapter)
     vt_module = VTModule(DummyAdapter)
@@ -197,5 +211,23 @@ def test_cursor_with_constraints_invalid_filter():
 
     with pytest.raises(Exception) as excinfo:
         cursor.Filter(42, f"[[1, {apsw.SQLITE_INDEX_CONSTRAINT_MATCH}]]", ["Alice"])
+
+    assert str(excinfo.value) == "Invalid constraint passed: 64"
+
+
+def test_cursor_with_constraints_no_filters():
+    table = VTTable(DummyAdapterNoFilters())
+    cursor = table.Open()
+    with pytest.raises(Exception) as excinfo:
+        cursor.Filter(42, f"[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}]]", ["Alice"])
+
+    assert str(excinfo.value) == "No valid filter found"
+
+
+def test_cursor_with_constraints_only_equal():
+    table = VTTable(DummyAdapterOnlyEqual())
+    cursor = table.Open()
+    with pytest.raises(Exception) as excinfo:
+        cursor.Filter(42, f"[[1, {apsw.SQLITE_INDEX_CONSTRAINT_GE}]]", ["Alice"])
 
     assert str(excinfo.value) == "No valid filter found"

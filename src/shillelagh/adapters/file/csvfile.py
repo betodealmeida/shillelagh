@@ -1,14 +1,18 @@
 import csv
 import operator
 import os
+import urllib.parse
 from functools import reduce
 from pathlib import Path
 from typing import cast
 from typing import Dict
 from typing import Iterator
 from typing import Optional
+from typing import Tuple
+from typing import Type
 
 from shillelagh.adapters.base import Adapter
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
@@ -32,8 +36,23 @@ class RowTracker:
             self.last_row = row
             yield row
 
+    def __next__(self) -> Row:
+        return self.iterable.__next__()
+
 
 class CSVFile(Adapter):
+    @staticmethod
+    def supports(uri: str) -> bool:
+        parsed = urllib.parse.urlparse(uri)
+        return parsed.scheme == "csv"
+
+    @staticmethod
+    def parse_uri(uri: str) -> Tuple[str]:
+        parsed = urllib.parse.urlparse(uri)
+
+        # netloc is populated for relative paths, path for absolute
+        return (parsed.path or parsed.netloc,)
+
     def __init__(self, path: str):
         self.path = Path(path)
 
@@ -73,18 +92,20 @@ class CSVFile(Adapter):
                 column_index = column_names.index(column_name)
 
                 if filter_.start is not None:
+                    start = filter_.start
                     op = operator.ge if filter_.include_start else operator.gt
                     filters.append(
-                        lambda row, value=filter_.start, i=column_index, op=op: op(
+                        lambda row, value=start, i=column_index, op=op: op(
                             row[i],
                             value,
                         ),
                     )
 
                 if filter_.end is not None:
+                    end = filter_.end
                     op = operator.le if filter_.include_end else operator.lt
                     filters.append(
-                        lambda row, value=filter_.end, i=column_index, op=op: op(
+                        lambda row, value=end, i=column_index, op=op: op(
                             row[i],
                             value,
                         ),

@@ -81,20 +81,46 @@ The important thing to know here is that since we defined ``ts`` as being filter
 
 Note also that the method yields rows as dictionaries. In addition to values for ``ts`` and ``temperature`` it also returns a row ID. This should be a unique value for each row.
 
+We also need to define some dispatching methods, so our adapter can be found:
+
+.. code-block:: python
+
+        @staticmethod
+        def supports(uri: str) -> bool:
+            """https://api.weatherapi.com/v1/history.json?key=XXX&q=94158"""
+            parsed = urllib.parse.urlparse(uri)
+            query_string = urllib.parse.parse_qs(parsed.query)
+            return (
+                parsed.netloc == "api.weatherapi.com"
+                and parsed.path == "/v1/history.json"
+                and "key" in query_string
+                and "q" in query_string
+            )
+
+        @staticmethod
+        def parse_uri(uri: str) -> Tuple[str, str]:
+            parsed = urllib.parse.urlparse(uri)
+            query_string = urllib.parse.parse_qs(parsed.query)
+            location = query_string["q"][0]
+            api_key = query_string["key"][0]
+    
+            return (location, api_key)
+
 Now we can use our class to query the API using Sqlite:
 
 .. code-block:: python
 
-    import apsw
     from shillelagh.backends.apsw.vt import VTModule
+    from shillelagh.db import connect
 
-    connection = apsw.Connection(":memory:")
+    connection = connect(":memory:")
     cursor = connection.cursor()
-    connection.createmodule("weatherapi", VTModule(WeatherAPI))
 
-    # define a virtual table
     api_key = "XXX"
-    cursor.execute(f"CREATE VIRTUAL TABLE bodega_bay USING weatherapi(94923, {api_key})")
-
-    for row in cursor.execute("SELECT * FROM bodega_bay WHERE ts >= '2020-01-01T12:00:00'"):
+    query = f"""
+        SELECT *
+        FROM "https://api.weatherapi.com/v1/history.json?key={api_key}&q=94923" AS bodega_bay
+        WHERE ts >= '2020-01-01T12:00:00'
+    """
+    for row in cursor.execute(query):
         print(row)

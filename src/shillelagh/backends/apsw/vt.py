@@ -151,7 +151,9 @@ class VTCursor:
             indexes,
             constraintargs,
         ):
-            operator = operator_map.get(sqlite_index_constraint)
+            if sqlite_index_constraint not in operator_map:
+                raise Exception(f"Invalid constraint passed: {sqlite_index_constraint}")
+            operator = operator_map[sqlite_index_constraint]
             column_name = column_names[column_index]
             column_type = columns[column_name]
             value = column_type.parse(constraint)

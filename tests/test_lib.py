@@ -6,6 +6,7 @@ from shillelagh.fields import String
 from shillelagh.lib import analyse
 from shillelagh.lib import DELETED
 from shillelagh.lib import RowIDManager
+from shillelagh.lib import update_order
 
 
 def test_row_id_manager_empty_range():
@@ -82,3 +83,17 @@ def test_analyse():
         "str": Order.ASCENDING,
     }
     assert types == {"int": Integer, "float": Float, "str": String}
+
+
+def test_update_order():
+    order = update_order(Order.NONE, previous=None, current=1, num_rows=1)
+    assert order == Order.NONE
+
+    order = update_order(order, previous=1, current=2, num_rows=2)
+    assert order == Order.ASCENDING
+
+    order = update_order(order, previous=2, current=2, num_rows=3)
+    assert order == Order.ASCENDING
+
+    order = update_order(order, previous=2, current=1, num_rows=4)
+    assert order == Order.NONE

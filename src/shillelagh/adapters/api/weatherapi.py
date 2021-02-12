@@ -1,8 +1,10 @@
+import urllib.parse
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
 from typing import Dict
 from typing import Iterator
+from typing import Tuple
 
 import dateutil.parser
 import requests
@@ -28,12 +30,36 @@ class WeatherAPI(Adapter):
     ts = DateTime(filters=[Range], order=Order.ASCENDING, exact=False)
     temperature = Float()
 
+    @staticmethod
+    def supports(uri: str) -> bool:
+        """https://api.weatherapi.com/v1/history.json?key=XXX&q=94158"""
+        parsed = urllib.parse.urlparse(uri)
+        query_string = urllib.parse.parse_qs(parsed.query)
+        return (
+            parsed.netloc == "api.weatherapi.com"
+            and parsed.path == "/v1/history.json"
+            and "key" in query_string
+            and "q" in query_string
+        )
+
+    @staticmethod
+    def parse_uri(uri: str) -> Tuple[str, str]:
+        parsed = urllib.parse.urlparse(uri)
+        query_string = urllib.parse.parse_qs(parsed.query)
+        location = query_string["q"][0]
+        api_key = query_string["key"][0]
+
+        return (location, api_key)
+
     def __init__(self, location: str, api_key: str):
         self.location = location
         self.api_key = api_key
 
     def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
         ts_range = bounds["ts"]
+        if not isinstance(ts_range, Range):
+            raise Exception("Invalid filter")
+
         today = date.today()
         start = ts_range.start.date() if ts_range.start else today - timedelta(days=7)
         end = ts_range.end.date() if ts_range.end else today

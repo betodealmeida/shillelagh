@@ -2,6 +2,7 @@ from typing import Any
 from typing import Dict
 from typing import Iterator
 from typing import Optional
+from typing import Tuple
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.fields import Float
@@ -110,3 +111,18 @@ def test_adapter_manipulate_rows():
         {"rowid": 4, "name": "Dani", "age": 40, "pets": 2},
         {"rowid": 1, "name": "Bob", "age": 24, "pets": 4},
     ]
+
+
+def test_from_uri():
+    class DummyAdapter(Adapter):
+        @staticmethod
+        def parse_uri(uri: str) -> Tuple[str, ...]:
+            return tuple(uri.split(":", 1))
+
+        def __init__(self, a: str, b: str):
+            self.a = a
+            self.b = b
+
+    adapter = DummyAdapter.from_uri("foo:bar")
+    assert adapter.a == "foo"
+    assert adapter.b == "bar"

@@ -18,7 +18,7 @@ class Filter:
     operators: Set[Operator] = set()
 
     @classmethod
-    def build(cls, operations: Set[Tuple[int, Any]]) -> "Filter":
+    def build(cls, operations: Set[Tuple[Operator, Any]]) -> "Filter":
         raise NotImplementedError("Subclass must implement `build`")
 
     def check(self, value: Any) -> bool:
@@ -41,7 +41,7 @@ class Equal(Filter):
         self.value = value
 
     @classmethod
-    def build(cls, operations: Set[Tuple[int, Any]]) -> Filter:
+    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
         values = {value for operator, value in operations}
         if len(values) != 1:
             return Impossible()
@@ -74,7 +74,7 @@ class Range(Filter):
     }
 
     @classmethod
-    def build(cls, operations: Set[Tuple[int, Any]]) -> Filter:
+    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
         start = end = None
         include_start = include_end = False
 
