@@ -1,5 +1,5 @@
-from shillelagh.fields import Integer
 from shillelagh.fields import Field
+from shillelagh.fields import Integer
 from shillelagh.fields import Order
 from shillelagh.filters import Equal
 

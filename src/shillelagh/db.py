@@ -14,7 +14,6 @@ import apsw
 from pkg_resources import iter_entry_points
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.vt import VTModule
-from shillelagh.exceptions import CursorClosedError
 from shillelagh.exceptions import Error
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
@@ -82,20 +81,17 @@ class Cursor(object):
 
         # this is set to a list of rows after a successful query
         self._results: Optional[List[Any]] = None
+        self._rowcount = -1
 
     @property  # type: ignore
     @check_result
     @check_closed
     def rowcount(self) -> int:
-        # results can't be None because of `check_result`
-        results = cast(List[Any], self._results)
-        return len(results)
+        return self._rowcount
 
     @check_closed
     def close(self) -> None:
         """Close the cursor."""
-        if self.closed:
-            raise CursorClosedError("Cursor already closed")
         self._cursor.close()
         self.closed = True
 
@@ -129,6 +125,8 @@ class Cursor(object):
             self.description = self._get_description()
             self._results = list(self._cursor)
 
+        self._rowcount = len(self._results)
+
         return self
 
     def _create_table(self, uri: str) -> None:
@@ -147,7 +145,7 @@ class Cursor(object):
     def _get_description(self):
         # XXX convert type from string to object
         try:
-            return self._cursor.getdescription() + (None,) * 5
+            return [desc + (None,) * 5 for desc in self._cursor.getdescription()]
         except apsw.ExecutionCompleteError:
             return None
 
@@ -228,10 +226,8 @@ class Connection(object):
         """Close the connection now."""
         self.closed = True
         for cursor in self.cursors:
-            try:
+            if not cursor.closed:
                 cursor.close()
-            except CursorClosedError:
-                pass  # already closed
 
     @check_closed
     def commit(self) -> None:
@@ -300,12 +296,14 @@ def escape(value: Any) -> str:
     if value == "*":
         return cast(str, value)
     elif isinstance(value, str):
-        return "'{}'".format(value.replace("'", "''"))
+        quoted_value = value.replace("'", "''")
+        return f"'{quoted_value}'"
     elif isinstance(value, bool):
         return "TRUE" if value else "FALSE"
     elif isinstance(value, (int, float)):
         return str(value)
     elif isinstance(value, (list, tuple)):
-        return "({0})".format(", ".join(escape(element) for element in value))
+        combined_value = ", ".join(escape(element) for element in value)
+        return f"({combined_value})"
     else:
         raise ProgrammingError(f"Unable to escape value: {value!r}")

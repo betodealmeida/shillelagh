@@ -89,10 +89,6 @@ class InternalError(DatabaseError):
     """
 
 
-class CursorClosedError(InternalError):
-    """Raised when closing an already closed cursor."""
-
-
 class ProgrammingError(DatabaseError):
     """
     Raised for programming errors.
