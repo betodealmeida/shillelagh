@@ -147,7 +147,7 @@ def test_dispatch(mocker, requests_mock):
 
     sql = (
         "SELECT * FROM "
-        "'https://api.weatherapi.com/v1/history.json?key=f426b51ea9aa4e4ab68190907202309&q=94923' "
+        '"https://api.weatherapi.com/v1/history.json?key=f426b51ea9aa4e4ab68190907202309&q=94923" '
         "WHERE ts = '2020-10-20T12:00:00'"
     )
     data = list(cursor.execute(sql))

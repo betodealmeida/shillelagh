@@ -3,9 +3,9 @@ import sys
 from datetime import datetime
 from datetime import timedelta
 
-import apsw
 from shillelagh.adapters.api.weatherapi import WeatherAPI
 from shillelagh.backends.apsw.vt import VTModule
+from shillelagh.db import connect
 
 
 if __name__ == "__main__":
@@ -14,25 +14,22 @@ if __name__ == "__main__":
     # sign up for an API key at https://www.weatherapi.com/my/
     api_key = sys.argv[1]
 
-    connection = apsw.Connection(":memory:")
+    connection = connect(":memory:")
     cursor = connection.cursor()
-    connection.createmodule("weatherapi", VTModule(WeatherAPI))
-
-    cursor.execute(
-        f"CREATE VIRTUAL TABLE bodega_bay USING weatherapi(94923, {api_key})",
-    )
-    cursor.execute(
-        f"CREATE VIRTUAL TABLE san_mateo USING weatherapi(94401, {api_key})",
-    )
 
     # TODO: use datetime functions?
-    sql = f"SELECT * FROM bodega_bay WHERE ts >= '{three_days_ago}'"
+    sql = f"""
+    SELECT *
+    FROM "https://api.weatherapi.com/v1/history.json?key={api_key}&q=94923" AS bodega_bay
+    WHERE ts >= '{three_days_ago}'
+    """
     for row in cursor.execute(sql):
         print(row)
 
     sql = f"""
-    SELECT * FROM bodega_bay
-    JOIN san_mateo
+    SELECT *
+    FROM "https://api.weatherapi.com/v1/history.json?key={api_key}&q=94923" AS bodega_bay
+    JOIN "https://api.weatherapi.com/v1/history.json?key={api_key}&q=94401" AS san_mateo
     ON bodega_bay.ts = san_mateo.ts
     WHERE bodega_bay.ts >= '{three_days_ago}'
     AND san_mateo.ts >= '{three_days_ago}'

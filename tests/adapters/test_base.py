@@ -116,7 +116,7 @@ def test_adapter_manipulate_rows():
 def test_from_uri():
     class DummyAdapter(Adapter):
         @staticmethod
-        def parse_uri(uri: str) -> Tuple[str, str]:
+        def parse_uri(uri: str) -> Tuple[str, ...]:
             return tuple(uri.split(":", 1))
 
         def __init__(self, a: str, b: str):

@@ -1,33 +1,37 @@
-import apsw
 from shillelagh.adapters.file.csvfile import CSVFile
 from shillelagh.backends.apsw.vt import VTModule
+from shillelagh.db import connect
 
 if __name__ == "__main__":
-    connection = apsw.Connection(":memory:")
+    connection = connect(":memory:")
     cursor = connection.cursor()
-    connection.createmodule("csvfile", VTModule(CSVFile))
-    cursor.execute(f"CREATE VIRTUAL TABLE test USING csvfile(test.csv)")
 
-    sql = 'SELECT * FROM test WHERE "index" > 11'
+    sql = '''SELECT * FROM "csv://test.csv"'''
     print(sql)
     for row in cursor.execute(sql):
         print(row)
     print("==")
 
-    sql = """INSERT INTO test ("index", temperature, site) VALUES (14, 10.1, 'New_Site')"""
-    print(sql)
-    cursor.execute(sql)
-
-    sql = 'SELECT * FROM test WHERE "index" > 11'
+    sql = """SELECT * FROM "csv://test.csv" WHERE "index" > 11"""
     print(sql)
     for row in cursor.execute(sql):
         print(row)
     print("==")
 
-    sql = "DELETE FROM test WHERE site = 'New_Site'"
+    sql = """INSERT INTO "csv://test.csv" ("index", temperature, site) VALUES (14, 10.1, 'New_Site')"""
     print(sql)
     cursor.execute(sql)
-    sql = "SELECT * FROM test"
+
+    sql = """SELECT * FROM "csv://test.csv" WHERE "index" > 11"""
+    print(sql)
+    for row in cursor.execute(sql):
+        print(row)
+    print("==")
+
+    sql = """DELETE FROM "csv://test.csv" WHERE site = 'New_Site'"""
+    print(sql)
+    cursor.execute(sql)
+    sql = '''SELECT * FROM "csv://test.csv"'''
     print(sql)
     for row in cursor.execute(sql):
         print(row)

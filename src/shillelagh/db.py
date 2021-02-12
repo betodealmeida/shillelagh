@@ -136,10 +136,10 @@ class Cursor(object):
         else:
             raise ProgrammingError(f"Unsupported table: {uri}")
 
-        table_name = uri.replace("'", "''")
+        table_name = uri.replace('"', '""')
         args = ", ".join(adapter.parse_uri(uri))
         self._cursor.execute(
-            f"CREATE VIRTUAL TABLE '{table_name}' USING {adapter.__name__}({args})",
+            f'CREATE VIRTUAL TABLE "{table_name}" USING {adapter.__name__}({args})',
         )
 
     def _get_description(self):

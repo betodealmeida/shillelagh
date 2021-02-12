@@ -9,7 +9,6 @@ from unittest import mock
 
 import apsw
 import pytest
-
 from shillelagh.adapters.base import Adapter
 from shillelagh.db import connect
 from shillelagh.db import Connection
@@ -86,16 +85,16 @@ def test_connect(mocker):
     connection = connect(":memory:", ["dummy"])
     cursor = connection.cursor()
 
-    cursor.execute("SELECT * FROM 'dummy://'")
+    cursor.execute('SELECT * FROM "dummy://"')
     assert cursor.fetchall() == [(20.0, "Alice", 0), (23.0, "Bob", 3)]
     assert cursor.rowcount == 2
 
-    cursor.execute("SELECT * FROM 'dummy://' WHERE age > 21")
+    cursor.execute('SELECT * FROM "dummy://" WHERE age > 21')
     assert cursor.fetchone() == (23.0, "Bob", 3)
     assert cursor.rowcount == 1
     assert cursor.fetchone() is None
 
-    cursor.execute("SELECT * FROM 'dummy://'")
+    cursor.execute('SELECT * FROM "dummy://"')
     assert cursor.fetchmany() == [(20.0, "Alice", 0)]
     assert cursor.fetchmany(1000) == [(23.0, "Bob", 3)]
     assert cursor.rowcount == 2
@@ -140,7 +139,7 @@ def test_unsupported_table(mocker):
     cursor = connection.cursor()
 
     with pytest.raises(ProgrammingError) as excinfo:
-        cursor.execute("SELECT * FROM 'dummy://'")
+        cursor.execute('SELECT * FROM "dummy://"')
     assert str(excinfo.value) == "Unsupported table: dummy://"
 
 
@@ -153,11 +152,11 @@ def test_description(mocker):
 
     assert cursor.description is None
     cursor.execute(
-        """INSERT INTO 'dummy://' (age, name, pets) VALUES (6, "Billy", "Mr. Rock")"""
+        """INSERT INTO "dummy://" (age, name, pets) VALUES (6, 'Billy', 'Mr. Rock')""",
     )
     assert cursor.description is None
 
-    cursor.execute("SELECT * FROM 'dummy://'")
+    cursor.execute('SELECT * FROM "dummy://"')
     assert cursor.description == [
         ("age", "REAL", None, None, None, None, None),
         ("name", "TEXT", None, None, None, None, None),
@@ -175,7 +174,7 @@ def test_execute_many(mocker):
     items = [(6, "Billy", "Mr. Rock"), (7, "Timmy", "Dr. Elephant")]
     with pytest.raises(NotSupportedError) as excinfo:
         cursor.executemany(
-            """INSERT INTO 'dummy://' (age, name, pets) VALUES (6, "Billy", "Mr. Rock")""",
+            """INSERT INTO "dummy://" (age, name, pets) VALUES (?, ?, ?)""",
             items,
         )
     assert str(excinfo.value) == "`executemany` is not supported, use `execute` instead"
@@ -203,19 +202,39 @@ def test_close_connection():
     cursor2.close.assert_called()
 
 
-def test_transaction():
-    connection = connect(":memory:")
+def test_transaction(mocker):
+    entry_points = [MockEntryPoint("dummy", DummyAdapter)]
+    mocker.patch("shillelagh.db.iter_entry_points", return_value=entry_points)
+
+    connection = connect(":memory:", ["dummy"])
 
     cursor = connection.cursor()
     cursor._cursor = mock.MagicMock()
+    cursor._cursor.execute.side_effect = [
+        "",
+        apsw.SQLError("SQLError: no such table: dummy://"),
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+    ]
+
     assert not cursor.in_transaction
     connection.commit()
     cursor._cursor.execute.assert_not_called()
 
-    cursor.execute("SELECT 1")
+    cursor.execute('SELECT 1 FROM "dummy://"')
     assert cursor.in_transaction
-    assert not cursor._cursor.execute.assert_has_calls(
-        [mock.call("BEGIN"), mock.call("SELECT 1")]
+    print(cursor._cursor.execute.mock_calls)
+    cursor._cursor.execute.assert_has_calls(
+        [
+            mock.call("BEGIN"),
+            mock.call('SELECT 1 FROM "dummy://"'),
+            mock.call('CREATE VIRTUAL TABLE "dummy://" USING DummyAdapter()'),
+            mock.call('SELECT 1 FROM "dummy://"'),
+        ],
     )
 
     connection.rollback()
@@ -225,11 +244,13 @@ def test_transaction():
     cursor._cursor.execute.assert_has_calls(
         [
             mock.call("BEGIN"),
-            mock.call("SELECT 1"),
+            mock.call('SELECT 1 FROM "dummy://"'),
+            mock.call('CREATE VIRTUAL TABLE "dummy://" USING DummyAdapter()'),
+            mock.call('SELECT 1 FROM "dummy://"'),
             mock.call("ROLLBACK"),
             mock.call("BEGIN"),
             mock.call("SELECT 2"),
-        ]
+        ],
     )
 
     connection.commit()
@@ -237,12 +258,14 @@ def test_transaction():
     cursor._cursor.execute.assert_has_calls(
         [
             mock.call("BEGIN"),
-            mock.call("SELECT 1"),
+            mock.call('SELECT 1 FROM "dummy://"'),
+            mock.call('CREATE VIRTUAL TABLE "dummy://" USING DummyAdapter()'),
+            mock.call('SELECT 1 FROM "dummy://"'),
             mock.call("ROLLBACK"),
             mock.call("BEGIN"),
             mock.call("SELECT 2"),
             mock.call("COMMIT"),
-        ]
+        ],
     )
 
     cursor._cursor.reset_mock()
@@ -261,7 +284,7 @@ def test_connection_context_manager():
             mock.call("BEGIN"),
             mock.call("SELECT 2"),
             mock.call("COMMIT"),
-        ]
+        ],
     )
 
 
@@ -280,5 +303,6 @@ def test_escape():
         escape(escape)
 
     assert re.match(
-        "Unable to escape value: <function escape at 0x\w+>", str(excinfo.value)
+        r"Unable to escape value: <function escape at 0x\w+>",
+        str(excinfo.value),
     )
