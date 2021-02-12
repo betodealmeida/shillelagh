@@ -110,7 +110,6 @@ Now we can use our class to query the API using Sqlite:
 
 .. code-block:: python
 
-    from shillelagh.backends.apsw.vt import VTModule
     from shillelagh.db import connect
 
     connection = connect(":memory:")
