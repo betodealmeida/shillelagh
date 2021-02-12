@@ -13,7 +13,6 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.db import connect
 from shillelagh.db import Connection
 from shillelagh.db import Cursor
-from shillelagh.db import escape
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
@@ -229,13 +228,12 @@ def test_transaction(mocker):
 
     cursor.execute('SELECT 1 FROM "dummy://"')
     assert cursor.in_transaction
-    print(cursor._cursor.execute.mock_calls)
     cursor._cursor.execute.assert_has_calls(
         [
             mock.call("BEGIN"),
-            mock.call('SELECT 1 FROM "dummy://"'),
+            mock.call('SELECT 1 FROM "dummy://"', None),
             mock.call('CREATE VIRTUAL TABLE "dummy://" USING DummyAdapter()'),
-            mock.call('SELECT 1 FROM "dummy://"'),
+            mock.call('SELECT 1 FROM "dummy://"', None),
         ],
     )
 
@@ -246,12 +244,12 @@ def test_transaction(mocker):
     cursor._cursor.execute.assert_has_calls(
         [
             mock.call("BEGIN"),
-            mock.call('SELECT 1 FROM "dummy://"'),
+            mock.call('SELECT 1 FROM "dummy://"', None),
             mock.call('CREATE VIRTUAL TABLE "dummy://" USING DummyAdapter()'),
-            mock.call('SELECT 1 FROM "dummy://"'),
+            mock.call('SELECT 1 FROM "dummy://"', None),
             mock.call("ROLLBACK"),
             mock.call("BEGIN"),
-            mock.call("SELECT 2"),
+            mock.call("SELECT 2", None),
         ],
     )
 
@@ -260,12 +258,12 @@ def test_transaction(mocker):
     cursor._cursor.execute.assert_has_calls(
         [
             mock.call("BEGIN"),
-            mock.call('SELECT 1 FROM "dummy://"'),
+            mock.call('SELECT 1 FROM "dummy://"', None),
             mock.call('CREATE VIRTUAL TABLE "dummy://" USING DummyAdapter()'),
-            mock.call('SELECT 1 FROM "dummy://"'),
+            mock.call('SELECT 1 FROM "dummy://"', None),
             mock.call("ROLLBACK"),
             mock.call("BEGIN"),
-            mock.call("SELECT 2"),
+            mock.call("SELECT 2", None),
             mock.call("COMMIT"),
         ],
     )
@@ -284,27 +282,7 @@ def test_connection_context_manager():
     cursor._cursor.execute.assert_has_calls(
         [
             mock.call("BEGIN"),
-            mock.call("SELECT 2"),
+            mock.call("SELECT 2", None),
             mock.call("COMMIT"),
         ],
-    )
-
-
-def test_escape():
-    assert escape("*") == "*"
-    assert escape("test") == "'test'"
-    assert escape(True) == "TRUE"
-    assert escape(False) == "FALSE"
-    assert escape("O'Malley's") == "'O''Malley''s'"
-    assert escape(1) == "1"
-    assert escape(1.1) == "1.1"
-    assert escape([1, "test"]) == "(1, 'test')"
-    assert escape((1, "test")) == "(1, 'test')"
-
-    with pytest.raises(ProgrammingError) as excinfo:
-        escape(escape)
-
-    assert re.match(
-        r"Unable to escape value: <function escape at 0x\w+>",
-        str(excinfo.value),
     )

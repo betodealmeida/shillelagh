@@ -24,7 +24,7 @@ from shillelagh.types import Description
 
 apilevel = "2.0"
 threadsafety = 2
-paramstyle = "pyformat"
+paramstyle = "qmark"
 
 NO_SUCH_TABLE = "SQLError: no such table: "
 
@@ -99,16 +99,15 @@ class Cursor(object):
     def execute(
         self,
         operation: str,
-        parameters: Optional[Dict[str, Any]] = None,
+        parameters: Optional[Tuple[Any, ...]] = None,
     ) -> "Cursor":
         if not self.in_transaction:
             self._cursor.execute("BEGIN")
             self.in_transaction = True
 
         self.description = None
-        query = apply_parameters(operation, parameters or {})
         try:
-            self._cursor.execute(query)
+            self._cursor.execute(operation, parameters)
             self.description = self._get_description()
             self._results = list(self._cursor)
         except apsw.SQLError as exc:
@@ -121,7 +120,7 @@ class Cursor(object):
             self._create_table(uri)
 
             # try again
-            self._cursor.execute(query)
+            self._cursor.execute(operation, parameters)
             self.description = self._get_description()
             self._results = list(self._cursor)
 
@@ -269,7 +268,7 @@ class Connection(object):
     def execute(
         self,
         operation: str,
-        parameters: Optional[Dict[str, Any]] = None,
+        parameters: Optional[Tuple[Any, ...]] = None,
     ) -> Cursor:
         cursor = self.cursor()
         return cursor.execute(operation, parameters)
@@ -297,25 +296,3 @@ def connect(path: str, adapters: Optional[str] = None) -> Connection:
         if adapters is None or adapter.name in adapters
     ]
     return Connection(path, enabled_adapters)
-
-
-def apply_parameters(operation: str, parameters: Dict[str, Any]) -> str:
-    escaped_parameters = {key: escape(value) for key, value in parameters.items()}
-    return operation % escaped_parameters
-
-
-def escape(value: Any) -> str:
-    if value == "*":
-        return cast(str, value)
-    elif isinstance(value, str):
-        quoted_value = value.replace("'", "''")
-        return f"'{quoted_value}'"
-    elif isinstance(value, bool):
-        return "TRUE" if value else "FALSE"
-    elif isinstance(value, (int, float)):
-        return str(value)
-    elif isinstance(value, (list, tuple)):
-        combined_value = ", ".join(escape(element) for element in value)
-        return f"({combined_value})"
-    else:
-        raise ProgrammingError(f"Unable to escape value: {value!r}")

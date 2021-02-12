@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from enum import Enum
 from typing import Any
 from typing import Callable
@@ -80,13 +80,31 @@ class String(Field):
         return str(value)
 
 
+class Date(Field):
+    type = "DATE"
+    db_api_type = DATETIME
+
+    @staticmethod
+    def parse(value: Any) -> datetime.date:
+        return dateutil.parser.parse(value).astimezone(datetime.timezone.utc).date()
+
+
+class Time(Field):
+    type = "TIME"
+    db_api_type = DATETIME
+
+    @staticmethod
+    def parse(value: Any) -> datetime.time:
+        return dateutil.parser.parse(value).astimezone(datetime.timezone.utc).timetz()
+
+
 class DateTime(Field):
     type = "TIMESTAMP"
     db_api_type = DATETIME
 
     @staticmethod
-    def parse(value: Any) -> datetime:
-        return dateutil.parser.parse(value)
+    def parse(value: Any) -> datetime.datetime:
+        return dateutil.parser.parse(value).astimezone(datetime.timezone.utc)
 
 
 class Blob(Field):
@@ -95,6 +113,8 @@ class Blob(Field):
 
     @staticmethod
     def parse(value: Any) -> bytes:
+        if isinstance(value, str):
+            return value.encode()
         return bytes(value)
 
 
