@@ -1,3 +1,5 @@
+# TODO: move this to backends/apsw/
+import json
 import urllib.parse
 from functools import wraps
 from typing import Any
@@ -18,6 +20,7 @@ from shillelagh.exceptions import Error
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import type_map
+from shillelagh.lib import quote, serialize
 from shillelagh.types import BINARY
 from shillelagh.types import DBAPIType
 from shillelagh.types import Description
@@ -63,9 +66,15 @@ class Cursor(object):
 
     """Connection cursor."""
 
-    def __init__(self, cursor: "apsw.Cursor", adapters: List[Type[Adapter]]):
+    def __init__(
+        self,
+        cursor: "apsw.Cursor",
+        adapters: List[Type[Adapter]],
+        adapter_args: Optional[Dict[str, Any]] = None,
+    ):
         self._cursor = cursor
         self._adapters = adapters
+        self._adapter_args = adapter_args
 
         self.in_transaction = False
 
@@ -135,10 +144,15 @@ class Cursor(object):
         else:
             raise ProgrammingError(f"Unsupported table: {uri}")
 
-        table_name = uri.replace('"', '""')
-        args = ", ".join(adapter.parse_uri(uri))
+        # collect arguments from URI and connection and serialize them
+        args = [
+            serialize(arg)
+            for arg in adapter.parse_uri(uri) + self._adapter_args.get(adapter.name, ())
+        ]
+        formatted_args = ", ".join(args)
+        table_name = quote(uri)
         self._cursor.execute(
-            f'CREATE VIRTUAL TABLE "{table_name}" USING {adapter.__name__}({args})',
+            f'CREATE VIRTUAL TABLE "{table_name}" USING {adapter.__name__}({formatted_args})',
         )
 
     def _get_description(self) -> Description:
@@ -220,7 +234,12 @@ class Connection(object):
 
     """Connection to a Google Spreadsheet."""
 
-    def __init__(self, path: str, adapters: List[Type[Adapter]]):
+    def __init__(
+        self,
+        path: str,
+        adapters: List[Type[Adapter]],
+        adapter_args: Optional[Dict[str, Any]] = None,
+    ):
         # create underlying APSW connection
         self._connection = apsw.Connection(path)
 
@@ -228,6 +247,7 @@ class Connection(object):
         for adapter in adapters:
             self._connection.createmodule(adapter.__name__, VTModule(adapter))
         self._adapters = adapters
+        self._adapter_args = adapter_args
 
         self.closed = False
         self.cursors: List[Cursor] = []
@@ -259,7 +279,7 @@ class Connection(object):
     @check_closed
     def cursor(self) -> Cursor:
         """Return a new Cursor Object using the connection."""
-        cursor = Cursor(self._connection.cursor(), self._adapters)
+        cursor = Cursor(self._connection.cursor(), self._adapters, self._adapter_args)
         self.cursors.append(cursor)
 
         return cursor
@@ -281,7 +301,11 @@ class Connection(object):
         self.close()
 
 
-def connect(path: str, adapters: Optional[str] = None) -> Connection:
+def connect(
+    path: str,
+    adapters: Optional[str] = None,
+    adapter_args: Optional[Dict[str, Any]] = None,
+) -> Connection:
     """
     Constructor for creating a connection to the database.
 
@@ -295,4 +319,5 @@ def connect(path: str, adapters: Optional[str] = None) -> Connection:
         for adapter in iter_entry_points("shillelagh.adapter")
         if adapters is None or adapter.name in adapters
     ]
-    return Connection(path, enabled_adapters)
+
+    return Connection(path, enabled_adapters, adapter_args)

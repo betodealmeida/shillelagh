@@ -31,6 +31,7 @@ class Adapter:
         raise NotImplementedError("Subclasses must implement `parse_uri`")
 
     def get_columns(self) -> Dict[str, Field]:
+        """This method is called for every query, so make sure it's cheap."""
         return dict(
             inspect.getmembers(self, lambda attribute: isinstance(attribute, Field)),
         )

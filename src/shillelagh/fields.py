@@ -8,6 +8,7 @@ from typing import Optional
 from typing import Type
 
 import dateutil.parser
+from distutils.util import strtobool
 from shillelagh.filters import Filter
 from shillelagh.types import BINARY
 from shillelagh.types import DATETIME
@@ -118,6 +119,18 @@ class Blob(Field):
         return bytes(value)
 
 
+class Boolean(Field):
+    type = "BOOLEAN"
+    db_api_type = NUMBER
+
+    @staticmethod
+    def parse(value: Any) -> bool:
+        if isinstance(value, bool):
+            return value
+        return bool(strtobool(value))
+
+
 type_map = {
-    field.type: field.db_api_type for field in {Integer, Float, String, DateTime, Blob}
+    field.type: field.db_api_type
+    for field in {Integer, Float, String, Date, Time, DateTime, Blob, Boolean}
 }
