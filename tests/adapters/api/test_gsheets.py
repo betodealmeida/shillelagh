@@ -40,3 +40,14 @@ def test_credentials(mocker):
         ("ZA", 6),
         ("CR", 10),
     ]
+
+    sql = (
+        "SELECT * FROM "
+        '"https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=0" '
+        "WHERE cnt > 5"
+    )
+    data = list(cursor.execute(sql))
+    assert data == [
+        ("ZA", 6),
+        ("CR", 10),
+    ]

@@ -20,7 +20,7 @@ def test_types():
             type_timestamp TIMESTAMP,
             type_binary BLOB
         )
-    """
+    """,
     )
     cursor.execute(
         "INSERT INTO test_types VALUES (?, ?, ?, ?)",

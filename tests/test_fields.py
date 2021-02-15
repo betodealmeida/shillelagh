@@ -36,5 +36,7 @@ def test_date():
 
 def test_time():
     assert Time.parse("12:00+00:00") == datetime.time(
-        12, 0, tzinfo=datetime.timezone.utc,
+        12,
+        0,
+        tzinfo=datetime.timezone.utc,
     )

@@ -20,7 +20,8 @@ from shillelagh.exceptions import Error
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import type_map
-from shillelagh.lib import quote, serialize
+from shillelagh.lib import quote
+from shillelagh.lib import serialize
 from shillelagh.types import BINARY
 from shillelagh.types import DBAPIType
 from shillelagh.types import Description
@@ -70,7 +71,7 @@ class Cursor(object):
         self,
         cursor: "apsw.Cursor",
         adapters: List[Type[Adapter]],
-        adapter_args: Optional[Dict[str, Any]] = None,
+        adapter_args: Dict[str, Any],
     ):
         self._cursor = cursor
         self._adapters = adapters
@@ -147,7 +148,8 @@ class Cursor(object):
         # collect arguments from URI and connection and serialize them
         args = [
             serialize(arg)
-            for arg in adapter.parse_uri(uri) + self._adapter_args.get(adapter.name, ())
+            for arg in adapter.parse_uri(uri)
+            + self._adapter_args.get(adapter.__name__.lower(), ())
         ]
         formatted_args = ", ".join(args)
         table_name = quote(uri)
@@ -238,7 +240,7 @@ class Connection(object):
         self,
         path: str,
         adapters: List[Type[Adapter]],
-        adapter_args: Optional[Dict[str, Any]] = None,
+        adapter_args: Dict[str, Any],
     ):
         # create underlying APSW connection
         self._connection = apsw.Connection(path)
@@ -320,4 +322,4 @@ def connect(
         if adapters is None or adapter.name in adapters
     ]
 
-    return Connection(path, enabled_adapters, adapter_args)
+    return Connection(path, enabled_adapters, adapter_args or {})

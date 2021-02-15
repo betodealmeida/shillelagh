@@ -13,11 +13,11 @@ from typing import Type
 import apsw
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.lib import deserialize
 from shillelagh.fields import Field
 from shillelagh.fields import Order
 from shillelagh.filters import Filter
 from shillelagh.filters import Operator
+from shillelagh.lib import deserialize
 from shillelagh.types import Constraint
 from shillelagh.types import Index
 

@@ -38,7 +38,7 @@ def test_weatherapi(requests_mock):
     cursor = connection.cursor()
     connection.createmodule("weatherapi", VTModule(WeatherAPI))
     cursor.execute(
-        f"CREATE VIRTUAL TABLE bodega_bay USING weatherapi(94923, f426b51ea9aa4e4ab68190907202309)",
+        f"""CREATE VIRTUAL TABLE bodega_bay USING weatherapi('94923', '"f426b51ea9aa4e4ab68190907202309"')""",
     )
 
     sql = "SELECT * FROM bodega_bay WHERE ts = '2020-10-20T12:00:00'"
@@ -72,7 +72,7 @@ def test_weatherapi_impossible(requests_mock):
     cursor = connection.cursor()
     connection.createmodule("weatherapi", VTModule(WeatherAPI))
     cursor.execute(
-        f"CREATE VIRTUAL TABLE bodega_bay USING weatherapi(94923, f426b51ea9aa4e4ab68190907202309)",
+        f"""CREATE VIRTUAL TABLE bodega_bay USING weatherapi('94923', '"f426b51ea9aa4e4ab68190907202309"')""",
     )
 
     sql = "SELECT * FROM bodega_bay WHERE ts = '2020-10-20T12:00:00' AND ts = '2020-10-21T12:00:00'"
@@ -106,7 +106,7 @@ def test_weatherapi_api_error(requests_mock):
     cursor = connection.cursor()
     connection.createmodule("weatherapi", VTModule(WeatherAPI))
     cursor.execute(
-        f"CREATE VIRTUAL TABLE bodega_bay USING weatherapi(94923, f426b51ea9aa4e4ab68190907202309)",
+        f"""CREATE VIRTUAL TABLE bodega_bay USING weatherapi('94923', '"f426b51ea9aa4e4ab68190907202309"')""",
     )
 
     sql = "SELECT * FROM bodega_bay WHERE ts >= '2020-10-20T12:00:00' AND ts <= '2020-10-21T12:00:00'"

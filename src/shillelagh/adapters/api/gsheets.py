@@ -1,7 +1,9 @@
 import json
 import urllib.parse
 from typing import Any
+from typing import cast
 from typing import Dict
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -11,13 +13,21 @@ from typing import TypedDict
 from google.auth.transport.requests import AuthorizedSession
 from google.oauth2.service_account import Credentials
 from requests import Session
-
 from shillelagh.adapters.base import Adapter
+from shillelagh.exceptions import ProgrammingError
+from shillelagh.fields import Boolean
+from shillelagh.fields import Date
+from shillelagh.fields import DateTime
 from shillelagh.fields import Field
-from shillelagh.fields import Float, String, DateTime, Boolean, Date, Time, Order
+from shillelagh.fields import Float
+from shillelagh.fields import Order
+from shillelagh.fields import String
+from shillelagh.fields import Time
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
+from shillelagh.filters import Impossible
 from shillelagh.filters import Range
+from shillelagh.types import Row
 
 # Google API scopes for authentication
 # https://developers.google.com/chart/interactive/docs/spreadsheets
@@ -100,8 +110,21 @@ def get_field(col: QueryResultsColumn) -> Field:
     )
 
 
+def quote(value: Any) -> str:
+    if isinstance(value, (int, float)):
+        return str(value)
+    if isinstance(value, str):
+        quoted_value = value.replace("'", "''")
+        return f"'{quoted_value}'"
+
+    raise Exception(f"Can't quote value: {value}")
+
+
 def get_url(
-    uri: str, headers: int = 0, gid: int = 0, sheet: Optional[str] = None
+    uri: str,
+    headers: int = 0,
+    gid: int = 0,
+    sheet: Optional[str] = None,
 ) -> str:
     """Return API URL given the spreadsheet URL."""
     parts = urllib.parse.urlparse(uri)
@@ -133,19 +156,16 @@ def get_url(
     params = urllib.parse.urlencode(args)
 
     return urllib.parse.urlunparse(
-        (parts.scheme, parts.netloc, path, None, params, None)
+        (parts.scheme, parts.netloc, path, None, params, None),
     )
 
 
 class GSheetsAPI(Adapter):
-
-    name = "gsheets"
-
     @staticmethod
     def supports(uri: str) -> bool:
         parsed = urllib.parse.urlparse(uri)
         return parsed.netloc == "docs.google.com" and parsed.path.startswith(
-            "/spreadsheets/"
+            "/spreadsheets/",
         )
 
     @staticmethod
@@ -161,7 +181,9 @@ class GSheetsAPI(Adapter):
         self.url = get_url(uri)
         self.credentials = (
             Credentials.from_service_account_info(
-                service_account_info, scopes=SCOPES, subject=subject
+                service_account_info,
+                scopes=SCOPES,
+                subject=subject,
             )
             if service_account_info
             else None
@@ -187,7 +209,7 @@ class GSheetsAPI(Adapter):
         else:
             result = response.json()
 
-        return result
+        return cast(QueryResults, result)
 
     def _set_columns(self) -> None:
         results = self._run_query("SELECT * LIMIT 0")
@@ -195,7 +217,39 @@ class GSheetsAPI(Adapter):
         # map between column letter (A, B, etc.) to column name
         self._column_map = {col["label"]: col["id"] for col in results["table"]["cols"]}
 
-        self.columns = {col["id"]: get_fiels(col) for col in results["table"]["cols"]}
+        self.columns = {
+            col["label"]: get_field(col) for col in results["table"]["cols"]
+        }
 
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
+
+    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
+        sql = "SELECT *"
+
+        conditions = []
+        for column_name, filter_ in bounds.items():
+            id_ = self._column_map[column_name]
+            if isinstance(filter_, Impossible):
+                conditions.append("1 = 0")
+            elif isinstance(filter_, Equal):
+                conditions.append(f"{id_} = {quote(filter_.value)}")
+            elif isinstance(filter_, Range):
+                if filter_.start:
+                    op = ">=" if filter_.include_start else ">"
+                    conditions.append(f"{id_} {op} {quote(filter_.start)}")
+                if filter_.end:
+                    op = "<=" if filter_.include_end else "<"
+                    conditions.append(f"{id_} {op} {quote(filter_.end)}")
+        if conditions:
+            sql = f"{sql} WHERE {' AND '.join(conditions)}"
+
+        results = self._run_query(sql)
+        cols = results["table"]["cols"]
+        rows = results["table"]["rows"]
+
+        column_names = [col["label"] for col in cols]
+        for i, row in enumerate(rows):
+            data = dict(zip(column_names, [col["v"] for col in row["c"]]))
+            data["rowid"] = i
+            yield data

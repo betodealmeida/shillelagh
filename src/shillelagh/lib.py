@@ -144,9 +144,9 @@ def unquote(value: str) -> str:
     return value.replace("''", "'")
 
 
-def serialize(value: str) -> str:
+def serialize(value: Any) -> str:
     return f"'{quote(json.dumps(value))}'"
 
 
-def deserialize(value: str) -> str:
+def deserialize(value: str) -> Any:
     return json.loads(unquote(value[1:-1]))

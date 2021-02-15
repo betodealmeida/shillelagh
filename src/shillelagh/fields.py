@@ -1,4 +1,5 @@
 import datetime
+from distutils.util import strtobool
 from enum import Enum
 from typing import Any
 from typing import Callable
@@ -8,7 +9,6 @@ from typing import Optional
 from typing import Type
 
 import dateutil.parser
-from distutils.util import strtobool
 from shillelagh.filters import Filter
 from shillelagh.types import BINARY
 from shillelagh.types import DATETIME
@@ -22,6 +22,7 @@ class Order(Enum):
     ASCENDING = "ascending"
     DESCENDING = "descending"
     NONE = "none"
+    ANY = "any"
 
 
 class Field:
