@@ -4,8 +4,7 @@ from datetime import datetime
 from datetime import timedelta
 
 from shillelagh.adapters.api.weatherapi import WeatherAPI
-from shillelagh.backends.apsw.vt import VTModule
-from shillelagh.db import connect
+from shillelagh.backends.apsw.db import connect
 
 
 if __name__ == "__main__":

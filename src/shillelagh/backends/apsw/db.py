@@ -1,3 +1,4 @@
+import json
 import urllib.parse
 from functools import wraps
 from typing import Any
@@ -18,16 +19,23 @@ from shillelagh.exceptions import Error
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import type_map
+from shillelagh.lib import quote
+from shillelagh.lib import serialize
 from shillelagh.types import BINARY
 from shillelagh.types import DBAPIType
 from shillelagh.types import Description
+from typing_extensions import Literal
 
 apilevel = "2.0"
 threadsafety = 2
 paramstyle = "qmark"
+sqlite_version_info = tuple(
+    int(number) for number in apsw.sqlitelibversion().split(".")
+)
 
 NO_SUCH_TABLE = "SQLError: no such table: "
 
+IsolationLevel = Literal["DEFERRED", "IMMEDIATE", "EXCLUSIVE"]
 F = TypeVar("F", bound=Callable[..., Any])
 
 
@@ -63,11 +71,19 @@ class Cursor(object):
 
     """Connection cursor."""
 
-    def __init__(self, cursor: "apsw.Cursor", adapters: List[Type[Adapter]]):
+    def __init__(
+        self,
+        cursor: "apsw.Cursor",
+        adapters: List[Type[Adapter]],
+        adapter_args: Dict[str, Any],
+        isolation_level: Optional[IsolationLevel] = None,
+    ):
         self._cursor = cursor
         self._adapters = adapters
+        self._adapter_args = adapter_args
 
         self.in_transaction = False
+        self.isolation_level = isolation_level
 
         # This read/write attribute specifies the number of rows to fetch at a
         # time with .fetchmany(). It defaults to 1 meaning to fetch a single
@@ -101,8 +117,8 @@ class Cursor(object):
         operation: str,
         parameters: Optional[Tuple[Any, ...]] = None,
     ) -> "Cursor":
-        if not self.in_transaction:
-            self._cursor.execute("BEGIN")
+        if not self.in_transaction and self.isolation_level:
+            self._cursor.execute(f"BEGIN {self.isolation_level}")
             self.in_transaction = True
 
         self.description = None
@@ -135,10 +151,16 @@ class Cursor(object):
         else:
             raise ProgrammingError(f"Unsupported table: {uri}")
 
-        table_name = uri.replace('"', '""')
-        args = ", ".join(adapter.parse_uri(uri))
+        # collect arguments from URI and connection and serialize them
+        args = [
+            serialize(arg)
+            for arg in adapter.parse_uri(uri)
+            + self._adapter_args.get(adapter.__name__.lower(), ())
+        ]
+        formatted_args = ", ".join(args)
+        table_name = quote(uri)
         self._cursor.execute(
-            f'CREATE VIRTUAL TABLE "{table_name}" USING {adapter.__name__}({args})',
+            f'CREATE VIRTUAL TABLE "{table_name}" USING {adapter.__name__}({formatted_args})',
         )
 
     def _get_description(self) -> Description:
@@ -220,14 +242,22 @@ class Connection(object):
 
     """Connection to a Google Spreadsheet."""
 
-    def __init__(self, path: str, adapters: List[Type[Adapter]]):
+    def __init__(
+        self,
+        path: str,
+        adapters: List[Type[Adapter]],
+        adapter_args: Dict[str, Any],
+        isolation_level: Optional[IsolationLevel] = None,
+    ):
         # create underlying APSW connection
         self._connection = apsw.Connection(path)
+        self.isolation_level = isolation_level
 
         # register adapters
         for adapter in adapters:
             self._connection.createmodule(adapter.__name__, VTModule(adapter))
         self._adapters = adapters
+        self._adapter_args = adapter_args
 
         self.closed = False
         self.cursors: List[Cursor] = []
@@ -259,7 +289,12 @@ class Connection(object):
     @check_closed
     def cursor(self) -> Cursor:
         """Return a new Cursor Object using the connection."""
-        cursor = Cursor(self._connection.cursor(), self._adapters)
+        cursor = Cursor(
+            self._connection.cursor(),
+            self._adapters,
+            self._adapter_args,
+            self.isolation_level,
+        )
         self.cursors.append(cursor)
 
         return cursor
@@ -281,7 +316,12 @@ class Connection(object):
         self.close()
 
 
-def connect(path: str, adapters: Optional[str] = None) -> Connection:
+def connect(
+    path: str,
+    adapters: Optional[List[str]] = None,
+    adapter_args: Optional[Dict[str, Any]] = None,
+    isolation_level: Optional[IsolationLevel] = None,
+) -> Connection:
     """
     Constructor for creating a connection to the database.
 
@@ -295,4 +335,5 @@ def connect(path: str, adapters: Optional[str] = None) -> Connection:
         for adapter in iter_entry_points("shillelagh.adapter")
         if adapters is None or adapter.name in adapters
     ]
-    return Connection(path, enabled_adapters)
+
+    return Connection(path, enabled_adapters, adapter_args or {}, isolation_level)

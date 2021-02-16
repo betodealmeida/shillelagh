@@ -6,22 +6,15 @@ import pytest
 from shillelagh.adapters.base import Adapter
 from shillelagh.adapters.file.csvfile import CSVFile
 from shillelagh.adapters.file.csvfile import RowTracker
+from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
-from shillelagh.db import connect
 from shillelagh.fields import Float
 from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Range
 
-
-class MockEntryPoint:
-    def __init__(self, name: str, adapter: Adapter):
-        self.name = name
-        self.adapter = adapter
-
-    def load(self) -> Adapter:
-        return self.adapter
+from ...fakes import FakeEntryPoint
 
 
 contents = """"index","temperature","site"
@@ -124,7 +117,7 @@ def test_csvfile(fs):
     connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
     connection.createmodule("csvfile", VTModule(CSVFile))
-    cursor.execute(f"CREATE VIRTUAL TABLE test USING csvfile(test.csv)")
+    cursor.execute(f"""CREATE VIRTUAL TABLE test USING csvfile('"test.csv"')""")
 
     sql = 'SELECT * FROM test WHERE "index" > 11'
     data = list(cursor.execute(sql))
@@ -166,8 +159,11 @@ def test_csvfile(fs):
 
 
 def test_dispatch(mocker, fs):
-    entry_points = [MockEntryPoint("csvfile", CSVFile)]
-    mocker.patch("shillelagh.db.iter_entry_points", return_value=entry_points)
+    entry_points = [FakeEntryPoint("csvfile", CSVFile)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
 
     with open("test.csv", "w") as fp:
         fp.write(contents)

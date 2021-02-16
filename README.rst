@@ -110,7 +110,7 @@ Now we can use our class to query the API using Sqlite:
 
 .. code-block:: python
 
-    from shillelagh.db import connect
+    from shillelagh.backends.apsw.db import connect
 
     connection = connect(":memory:")
     cursor = connection.cursor()

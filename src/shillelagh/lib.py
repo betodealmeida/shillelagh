@@ -1,4 +1,5 @@
 import itertools
+import json
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -133,3 +134,19 @@ def update_order(
         return Order.NONE
 
     return current_order
+
+
+def quote(value: str) -> str:
+    return value.replace("'", "''")
+
+
+def unquote(value: str) -> str:
+    return value.replace("''", "'")
+
+
+def serialize(value: Any) -> str:
+    return f"'{quote(json.dumps(value))}'"
+
+
+def deserialize(value: str) -> Any:
+    return json.loads(unquote(value[1:-1]))

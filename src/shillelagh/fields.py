@@ -1,4 +1,5 @@
 import datetime
+from distutils.util import strtobool
 from enum import Enum
 from typing import Any
 from typing import Callable
@@ -21,6 +22,7 @@ class Order(Enum):
     ASCENDING = "ascending"
     DESCENDING = "descending"
     NONE = "none"
+    ANY = "any"
 
 
 class Field:
@@ -118,6 +120,18 @@ class Blob(Field):
         return bytes(value)
 
 
+class Boolean(Field):
+    type = "BOOLEAN"
+    db_api_type = NUMBER
+
+    @staticmethod
+    def parse(value: Any) -> bool:
+        if isinstance(value, bool):
+            return value
+        return bool(strtobool(str(value)))
+
+
 type_map = {
-    field.type: field.db_api_type for field in {Integer, Float, String, DateTime, Blob}
+    field.type: field.db_api_type
+    for field in {Integer, Float, String, Date, Time, DateTime, Blob, Boolean}
 }

@@ -14,52 +14,20 @@ from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.types import Row
 
-
-class DummyAdapter(Adapter):
-
-    age = Float(filters=[Range], order=Order.NONE, exact=True)
-    name = String(filters=[Equal], order=Order.ASCENDING, exact=True)
-    pets = Integer()
-
-    def __init__(self):
-        self.data = [
-            {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
-            {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
-        ]
-
-    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Dict[str, Any]]:
-        data = self.data[:]
-
-        for column in ["name", "age"]:
-            if column in bounds:
-                data = [row for row in data if bounds[column].check(row[column])]
-
-        yield from iter(data)
-
-    def insert_row(self, row: Row) -> int:
-        row_id: Optional[int] = row["rowid"]
-        if row_id is None:
-            row["rowid"] = row_id = max(row["rowid"] for row in self.data) + 1
-
-        self.data.append(row)
-
-        return row_id
-
-    def delete_row(self, row_id: int) -> None:
-        self.data = [row for row in self.data if row["rowid"] != row_id]
+from ..fakes import FakeAdapter
 
 
 def test_adapter_get_columns():
-    adapter = DummyAdapter()
+    adapter = FakeAdapter()
     assert adapter.get_columns() == {
-        "age": DummyAdapter.age,
-        "name": DummyAdapter.name,
-        "pets": DummyAdapter.pets,
+        "age": FakeAdapter.age,
+        "name": FakeAdapter.name,
+        "pets": FakeAdapter.pets,
     }
 
 
 def test_adapter_get_data():
-    adapter = DummyAdapter()
+    adapter = FakeAdapter()
     data = adapter.get_data({})
     assert list(data) == [
         {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
@@ -78,7 +46,7 @@ def test_adapter_get_data():
 
 
 def test_adapter_manipulate_rows():
-    adapter = DummyAdapter()
+    adapter = FakeAdapter()
 
     adapter.insert_row({"rowid": None, "name": "Charlie", "age": 6, "pets": 1})
     data = adapter.get_data({})
@@ -114,7 +82,7 @@ def test_adapter_manipulate_rows():
 
 
 def test_from_uri():
-    class DummyAdapter(Adapter):
+    class FakeAdapter(Adapter):
         @staticmethod
         def parse_uri(uri: str) -> Tuple[str, ...]:
             return tuple(uri.split(":", 1))
@@ -123,6 +91,6 @@ def test_from_uri():
             self.a = a
             self.b = b
 
-    adapter = DummyAdapter.from_uri("foo:bar")
+    adapter = FakeAdapter.from_uri("foo:bar")
     assert adapter.a == "foo"
     assert adapter.b == "bar"

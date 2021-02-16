@@ -12,10 +12,12 @@ from typing import Type
 
 import apsw
 from shillelagh.adapters.base import Adapter
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.fields import Order
 from shillelagh.filters import Filter
 from shillelagh.filters import Operator
+from shillelagh.lib import deserialize
 from shillelagh.types import Constraint
 from shillelagh.types import Index
 
@@ -41,7 +43,8 @@ class VTModule:
         tablename: str,
         *args: str,
     ) -> Tuple[str, "VTTable"]:
-        adapter = self.adapter(*args)
+        deserialized_args = [deserialize(arg) for arg in args]
+        adapter = self.adapter(*deserialized_args)
         table = VTTable(adapter)
         create_table: str = table.get_create_table(tablename)
         return create_table, table
@@ -55,6 +58,8 @@ class VTTable:
 
     def get_create_table(self, tablename: str) -> str:
         columns = self.adapter.get_columns()
+        if not columns:
+            raise ProgrammingError(f"Virtual table {tablename} has no columns")
         formatted_columns = ", ".join(f'"{k}" {v.type}' for (k, v) in columns.items())
         return f'CREATE TABLE "{tablename}" ({formatted_columns})'
 

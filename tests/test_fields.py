@@ -1,6 +1,7 @@
 import datetime
 
 from shillelagh.fields import Blob
+from shillelagh.fields import Boolean
 from shillelagh.fields import Date
 from shillelagh.fields import Field
 from shillelagh.fields import Integer
@@ -36,5 +37,14 @@ def test_date():
 
 def test_time():
     assert Time.parse("12:00+00:00") == datetime.time(
-        12, 0, tzinfo=datetime.timezone.utc,
+        12,
+        0,
+        tzinfo=datetime.timezone.utc,
     )
+
+
+def test_boolean():
+    assert Boolean.parse(True) is True
+    assert Boolean.parse(False) is False
+    assert Boolean.parse("true") is True
+    assert Boolean.parse(0) is False
