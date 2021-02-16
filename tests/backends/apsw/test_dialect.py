@@ -1,3 +1,4 @@
+import json
 import re
 import urllib.parse
 from typing import Any
@@ -10,11 +11,14 @@ from unittest import mock
 import apsw
 import pytest
 from sqlalchemy import inspect, select, Table, MetaData, func, create_engine
+from sqlalchemy.engine.url import make_url
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.db import Connection
 from shillelagh.backends.apsw.db import Cursor
+from shillelagh.backends.apsw.dialect import APSWDialect
+from shillelagh.backends.apsw.dialect import APSWGSheetsDialect
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
@@ -84,7 +88,7 @@ class FakeAdapter(Adapter):
         self.data = [row for row in self.data if row["rowid"] != row_id]
 
 
-def test_dialect(mocker):
+def test_create_engine(mocker):
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -97,3 +101,57 @@ def test_dialect(mocker):
     table = Table("dummy://", MetaData(bind=engine), autoload=True)
     query = select([func.sum(table.columns.pets)], from_obj=table)
     assert query.scalar() == 3
+
+
+def test_create_engine_no_adapters(mocker):
+    engine = create_engine("shillelagh://")
+    inspector = inspect(engine)
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        Table("dummy://", MetaData(bind=engine), autoload=True)
+    assert str(excinfo.value) == "Unsupported table: dummy://"
+
+
+def test_dialect_ping():
+    mock_dbapi_connection = mock.MagicMock()
+    dialect = APSWDialect()
+    assert dialect.do_ping(mock_dbapi_connection) is True
+
+
+def test_gsheets_dialect(fs):
+    dialect = APSWGSheetsDialect()
+    assert dialect.create_connect_args(make_url("gsheets://")) == (
+        (
+            ":memory:",
+            ["gsheetsapi"],
+            {},
+        ),
+        {},
+    )
+
+    dialect = APSWGSheetsDialect(
+        service_account_info={"secret": "XXX"}, subject="user@example.com"
+    )
+    assert dialect.create_connect_args(make_url("gsheets://")) == (
+        (
+            ":memory:",
+            ["gsheetsapi"],
+            {"gsheetsapi": ({"secret": "XXX"}, "user@example.com")},
+        ),
+        {},
+    )
+
+    with open("credentials.json", "w") as fp:
+        json.dump({"secret": "YYY"}, fp)
+
+    dialect = APSWGSheetsDialect(
+        service_account_file="credentials.json", subject="user@example.com"
+    )
+    assert dialect.create_connect_args(make_url("gsheets://")) == (
+        (
+            ":memory:",
+            ["gsheetsapi"],
+            {"gsheetsapi": ({"secret": "YYY"}, "user@example.com")},
+        ),
+        {},
+    )

@@ -221,18 +221,17 @@ converters = {
 }
 
 
-# XXX types, improve
-def convert_rows(cols, rows):
-    results = []
+def convert_rows(
+    cols: List[QueryResultsColumn], rows: List[QueryResultsRow]
+) -> Iterator[List[Any]]:
+    """Convert custom Google sheets types."""
     for row in rows:
         values = []
         for i, col in enumerate(row["c"]):
             if i < len(cols):
                 converter = converters[cols[i]["type"]]
                 values.append(converter(col["v"]) if col else None)
-        results.append(values)
-
-    return results
+        yield values
 
 
 class GSheetsAPI(Adapter):

@@ -9,15 +9,18 @@ import apsw
 
 import sqlalchemy.types
 from sqlalchemy import exc
-from sqlalchemy.dialects import sqlite
+from sqlalchemy.dialects.sqlite.base import SQLiteDialect
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import NoSuchTableError
+from sqlalchemy.pool.base import _ConnectionFairy
 
+from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw import db
+from shillelagh.backends.apsw.vt import VTTable
 from shillelagh.exceptions import ProgrammingError
 
 
-class APSWDialect(sqlite.dialect):
+class APSWDialect(SQLiteDialect):
     name = "shillelagh"
     driver = "apsw"
 
@@ -46,21 +49,12 @@ class APSWDialect(sqlite.dialect):
         path = url.database or ":memory:"
         return ([path, self._adapters, self._adapter_args, self.isolation_level], {})
 
-    def do_ping(self, dbapi_connection) -> bool:
+    def do_ping(self, dbapi_connection: _ConnectionFairy) -> bool:
         return True
 
     def get_columns(self, connection, table_name, schema=None, **kw):
-        raw_connection = connection.engine.raw_connection()
-        for adapter in raw_connection._adapters:
-            if adapter.supports(table_name):
-                break
-        else:
-            raise ProgrammingError(f"Unsupported table: {table_name}")
-
-        args = adapter.parse_uri(table_name) + raw_connection._adapter_args.get(
-            adapter.__name__.lower(), ()
-        )
-        columns = adapter(*args).get_columns()
+        adapter = self._get_adapter_for_table_name(connection, table_name)
+        columns = adapter.get_columns()
         return [
             {
                 "name": column_name,
@@ -73,9 +67,22 @@ class APSWDialect(sqlite.dialect):
             for column_name, field in columns.items()
         ]
 
-    def _get_table_sql(self, connection, table_name, schema=None, **kw):
-        # XXX
-        return ""
+    def _get_table_sql(self, connection, table_name, schema=None, **kw) -> str:
+        adapter = self._get_adapter_for_table_name(connection, table_name)
+        table = VTTable(adapter)
+        return table.get_create_table(table_name)
+
+    def _get_adapter_for_table_name(self, connection, table_name) -> Adapter:
+        raw_connection = connection.engine.raw_connection()
+        for adapter in raw_connection._adapters:
+            if adapter.supports(table_name):
+                break
+        else:
+            raise ProgrammingError(f"Unsupported table: {table_name}")
+
+        uri_args = adapter.parse_uri(table_name)
+        adapter_args = raw_connection._adapter_args.get(adapter.__name__.lower(), ())
+        return adapter(*uri_args, *adapter_args)
 
 
 class APSWGSheetsDialect(APSWDialect):
@@ -106,10 +113,8 @@ class APSWGSheetsDialect(APSWDialect):
         Tuple[str, Optional[List[str]], Optional[Dict[str, Any]]],
         Dict[str, Any],
     ]:
-        path = url.database or ":memory:"
-
         adapter_args: Dict[str, Any] = {}
         if self.service_account_info:
             adapter_args["gsheetsapi"] = (self.service_account_info, self.subject)
 
-        return (path, ["gsheetsapi"], adapter_args), {}
+        return (":memory:", ["gsheetsapi"], adapter_args), {}
