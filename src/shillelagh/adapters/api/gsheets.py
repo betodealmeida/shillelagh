@@ -1,6 +1,6 @@
+import datetime
 import json
 import urllib.parse
-from datetime import datetime
 from typing import Any
 from typing import cast
 from typing import Dict
@@ -140,10 +140,9 @@ def quote(value: Any) -> str:
     if isinstance(value, (int, float)):
         return str(value)
     if isinstance(value, str):
-        quoted_value = value.replace("'", "''")
-        return f"'{quoted_value}'"
-    # XXX add more
-    if isinstance(value, datetime):
+        escaped_value = value.replace("'", "''")
+        return f"'{escaped_value}'"
+    if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
         return f"'{value.isoformat()}'"
 
     raise Exception(f"Can't quote value: {value}")
@@ -191,6 +190,49 @@ def get_url(
     return urllib.parse.urlunparse(
         (parts.scheme, parts.netloc, path, None, params, None),
     )
+
+
+def parse_datetime(value: str) -> str:
+    """Parse a string like 'Date(2018,0,1,0,0,0)'."""
+    args = [int(number) for number in value[len("Date(") : -1].split(",")]
+    args[1] += 1  # month is zero indexed in the response
+    return datetime.datetime(*args, tzinfo=datetime.timezone.utc).isoformat()
+
+
+def parse_date(value: str) -> str:
+    """Parse a string like 'Date(2018,0,1)'."""
+    args = [int(number) for number in value[len("Date(") : -1].split(",")]
+    args[1] += 1  # month is zero indexed in the response
+    return datetime.date(*args).isoformat()
+
+
+def parse_timeofday(values: List[int]) -> str:
+    """Parse time of day as returned from the API."""
+    return datetime.time(*values, tzinfo=datetime.timezone.utc).isoformat()
+
+
+converters = {
+    "string": lambda v: v,
+    "number": lambda v: v,
+    "boolean": bool,
+    "date": parse_date,
+    "datetime": parse_datetime,
+    "timeofday": parse_timeofday,
+}
+
+
+# XXX types, improve
+def convert_rows(cols, rows):
+    results = []
+    for row in rows:
+        values = []
+        for i, col in enumerate(row["c"]):
+            if i < len(cols):
+                converter = converters[cols[i]["type"]]
+                values.append(converter(col["v"]) if col else None)
+        results.append(values)
+
+    return results
 
 
 class GSheetsAPI(Adapter):
@@ -293,10 +335,10 @@ class GSheetsAPI(Adapter):
 
         results = self._run_query(sql)
         cols = results["table"]["cols"]
-        rows = results["table"]["rows"]
+        rows = convert_rows(cols, results["table"]["rows"])
 
         column_names = [col["label"] for col in cols]
         for i, row in enumerate(rows):
-            data = dict(zip(column_names, [col["v"] for col in row["c"]]))
+            data = dict(zip(column_names, row))
             data["rowid"] = i
             yield data

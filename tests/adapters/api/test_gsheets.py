@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from unittest import mock
 
 import apsw
@@ -229,10 +229,13 @@ def test_execute_filter(mocker):
 def test_quote():
     assert quote("value") == "'value'"
     assert quote(1) == "1"
+    assert quote(datetime.datetime.now()) == "'2020-01-01T00:00:00'"
+    assert quote(datetime.time(0, 0, 0)) == "'00:00:00'"
+    assert quote(datetime.date.today()) == "'2020-01-01'"
 
     with pytest.raises(Exception) as excinfo:
-        quote(datetime.now())
-    assert str(excinfo.value) == "Can't quote value: 2020-01-01 00:00:00"
+        quote([1])
+    assert str(excinfo.value) == "Can't quote value: [1]"
 
 
 def test_get_url():
