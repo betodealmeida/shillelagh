@@ -370,7 +370,7 @@ def test_convert_rows(mocker):
                             {"v": "Date(2018,0,1)", "f": "1/1/2018"},
                             {"v": [17, 0, 0, 0], "f": "5:00:00 PM"},
                             {"v": "test"},
-                        ]
+                        ],
                     },
                     {
                         "c": [
@@ -380,7 +380,7 @@ def test_convert_rows(mocker):
                             None,
                             None,
                             {"v": "test"},
-                        ]
+                        ],
                     },
                     {
                         "c": [
@@ -390,7 +390,7 @@ def test_convert_rows(mocker):
                             None,
                             None,
                             {"v": "test"},
-                        ]
+                        ],
                     },
                     {
                         "c": [
@@ -400,7 +400,7 @@ def test_convert_rows(mocker):
                             None,
                             None,
                             {"v": "test"},
-                        ]
+                        ],
                     },
                     {
                         "c": [
@@ -410,7 +410,7 @@ def test_convert_rows(mocker):
                             None,
                             None,
                             {"v": "test"},
-                        ]
+                        ],
                     },
                     {
                         "c": [
@@ -420,7 +420,7 @@ def test_convert_rows(mocker):
                             None,
                             None,
                             {"v": "test"},
-                        ]
+                        ],
                     },
                     {
                         "c": [
@@ -430,7 +430,7 @@ def test_convert_rows(mocker):
                             None,
                             None,
                             {"v": None},
-                        ]
+                        ],
                     },
                     {
                         "c": [
@@ -440,7 +440,7 @@ def test_convert_rows(mocker):
                             None,
                             None,
                             {"v": "test"},
-                        ]
+                        ],
                     },
                     {
                         "c": [
@@ -450,7 +450,7 @@ def test_convert_rows(mocker):
                             None,
                             None,
                             {"v": "test"},
-                        ]
+                        ],
                     },
                 ],
                 "parsedNumHeaders": 1,
@@ -474,3 +474,37 @@ def test_convert_rows(mocker):
         ("2018-09-08T00:00:00+00:00", None, 0, None, None, "test"),
         ("2018-09-09T00:00:00+00:00", 34.0, None, None, None, "test"),
     ]
+
+
+def test_get_session(mocker):
+    mock_authorized_session = mock.MagicMock()
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.AuthorizedSession", mock_authorized_session
+    )
+    mock_session = mock.MagicMock()
+    mocker.patch("shillelagh.adapters.api.gsheets.Session", mock_session)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.Credentials.from_service_account_info",
+        return_value="SECRET",
+    )
+
+    # prevent network call
+    GSheetsAPI._set_columns = mock.MagicMock()
+
+    adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1")
+    adapter._get_session()
+    mock_authorized_session.assert_not_called()
+    mock_session.assert_called()
+
+    mock_authorized_session.reset_mock()
+    mock_session.reset_mock()
+
+    adapter = GSheetsAPI(
+        "https://docs.google.com/spreadsheets/d/1",
+        service_account_info={"secret": "XXX"},
+        subject="user@example.com",
+    )
+    assert adapter.credentials == "SECRET"
+    adapter._get_session()
+    mock_authorized_session.assert_called()
+    mock_session.assert_not_called()

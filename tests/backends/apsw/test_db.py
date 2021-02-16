@@ -26,8 +26,8 @@ from shillelagh.types import NUMBER
 from shillelagh.types import Row
 from shillelagh.types import STRING
 
-from ...fakes import FakeEntryPoint
 from ...fakes import FakeAdapter
+from ...fakes import FakeEntryPoint
 
 
 def test_connect(mocker):

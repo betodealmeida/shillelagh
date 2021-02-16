@@ -2,6 +2,7 @@ import datetime
 import json
 import urllib.parse
 from typing import Any
+from typing import Callable
 from typing import cast
 from typing import Dict
 from typing import Iterator
@@ -13,8 +14,6 @@ from typing import Type
 from google.auth.transport.requests import AuthorizedSession
 from google.oauth2.service_account import Credentials
 from requests import Session
-from typing_extensions import Literal
-from typing_extensions import TypedDict
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Boolean
@@ -30,6 +29,8 @@ from shillelagh.filters import Filter
 from shillelagh.filters import Impossible
 from shillelagh.filters import Range
 from shillelagh.types import Row
+from typing_extensions import Literal
+from typing_extensions import TypedDict
 
 # Google API scopes for authentication
 # https://developers.google.com/chart/interactive/docs/spreadsheets
@@ -196,7 +197,7 @@ def parse_datetime(value: str) -> str:
     """Parse a string like 'Date(2018,0,1,0,0,0)'."""
     args = [int(number) for number in value[len("Date(") : -1].split(",")]
     args[1] += 1  # month is zero indexed in the response
-    return datetime.datetime(*args, tzinfo=datetime.timezone.utc).isoformat()
+    return datetime.datetime(*args, tzinfo=datetime.timezone.utc).isoformat()  # type: ignore
 
 
 def parse_date(value: str) -> str:
@@ -208,10 +209,10 @@ def parse_date(value: str) -> str:
 
 def parse_timeofday(values: List[int]) -> str:
     """Parse time of day as returned from the API."""
-    return datetime.time(*values, tzinfo=datetime.timezone.utc).isoformat()
+    return datetime.time(*values, tzinfo=datetime.timezone.utc).isoformat()  # type: ignore
 
 
-converters = {
+converters: Dict[str, Callable[[Any], Any]] = {
     "string": lambda v: v,
     "number": lambda v: v,
     "boolean": bool,
@@ -222,16 +223,18 @@ converters = {
 
 
 def convert_rows(
-    cols: List[QueryResultsColumn], rows: List[QueryResultsRow]
+    cols: List[QueryResultsColumn],
+    rows: List[QueryResultsRow],
 ) -> Iterator[List[Any]]:
     """Convert custom Google sheets types."""
+    row_converters: Optional[List[Callable[[Any], Any]]] = None
     for row in rows:
-        values = []
-        for i, col in enumerate(row["c"]):
-            if i < len(cols):
-                converter = converters[cols[i]["type"]]
-                values.append(converter(col["v"]) if col else None)
-        yield values
+        if row_converters is None:
+            row_converters = [converters[col["type"]] for col in cols]
+        yield [
+            converter(cell["v"]) if cell else None
+            for cell, converter in zip(row["c"], row_converters)
+        ]
 
 
 class GSheetsAPI(Adapter):

@@ -1,23 +1,22 @@
 import json
 from typing import Any
+from typing import cast
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
 
 import apsw
-
 import sqlalchemy.types
+from shillelagh.adapters.base import Adapter
+from shillelagh.backends.apsw import db
+from shillelagh.backends.apsw.vt import VTTable
+from shillelagh.exceptions import ProgrammingError
 from sqlalchemy import exc
 from sqlalchemy.dialects.sqlite.base import SQLiteDialect
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.pool.base import _ConnectionFairy
-
-from shillelagh.adapters.base import Adapter
-from shillelagh.backends.apsw import db
-from shillelagh.backends.apsw.vt import VTTable
-from shillelagh.exceptions import ProgrammingError
 
 
 class APSWDialect(SQLiteDialect):
@@ -43,11 +42,11 @@ class APSWDialect(SQLiteDialect):
         self,
         url: URL,
     ) -> Tuple[
-        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]]],
+        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], Optional[str]],
         Dict[str, Any],
     ]:
-        path = url.database or ":memory:"
-        return ([path, self._adapters, self._adapter_args, self.isolation_level], {})
+        path = str(url.database) or ":memory:"
+        return ((path, self._adapters, self._adapter_args, self.isolation_level), {})
 
     def do_ping(self, dbapi_connection: _ConnectionFairy) -> bool:
         return True
@@ -73,7 +72,7 @@ class APSWDialect(SQLiteDialect):
         return table.get_create_table(table_name)
 
     def _get_adapter_for_table_name(self, connection, table_name) -> Adapter:
-        raw_connection = connection.engine.raw_connection()
+        raw_connection = cast(db.Connection, connection.engine.raw_connection())
         for adapter in raw_connection._adapters:
             if adapter.supports(table_name):
                 break
@@ -110,11 +109,11 @@ class APSWGSheetsDialect(APSWDialect):
         self,
         url: URL,
     ) -> Tuple[
-        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]]],
+        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], Optional[str]],
         Dict[str, Any],
     ]:
         adapter_args: Dict[str, Any] = {}
         if self.service_account_info:
             adapter_args["gsheetsapi"] = (self.service_account_info, self.subject)
 
-        return (":memory:", ["gsheetsapi"], adapter_args), {}
+        return (":memory:", ["gsheetsapi"], adapter_args, self.isolation_level), {}

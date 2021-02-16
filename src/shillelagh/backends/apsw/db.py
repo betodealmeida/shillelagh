@@ -13,7 +13,6 @@ from typing import TypeVar
 
 import apsw
 from pkg_resources import iter_entry_points
-from typing_extensions import Literal
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import Error
@@ -25,6 +24,7 @@ from shillelagh.lib import serialize
 from shillelagh.types import BINARY
 from shillelagh.types import DBAPIType
 from shillelagh.types import Description
+from typing_extensions import Literal
 
 apilevel = "2.0"
 threadsafety = 2
