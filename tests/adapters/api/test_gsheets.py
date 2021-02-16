@@ -39,6 +39,7 @@ def test_credentials(mocker):
                 "user@example.com",
             ),
         },
+        isolation_level="IMMEDIATE",
     )
     cursor = connection.cursor()
     cursor._cursor = mock.MagicMock()
@@ -54,7 +55,7 @@ def test_credentials(mocker):
     cursor.execute('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"')
     cursor._cursor.execute.assert_has_calls(
         [
-            mock.call("BEGIN"),
+            mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
             mock.call(
                 """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" USING GSheetsAPI('"https://docs.google.com/spreadsheets/d/1"', '{"secret": "XXX"}', '"user@example.com"')""",

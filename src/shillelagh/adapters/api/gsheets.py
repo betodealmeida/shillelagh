@@ -1,19 +1,20 @@
 import json
 import urllib.parse
+from datetime import datetime
 from typing import Any
 from typing import cast
 from typing import Dict
 from typing import Iterator
 from typing import List
-from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Type
-from typing import TypedDict
 
 from google.auth.transport.requests import AuthorizedSession
 from google.oauth2.service_account import Credentials
 from requests import Session
+from typing_extensions import Literal
+from typing_extensions import TypedDict
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Boolean
@@ -141,6 +142,9 @@ def quote(value: Any) -> str:
     if isinstance(value, str):
         quoted_value = value.replace("'", "''")
         return f"'{quoted_value}'"
+    # XXX add more
+    if isinstance(value, datetime):
+        return f"'{value.isoformat()}'"
 
     raise Exception(f"Can't quote value: {value}")
 

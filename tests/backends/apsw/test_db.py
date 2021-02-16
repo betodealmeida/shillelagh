@@ -86,7 +86,7 @@ def test_connect(mocker):
         return_value=entry_points,
     )
 
-    connection = connect(":memory:", ["dummy"])
+    connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
     cursor.execute('SELECT * FROM "dummy://"')
@@ -105,7 +105,7 @@ def test_connect(mocker):
 
 
 def test_check_closed(mocker):
-    connection = connect(":memory:")
+    connection = connect(":memory:", isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
     cursor.close()
@@ -126,7 +126,7 @@ def test_check_result(mocker):
         return_value=entry_points,
     )
 
-    connection = connect(":memory:", ["dummy"])
+    connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
     with pytest.raises(ProgrammingError) as excinfo:
         cursor.fetchall()
@@ -135,14 +135,14 @@ def test_check_result(mocker):
 
 
 def test_check_invalid_syntax(mocker):
-    connection = connect(":memory:")
+    connection = connect(":memory:", isolation_level="IMMEDIATE")
     with pytest.raises(apsw.SQLError) as excinfo:
         connection.execute("SELLLLECT 1")
     assert str(excinfo.value) == 'SQLError: near "SELLLLECT": syntax error'
 
 
 def test_unsupported_table(mocker):
-    connection = connect(":memory:")
+    connection = connect(":memory:", isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
     with pytest.raises(ProgrammingError) as excinfo:
@@ -157,7 +157,7 @@ def test_description(mocker):
         return_value=entry_points,
     )
 
-    connection = connect(":memory:", ["dummy"])
+    connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
     assert cursor.description is None
@@ -181,10 +181,10 @@ def test_execute_many(mocker):
         return_value=entry_points,
     )
 
-    connection = connect(":memory:", ["dummy"])
+    connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
-    items = [(6, "Billy", "Mr. Rock"), (7, "Timmy", "Dr. Elephant")]
+    items = [(6, "Billy", 1), (7, "Timmy", 2)]
     with pytest.raises(NotSupportedError) as excinfo:
         cursor.executemany(
             """INSERT INTO "dummy://" (age, name, pets) VALUES (?, ?, ?)""",
@@ -194,14 +194,14 @@ def test_execute_many(mocker):
 
 
 def test_setsize():
-    connection = connect(":memory:")
+    connection = connect(":memory:", isolation_level="IMMEDIATE")
     cursor = connection.cursor()
     cursor.setinputsizes(100)
     cursor.setoutputsizes(100)
 
 
 def test_close_connection():
-    connection = connect(":memory:")
+    connection = connect(":memory:", isolation_level="IMMEDIATE")
     cursor1 = connection.cursor()
     cursor2 = connection.cursor()
 
@@ -222,7 +222,7 @@ def test_transaction(mocker):
         return_value=entry_points,
     )
 
-    connection = connect(":memory:", ["dummy"])
+    connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
 
     cursor = connection.cursor()
     cursor._cursor = mock.MagicMock()
@@ -245,7 +245,7 @@ def test_transaction(mocker):
     assert cursor.in_transaction
     cursor._cursor.execute.assert_has_calls(
         [
-            mock.call("BEGIN"),
+            mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "dummy://"', None),
             mock.call('CREATE VIRTUAL TABLE "dummy://" USING DummyAdapter()'),
             mock.call('SELECT 1 FROM "dummy://"', None),
@@ -258,12 +258,12 @@ def test_transaction(mocker):
     assert cursor.in_transaction
     cursor._cursor.execute.assert_has_calls(
         [
-            mock.call("BEGIN"),
+            mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "dummy://"', None),
             mock.call('CREATE VIRTUAL TABLE "dummy://" USING DummyAdapter()'),
             mock.call('SELECT 1 FROM "dummy://"', None),
             mock.call("ROLLBACK"),
-            mock.call("BEGIN"),
+            mock.call("BEGIN IMMEDIATE"),
             mock.call("SELECT 2", None),
         ],
     )
@@ -272,12 +272,12 @@ def test_transaction(mocker):
     assert not cursor.in_transaction
     cursor._cursor.execute.assert_has_calls(
         [
-            mock.call("BEGIN"),
+            mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "dummy://"', None),
             mock.call('CREATE VIRTUAL TABLE "dummy://" USING DummyAdapter()'),
             mock.call('SELECT 1 FROM "dummy://"', None),
             mock.call("ROLLBACK"),
-            mock.call("BEGIN"),
+            mock.call("BEGIN IMMEDIATE"),
             mock.call("SELECT 2", None),
             mock.call("COMMIT"),
         ],
@@ -289,14 +289,14 @@ def test_transaction(mocker):
 
 
 def test_connection_context_manager():
-    with connect(":memory:") as connection:
+    with connect(":memory:", isolation_level="IMMEDIATE") as connection:
         cursor = connection.cursor()
         cursor._cursor = mock.MagicMock()
         cursor.execute("SELECT 2")
 
     cursor._cursor.execute.assert_has_calls(
         [
-            mock.call("BEGIN"),
+            mock.call("BEGIN IMMEDIATE"),
             mock.call("SELECT 2", None),
             mock.call("COMMIT"),
         ],
