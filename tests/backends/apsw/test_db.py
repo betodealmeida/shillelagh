@@ -26,61 +26,12 @@ from shillelagh.types import NUMBER
 from shillelagh.types import Row
 from shillelagh.types import STRING
 
-
-class MockEntryPoint:
-    def __init__(self, name: str, adapter: Adapter):
-        self.name = name
-        self.adapter = adapter
-
-    def load(self) -> Adapter:
-        return self.adapter
-
-
-class DummyAdapter(Adapter):
-
-    age = Float(filters=[Range], order=Order.NONE, exact=True)
-    name = String(filters=[Equal], order=Order.ASCENDING, exact=True)
-    pets = Integer()
-
-    @staticmethod
-    def supports(uri: str) -> bool:
-        parsed = urllib.parse.urlparse(uri)
-        return parsed.scheme == "dummy"
-
-    @staticmethod
-    def parse_uri(uri: str) -> Tuple[()]:
-        return ()
-
-    def __init__(self):
-        self.data = [
-            {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
-            {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
-        ]
-
-    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Dict[str, Any]]:
-        data = self.data[:]
-
-        for column in ["name", "age"]:
-            if column in bounds:
-                data = [row for row in data if bounds[column].check(row[column])]
-
-        yield from iter(data)
-
-    def insert_row(self, row: Row) -> int:
-        row_id: Optional[int] = row["rowid"]
-        if row_id is None:
-            row["rowid"] = row_id = max(row["rowid"] for row in self.data) + 1
-
-        self.data.append(row)
-
-        return row_id
-
-    def delete_row(self, row_id: int) -> None:
-        self.data = [row for row in self.data if row["rowid"] != row_id]
+from ...fakes import FakeEntryPoint
+from ...fakes import FakeAdapter
 
 
 def test_connect(mocker):
-    entry_points = [MockEntryPoint("dummy", DummyAdapter)]
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
@@ -120,7 +71,7 @@ def test_check_closed(mocker):
 
 
 def test_check_result(mocker):
-    entry_points = [MockEntryPoint("dummy", DummyAdapter)]
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
@@ -151,7 +102,7 @@ def test_unsupported_table(mocker):
 
 
 def test_description(mocker):
-    entry_points = [MockEntryPoint("dummy", DummyAdapter)]
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
@@ -175,7 +126,7 @@ def test_description(mocker):
 
 
 def test_execute_many(mocker):
-    entry_points = [MockEntryPoint("dummy", DummyAdapter)]
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
@@ -216,7 +167,7 @@ def test_close_connection():
 
 
 def test_transaction(mocker):
-    entry_points = [MockEntryPoint("dummy", DummyAdapter)]
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
@@ -247,7 +198,7 @@ def test_transaction(mocker):
         [
             mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "dummy://"', None),
-            mock.call('CREATE VIRTUAL TABLE "dummy://" USING DummyAdapter()'),
+            mock.call('CREATE VIRTUAL TABLE "dummy://" USING FakeAdapter()'),
             mock.call('SELECT 1 FROM "dummy://"', None),
         ],
     )
@@ -260,7 +211,7 @@ def test_transaction(mocker):
         [
             mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "dummy://"', None),
-            mock.call('CREATE VIRTUAL TABLE "dummy://" USING DummyAdapter()'),
+            mock.call('CREATE VIRTUAL TABLE "dummy://" USING FakeAdapter()'),
             mock.call('SELECT 1 FROM "dummy://"', None),
             mock.call("ROLLBACK"),
             mock.call("BEGIN IMMEDIATE"),
@@ -274,7 +225,7 @@ def test_transaction(mocker):
         [
             mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "dummy://"', None),
-            mock.call('CREATE VIRTUAL TABLE "dummy://" USING DummyAdapter()'),
+            mock.call('CREATE VIRTUAL TABLE "dummy://" USING FakeAdapter()'),
             mock.call('SELECT 1 FROM "dummy://"', None),
             mock.call("ROLLBACK"),
             mock.call("BEGIN IMMEDIATE"),

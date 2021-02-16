@@ -102,5 +102,6 @@ ENV/
 
 *.sqlite
 *.db
+*.swp
 
 test_creds.py

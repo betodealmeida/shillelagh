@@ -13,18 +13,12 @@ from shillelagh.adapters.api.gsheets import quote
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 
-
-class MockEntryPoint:
-    def __init__(self, name: str, adapter: Adapter):
-        self.name = name
-        self.adapter = adapter
-
-    def load(self) -> Adapter:
-        return self.adapter
+from ...fakes import FakeAdapter
+from ...fakes import FakeEntryPoint
 
 
 def test_credentials(mocker):
-    entry_points = [MockEntryPoint("gsheetsapi", GSheetsAPI)]
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
@@ -66,7 +60,7 @@ def test_credentials(mocker):
 
 
 def test_execute(mocker):
-    entry_points = [MockEntryPoint("gsheetsapi", GSheetsAPI)]
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
@@ -137,7 +131,7 @@ def test_execute(mocker):
 
 
 def test_execute_filter(mocker):
-    entry_points = [MockEntryPoint("gsheetsapi", GSheetsAPI)]
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,

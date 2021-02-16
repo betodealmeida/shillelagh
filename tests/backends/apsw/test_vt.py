@@ -19,63 +19,31 @@ from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.types import Row
 
-
-class DummyAdapter(Adapter):
-
-    age = Float(filters=[Range], order=Order.NONE, exact=True)
-    name = String(filters=[Equal], order=Order.ASCENDING, exact=True)
-    pets = Integer()
-
-    def __init__(self):
-        self.data = [
-            {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
-            {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
-        ]
-
-    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Dict[str, Any]]:
-        data = self.data[:]
-
-        for column in ["name", "age"]:
-            if column in bounds:
-                data = [row for row in data if bounds[column].check(row[column])]
-
-        yield from iter(data)
-
-    def insert_row(self, row: Row) -> int:
-        row_id: Optional[int] = row["rowid"]
-        if row_id is None:
-            row["rowid"] = row_id = max(row["rowid"] for row in self.data) + 1
-
-        self.data.append(row)
-
-        return row_id
-
-    def delete_row(self, row_id: int) -> None:
-        self.data = [row for row in self.data if row["rowid"] != row_id]
+from ...fakes import FakeAdapter
 
 
-class DummyAdapterNoFilters(DummyAdapter):
+class FakeAdapterNoFilters(FakeAdapter):
 
     age = Float()
     name = String()
     pets = Integer()
 
 
-class DummyAdapterOnlyEqual(DummyAdapter):
+class FakeAdapterOnlyEqual(FakeAdapter):
 
     age = Float(filters=[Equal], order=Order.NONE, exact=True)
     name = String(filters=[Equal], order=Order.ASCENDING, exact=True)
     pets = Integer()
 
 
-class DummyAdapterNoColumns(DummyAdapter):
+class FakeAdapterNoColumns(FakeAdapter):
     def get_columns(self) -> Dict[str, Field]:
         return {}
 
 
 def test_vt_module():
-    table = VTTable(DummyAdapter)
-    vt_module = VTModule(DummyAdapter)
+    table = VTTable(FakeAdapter)
+    vt_module = VTModule(FakeAdapter)
     create_table, table = vt_module.Create(None, "", "", "table")
     assert (
         create_table
@@ -84,7 +52,7 @@ def test_vt_module():
 
 
 def test_virtual_best_index():
-    table = VTTable(DummyAdapter())
+    table = VTTable(FakeAdapter())
     result = table.BestIndex(
         [
             (1, apsw.SQLITE_INDEX_CONSTRAINT_EQ),  # name =
@@ -103,7 +71,7 @@ def test_virtual_best_index():
 
 
 def test_virtual_best_index_operator_not_supported():
-    table = VTTable(DummyAdapter())
+    table = VTTable(FakeAdapter())
     result = table.BestIndex(
         [(1, apsw.SQLITE_INDEX_CONSTRAINT_MATCH)],  # name LIKE?
         [(1, False)],  # ORDER BY name ASC
@@ -112,7 +80,7 @@ def test_virtual_best_index_operator_not_supported():
 
 
 def test_virtual_best_index_no_order_by():
-    table = VTTable(DummyAdapter())
+    table = VTTable(FakeAdapter())
     result = table.BestIndex(
         [
             (1, apsw.SQLITE_INDEX_CONSTRAINT_EQ),  # name =
@@ -131,12 +99,12 @@ def test_virtual_best_index_no_order_by():
 
 
 def test_virtual_disconnect():
-    table = VTTable(DummyAdapter())
+    table = VTTable(FakeAdapter())
     table.Disconnect()  # no-op
 
 
 def test_update_insert_row():
-    adapter = DummyAdapter()
+    adapter = FakeAdapter()
     table = VTTable(adapter)
 
     new_row_id = table.UpdateInsertRow(None, [6, "Charlie", 1])
@@ -158,7 +126,7 @@ def test_update_insert_row():
 
 
 def test_update_delete_row():
-    adapter = DummyAdapter()
+    adapter = FakeAdapter()
     table = VTTable(adapter)
 
     table.UpdateDeleteRow(0)
@@ -168,7 +136,7 @@ def test_update_delete_row():
 
 
 def test_update_change_row():
-    adapter = DummyAdapter()
+    adapter = FakeAdapter()
     table = VTTable(adapter)
 
     table.UpdateChangeRow(1, 1, [24, "Bob", 4])
@@ -185,7 +153,7 @@ def test_update_change_row():
 
 
 def test_cursor():
-    table = VTTable(DummyAdapter())
+    table = VTTable(FakeAdapter())
     cursor = table.Open()
     cursor.Filter(42, "[]", [])
     assert cursor.current_row == (0, 20, "Alice", 0)
@@ -202,7 +170,7 @@ def test_cursor():
 
 
 def test_cursor_with_constraints():
-    table = VTTable(DummyAdapter())
+    table = VTTable(FakeAdapter())
     cursor = table.Open()
     cursor.Filter(42, f"[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}]]", ["Alice"])
     assert cursor.current_row == (0, 20, "Alice", 0)
@@ -213,7 +181,7 @@ def test_cursor_with_constraints():
 
 
 def test_cursor_with_constraints_invalid_filter():
-    table = VTTable(DummyAdapter())
+    table = VTTable(FakeAdapter())
     cursor = table.Open()
 
     with pytest.raises(Exception) as excinfo:
@@ -223,7 +191,7 @@ def test_cursor_with_constraints_invalid_filter():
 
 
 def test_cursor_with_constraints_no_filters():
-    table = VTTable(DummyAdapterNoFilters())
+    table = VTTable(FakeAdapterNoFilters())
     cursor = table.Open()
     with pytest.raises(Exception) as excinfo:
         cursor.Filter(42, f"[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}]]", ["Alice"])
@@ -232,7 +200,7 @@ def test_cursor_with_constraints_no_filters():
 
 
 def test_cursor_with_constraints_only_equal():
-    table = VTTable(DummyAdapterOnlyEqual())
+    table = VTTable(FakeAdapterOnlyEqual())
     cursor = table.Open()
     with pytest.raises(Exception) as excinfo:
         cursor.Filter(42, f"[[1, {apsw.SQLITE_INDEX_CONSTRAINT_GE}]]", ["Alice"])
@@ -241,8 +209,8 @@ def test_cursor_with_constraints_only_equal():
 
 
 def test_adapter_with_no_columns():
-    table = VTTable(DummyAdapter)
-    vt_module = VTModule(DummyAdapterNoColumns)
+    table = VTTable(FakeAdapter)
+    vt_module = VTModule(FakeAdapterNoColumns)
     with pytest.raises(ProgrammingError) as excinfo:
         create_table, table = vt_module.Create(None, "", "", "table")
 

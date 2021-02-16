@@ -7,14 +7,7 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
 
-
-class MockEntryPoint:
-    def __init__(self, name: str, adapter: Adapter):
-        self.name = name
-        self.adapter = adapter
-
-    def load(self) -> Adapter:
-        return self.adapter
+from ...fakes import FakeEntryPoint
 
 
 def test_weatherapi(requests_mock):
@@ -123,7 +116,7 @@ def test_weatherapi_api_error(requests_mock):
 
 
 def test_dispatch(mocker, requests_mock):
-    entry_points = [MockEntryPoint("weatherapi", WeatherAPI)]
+    entry_points = [FakeEntryPoint("weatherapi", WeatherAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
