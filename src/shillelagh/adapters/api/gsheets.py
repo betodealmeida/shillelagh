@@ -315,7 +315,7 @@ class GSheetsAPI(Adapter):
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
 
-    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
+    def _build_sql(self, bounds: Dict[str, Filter]) -> str:
         sql = "SELECT *"
 
         conditions = []
@@ -326,15 +326,21 @@ class GSheetsAPI(Adapter):
             elif isinstance(filter_, Equal):
                 conditions.append(f"{id_} = {quote(filter_.value)}")
             elif isinstance(filter_, Range):
-                if filter_.start:
+                if filter_.start is not None:
                     op = ">=" if filter_.include_start else ">"
                     conditions.append(f"{id_} {op} {quote(filter_.start)}")
-                if filter_.end:
+                if filter_.end is not None:
                     op = "<=" if filter_.include_end else "<"
                     conditions.append(f"{id_} {op} {quote(filter_.end)}")
+            else:
+                raise ProgrammingError(f"Invalid filter: {filter_}")
         if conditions:
             sql = f"{sql} WHERE {' AND '.join(conditions)}"
 
+        return sql
+
+    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
+        sql = self._build_sql(bounds)
         results = self._run_query(sql)
         cols = results["table"]["cols"]
         rows = convert_rows(cols, results["table"]["rows"])

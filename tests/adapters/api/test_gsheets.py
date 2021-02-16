@@ -1,4 +1,5 @@
 import datetime
+import json
 from unittest import mock
 
 import apsw
@@ -12,6 +13,10 @@ from shillelagh.adapters.api.gsheets import GSheetsAPI
 from shillelagh.adapters.api.gsheets import quote
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
+from shillelagh.exceptions import ProgrammingError
+from shillelagh.filters import Equal
+from shillelagh.filters import Impossible
+from shillelagh.filters import Range
 
 from ...fakes import FakeAdapter
 from ...fakes import FakeEntryPoint
@@ -479,7 +484,8 @@ def test_convert_rows(mocker):
 def test_get_session(mocker):
     mock_authorized_session = mock.MagicMock()
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.AuthorizedSession", mock_authorized_session
+        "shillelagh.adapters.api.gsheets.AuthorizedSession",
+        mock_authorized_session,
     )
     mock_session = mock.MagicMock()
     mocker.patch("shillelagh.adapters.api.gsheets.Session", mock_session)
@@ -489,7 +495,10 @@ def test_get_session(mocker):
     )
 
     # prevent network call
-    GSheetsAPI._set_columns = mock.MagicMock()
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_columns",
+        mock.MagicMock(),
+    )
 
     adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1")
     adapter._get_session()
@@ -508,3 +517,256 @@ def test_get_session(mocker):
     adapter._get_session()
     mock_authorized_session.assert_called()
     mock_session.assert_not_called()
+
+
+def test_api_bugs(mocker):
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    adapter = requests_mock.Adapter()
+    session = requests.Session()
+    session.mount("https://docs.google.com/spreadsheets/d/3", adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    # use content= so that the response has no encoding
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/3/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%200",
+        content=json.dumps(
+            {
+                "version": "0.6",
+                "reqId": "0",
+                "status": "ok",
+                "sig": "2050160589",
+                "table": {
+                    "cols": [
+                        {"id": "A", "label": "country", "type": "string"},
+                        {
+                            "id": "B",
+                            "label": "cnt",
+                            "type": "number",
+                            "pattern": "General",
+                        },
+                    ],
+                    "rows": [],
+                    "parsedNumHeaders": 0,
+                },
+            },
+        ).encode(),
+    )
+    # the API actually returns "200 OK" on errors, but let's assume for a second
+    # that it uses HTTP status codes correctly...
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/3/gviz/tq?gid=0&tq=SELECT%20%2A",
+        content=json.dumps(
+            {
+                "version": "0.6",
+                "reqId": "0",
+                "status": "error",
+                "errors": [
+                    {
+                        "reason": "invalid_query",
+                        "message": "INVALID_QUERY",
+                        "detailed_message": "Invalid query: NO_COLUMN: C",
+                    },
+                ],
+            },
+        ).encode(),
+        status_code=400,
+        headers={},
+    )
+
+    connection = connect(":memory:", ["gsheetsapi"])
+    cursor = connection.cursor()
+
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/3/edit#gid=0"'''
+    with pytest.raises(ProgrammingError):
+        cursor.execute(sql)
+
+
+def test_execute_json_prefix(mocker):
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    adapter = requests_mock.Adapter()
+    session = requests.Session()
+    session.mount("https://docs.google.com/spreadsheets/d/4", adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/4/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%200",
+        json={
+            "version": "0.6",
+            "reqId": "0",
+            "status": "ok",
+            "sig": "2050160589",
+            "table": {
+                "cols": [
+                    {"id": "A", "label": "country", "type": "string"},
+                    {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
+                ],
+                "rows": [],
+                "parsedNumHeaders": 0,
+            },
+        },
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/4/gviz/tq?gid=0&tq=SELECT%20%2A",
+        text=")]}'\n"
+        + json.dumps(
+            {
+                "version": "0.6",
+                "reqId": "0",
+                "status": "ok",
+                "sig": "1642441872",
+                "table": {
+                    "cols": [
+                        {"id": "A", "label": "country", "type": "string"},
+                        {
+                            "id": "B",
+                            "label": "cnt",
+                            "type": "number",
+                            "pattern": "General",
+                        },
+                    ],
+                    "rows": [
+                        {"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]},
+                        {"c": [{"v": "BR"}, {"v": 3.0, "f": "3"}]},
+                        {"c": [{"v": "IN"}, {"v": 5.0, "f": "5"}]},
+                        {"c": [{"v": "ZA"}, {"v": 6.0, "f": "6"}]},
+                        {"c": [{"v": "CR"}, {"v": 10.0, "f": "10"}]},
+                    ],
+                    "parsedNumHeaders": 1,
+                },
+            },
+        ),
+    )
+
+    connection = connect(":memory:", ["gsheetsapi"])
+    cursor = connection.cursor()
+
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/4/edit#gid=0"'''
+    data = list(cursor.execute(sql))
+    assert data == [
+        ("BR", 1),
+        ("BR", 3),
+        ("IN", 5),
+        ("ZA", 6),
+        ("CR", 10),
+    ]
+
+
+def test_execute_invalid_json(mocker):
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    adapter = requests_mock.Adapter()
+    session = requests.Session()
+    session.mount("https://docs.google.com/spreadsheets/d/5", adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/5/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%200",
+        text="NOT JSON",
+    )
+
+    connection = connect(":memory:", ["gsheetsapi"])
+    cursor = connection.cursor()
+
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/5/edit#gid=0"'''
+    with pytest.raises(ProgrammingError) as excinfo:
+        cursor.execute(sql)
+    assert str(excinfo.value) == (
+        "Response from Google is not valid JSON. Please verify that you have "
+        "the proper credentials to access the spreadsheet."
+    )
+
+
+def test_execute_error_response(mocker):
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    adapter = requests_mock.Adapter()
+    session = requests.Session()
+    session.mount("https://docs.google.com/spreadsheets/d/6", adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/6/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%200",
+        json={
+            "version": "0.6",
+            "reqId": "0",
+            "status": "error",
+            "errors": [
+                {
+                    "reason": "invalid_query",
+                    "message": "INVALID_QUERY",
+                    "detailed_message": "Invalid query: NO_COLUMN: C",
+                },
+            ],
+        },
+    )
+
+    connection = connect(":memory:", ["gsheetsapi"])
+    cursor = connection.cursor()
+
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/6/edit#gid=0"'''
+    with pytest.raises(ProgrammingError) as excinfo:
+        cursor.execute(sql)
+    assert str(excinfo.value) == "Invalid query: NO_COLUMN: C"
+
+
+def test_build_sql(mocker):
+    # prevent network call
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_columns",
+        mock.MagicMock(),
+    )
+
+    adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1")
+    adapter._column_map = {f"col{i}_": letter for i, letter in enumerate("ABCDE")}
+
+    bounds = {}
+    assert adapter._build_sql(bounds) == "SELECT *"
+
+    bounds = {
+        "col0_": Impossible(),
+        "col1_": Equal(1),
+        "col2_": Range(start=0, end=1, include_start=True, include_end=False),
+        "col3_": Range(start=None, end=1, include_start=False, include_end=True),
+        "col4_": Range(start=0, end=None, include_start=False, include_end=True),
+    }
+    assert (
+        adapter._build_sql(bounds)
+        == "SELECT * WHERE 1 = 0 AND B = 1 AND C >= 0 AND C < 1 AND D <= 1 AND E > 0"
+    )
+
+    bounds = {"col0_": 1}
+    with pytest.raises(ProgrammingError) as excinfo:
+        adapter._build_sql(bounds)
+    assert str(excinfo.value) == "Invalid filter: 1"
