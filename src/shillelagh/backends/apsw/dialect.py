@@ -45,7 +45,7 @@ class APSWDialect(SQLiteDialect):
         Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], Optional[str]],
         Dict[str, Any],
     ]:
-        path = str(url.database) or ":memory:"
+        path = str(url.database) if url.database else ":memory:"
         return ((path, self._adapters, self._adapter_args, self.isolation_level), {})
 
     def do_ping(self, dbapi_connection: _ConnectionFairy) -> bool:
