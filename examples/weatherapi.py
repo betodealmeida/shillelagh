@@ -3,7 +3,6 @@ import sys
 from datetime import datetime
 from datetime import timedelta
 
-from shillelagh.adapters.api.weatherapi import WeatherAPI
 from shillelagh.backends.apsw.db import connect
 
 

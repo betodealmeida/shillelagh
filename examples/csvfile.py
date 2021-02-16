@@ -1,4 +1,3 @@
-from shillelagh.adapters.file.csvfile import CSVFile
 from shillelagh.backends.apsw.db import connect
 
 if __name__ == "__main__":
