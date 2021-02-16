@@ -8,6 +8,7 @@ from typing import Tuple
 
 import apsw
 import sqlalchemy.types
+from typing_extensions import TypedDict
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw import db
 from shillelagh.backends.apsw.vt import VTTable
@@ -17,6 +18,16 @@ from sqlalchemy.dialects.sqlite.base import SQLiteDialect
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.pool.base import _ConnectionFairy
+from sqlalchemy.sql.visitors import VisitableType
+
+
+class SQLAlchemyColumn(TypedDict):
+    name: str
+    type: VisitableType
+    nullable: bool
+    default: Optional[str]
+    autoincrement: str
+    primary_key: int
 
 
 class APSWDialect(SQLiteDialect):
@@ -51,7 +62,13 @@ class APSWDialect(SQLiteDialect):
     def do_ping(self, dbapi_connection: _ConnectionFairy) -> bool:
         return True
 
-    def get_columns(self, connection, table_name, schema=None, **kw):
+    def get_columns(
+        self,
+        connection: _ConnectionFairy,
+        table_name: str,
+        schema: Optional[str] = None,
+        **kwargs: Any,
+    ) -> List[SQLAlchemyColumn]:
         adapter = self._get_adapter_for_table_name(connection, table_name)
         columns = adapter.get_columns()
         return [
@@ -66,12 +83,20 @@ class APSWDialect(SQLiteDialect):
             for column_name, field in columns.items()
         ]
 
-    def _get_table_sql(self, connection, table_name, schema=None, **kw) -> str:
+    def _get_table_sql(
+        self,
+        connection: _ConnectionFairy,
+        table_name: str,
+        schema: Optional[str] = None,
+        **kwargs: Any,
+    ) -> str:
         adapter = self._get_adapter_for_table_name(connection, table_name)
         table = VTTable(adapter)
         return table.get_create_table(table_name)
 
-    def _get_adapter_for_table_name(self, connection, table_name) -> Adapter:
+    def _get_adapter_for_table_name(
+        self, connection: _ConnectionFairy, table_name: str
+    ) -> Adapter:
         raw_connection = cast(db.Connection, connection.engine.raw_connection())
         for adapter in raw_connection._adapters:
             if adapter.supports(table_name):
@@ -117,3 +142,8 @@ class APSWGSheetsDialect(APSWDialect):
             adapter_args["gsheetsapi"] = (self.service_account_info, self.subject)
 
         return (":memory:", ["gsheetsapi"], adapter_args, self.isolation_level), {}
+
+    def get_schema_names(
+        self, connection: _ConnectionFairy, **kwargs: Any
+    ) -> List[str]:
+        return []
