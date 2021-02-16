@@ -128,7 +128,7 @@ class Boolean(Field):
     def parse(value: Any) -> bool:
         if isinstance(value, bool):
             return value
-        return bool(strtobool(value))
+        return bool(strtobool(str(value)))
 
 
 type_map = {

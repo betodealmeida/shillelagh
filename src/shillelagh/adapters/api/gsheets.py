@@ -5,6 +5,7 @@ from typing import cast
 from typing import Dict
 from typing import Iterator
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -64,9 +65,17 @@ class QueryResultsTable(TypedDict):
     parsedNumHeaders: int
 
 
-class QueryResults(TypedDict):
+class QueryResultsError(TypedDict):
+    reason: str
+    message: str
+    detailed_message: str
+
+
+class QueryResults(TypedDict, total=False):
     """
     Query results from the Google API.
+
+    Successful query:
 
     {
         "version": "0.6",
@@ -82,13 +91,29 @@ class QueryResults(TypedDict):
             "parsedNumHeaders": 0,
         },
     }
+
+    Failed:
+
+    {
+        "version": "0.6",
+        "reqId": "0",
+        "status": "error",
+        "errors": [
+            {
+                "reason": "invalid_query",
+                "message": "INVALID_QUERY",
+                "detailed_message": "Invalid query: NO_COLUMN: C",
+            }
+        ],
+    }
     """
 
     version: str
     reqId: str
-    status: str
+    status: Literal["ok", "error"]
     sig: str
     table: QueryResultsTable
+    errors: List[QueryResultsError]
 
 
 type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
@@ -118,6 +143,10 @@ def quote(value: Any) -> str:
         return f"'{quoted_value}'"
 
     raise Exception(f"Can't quote value: {value}")
+
+
+def format_error_message(errors: List[QueryResultsError]) -> str:
+    return "\n\n".join(error["detailed_message"] for error in errors)
 
 
 def get_url(
@@ -190,13 +219,18 @@ class GSheetsAPI(Adapter):
         )
         self._set_columns()
 
+    def _get_session(self) -> Session:
+        return cast(
+            Session,
+            AuthorizedSession(self.credentials) if self.credentials else Session(),
+        )
+
     def _run_query(self, sql: str) -> QueryResults:
         quoted_sql = urllib.parse.quote(sql, safe="/()")
         url = f"{self.url}&tq={quoted_sql}"
         headers = {"X-DataSource-Auth": "true"}
 
-        session = AuthorizedSession(self.credentials) if self.credentials else Session()
-
+        session = self._get_session()
         response = session.get(url, headers=headers)
         if response.encoding is None:
             response.encoding = "utf-8"
@@ -207,7 +241,16 @@ class GSheetsAPI(Adapter):
         if response.text.startswith(JSON_PAYLOAD_PREFIX):
             result = json.loads(response.text[len(JSON_PAYLOAD_PREFIX) :])
         else:
-            result = response.json()
+            try:
+                result = response.json()
+            except json.decoder.JSONDecodeError:
+                raise ProgrammingError(
+                    "Response from Google is not valid JSON. Please verify that you "
+                    "have the proper credentials to access the spreadsheet.",
+                )
+
+        if result["status"] == "error":
+            raise ProgrammingError(format_error_message(result["errors"]))
 
         return cast(QueryResults, result)
 

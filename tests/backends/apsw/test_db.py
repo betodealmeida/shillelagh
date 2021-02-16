@@ -10,9 +10,9 @@ from unittest import mock
 import apsw
 import pytest
 from shillelagh.adapters.base import Adapter
-from shillelagh.db import connect
-from shillelagh.db import Connection
-from shillelagh.db import Cursor
+from shillelagh.backends.apsw.db import connect
+from shillelagh.backends.apsw.db import Connection
+from shillelagh.backends.apsw.db import Cursor
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
@@ -81,7 +81,10 @@ class DummyAdapter(Adapter):
 
 def test_connect(mocker):
     entry_points = [MockEntryPoint("dummy", DummyAdapter)]
-    mocker.patch("shillelagh.db.iter_entry_points", return_value=entry_points)
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
 
     connection = connect(":memory:", ["dummy"])
     cursor = connection.cursor()
@@ -118,7 +121,10 @@ def test_check_closed(mocker):
 
 def test_check_result(mocker):
     entry_points = [MockEntryPoint("dummy", DummyAdapter)]
-    mocker.patch("shillelagh.db.iter_entry_points", return_value=entry_points)
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
 
     connection = connect(":memory:", ["dummy"])
     cursor = connection.cursor()
@@ -146,7 +152,10 @@ def test_unsupported_table(mocker):
 
 def test_description(mocker):
     entry_points = [MockEntryPoint("dummy", DummyAdapter)]
-    mocker.patch("shillelagh.db.iter_entry_points", return_value=entry_points)
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
 
     connection = connect(":memory:", ["dummy"])
     cursor = connection.cursor()
@@ -167,7 +176,10 @@ def test_description(mocker):
 
 def test_execute_many(mocker):
     entry_points = [MockEntryPoint("dummy", DummyAdapter)]
-    mocker.patch("shillelagh.db.iter_entry_points", return_value=entry_points)
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
 
     connection = connect(":memory:", ["dummy"])
     cursor = connection.cursor()
@@ -205,7 +217,10 @@ def test_close_connection():
 
 def test_transaction(mocker):
     entry_points = [MockEntryPoint("dummy", DummyAdapter)]
-    mocker.patch("shillelagh.db.iter_entry_points", return_value=entry_points)
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
 
     connection = connect(":memory:", ["dummy"])
 

@@ -8,6 +8,8 @@ import pytest
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.backends.apsw.vt import VTTable
+from shillelagh.exceptions import ProgrammingError
+from shillelagh.fields import Field
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
 from shillelagh.fields import Order
@@ -64,6 +66,11 @@ class DummyAdapterOnlyEqual(DummyAdapter):
     age = Float(filters=[Equal], order=Order.NONE, exact=True)
     name = String(filters=[Equal], order=Order.ASCENDING, exact=True)
     pets = Integer()
+
+
+class DummyAdapterNoColumns(DummyAdapter):
+    def get_columns(self) -> Dict[str, Field]:
+        return {}
 
 
 def test_vt_module():
@@ -231,3 +238,12 @@ def test_cursor_with_constraints_only_equal():
         cursor.Filter(42, f"[[1, {apsw.SQLITE_INDEX_CONSTRAINT_GE}]]", ["Alice"])
 
     assert str(excinfo.value) == "No valid filter found"
+
+
+def test_adapter_with_no_columns():
+    table = VTTable(DummyAdapter)
+    vt_module = VTModule(DummyAdapterNoColumns)
+    with pytest.raises(ProgrammingError) as excinfo:
+        create_table, table = vt_module.Create(None, "", "", "table")
+
+    assert str(excinfo.value) == "Virtual table table has no columns"

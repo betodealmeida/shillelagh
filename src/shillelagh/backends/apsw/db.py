@@ -1,4 +1,3 @@
-# TODO: move this to backends/apsw/
 import json
 import urllib.parse
 from functools import wraps

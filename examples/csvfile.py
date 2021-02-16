@@ -1,6 +1,5 @@
 from shillelagh.adapters.file.csvfile import CSVFile
-from shillelagh.backends.apsw.vt import VTModule
-from shillelagh.db import connect
+from shillelagh.backends.apsw.db import connect
 
 if __name__ == "__main__":
     connection = connect(":memory:")

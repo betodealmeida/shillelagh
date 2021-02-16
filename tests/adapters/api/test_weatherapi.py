@@ -4,8 +4,8 @@ import apsw
 import pytest
 from shillelagh.adapters.api.weatherapi import WeatherAPI
 from shillelagh.adapters.base import Adapter
+from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
-from shillelagh.db import connect
 
 
 class MockEntryPoint:
@@ -124,7 +124,10 @@ def test_weatherapi_api_error(requests_mock):
 
 def test_dispatch(mocker, requests_mock):
     entry_points = [MockEntryPoint("weatherapi", WeatherAPI)]
-    mocker.patch("shillelagh.db.iter_entry_points", return_value=entry_points)
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
 
     url = "https://api.weatherapi.com/v1/history.json?key=f426b51ea9aa4e4ab68190907202309&q=94923&dt=2020-10-20"
     payload = {

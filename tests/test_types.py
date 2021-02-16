@@ -1,4 +1,4 @@
-from shillelagh.db import connect
+from shillelagh.backends.apsw.db import connect
 from shillelagh.types import Binary
 from shillelagh.types import Date
 from shillelagh.types import DateFromTicks
