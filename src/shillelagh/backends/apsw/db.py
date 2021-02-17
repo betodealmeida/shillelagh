@@ -98,7 +98,7 @@ class Cursor(object):
         self.description: Description = None
 
         # this is set to an iterator of rows after a successful query
-        self._results: Optional[Iterator[List[Any]]] = None
+        self._results: Optional[Iterator[Tuple[Any, ...]]] = None
         self._rowcount = -1
 
     @property  # type: ignore
@@ -199,7 +199,7 @@ class Cursor(object):
 
     @check_result
     @check_closed
-    def fetchone(self) -> Optional[List[Any]]:
+    def fetchone(self) -> Optional[Tuple[Any, ...]]:
         """
         Fetch the next row of a query result set, returning a single sequence,
         or `None` when no more data is available.
@@ -215,7 +215,7 @@ class Cursor(object):
 
     @check_result
     @check_closed
-    def fetchmany(self, size=None) -> List[List[Any]]:
+    def fetchmany(self, size=None) -> List[Tuple[Any, ...]]:
         """
         Fetch the next set of rows of a query result, returning a sequence of
         sequences (e.g. a list of tuples). An empty sequence is returned when
@@ -227,7 +227,7 @@ class Cursor(object):
 
     @check_result
     @check_closed
-    def fetchall(self) -> List[List[Any]]:
+    def fetchall(self) -> List[Tuple[Any, ...]]:
         """
         Fetch all (remaining) rows of a query result, returning them as a
         sequence of sequences (e.g. a list of tuples). Note that the cursor's
@@ -248,14 +248,14 @@ class Cursor(object):
 
     @check_result
     @check_closed
-    def __iter__(self) -> Iterator[List[Any]]:
+    def __iter__(self) -> Iterator[Tuple[Any, ...]]:
         for row in self._results:  # type: ignore
             self._rowcount = max(0, self._rowcount) + 1
             yield row
 
     @check_result
     @check_closed
-    def __next__(self) -> List[Any]:
+    def __next__(self) -> Tuple[Any, ...]:
         return next(self._results)  # type: ignore
 
     next = __next__
