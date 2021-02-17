@@ -109,3 +109,6 @@ def test_gsheets_dialect(fs):
         ),
         {},
     )
+
+    mock_dbapi_connection = mock.MagicMock()
+    assert dialect.get_schema_names(mock_dbapi_connection) == []

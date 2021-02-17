@@ -1,3 +1,4 @@
+import itertools
 import json
 import urllib.parse
 from functools import wraps
@@ -5,6 +6,7 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -95,15 +97,21 @@ class Cursor(object):
         # this is updated only after a query
         self.description: Description = None
 
-        # this is set to a list of rows after a successful query
-        self._results: Optional[List[Any]] = None
+        # this is set to an iterator of rows after a successful query
+        self._results: Optional[Iterator[List[Any]]] = None
         self._rowcount = -1
 
     @property  # type: ignore
-    @check_result
     @check_closed
     def rowcount(self) -> int:
-        return self._rowcount
+        try:
+            results = list(self._results)  # type: ignore
+        except TypeError:
+            return -1
+
+        n = len(results)
+        self._results = iter(results)
+        return self._rowcount + n
 
     @check_closed
     def close(self) -> None:
@@ -122,10 +130,11 @@ class Cursor(object):
             self.in_transaction = True
 
         self.description = None
+        self._rowcount = -1
         try:
             self._cursor.execute(operation, parameters)
             self.description = self._get_description()
-            self._results = list(self._cursor)
+            self._results = iter(self._cursor)
         except apsw.SQLError as exc:
             message = exc.args[0]
             if not message.startswith(NO_SUCH_TABLE):
@@ -138,9 +147,7 @@ class Cursor(object):
             # try again
             self._cursor.execute(operation, parameters)
             self.description = self._get_description()
-            self._results = list(self._cursor)
-
-        self._rowcount = len(self._results)
+            self._results = iter(self._cursor)
 
         return self
 
@@ -183,59 +190,75 @@ class Cursor(object):
         ]
 
     @check_closed
-    def executemany(self, operation, seq_of_parameters=None):
+    def executemany(
+        self,
+        operation: str,
+        seq_of_parameters: Optional[Tuple[Any, ...]] = None,
+    ) -> "Cursor":
         raise NotSupportedError("`executemany` is not supported, use `execute` instead")
 
     @check_result
     @check_closed
-    def fetchone(self):
+    def fetchone(self) -> Optional[List[Any]]:
         """
         Fetch the next row of a query result set, returning a single sequence,
         or `None` when no more data is available.
         """
         try:
-            return self._results.pop(0)
-        except IndexError:
+            row = self.next()
+        except StopIteration:
             return None
+
+        self._rowcount = max(0, self._rowcount) + 1
+
+        return row
 
     @check_result
     @check_closed
-    def fetchmany(self, size=None):
+    def fetchmany(self, size=None) -> List[List[Any]]:
         """
         Fetch the next set of rows of a query result, returning a sequence of
         sequences (e.g. a list of tuples). An empty sequence is returned when
         no more rows are available.
         """
         size = size or self.arraysize
-        out = self._results[:size]
-        self._results = self._results[size:]
-        return out
+        results = list(itertools.islice(self, size))
+        return results
 
     @check_result
     @check_closed
-    def fetchall(self):
+    def fetchall(self) -> List[List[Any]]:
         """
         Fetch all (remaining) rows of a query result, returning them as a
         sequence of sequences (e.g. a list of tuples). Note that the cursor's
         arraysize attribute can affect the performance of this operation.
         """
-        out = self._results[:]
-        self._results = []
-        return out
+        results = list(self)
+        return results
 
     @check_closed
-    def setinputsizes(self, sizes):
+    def setinputsizes(self, sizes: int) -> None:
         # not supported
         pass
 
     @check_closed
-    def setoutputsizes(self, sizes):
+    def setoutputsizes(self, sizes: int) -> None:
         # not supported
         pass
 
+    @check_result
     @check_closed
-    def __iter__(self):
-        return iter(self._results)
+    def __iter__(self) -> Iterator[List[Any]]:
+        for row in self._results:  # type: ignore
+            self._rowcount = max(0, self._rowcount) + 1
+            yield row
+
+    @check_result
+    @check_closed
+    def __next__(self) -> List[Any]:
+        return next(self._results)  # type: ignore
+
+    next = __next__
 
 
 class Connection(object):

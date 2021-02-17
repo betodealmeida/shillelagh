@@ -8,7 +8,6 @@ from typing import Tuple
 
 import apsw
 import sqlalchemy.types
-from typing_extensions import TypedDict
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw import db
 from shillelagh.backends.apsw.vt import VTTable
@@ -19,6 +18,7 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.pool.base import _ConnectionFairy
 from sqlalchemy.sql.visitors import VisitableType
+from typing_extensions import TypedDict
 
 
 class SQLAlchemyColumn(TypedDict):
@@ -95,7 +95,9 @@ class APSWDialect(SQLiteDialect):
         return table.get_create_table(table_name)
 
     def _get_adapter_for_table_name(
-        self, connection: _ConnectionFairy, table_name: str
+        self,
+        connection: _ConnectionFairy,
+        table_name: str,
     ) -> Adapter:
         raw_connection = cast(db.Connection, connection.engine.raw_connection())
         for adapter in raw_connection._adapters:
