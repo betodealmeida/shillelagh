@@ -40,9 +40,25 @@ def test_connect(mocker):
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
+    assert cursor.rowcount == -1
+
+    cursor.execute(
+        """INSERT INTO "dummy://" (age, name, pets) VALUES (6, 'Billy', 1)""",
+    )
+    assert cursor.rowcount == -1
+    cursor.execute("""DELETE FROM "dummy://" WHERE name = 'Billy'""")
+    assert cursor.rowcount == -1
+
     cursor.execute('SELECT * FROM "dummy://"')
     assert cursor.fetchall() == [(20.0, "Alice", 0), (23.0, "Bob", 3)]
     assert cursor.rowcount == 2
+
+    cursor.execute('SELECT * FROM "dummy://"')
+    assert cursor.fetchone() == (20.0, "Alice", 0)
+    assert cursor.rowcount == 2
+    assert cursor.fetchone() == (23.0, "Bob", 3)
+    assert cursor.rowcount == 2
+    assert cursor.fetchone() is None
 
     cursor.execute('SELECT * FROM "dummy://" WHERE age > 21')
     assert cursor.fetchone() == (23.0, "Bob", 3)
@@ -52,6 +68,7 @@ def test_connect(mocker):
     cursor.execute('SELECT * FROM "dummy://"')
     assert cursor.fetchmany() == [(20.0, "Alice", 0)]
     assert cursor.fetchmany(1000) == [(23.0, "Bob", 3)]
+    assert cursor.fetchall() == []
     assert cursor.rowcount == 2
 
 
@@ -113,7 +130,7 @@ def test_description(mocker):
 
     assert cursor.description is None
     cursor.execute(
-        """INSERT INTO "dummy://" (age, name, pets) VALUES (6, 'Billy', 'Mr. Rock')""",
+        """INSERT INTO "dummy://" (age, name, pets) VALUES (6, 'Billy', 1)""",
     )
     assert cursor.description is None
 
