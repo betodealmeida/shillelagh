@@ -309,7 +309,9 @@ class GSheetsAPI(Adapter):
         self._column_map = {col["label"]: col["id"] for col in results["table"]["cols"]}
 
         self.columns = {
-            col["label"]: get_field(col) for col in results["table"]["cols"]
+            col["label"]: get_field(col)
+            for col in results["table"]["cols"]
+            if col["label"]
         }
 
     def get_columns(self) -> Dict[str, Field]:
