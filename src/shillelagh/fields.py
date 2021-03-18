@@ -1,5 +1,4 @@
 import datetime
-import inspect
 from distutils.util import strtobool
 from enum import Enum
 from typing import Any
@@ -12,12 +11,6 @@ from typing import TypeVar
 
 import dateutil.parser
 from shillelagh.filters import Filter
-from shillelagh.types import BINARY
-from shillelagh.types import DATETIME
-from shillelagh.types import DBAPIType
-from shillelagh.types import NUMBER
-from shillelagh.types import ROWID
-from shillelagh.types import STRING
 
 T = TypeVar("T")
 
@@ -32,7 +25,7 @@ class Order(Enum):
 class Field:
 
     type = ""
-    db_api_type = DBAPIType
+    db_api_type = "DBAPIType"
 
     def __init__(
         self,
@@ -45,10 +38,6 @@ class Field:
         self.exact = exact
 
     def __eq__(self, other: object) -> bool:
-        # for DB API type_code comparison
-        if inspect.isclass(other) and issubclass(other, DBAPIType):
-            return self.db_api_type == other
-
         if not isinstance(other, Field):
             return NotImplemented
 
@@ -65,7 +54,7 @@ class Field:
 
 class Integer(Field):
     type = "INTEGER"
-    db_api_type = NUMBER
+    db_api_type = "NUMBER"
 
     @staticmethod
     def parse(value: Any) -> Optional[int]:
@@ -77,7 +66,7 @@ class Integer(Field):
 
 class Float(Field):
     type = "REAL"
-    db_api_type = NUMBER
+    db_api_type = "NUMBER"
 
     @staticmethod
     def parse(value: Any) -> Optional[float]:
@@ -89,7 +78,7 @@ class Float(Field):
 
 class String(Field):
     type = "TEXT"
-    db_api_type = STRING
+    db_api_type = "STRING"
 
     @staticmethod
     def parse(value: Any) -> Optional[str]:
@@ -101,7 +90,7 @@ class String(Field):
 
 class Date(Field):
     type = "DATE"
-    db_api_type = DATETIME
+    db_api_type = "DATETIME"
 
     @staticmethod
     def parse(value: Any) -> Optional[datetime.date]:
@@ -110,7 +99,7 @@ class Date(Field):
 
         try:
             dt = dateutil.parser.parse(value)
-        except dateutil.parser._parser.ParserError:
+        except dateutil.parser.ParserError:
             return None
 
         return dt.astimezone(datetime.timezone.utc).date()
@@ -118,7 +107,7 @@ class Date(Field):
 
 class Time(Field):
     type = "TIME"
-    db_api_type = DATETIME
+    db_api_type = "DATETIME"
 
     @staticmethod
     def parse(value: Any) -> Optional[datetime.time]:
@@ -127,7 +116,7 @@ class Time(Field):
 
         try:
             dt = dateutil.parser.parse(value)
-        except dateutil.parser._parser.ParserError:
+        except dateutil.parser.ParserError:
             return None
 
         return dt.astimezone(datetime.timezone.utc).timetz()
@@ -135,7 +124,7 @@ class Time(Field):
 
 class DateTime(Field):
     type = "TIMESTAMP"
-    db_api_type = DATETIME
+    db_api_type = "DATETIME"
 
     @staticmethod
     def parse(value: Any) -> Optional[datetime.datetime]:
@@ -144,7 +133,7 @@ class DateTime(Field):
 
         try:
             dt = dateutil.parser.parse(value)
-        except dateutil.parser._parser.ParserError:
+        except dateutil.parser.ParserError:
             return None
 
         return dt.astimezone(datetime.timezone.utc)
@@ -152,7 +141,7 @@ class DateTime(Field):
 
 class Blob(Field):
     type = "BLOB"
-    db_api_type = BINARY
+    db_api_type = "BINARY"
 
     @staticmethod
     def parse(value: T) -> T:
@@ -161,7 +150,7 @@ class Blob(Field):
 
 class Boolean(Field):
     type = "BOOLEAN"
-    db_api_type = NUMBER
+    db_api_type = "NUMBER"
 
     @staticmethod
     def parse(value: Any) -> Optional[bool]:

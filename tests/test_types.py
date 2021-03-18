@@ -2,6 +2,7 @@ from datetime import date
 from datetime import datetime
 from datetime import time
 from datetime import timezone
+
 from shillelagh.backends.apsw.db import connect
 from shillelagh.types import Binary
 from shillelagh.types import Date

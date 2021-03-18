@@ -25,7 +25,6 @@ from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
-from shillelagh.types import NUMBER
 from shillelagh.types import Row
 from shillelagh.types import STRING
 from sqlalchemy import create_engine

@@ -227,6 +227,8 @@ def test_execute_filter(mocker):
 @freeze_time("2020-01-01")
 def test_quote():
     assert quote("value") == "'value'"
+    assert quote(True) == "true"
+    assert quote(False) == "false"
     assert quote(1) == "1"
     assert quote(datetime.datetime.now()) == "datetime '2020-01-01 00:00:00'"
     assert quote(datetime.time(0, 0, 0)) == "timeofday '00:00:00'"
@@ -472,7 +474,7 @@ def test_convert_rows(mocker):
         (
             datetime.datetime(2018, 9, 1, 0, 0, tzinfo=datetime.timezone.utc),
             1.0,
-            1,
+            True,
             datetime.date(2018, 1, 1),
             datetime.time(17, 0, 0, tzinfo=datetime.timezone.utc),
             "test",
@@ -480,7 +482,7 @@ def test_convert_rows(mocker):
         (
             datetime.datetime(2018, 9, 2, 0, 0, tzinfo=datetime.timezone.utc),
             1.0,
-            0,
+            False,
             None,
             None,
             "test",
@@ -488,7 +490,7 @@ def test_convert_rows(mocker):
         (
             datetime.datetime(2018, 9, 3, 0, 0, tzinfo=datetime.timezone.utc),
             2.0,
-            0,
+            False,
             None,
             None,
             "test",
@@ -496,7 +498,7 @@ def test_convert_rows(mocker):
         (
             datetime.datetime(2018, 9, 4, 0, 0, tzinfo=datetime.timezone.utc),
             3.0,
-            0,
+            False,
             None,
             None,
             "test",
@@ -504,7 +506,7 @@ def test_convert_rows(mocker):
         (
             datetime.datetime(2018, 9, 5, 0, 0, tzinfo=datetime.timezone.utc),
             5.0,
-            0,
+            False,
             None,
             None,
             "test",
@@ -512,7 +514,7 @@ def test_convert_rows(mocker):
         (
             datetime.datetime(2018, 9, 6, 0, 0, tzinfo=datetime.timezone.utc),
             8.0,
-            0,
+            False,
             None,
             None,
             "test",
@@ -520,7 +522,7 @@ def test_convert_rows(mocker):
         (
             datetime.datetime(2018, 9, 7, 0, 0, tzinfo=datetime.timezone.utc),
             13.0,
-            0,
+            False,
             None,
             None,
             None,
@@ -528,7 +530,7 @@ def test_convert_rows(mocker):
         (
             datetime.datetime(2018, 9, 8, 0, 0, tzinfo=datetime.timezone.utc),
             None,
-            0,
+            False,
             None,
             None,
             "test",

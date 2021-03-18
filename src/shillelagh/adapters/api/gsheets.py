@@ -138,13 +138,13 @@ def get_field(col: QueryResultsColumn) -> Field:
 
 
 def quote(value: Any) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
     if isinstance(value, (int, float)):
         return str(value)
     if isinstance(value, str):
         escaped_value = value.replace("'", "''")
         return f"'{escaped_value}'"
-    if isinstance(value, bool):
-        return "true" if value else "false"
     if isinstance(value, datetime.datetime):
         return f"datetime '{value}'"
     if isinstance(value, datetime.date):

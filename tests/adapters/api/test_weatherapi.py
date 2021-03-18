@@ -1,6 +1,6 @@
+import os
 from datetime import datetime
 from datetime import timezone
-import os
 
 import apsw
 import pytest
