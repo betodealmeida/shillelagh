@@ -1,4 +1,5 @@
 import datetime
+import inspect
 import time
 from typing import Any
 from typing import Dict
@@ -6,7 +7,10 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Type
+from typing import TYPE_CHECKING
 from typing import Union
+
+from shillelagh.fields import Field
 
 # A value corresponding to a constraint is one of:
 #     None
@@ -28,27 +32,21 @@ Index = Tuple[int, int]
 
 
 class DBAPIType:
-    pass
+    def __init__(self, name: str):
+        self.name = name
+
+    def __eq__(self, other: Any) -> bool:
+        if inspect.isclass(other) and issubclass(other, Field):
+            return bool(self.name == other.db_api_type)
+
+        return NotImplemented
 
 
-class STRING(DBAPIType):
-    pass
-
-
-class BINARY(DBAPIType):
-    pass
-
-
-class NUMBER(DBAPIType):
-    pass
-
-
-class DATETIME(DBAPIType):
-    pass
-
-
-class ROWID(DBAPIType):
-    pass
+STRING = DBAPIType("STRING")
+BINARY = DBAPIType("BINARY")
+NUMBER = DBAPIType("NUMBER")
+DATETIME = DBAPIType("DATETIME")
+ROWID = DBAPIType("ROWID")
 
 
 # Cursor description
@@ -56,7 +54,7 @@ Description = Optional[
     List[
         Tuple[
             str,
-            Type[DBAPIType],
+            Type[Field],
             Optional[str],
             Optional[str],
             Optional[str],

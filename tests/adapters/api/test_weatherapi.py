@@ -1,4 +1,6 @@
 import os
+from datetime import datetime
+from datetime import timezone
 
 import apsw
 import pytest
@@ -147,7 +149,7 @@ def test_dispatch(mocker, requests_mock):
         "WHERE ts = '2020-10-20T12:00:00'"
     )
     data = list(cursor.execute(sql))
-    assert data == [(20.1, "2020-10-20T12:00:00")]
+    assert data == [(20.1, datetime(2020, 10, 20, 19, 0, tzinfo=timezone.utc))]
 
     try:
         os.unlink("weatherapi_cache.sqlite")

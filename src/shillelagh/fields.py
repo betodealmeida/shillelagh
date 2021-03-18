@@ -7,15 +7,12 @@ from typing import cast
 from typing import List
 from typing import Optional
 from typing import Type
+from typing import TypeVar
 
 import dateutil.parser
 from shillelagh.filters import Filter
-from shillelagh.types import BINARY
-from shillelagh.types import DATETIME
-from shillelagh.types import DBAPIType
-from shillelagh.types import NUMBER
-from shillelagh.types import ROWID
-from shillelagh.types import STRING
+
+T = TypeVar("T")
 
 
 class Order(Enum):
@@ -28,7 +25,7 @@ class Order(Enum):
 class Field:
 
     type = ""
-    db_api_type = DBAPIType
+    db_api_type = "DBAPIType"
 
     def __init__(
         self,
@@ -57,81 +54,115 @@ class Field:
 
 class Integer(Field):
     type = "INTEGER"
-    db_api_type = NUMBER
+    db_api_type = "NUMBER"
 
     @staticmethod
-    def parse(value: Any) -> int:
+    def parse(value: Any) -> Optional[int]:
+        if value is None:
+            return None
+
         return int(value)
 
 
 class Float(Field):
     type = "REAL"
-    db_api_type = NUMBER
+    db_api_type = "NUMBER"
 
     @staticmethod
-    def parse(value: Any) -> float:
+    def parse(value: Any) -> Optional[float]:
+        if value is None:
+            return None
+
         return float(value)
 
 
 class String(Field):
     type = "TEXT"
-    db_api_type = STRING
+    db_api_type = "STRING"
 
     @staticmethod
-    def parse(value: Any) -> str:
+    def parse(value: Any) -> Optional[str]:
+        if value is None:
+            return None
+
         return str(value)
 
 
 class Date(Field):
     type = "DATE"
-    db_api_type = DATETIME
+    db_api_type = "DATETIME"
 
     @staticmethod
-    def parse(value: Any) -> datetime.date:
-        return dateutil.parser.parse(value).astimezone(datetime.timezone.utc).date()
+    def parse(value: Any) -> Optional[datetime.date]:
+        if value is None:
+            return None
+
+        try:
+            dt = dateutil.parser.parse(value)
+        except dateutil.parser.ParserError:
+            return None
+
+        return dt.astimezone(datetime.timezone.utc).date()
 
 
 class Time(Field):
     type = "TIME"
-    db_api_type = DATETIME
+    db_api_type = "DATETIME"
 
     @staticmethod
-    def parse(value: Any) -> datetime.time:
-        return dateutil.parser.parse(value).astimezone(datetime.timezone.utc).timetz()
+    def parse(value: Any) -> Optional[datetime.time]:
+        if value is None:
+            return None
+
+        try:
+            dt = dateutil.parser.parse(value)
+        except dateutil.parser.ParserError:
+            return None
+
+        return dt.astimezone(datetime.timezone.utc).timetz()
 
 
 class DateTime(Field):
     type = "TIMESTAMP"
-    db_api_type = DATETIME
+    db_api_type = "DATETIME"
 
     @staticmethod
-    def parse(value: Any) -> datetime.datetime:
-        return dateutil.parser.parse(value).astimezone(datetime.timezone.utc)
+    def parse(value: Any) -> Optional[datetime.datetime]:
+        if value is None:
+            return None
+
+        try:
+            dt = dateutil.parser.parse(value)
+        except dateutil.parser.ParserError:
+            return None
+
+        return dt.astimezone(datetime.timezone.utc)
 
 
 class Blob(Field):
     type = "BLOB"
-    db_api_type = BINARY
+    db_api_type = "BINARY"
 
     @staticmethod
-    def parse(value: Any) -> bytes:
-        if isinstance(value, str):
-            return value.encode()
-        return bytes(value)
+    def parse(value: T) -> T:
+        return value
 
 
 class Boolean(Field):
     type = "BOOLEAN"
-    db_api_type = NUMBER
+    db_api_type = "NUMBER"
 
     @staticmethod
-    def parse(value: Any) -> bool:
+    def parse(value: Any) -> Optional[bool]:
+        if value is None:
+            return None
+
         if isinstance(value, bool):
             return value
         return bool(strtobool(str(value)))
 
 
 type_map = {
-    field.type: field.db_api_type
+    field.type: field
     for field in {Integer, Float, String, Date, Time, DateTime, Blob, Boolean}
 }

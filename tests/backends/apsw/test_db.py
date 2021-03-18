@@ -22,9 +22,7 @@ from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
-from shillelagh.types import NUMBER
 from shillelagh.types import Row
-from shillelagh.types import STRING
 
 from ...fakes import FakeAdapter
 from ...fakes import FakeEntryPoint
@@ -136,9 +134,9 @@ def test_description(mocker):
 
     cursor.execute('SELECT * FROM "dummy://"')
     assert cursor.description == [
-        ("age", NUMBER, None, None, None, None, True),
-        ("name", STRING, None, None, None, None, True),
-        ("pets", NUMBER, None, None, None, None, True),
+        ("age", Float, None, None, None, None, True),
+        ("name", String, None, None, None, None, True),
+        ("pets", Integer, None, None, None, None, True),
     ]
 
 

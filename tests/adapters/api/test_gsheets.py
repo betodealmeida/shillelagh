@@ -227,10 +227,12 @@ def test_execute_filter(mocker):
 @freeze_time("2020-01-01")
 def test_quote():
     assert quote("value") == "'value'"
+    assert quote(True) == "true"
+    assert quote(False) == "false"
     assert quote(1) == "1"
-    assert quote(datetime.datetime.now()) == "'2020-01-01T00:00:00'"
-    assert quote(datetime.time(0, 0, 0)) == "'00:00:00'"
-    assert quote(datetime.date.today()) == "'2020-01-01'"
+    assert quote(datetime.datetime.now()) == "datetime '2020-01-01 00:00:00'"
+    assert quote(datetime.time(0, 0, 0)) == "timeofday '00:00:00'"
+    assert quote(datetime.date.today()) == "date '2020-01-01'"
 
     with pytest.raises(Exception) as excinfo:
         quote([1])
@@ -469,15 +471,78 @@ def test_convert_rows(mocker):
     sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/2/edit#gid=0"'''
     data = list(cursor.execute(sql))
     assert data == [
-        ("2018-09-01T00:00:00+00:00", 1.0, 1, "2018-01-01", "17:00:00+00:00", "test"),
-        ("2018-09-02T00:00:00+00:00", 1.0, 0, None, None, "test"),
-        ("2018-09-03T00:00:00+00:00", 2.0, 0, None, None, "test"),
-        ("2018-09-04T00:00:00+00:00", 3.0, 0, None, None, "test"),
-        ("2018-09-05T00:00:00+00:00", 5.0, 0, None, None, "test"),
-        ("2018-09-06T00:00:00+00:00", 8.0, 0, None, None, "test"),
-        ("2018-09-07T00:00:00+00:00", 13.0, 0, None, None, None),
-        ("2018-09-08T00:00:00+00:00", None, 0, None, None, "test"),
-        ("2018-09-09T00:00:00+00:00", 34.0, None, None, None, "test"),
+        (
+            datetime.datetime(2018, 9, 1, 0, 0, tzinfo=datetime.timezone.utc),
+            1.0,
+            True,
+            datetime.date(2018, 1, 1),
+            datetime.time(17, 0, 0, tzinfo=datetime.timezone.utc),
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 2, 0, 0, tzinfo=datetime.timezone.utc),
+            1.0,
+            False,
+            None,
+            None,
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 3, 0, 0, tzinfo=datetime.timezone.utc),
+            2.0,
+            False,
+            None,
+            None,
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 4, 0, 0, tzinfo=datetime.timezone.utc),
+            3.0,
+            False,
+            None,
+            None,
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 5, 0, 0, tzinfo=datetime.timezone.utc),
+            5.0,
+            False,
+            None,
+            None,
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 6, 0, 0, tzinfo=datetime.timezone.utc),
+            8.0,
+            False,
+            None,
+            None,
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 7, 0, 0, tzinfo=datetime.timezone.utc),
+            13.0,
+            False,
+            None,
+            None,
+            None,
+        ),
+        (
+            datetime.datetime(2018, 9, 8, 0, 0, tzinfo=datetime.timezone.utc),
+            None,
+            False,
+            None,
+            None,
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 9, 0, 0, tzinfo=datetime.timezone.utc),
+            34.0,
+            None,
+            None,
+            None,
+            "test",
+        ),
     ]
 
 
