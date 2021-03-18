@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.3.0 - 2021-03-18
+==========================
+
+- Handle conversion of datetime objects (time, date, datetime) natively
+
 Version 0.2.1 - 2021-03-15
 ==========================
 
