@@ -20,11 +20,11 @@ from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import Error
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
+from shillelagh.fields import Blob
+from shillelagh.fields import Field
 from shillelagh.fields import type_map
 from shillelagh.lib import quote
 from shillelagh.lib import serialize
-from shillelagh.types import BINARY
-from shillelagh.types import DBAPIType
 from shillelagh.types import Description
 from typing_extensions import Literal
 
@@ -37,7 +37,7 @@ sqlite_version_info = tuple(
 
 NO_SUCH_TABLE = "SQLError: no such table: "
 
-IsolationLevel = Literal["DEFERRED", "IMMEDIATE", "EXCLUSIVE"]
+IsolationLevel = Literal["READ UNCOMMITTED", "SERIALIZABLE"]
 F = TypeVar("F", bound=Callable[..., Any])
 
 
@@ -65,8 +65,8 @@ def check_result(method: F) -> F:
     return cast(F, wrapper)
 
 
-def get_type_code(type_name: str) -> Type[DBAPIType]:
-    return type_map.get(type_name, BINARY)
+def get_type_code(type_name: str) -> Type[Field]:
+    return type_map.get(type_name, Blob)
 
 
 class Cursor(object):
@@ -134,7 +134,7 @@ class Cursor(object):
         try:
             self._cursor.execute(operation, parameters)
             self.description = self._get_description()
-            self._results = iter(self._cursor)
+            self._results = self._convert(self._cursor)
         except apsw.SQLError as exc:
             message = exc.args[0]
             if not message.startswith(NO_SUCH_TABLE):
@@ -147,9 +147,16 @@ class Cursor(object):
             # try again
             self._cursor.execute(operation, parameters)
             self.description = self._get_description()
-            self._results = iter(self._cursor)
+            self._results = self._convert(self._cursor)
 
         return self
+
+    def _convert(self, cursor: "apsw.Cursor") -> Iterator[Tuple[Any, ...]]:
+        if not self.description:
+            return
+
+        for row in cursor:
+            yield tuple(desc[1].parse(col) for col, desc in zip(row, self.description))
 
     def _create_table(self, uri: str) -> None:
         for adapter in self._adapters:

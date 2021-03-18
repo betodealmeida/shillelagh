@@ -7,6 +7,7 @@ from typing import cast
 from typing import List
 from typing import Optional
 from typing import Type
+from typing import TypeVar
 
 import dateutil.parser
 from shillelagh.filters import Filter
@@ -16,6 +17,8 @@ from shillelagh.types import DBAPIType
 from shillelagh.types import NUMBER
 from shillelagh.types import ROWID
 from shillelagh.types import STRING
+
+T = TypeVar("T")
 
 
 class Order(Enum):
@@ -41,6 +44,10 @@ class Field:
         self.exact = exact
 
     def __eq__(self, other: object) -> bool:
+        # for DB API type_code comparison
+        if issubclass(other, DBAPIType):
+            return self.db_api_type == other
+
         if not isinstance(other, Field):
             return NotImplemented
 
@@ -114,10 +121,8 @@ class Blob(Field):
     db_api_type = BINARY
 
     @staticmethod
-    def parse(value: Any) -> bytes:
-        if isinstance(value, str):
-            return value.encode()
-        return bytes(value)
+    def parse(value: T) -> T:
+        return value
 
 
 class Boolean(Field):
@@ -132,6 +137,6 @@ class Boolean(Field):
 
 
 type_map = {
-    field.type: field.db_api_type
+    field.type: field
     for field in {Integer, Float, String, Date, Time, DateTime, Blob, Boolean}
 }

@@ -6,7 +6,11 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Type
+from typing import TYPE_CHECKING
 from typing import Union
+
+if TYPE_CHECKING:
+    from shillelagh.fields import Field
 
 # A value corresponding to a constraint is one of:
 #     None
@@ -56,7 +60,7 @@ Description = Optional[
     List[
         Tuple[
             str,
-            Type[DBAPIType],
+            Type["Field"],
             Optional[str],
             Optional[str],
             Optional[str],
