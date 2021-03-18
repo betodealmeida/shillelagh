@@ -1,4 +1,5 @@
 import datetime
+import inspect
 from distutils.util import strtobool
 from enum import Enum
 from typing import Any
@@ -45,7 +46,7 @@ class Field:
 
     def __eq__(self, other: object) -> bool:
         # for DB API type_code comparison
-        if issubclass(other, DBAPIType):
+        if inspect.isclass(other) and issubclass(other, DBAPIType):
             return self.db_api_type == other
 
         if not isinstance(other, Field):
@@ -67,7 +68,10 @@ class Integer(Field):
     db_api_type = NUMBER
 
     @staticmethod
-    def parse(value: Any) -> int:
+    def parse(value: Any) -> Optional[int]:
+        if value is None:
+            return None
+
         return int(value)
 
 
@@ -76,7 +80,10 @@ class Float(Field):
     db_api_type = NUMBER
 
     @staticmethod
-    def parse(value: Any) -> float:
+    def parse(value: Any) -> Optional[float]:
+        if value is None:
+            return None
+
         return float(value)
 
 
@@ -85,7 +92,10 @@ class String(Field):
     db_api_type = STRING
 
     @staticmethod
-    def parse(value: Any) -> str:
+    def parse(value: Any) -> Optional[str]:
+        if value is None:
+            return None
+
         return str(value)
 
 
@@ -94,8 +104,16 @@ class Date(Field):
     db_api_type = DATETIME
 
     @staticmethod
-    def parse(value: Any) -> datetime.date:
-        return dateutil.parser.parse(value).astimezone(datetime.timezone.utc).date()
+    def parse(value: Any) -> Optional[datetime.date]:
+        if value is None:
+            return None
+
+        try:
+            dt = dateutil.parser.parse(value)
+        except dateutil.parser._parser.ParserError:
+            return None
+
+        return dt.astimezone(datetime.timezone.utc).date()
 
 
 class Time(Field):
@@ -103,8 +121,16 @@ class Time(Field):
     db_api_type = DATETIME
 
     @staticmethod
-    def parse(value: Any) -> datetime.time:
-        return dateutil.parser.parse(value).astimezone(datetime.timezone.utc).timetz()
+    def parse(value: Any) -> Optional[datetime.time]:
+        if value is None:
+            return None
+
+        try:
+            dt = dateutil.parser.parse(value)
+        except dateutil.parser._parser.ParserError:
+            return None
+
+        return dt.astimezone(datetime.timezone.utc).timetz()
 
 
 class DateTime(Field):
@@ -112,8 +138,16 @@ class DateTime(Field):
     db_api_type = DATETIME
 
     @staticmethod
-    def parse(value: Any) -> datetime.datetime:
-        return dateutil.parser.parse(value).astimezone(datetime.timezone.utc)
+    def parse(value: Any) -> Optional[datetime.datetime]:
+        if value is None:
+            return None
+
+        try:
+            dt = dateutil.parser.parse(value)
+        except dateutil.parser._parser.ParserError:
+            return None
+
+        return dt.astimezone(datetime.timezone.utc)
 
 
 class Blob(Field):
@@ -130,7 +164,10 @@ class Boolean(Field):
     db_api_type = NUMBER
 
     @staticmethod
-    def parse(value: Any) -> bool:
+    def parse(value: Any) -> Optional[bool]:
+        if value is None:
+            return None
+
         if isinstance(value, bool):
             return value
         return bool(strtobool(str(value)))

@@ -26,8 +26,8 @@ def test_integer():
 
 
 def test_blob():
-    assert Blob.parse(1) == b"\x00"
-    assert Blob.parse("test") == b"test"
+    assert Blob.parse(1) == 1
+    assert Blob.parse("test") == "test"
     assert Blob.parse(b"test") == b"test"
 
 

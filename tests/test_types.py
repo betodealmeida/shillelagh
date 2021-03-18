@@ -1,3 +1,7 @@
+from datetime import date
+from datetime import datetime
+from datetime import time
+from datetime import timezone
 from shillelagh.backends.apsw.db import connect
 from shillelagh.types import Binary
 from shillelagh.types import Date
@@ -34,9 +38,9 @@ def test_types():
     cursor.execute("SELECT * FROM test_types")
     row = cursor.fetchone()
     assert row == (
-        "2020-01-01",
-        "00:00:00+00:00",
-        "2020-01-01T00:00:00+00:00",
+        date(2020, 1, 1),
+        time(0, 0, tzinfo=timezone.utc),
+        datetime(2020, 1, 1, 0, 0, tzinfo=timezone.utc),
         b"\xf0\x9f\xa6\xa5",
     )
 
@@ -53,15 +57,15 @@ def test_types():
     rows = cursor.fetchall()
     assert rows == [
         (
-            "2020-01-01",
-            "00:00:00+00:00",
-            "2020-01-01T00:00:00+00:00",
+            date(2020, 1, 1),
+            time(0, 0, tzinfo=timezone.utc),
+            datetime(2020, 1, 1, 0, 0, tzinfo=timezone.utc),
             b"\xf0\x9f\xa6\xa5",
         ),
         (
-            "1970-01-01",
-            "00:00:02+00:00",
-            "1970-01-01T00:00:03+00:00",
+            date(1970, 1, 1),
+            time(0, 0, 2, tzinfo=timezone.utc),
+            datetime(1970, 1, 1, 0, 0, 3, tzinfo=timezone.utc),
             b"\xf0\x9f\xa6\xa5",
         ),
     ]
