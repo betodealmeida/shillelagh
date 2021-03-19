@@ -15,8 +15,6 @@ from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.types import Row
 
-DELETED = range(-1, 0)
-
 
 class RowIDManager:
     def __init__(self, ranges: List[range]):
@@ -24,24 +22,34 @@ class RowIDManager:
             raise Exception("Argument `ranges` cannot be empty")
 
         self.ranges = ranges
+        self._max_id = ranges[-1].stop - 1
 
     def __iter__(self):
-        yield from itertools.chain(*self.ranges)
+        ids = itertools.chain(*self.ranges)
+        first = next(ids)
+        for i in range(first):
+            yield -1
+        yield first
+        prev = first
+        for id_ in ids:
+            for i in range(id_ - prev - 1):
+                yield -1
+            yield id_
+            prev = id_
+        for i in range(self._max_id - prev):
+            yield -1
 
-    def get_max_row_id(self) -> int:
-        return max((r.stop - 1) for r in self.ranges)
-
-    def check_row_id(self, row_id: int) -> None:
+    def _check_row_id(self, row_id: int) -> None:
         for r in self.ranges:
             if r.start <= row_id < r.stop:
                 raise Exception(f"Row ID {row_id} already present")
 
     def insert(self, row_id: Optional[int] = None) -> int:
         if row_id is None:
-            max_row_id = self.get_max_row_id()
-            row_id = max_row_id + 1
+            row_id = self._max_id + 1
         else:
-            self.check_row_id(row_id)
+            self._check_row_id(row_id)
+        self._max_id = max(self._max_id, row_id)
 
         last = self.ranges[-1]
         if last.stop == row_id:
@@ -54,17 +62,14 @@ class RowIDManager:
         for i, r in enumerate(self.ranges):
             if r.start <= row_id < r.stop:
                 if r.start == r.stop - 1:
-                    self.ranges[i] = DELETED
+                    self.ranges.pop(i)
                 elif row_id == r.start:
                     self.ranges[i] = range(r.start + 1, r.stop)
-                    self.ranges.insert(i, DELETED)
                 elif row_id == r.stop - 1:
                     self.ranges[i] = range(r.start, r.stop - 1)
-                    self.ranges.insert(i + 1, DELETED)
                 else:
                     self.ranges[i] = range(r.start, row_id)
                     self.ranges.insert(i + 1, range(row_id + 1, r.stop))
-                    self.ranges.insert(i + 1, DELETED)
 
                 return
 

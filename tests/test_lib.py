@@ -4,7 +4,6 @@ from shillelagh.fields import Integer
 from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.lib import analyse
-from shillelagh.lib import DELETED
 from shillelagh.lib import RowIDManager
 from shillelagh.lib import update_order
 
@@ -19,16 +18,18 @@ def test_row_id_manager_empty_range():
 def test_row_id_manager():
     manager = RowIDManager([range(0, 6)])
     assert list(manager) == [0, 1, 2, 3, 4, 5]
+    assert manager.ranges == [range(0, 6)]
 
     manager.insert()
     assert list(manager) == [0, 1, 2, 3, 4, 5, 6]
+    assert manager.ranges == [range(0, 7)]
 
     manager.insert(7)
     assert list(manager) == [0, 1, 2, 3, 4, 5, 6, 7]
     assert manager.ranges == [range(0, 8)]
 
     manager.insert(9)
-    assert list(manager) == [0, 1, 2, 3, 4, 5, 6, 7, 9]
+    assert list(manager) == [0, 1, 2, 3, 4, 5, 6, 7, -1, 9]
     assert manager.ranges == [range(0, 8), range(9, 10)]
 
     with pytest.raises(Exception) as excinfo:
@@ -36,36 +37,36 @@ def test_row_id_manager():
     assert str(excinfo.value) == "Row ID 5 already present"
 
     manager.delete(9)
-    assert list(manager) == [0, 1, 2, 3, 4, 5, 6, 7, -1]
-    assert manager.ranges == [range(0, 8), DELETED]
+    assert list(manager) == [0, 1, 2, 3, 4, 5, 6, 7, -1, -1]
+    assert manager.ranges == [range(0, 8)]
 
     manager.delete(4)
-    assert list(manager) == [0, 1, 2, 3, -1, 5, 6, 7, -1]
-    assert manager.ranges == [range(0, 4), DELETED, range(5, 8), DELETED]
+    assert list(manager) == [0, 1, 2, 3, -1, 5, 6, 7, -1, -1]
+    assert manager.ranges == [range(0, 4), range(5, 8)]
 
     with pytest.raises(Exception) as excinfo:
         manager.delete(9)
     assert str(excinfo.value) == "Row ID 9 not found"
 
     manager.delete(5)
-    assert list(manager) == [0, 1, 2, 3, -1, -1, 6, 7, -1]
+    assert list(manager) == [0, 1, 2, 3, -1, -1, 6, 7, -1, -1]
     assert manager.ranges == [
         range(0, 4),
-        DELETED,
-        DELETED,
         range(6, 8),
-        DELETED,
     ]
 
     manager.delete(7)
-    assert list(manager) == [0, 1, 2, 3, -1, -1, 6, -1, -1]
+    assert list(manager) == [0, 1, 2, 3, -1, -1, 6, -1, -1, -1]
     assert manager.ranges == [
         range(0, 4),
-        DELETED,
-        DELETED,
         range(6, 7),
-        DELETED,
-        DELETED,
+    ]
+
+    manager.delete(0)
+    assert list(manager) == [-1, 1, 2, 3, -1, -1, 6, -1, -1, -1]
+    assert manager.ranges == [
+        range(1, 4),
+        range(6, 7),
     ]
 
 
