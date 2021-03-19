@@ -244,6 +244,9 @@ def convert_rows(
 
 
 class GSheetsAPI(Adapter):
+
+    safe = True
+
     @staticmethod
     def supports(uri: str) -> bool:
         parsed = urllib.parse.urlparse(uri)

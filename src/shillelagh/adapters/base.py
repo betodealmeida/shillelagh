@@ -17,6 +17,10 @@ T = TypeVar("T", bound="Adapter")
 
 
 class Adapter:
+
+    # disable "unsafe" adapters that write to disk
+    safe = False
+
     @staticmethod
     def supports(uri: str) -> bool:
         raise NotImplementedError("Subclasses must implement `supports`")

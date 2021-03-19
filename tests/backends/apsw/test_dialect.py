@@ -16,6 +16,7 @@ from shillelagh.backends.apsw.db import Connection
 from shillelagh.backends.apsw.db import Cursor
 from shillelagh.backends.apsw.dialect import APSWDialect
 from shillelagh.backends.apsw.dialect import APSWGSheetsDialect
+from shillelagh.backends.apsw.dialect import APSWSafeDialect
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
@@ -73,6 +74,7 @@ def test_gsheets_dialect(fs):
             ":memory:",
             ["gsheetsapi"],
             {},
+            True,
             None,
         ),
         {},
@@ -87,6 +89,7 @@ def test_gsheets_dialect(fs):
             ":memory:",
             ["gsheetsapi"],
             {"gsheetsapi": ({"secret": "XXX"}, "user@example.com")},
+            True,
             None,
         ),
         {},
@@ -104,6 +107,7 @@ def test_gsheets_dialect(fs):
             ":memory:",
             ["gsheetsapi"],
             {"gsheetsapi": ({"secret": "YYY"}, "user@example.com")},
+            True,
             None,
         ),
         {},
@@ -111,3 +115,17 @@ def test_gsheets_dialect(fs):
 
     mock_dbapi_connection = mock.MagicMock()
     assert dialect.get_schema_names(mock_dbapi_connection) == []
+
+
+def test_safe_dialect(fs):
+    dialect = APSWSafeDialect()
+    assert dialect.create_connect_args(make_url("shillelagh+safe://")) == (
+        (
+            ":memory:",
+            None,
+            None,
+            True,
+            None,
+        ),
+        {},
+    )

@@ -26,7 +26,6 @@ from shillelagh.fields import type_map
 from shillelagh.lib import quote
 from shillelagh.lib import serialize
 from shillelagh.types import Description
-from typing_extensions import Literal
 
 apilevel = "2.0"
 threadsafety = 2
@@ -37,7 +36,6 @@ sqlite_version_info = tuple(
 
 NO_SUCH_TABLE = "SQLError: no such table: "
 
-IsolationLevel = Literal["READ UNCOMMITTED", "SERIALIZABLE"]
 F = TypeVar("F", bound=Callable[..., Any])
 
 
@@ -78,7 +76,7 @@ class Cursor(object):
         cursor: "apsw.Cursor",
         adapters: List[Type[Adapter]],
         adapter_args: Dict[str, Any],
-        isolation_level: Optional[IsolationLevel] = None,
+        isolation_level: Optional[str] = None,
     ):
         self._cursor = cursor
         self._adapters = adapters
@@ -277,7 +275,7 @@ class Connection(object):
         path: str,
         adapters: List[Type[Adapter]],
         adapter_args: Dict[str, Any],
-        isolation_level: Optional[IsolationLevel] = None,
+        isolation_level: Optional[str] = None,
     ):
         # create underlying APSW connection
         self._connection = apsw.Connection(path)
@@ -350,7 +348,8 @@ def connect(
     path: str,
     adapters: Optional[List[str]] = None,
     adapter_args: Optional[Dict[str, Any]] = None,
-    isolation_level: Optional[IsolationLevel] = None,
+    safe: bool = False,
+    isolation_level: Optional[str] = None,
 ) -> Connection:
     """
     Constructor for creating a connection to the database.
@@ -365,5 +364,7 @@ def connect(
         for adapter in iter_entry_points("shillelagh.adapter")
         if adapters is None or adapter.name in adapters
     ]
+    if safe:
+        enabled_adapters = [adapter for adapter in enabled_adapters if adapter.safe]
 
     return Connection(path, enabled_adapters, adapter_args or {}, isolation_level)
