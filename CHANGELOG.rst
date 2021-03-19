@@ -2,7 +2,7 @@
 Changelog
 =========
 
-Version 0.3.1 - YYYY-mm-dd
+Version 0.3.1 - 2021-03-19
 ==========================
 
 - Add safe mode through shillelagh+safe://
