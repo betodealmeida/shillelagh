@@ -27,6 +27,8 @@ class FakeEntryPoint:
 
 class FakeAdapter(Adapter):
 
+    safe = False
+
     age = Float(filters=[Range], order=Order.NONE, exact=True)
     name = String(filters=[Equal], order=Order.ASCENDING, exact=True)
     pets = Integer()

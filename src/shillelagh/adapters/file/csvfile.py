@@ -41,6 +41,9 @@ class RowTracker:
 
 
 class CSVFile(Adapter):
+
+    safe = False
+
     @staticmethod
     def supports(uri: str) -> bool:
         parsed = urllib.parse.urlparse(uri)

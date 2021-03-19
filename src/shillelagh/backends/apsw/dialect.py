@@ -42,25 +42,48 @@ class APSWDialect(SQLiteDialect):
         self,
         adapters: Optional[List[str]] = None,
         adapter_args: Optional[Dict[str, Any]] = None,
+        safe: bool = False,
         *args: Any,
         **kwargs: Any,
     ):
         super().__init__(*args, **kwargs)
         self._adapters = adapters
         self._adapter_args = adapter_args
+        self._safe = safe
 
     def create_connect_args(
         self,
         url: URL,
     ) -> Tuple[
-        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], Optional[str]],
+        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], bool, Optional[str]],
         Dict[str, Any],
     ]:
         path = str(url.database) if url.database else ":memory:"
-        return ((path, self._adapters, self._adapter_args, self.isolation_level), {})
+        return (
+            (
+                path,
+                self._adapters,
+                self._adapter_args,
+                self._safe,
+                self.isolation_level,
+            ),
+            {},
+        )
 
     def do_ping(self, dbapi_connection: _ConnectionFairy) -> bool:
         return True
+
+    # needed for SQLAlchemy
+    def _get_table_sql(
+        self,
+        connection: _ConnectionFairy,
+        table_name: str,
+        schema: Optional[str] = None,
+        **kwargs: Any,
+    ) -> str:
+        adapter = self._get_adapter_for_table_name(connection, table_name)
+        table = VTTable(adapter)
+        return table.get_create_table(table_name)
 
     def get_columns(
         self,
@@ -82,17 +105,6 @@ class APSWDialect(SQLiteDialect):
             }
             for column_name, field in columns.items()
         ]
-
-    def _get_table_sql(
-        self,
-        connection: _ConnectionFairy,
-        table_name: str,
-        schema: Optional[str] = None,
-        **kwargs: Any,
-    ) -> str:
-        adapter = self._get_adapter_for_table_name(connection, table_name)
-        table = VTTable(adapter)
-        return table.get_create_table(table_name)
 
     def _get_adapter_for_table_name(
         self,
@@ -136,16 +148,54 @@ class APSWGSheetsDialect(APSWDialect):
         self,
         url: URL,
     ) -> Tuple[
-        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], Optional[str]],
+        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], bool, Optional[str]],
         Dict[str, Any],
     ]:
         adapter_args: Dict[str, Any] = {}
         if self.service_account_info:
             adapter_args["gsheetsapi"] = (self.service_account_info, self.subject)
 
-        return (":memory:", ["gsheetsapi"], adapter_args, self.isolation_level), {}
+        return (
+            ":memory:",
+            ["gsheetsapi"],
+            adapter_args,
+            True,
+            self.isolation_level,
+        ), {}
 
     def get_schema_names(
         self, connection: _ConnectionFairy, **kwargs: Any
     ) -> List[str]:
         return []
+
+
+class APSWSafeDialect(APSWDialect):
+    def __init__(
+        self,
+        adapters: Optional[List[str]] = None,
+        adapter_args: Optional[Dict[str, Any]] = None,
+        *args: Any,
+        **kwargs: Any,
+    ):
+        super().__init__(*args, **kwargs)
+        self._adapters = adapters
+        self._adapter_args = adapter_args
+        self._safe = True
+
+    def create_connect_args(
+        self,
+        url: URL,
+    ) -> Tuple[
+        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], bool, Optional[str]],
+        Dict[str, Any],
+    ]:
+        return (
+            (
+                ":memory:",
+                self._adapters,
+                self._adapter_args,
+                True,
+                self.isolation_level,
+            ),
+            {},
+        )

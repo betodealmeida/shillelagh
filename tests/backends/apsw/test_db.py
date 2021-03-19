@@ -267,3 +267,14 @@ def test_connection_context_manager():
             mock.call("COMMIT"),
         ],
     )
+
+
+def test_connect_safe(mocker):
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    connection = connect(":memory:", ["dummy"], safe=True, isolation_level="IMMEDIATE")
+    assert connection._adapters == []

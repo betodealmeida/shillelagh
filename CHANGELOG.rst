@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.3.1 - YYYY-mm-dd
+==========================
+
+- Add safe mode through shillelagh+safe://
+- Fix isolation levels for apsw
+
 Version 0.3.0 - 2021-03-18
 ==========================
 

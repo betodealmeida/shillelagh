@@ -27,6 +27,8 @@ requests_cache.install_cache(
 
 class WeatherAPI(Adapter):
 
+    safe = True
+
     ts = DateTime(filters=[Range], order=Order.ASCENDING, exact=False)
     temperature = Float()
 
