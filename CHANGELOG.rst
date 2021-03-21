@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.3.2 - YYYY-mm-dd
+==========================
+
+- Add all columns to the weatherapi.com adapter
+
 Version 0.3.1 - 2021-03-19
 ==========================
 

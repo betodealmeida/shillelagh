@@ -37,7 +37,7 @@ class Field:
         self.order = order
         self.exact = exact
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Field):
             return NotImplemented
 
