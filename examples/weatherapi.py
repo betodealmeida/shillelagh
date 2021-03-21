@@ -19,19 +19,19 @@ if __name__ == "__main__":
     sql = f"""
     SELECT *
     FROM "https://api.weatherapi.com/v1/history.json?key={api_key}&q=94923" AS bodega_bay
-    WHERE ts >= '{three_days_ago}'
+    WHERE time >= '{three_days_ago}'
     """
     for row in cursor.execute(sql):
         print(row)
 
     sql = f"""
-    SELECT *
+    SELECT bodega_bay.time, bodega_bay.time_epoch, bodega_bay.temp_c, san_mateo.temp_c
     FROM "https://api.weatherapi.com/v1/history.json?key={api_key}&q=94923" AS bodega_bay
     JOIN "https://api.weatherapi.com/v1/history.json?key={api_key}&q=94401" AS san_mateo
-    ON bodega_bay.ts = san_mateo.ts
-    WHERE bodega_bay.ts >= '{three_days_ago}'
-    AND san_mateo.ts >= '{three_days_ago}'
-    AND san_mateo.temperature < bodega_bay.temperature
+    ON bodega_bay.time = san_mateo.time
+    WHERE bodega_bay.time >= '{three_days_ago}'
+    AND san_mateo.time >= '{three_days_ago}'
+    AND san_mateo.temp_c > bodega_bay.temp_c
     """
     for row in cursor.execute(sql):
         print(row)

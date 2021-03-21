@@ -10,9 +10,12 @@ import dateutil.parser
 import requests
 import requests_cache
 from shillelagh.adapters.base import Adapter
+from shillelagh.fields import Boolean
 from shillelagh.fields import DateTime
 from shillelagh.fields import Float
+from shillelagh.fields import Integer
 from shillelagh.fields import Order
+from shillelagh.fields import String
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.types import Row
@@ -29,8 +32,37 @@ class WeatherAPI(Adapter):
 
     safe = True
 
-    ts = DateTime(filters=[Range], order=Order.ASCENDING, exact=False)
-    temperature = Float()
+    time = DateTime(filters=[Range], order=Order.ASCENDING, exact=False)
+    time_epoch = Float(filters=[Range], order=Order.ASCENDING, exact=False)
+    temp_c = Float()
+    temp_f = Float()
+    is_day = Boolean()
+    wind_mph = Float()
+    wind_kph = Float()
+    wind_degree = Integer()
+    wind_dir = String()
+    pressure_mb = Float()
+    pressure_in = Float()
+    precip_mm = Float()
+    precip_in = Float()
+    humidity = Integer()
+    cloud = Integer()
+    feelslike_c = Float()
+    feelslike_f = Float()
+    windchill_c = Float()
+    windchill_f = Float()
+    heatindex_c = Float()
+    heatindex_f = Float()
+    dewpoint_c = Float()
+    dewpoint_f = Float()
+    will_it_rain = Boolean()
+    chance_of_rain = String()
+    will_it_snow = Boolean()
+    chance_of_snow = String()
+    vis_km = Float()
+    vis_miles = Float()
+    gust_mph = Float()
+    gust_kph = Float()
 
     @staticmethod
     def supports(uri: str) -> bool:
@@ -58,13 +90,32 @@ class WeatherAPI(Adapter):
         self.api_key = api_key
 
     def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
-        ts_range = bounds["ts"]
-        if not isinstance(ts_range, Range):
+        time_range = bounds.get("time", Range(None, None, False, False))
+        if not isinstance(time_range, Range):
             raise Exception("Invalid filter")
 
+        #  convert time_epoch range to datetime so we can combine
+        #  with the time range
+        time_epoch_range = bounds.get("time_epoch", Range(None, None, False, False))
+        if not isinstance(time_epoch_range, Range):
+            raise Exception("Invalid filter")
+        time_epoch_range.start = (
+            datetime.utcfromtimestamp(time_epoch_range.start)
+            if time_epoch_range.start is not None
+            else None
+        )
+        time_epoch_range.end = (
+            datetime.utcfromtimestamp(time_epoch_range.end)
+            if time_epoch_range.end is not None
+            else None
+        )
+        time_range += time_epoch_range
+
         today = date.today()
-        start = ts_range.start.date() if ts_range.start else today - timedelta(days=7)
-        end = ts_range.end.date() if ts_range.end else today
+        start = (
+            time_range.start.date() if time_range.start else today - timedelta(days=7)
+        )
+        end = time_range.end.date() if time_range.end else today
 
         while start <= end:
             url = (
@@ -75,12 +126,11 @@ class WeatherAPI(Adapter):
             if response.ok:
                 payload = response.json()
                 hourly_data = payload["forecast"]["forecastday"][0]["hour"]
+                columns = self.get_columns()
                 for record in hourly_data:
-                    dt = dateutil.parser.parse(record["time"])
-                    yield {
-                        "rowid": int(dt.timestamp()),
-                        "ts": dt.isoformat(),
-                        "temperature": record["temp_c"],
-                    }
+                    row = {column: record[column] for column in columns}
+                    row["time"] = dateutil.parser.parse(record["time"]).isoformat()
+                    row["rowid"] = int(row["time_epoch"])
+                    yield row
 
             start += timedelta(days=1)

@@ -73,6 +73,55 @@ class Range(Filter):
         Operator.LT,
     }
 
+    def __eq__(self, other: Any):
+        if not isinstance(other, Range):
+            return NotImplemented
+
+        return (
+            self.start == other.start
+            and self.end == other.end
+            and self.include_start == other.include_start
+            and self.include_end == other.include_end
+        )
+
+    def __add__(self, other: Any) -> "Range":
+        if not isinstance(other, Range):
+            return NotImplemented
+
+        if self.start is None:
+            start = other.start
+            include_start = other.include_start
+        elif other.start is None:
+            start = self.start
+            include_start = self.include_start
+        elif self.start > other.start:
+            start = self.start
+            include_start = self.include_start
+        elif self.start < other.start:
+            start = other.start
+            include_start = other.include_start
+        else:
+            start = self.start
+            include_start = self.include_start and other.include_start
+
+        if self.end is None:
+            end = other.end
+            include_end = other.include_end
+        elif other.end is None:
+            end = self.end
+            include_end = self.include_end
+        elif self.end < other.end:
+            end = self.end
+            include_end = self.include_end
+        elif self.end > other.end:
+            end = other.end
+            include_end = other.include_end
+        else:
+            end = self.end
+            include_end = self.include_end and other.include_end
+
+        return Range(start, end, include_start, include_end)
+
     @classmethod
     def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
         start = end = None

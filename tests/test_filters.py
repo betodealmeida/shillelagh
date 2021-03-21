@@ -124,3 +124,24 @@ def test_range_invalid_operator():
         Range.build(operations)
 
     assert str(excinfo.value) == "Invalid operator: -1"
+
+
+def test_combine_ranges():
+    assert not Range(0, 1, False, False) == 1
+    with pytest.raises(TypeError) as excinfo:
+        Range(0, 1, False, False) + 1
+    assert str(excinfo.value) == "unsupported operand type(s) for +: 'Range' and 'int'"
+
+    range1 = Range(1, 10, False, False)
+    range2 = Range(2, 9, True, True)
+    assert range1 + range2 == range2
+    assert range2 + range1 == range2
+    assert range1 + range1 == range1
+
+    range3 = Range(None, 9, True, True)
+    assert range1 + range3 == Range(1, 9, False, True)
+    assert range3 + range1 == Range(1, 9, False, True)
+
+    range4 = Range(2, None, True, True)
+    assert range1 + range4 == Range(2, 10, True, False)
+    assert range4 + range1 == Range(2, 10, True, False)
