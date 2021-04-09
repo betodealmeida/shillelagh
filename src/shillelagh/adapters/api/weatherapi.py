@@ -129,7 +129,7 @@ class WeatherAPI(Adapter):
                 columns = self.get_columns()
                 for record in hourly_data:
                     row = {column: record[column] for column in columns}
-                    row["time"] = dateutil.parser.parse(record["time"]).isoformat()
+                    row["time"] = dateutil.parser.parse(record["time"])
                     row["rowid"] = int(row["time_epoch"])
                     yield row
 
