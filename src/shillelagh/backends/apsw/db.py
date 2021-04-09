@@ -129,23 +129,24 @@ class Cursor(object):
 
         self.description = None
         self._rowcount = -1
-        try:
-            self._cursor.execute(operation, parameters)
-            self.description = self._get_description()
-            self._results = self._convert(self._cursor)
-        except apsw.SQLError as exc:
-            message = exc.args[0]
-            if not message.startswith(NO_SUCH_TABLE):
-                raise exc
 
-            # create the virtual table
-            uri = message[len(NO_SUCH_TABLE) :]
-            self._create_table(uri)
+        # this is where the magic happens: instead of forcing users to register
+        # their virtual tables explicitly, we do it for them when they first try
+        # to access them and it fails because the table doesn't exist yet
+        while True:
+            try:
+                self._cursor.execute(operation, parameters)
+                self.description = self._get_description()
+                self._results = self._convert(self._cursor)
+                break
+            except apsw.SQLError as exc:
+                message = exc.args[0]
+                if not message.startswith(NO_SUCH_TABLE):
+                    raise exc
 
-            # try again
-            self._cursor.execute(operation, parameters)
-            self.description = self._get_description()
-            self._results = self._convert(self._cursor)
+                # create the virtual table
+                uri = message[len(NO_SUCH_TABLE) :]
+                self._create_table(uri)
 
         return self
 

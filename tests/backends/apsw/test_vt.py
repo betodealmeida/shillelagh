@@ -1,3 +1,4 @@
+import datetime
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -6,6 +7,7 @@ from typing import Optional
 import apsw
 import pytest
 from shillelagh.adapters.base import Adapter
+from shillelagh.backends.apsw.vt import convert_value
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.backends.apsw.vt import VTTable
 from shillelagh.exceptions import ProgrammingError
@@ -215,3 +217,24 @@ def test_adapter_with_no_columns():
         create_table, table = vt_module.Create(None, "", "", "table")
 
     assert str(excinfo.value) == "Virtual table table has no columns"
+
+
+def test_convert_value():
+    assert convert_value(1) == 1
+    assert convert_value(1.0) == 1.0
+    assert convert_value("test") == "test"
+    assert convert_value(None) is None
+    assert convert_value(datetime.datetime(2021, 1, 1)) == "2021-01-01T00:00:00"
+    assert convert_value(datetime.date(2021, 1, 1)) == "2021-01-01"
+    assert convert_value(datetime.time(12, 0, 0)) == "12:00:00"
+    assert (
+        convert_value(datetime.datetime(2021, 1, 1, tzinfo=datetime.timezone.utc))
+        == "2021-01-01T00:00:00+00:00"
+    )
+    assert (
+        convert_value(datetime.time(12, 0, 0, tzinfo=datetime.timezone.utc))
+        == "12:00:00+00:00"
+    )
+    assert convert_value(True) == 1
+    assert convert_value(False) == 0
+    assert convert_value({}) == "{}"

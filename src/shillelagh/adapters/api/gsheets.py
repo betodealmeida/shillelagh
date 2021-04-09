@@ -199,23 +199,23 @@ def get_url(
     )
 
 
-def parse_datetime(value: str) -> str:
+def parse_datetime(value: str) -> datetime.datetime:
     """Parse a string like 'Date(2018,0,1,0,0,0)'."""
     args = [int(number) for number in value[len("Date(") : -1].split(",")]
     args[1] += 1  # month is zero indexed in the response
-    return datetime.datetime(*args, tzinfo=datetime.timezone.utc).isoformat()  # type: ignore
+    return datetime.datetime(*args, tzinfo=datetime.timezone.utc)  # type: ignore
 
 
-def parse_date(value: str) -> str:
+def parse_date(value: str) -> datetime.date:
     """Parse a string like 'Date(2018,0,1)'."""
     args = [int(number) for number in value[len("Date(") : -1].split(",")]
     args[1] += 1  # month is zero indexed in the response
-    return datetime.date(*args).isoformat()
+    return datetime.date(*args)
 
 
-def parse_timeofday(values: List[int]) -> str:
+def parse_timeofday(values: List[int]) -> datetime.time:
     """Parse time of day as returned from the API."""
-    return datetime.time(*values, tzinfo=datetime.timezone.utc).isoformat()  # type: ignore
+    return datetime.time(*values, tzinfo=datetime.timezone.utc)  # type: ignore
 
 
 converters: Dict[str, Callable[[Any], Any]] = {

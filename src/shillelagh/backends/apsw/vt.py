@@ -1,3 +1,4 @@
+import datetime
 import json
 from collections import defaultdict
 from typing import Any
@@ -20,6 +21,7 @@ from shillelagh.filters import Operator
 from shillelagh.lib import deserialize
 from shillelagh.types import Constraint
 from shillelagh.types import Index
+from shillelagh.types import Row
 
 
 operator_map = {
@@ -29,6 +31,20 @@ operator_map = {
     apsw.SQLITE_INDEX_CONSTRAINT_LE: Operator.LE,
     apsw.SQLITE_INDEX_CONSTRAINT_LT: Operator.LT,
 }
+
+
+def convert_value(value: Any) -> Any:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (int, float, str, type(None))):
+        return value
+    if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
+        return value.isoformat()
+    return str(value)
+
+
+def convert_row(row: Row) -> Row:
+    return {name: convert_value(value) for name, value in row.items()}
 
 
 class VTModule:
@@ -176,9 +192,9 @@ class VTCursor:
                 raise Exception("No valid filter found")
             bounds[column_name] = class_.build(operations)
 
+        rows = (convert_row(row) for row in self.adapter.get_data(bounds))
         self.data = (
-            tuple(row[name] for name in ["rowid"] + column_names)
-            for row in self.adapter.get_data(bounds)
+            tuple(row[name] for name in ["rowid"] + column_names) for row in rows
         )
         self.Next()
 
