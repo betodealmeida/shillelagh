@@ -33,7 +33,7 @@ class Adapter:
         return cls(*args)
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[str, ...]:
+    def parse_uri(uri: str) -> Tuple[Any, ...]:
         raise NotImplementedError("Subclasses must implement `parse_uri`")
 
     def get_columns(self) -> Dict[str, Field]:

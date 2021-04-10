@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.4.1 - 2021-MM-DD
+==========================
+
+- Make parse_uri signature more generic
+
 Version 0.4 - 2021-04-10
 ========================
 
