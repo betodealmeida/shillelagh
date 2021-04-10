@@ -1,7 +1,9 @@
+import operator
 import urllib.parse
 from typing import Any
 from typing import Dict
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import Tuple
 
@@ -13,6 +15,7 @@ from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
+from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
 
 
@@ -29,9 +32,9 @@ class FakeAdapter(Adapter):
 
     safe = False
 
-    age = Float(filters=[Range], order=Order.NONE, exact=True)
-    name = String(filters=[Equal], order=Order.ASCENDING, exact=True)
-    pets = Integer()
+    age = Float(filters=[Range], order=Order.ANY, exact=True)
+    name = String(filters=[Equal], order=Order.ANY, exact=True)
+    pets = Integer(order=Order.ANY)
 
     @staticmethod
     def supports(uri: str) -> bool:
@@ -48,12 +51,20 @@ class FakeAdapter(Adapter):
             {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
         ]
 
-    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Dict[str, Any]]:
+    def get_data(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> Iterator[Dict[str, Any]]:
         data = self.data[:]
 
         for column in ["name", "age"]:
             if column in bounds:
                 data = [row for row in data if bounds[column].check(row[column])]
+
+        for column_name, requested_order in order:
+            reverse = requested_order == Order.DESCENDING
+            data.sort(key=operator.itemgetter(column_name), reverse=reverse)
 
         yield from iter(data)
 

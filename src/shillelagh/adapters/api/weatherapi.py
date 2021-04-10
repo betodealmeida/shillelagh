@@ -4,6 +4,7 @@ from datetime import datetime
 from datetime import timedelta
 from typing import Dict
 from typing import Iterator
+from typing import List
 from typing import Tuple
 
 import dateutil.parser
@@ -18,6 +19,7 @@ from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
+from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
 
 
@@ -89,7 +91,11 @@ class WeatherAPI(Adapter):
         self.location = location
         self.api_key = api_key
 
-    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
+    def get_data(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> Iterator[Row]:
         time_range = bounds.get("time", Range(None, None, False, False))
         if not isinstance(time_range, Range):
             raise Exception("Invalid filter")

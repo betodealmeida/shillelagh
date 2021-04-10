@@ -2,9 +2,11 @@
 Changelog
 =========
 
-Version 0.3.2 - YYYY-mm-dd
-==========================
+Version 0.4 - YYYY-mm-dd
+========================
 
+- Allow adapters to return complex types (eg, datetime)
+- Implement Order.ANY for columns that can be sorted by the adapter
 - Add all columns to the weatherapi.com adapter
 
 Version 0.3.1 - 2021-03-19

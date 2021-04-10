@@ -7,22 +7,18 @@ from pathlib import Path
 from typing import cast
 from typing import Dict
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import Tuple
-from typing import Type
 
 from shillelagh.adapters.base import Adapter
-from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
-from shillelagh.fields import Float
-from shillelagh.fields import Integer
-from shillelagh.fields import Order
-from shillelagh.fields import String
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.lib import analyse
 from shillelagh.lib import RowIDManager
 from shillelagh.lib import update_order
+from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
 
 
@@ -81,7 +77,11 @@ class CSVFile(Adapter):
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
 
-    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
+    def get_data(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> Iterator[Row]:
         with open(self.path) as fp:
             reader = csv.reader(fp, quoting=csv.QUOTE_NONNUMERIC)
             column_names = ["rowid"] + next(reader)

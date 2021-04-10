@@ -14,6 +14,7 @@ from shillelagh.adapters.api.gsheets import quote
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
+from shillelagh.fields import Order
 from shillelagh.filters import Equal
 from shillelagh.filters import Impossible
 from shillelagh.filters import Range
@@ -817,7 +818,8 @@ def test_build_sql(mocker):
     adapter._column_map = {f"col{i}_": letter for i, letter in enumerate("ABCDE")}
 
     bounds = {}
-    assert adapter._build_sql(bounds) == "SELECT *"
+    order = []
+    assert adapter._build_sql(bounds, order) == "SELECT *"
 
     bounds = {
         "col0_": Impossible(),
@@ -826,12 +828,14 @@ def test_build_sql(mocker):
         "col3_": Range(start=None, end=1, include_start=False, include_end=True),
         "col4_": Range(start=0, end=None, include_start=False, include_end=True),
     }
-    assert (
-        adapter._build_sql(bounds)
-        == "SELECT * WHERE 1 = 0 AND B = 1 AND C >= 0 AND C < 1 AND D <= 1 AND E > 0"
+    order = [("col0_", Order.ASCENDING), ("col1_", Order.DESCENDING)]
+    assert adapter._build_sql(bounds, order) == (
+        "SELECT * WHERE 1 = 0 AND B = 1 AND C >= 0 AND C < 1 AND D <= 1 AND E > 0 "
+        "ORDER BY col0_, col1_ DESC"
     )
 
     bounds = {"col0_": 1}
+    order = []
     with pytest.raises(ProgrammingError) as excinfo:
-        adapter._build_sql(bounds)
+        adapter._build_sql(bounds, order)
     assert str(excinfo.value) == "Invalid filter: 1"

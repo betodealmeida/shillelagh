@@ -4,6 +4,7 @@ import time
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -11,6 +12,7 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 from shillelagh.fields import Field
+from shillelagh.fields import Order
 
 # A value corresponding to a constraint is one of:
 #     None
@@ -29,6 +31,8 @@ Row = Dict[str, Any]
 
 # An index is a tuple with a column index and an operator to filter it
 Index = Tuple[int, int]
+
+RequestedOrder = Union[Literal[Order.ASCENDING], Literal[Order.DESCENDING]]
 
 
 class DBAPIType:
