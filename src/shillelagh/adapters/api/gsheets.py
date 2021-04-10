@@ -28,6 +28,7 @@ from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Impossible
 from shillelagh.filters import Range
+from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
 from typing_extensions import Literal
 from typing_extensions import TypedDict
@@ -326,7 +327,11 @@ class GSheetsAPI(Adapter):
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
 
-    def _build_sql(self, bounds: Dict[str, Filter]) -> str:
+    def _build_sql(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> str:
         sql = "SELECT *"
 
         conditions = []
@@ -348,10 +353,21 @@ class GSheetsAPI(Adapter):
         if conditions:
             sql = f"{sql} WHERE {' AND '.join(conditions)}"
 
+        column_order: List[str] = []
+        for column_name, requested_order in order:
+            desc = " DESC" if requested_order == Order.DESCENDING else ""
+            column_order.append(f"{column_name}{desc}")
+        if column_order:
+            sql = f"{sql} ORDER BY {', '.join(column_order)}"
+
         return sql
 
-    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
-        sql = self._build_sql(bounds)
+    def get_data(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> Iterator[Row]:
+        sql = self._build_sql(bounds, order)
         results = self._run_query(sql)
         cols = results["table"]["cols"]
         rows = convert_rows(cols, results["table"]["rows"])

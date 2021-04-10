@@ -78,11 +78,11 @@ def analyse(
     order: Dict[str, Order] = {}
     types: Dict[str, Type[Field]] = {}
 
-    previous_row = None
+    previous_row: Optional[Row] = None
     for i, row in enumerate(data):
         for column_name, value in row.items():
             # determine order
-            if previous_row:
+            if previous_row is not None:
                 previous = previous_row[column_name]
                 order[column_name] = update_order(
                     current_order=order.get(column_name, Order.NONE),

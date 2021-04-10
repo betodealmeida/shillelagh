@@ -21,6 +21,7 @@ from shillelagh.filters import Operator
 from shillelagh.lib import deserialize
 from shillelagh.types import Constraint
 from shillelagh.types import Index
+from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
 
 
@@ -105,18 +106,21 @@ class VTTable:
                 # no indexes supported in this column
                 constraints_used.append(None)
 
-        # serialize the indexes to str so it can be used later when filtering the data
-        index_name = json.dumps(indexes)
-
         # is the data being returned in the requested order? if not, SQLite will have
         # to sort it
         orderby_consumed = True
+        orderbys_to_process: List[Tuple[int, bool]] = []
         for column_index, descending in orderbys:
             requested_order = Order.DESCENDING if descending else Order.ASCENDING
             column_type = column_types[column_index]
-            if column_type.order != requested_order:
+            if column_type.order == Order.ANY:
+                orderbys_to_process.append((column_index, descending))
+            elif column_type.order != requested_order:
                 orderby_consumed = False
                 break
+
+        # serialize the indexes to str so it can be used later when filtering the data
+        index_name = json.dumps([indexes, orderbys_to_process])
 
         return (
             constraints_used,
@@ -165,7 +169,9 @@ class VTCursor:
     ) -> None:
         columns: Dict[str, Field] = self.adapter.get_columns()
         column_names: List[str] = list(columns.keys())
-        indexes: List[Index] = json.loads(indexname)
+        index = json.loads(indexname)
+        indexes: List[Index] = index[0]
+        orderbys: List[Tuple[int, bool]] = index[1]
 
         all_bounds: DefaultDict[str, Set[Tuple[Operator, Any]]] = defaultdict(set)
         for (column_index, sqlite_index_constraint), constraint in zip(
@@ -192,7 +198,15 @@ class VTCursor:
                 raise Exception("No valid filter found")
             bounds[column_name] = class_.build(operations)
 
-        rows = (convert_row(row) for row in self.adapter.get_data(bounds))
+        order: List[Tuple[str, RequestedOrder]] = [
+            (
+                column_names[column_index],
+                Order.DESCENDING if descending else Order.ASCENDING,
+            )
+            for column_index, descending in orderbys
+        ]
+
+        rows = (convert_row(row) for row in self.adapter.get_data(bounds, order))
         self.data = (
             tuple(row[name] for name in ["rowid"] + column_names) for row in rows
         )

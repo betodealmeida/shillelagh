@@ -2,6 +2,7 @@ import inspect
 from typing import Any
 from typing import Dict
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -10,6 +11,7 @@ from typing import TypeVar
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.filters import Filter
+from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
 
 
@@ -40,7 +42,11 @@ class Adapter:
             inspect.getmembers(self, lambda attribute: isinstance(attribute, Field)),
         )
 
-    def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
+    def get_data(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> Iterator[Row]:
         raise NotImplementedError("Subclasses must implement `get_data`")
 
     def insert_row(self, row: Row) -> int:

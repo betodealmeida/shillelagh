@@ -16,9 +16,17 @@ T = TypeVar("T")
 
 
 class Order(Enum):
+    # Use ASCENDING/DESCENDING when you have static data with 1+
+    # columns pre-sorted. All other columns should have Order.NONE.
     ASCENDING = "ascending"
     DESCENDING = "descending"
+
+    # Use NONE when you can't or don't want to sort the data. Sqlite
+    # will then sort the provided data according to the query.
     NONE = "none"
+
+    # Use ANY when the column can be sorted in any order. Usually
+    # all other columns will also have Order.ANY.
     ANY = "any"
 
 

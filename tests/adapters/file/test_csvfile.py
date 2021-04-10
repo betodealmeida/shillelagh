@@ -70,19 +70,19 @@ def test_csvfile_get_data(mocker):
 
     adapter = CSVFile("test.csv")
 
-    assert list(adapter.get_data({})) == [
+    assert list(adapter.get_data({}, [])) == [
         {"rowid": 0, "index": 10.0, "temperature": 15.2, "site": "Diamond_St"},
         {"rowid": 1, "index": 11.0, "temperature": 13.1, "site": "Blacktail_Loop"},
         {"rowid": 2, "index": 12.0, "temperature": 13.3, "site": "Platinum_St"},
         {"rowid": 3, "index": 13.0, "temperature": 12.1, "site": "Kodiak_Trail"},
     ]
 
-    assert list(adapter.get_data({"index": Range(11, None, False, False)})) == [
+    assert list(adapter.get_data({"index": Range(11, None, False, False)}, [])) == [
         {"rowid": 2, "index": 12.0, "temperature": 13.3, "site": "Platinum_St"},
         {"rowid": 3, "index": 13.0, "temperature": 12.1, "site": "Kodiak_Trail"},
     ]
 
-    assert list(adapter.get_data({"index": Range(None, 11, False, True)})) == [
+    assert list(adapter.get_data({"index": Range(None, 11, False, True)}, [])) == [
         {"rowid": 0, "index": 10.0, "temperature": 15.2, "site": "Diamond_St"},
         {"rowid": 1, "index": 11.0, "temperature": 13.1, "site": "Blacktail_Loop"},
     ]
@@ -94,6 +94,7 @@ def test_csvfile_get_data(mocker):
                     "index": Range(None, 11, False, True),
                     "temperature": Range(14, None, False, False),
                 },
+                [],
             ),
         )
         == [{"rowid": 0, "index": 10.0, "temperature": 15.2, "site": "Diamond_St"}]
@@ -105,7 +106,7 @@ def test_csvfile_get_data_invalid_filter(mocker):
 
     adapter = CSVFile("test.csv")
     with pytest.raises(Exception) as excinfo:
-        next(adapter.get_data({"index": Equal(11)}))
+        next(adapter.get_data({"index": Equal(11)}, []))
 
     assert str(excinfo.value) == "Invalid filter"
 
