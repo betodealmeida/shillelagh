@@ -2,7 +2,7 @@
 Changelog
 =========
 
-Version 0.4 - YYYY-mm-dd
+Version 0.4 - 2021-04-10
 ========================
 
 - Allow adapters to return complex types (eg, datetime)
