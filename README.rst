@@ -52,7 +52,7 @@ Finally, we define a method to download data from the API:
 
 .. code-block:: python
 
-        def get_data(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
+        def get_data(self, bounds: Dict[str, Filter], order: List[Tuple[str, RequestedOrder]]) -> Iterator[Row]:
             ts_range: Range = bounds["ts"]
             today = date.today()
             start = ts_range.start.date() if ts_range.start else today - timedelta(days=7)
