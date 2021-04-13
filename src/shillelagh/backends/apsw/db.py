@@ -43,7 +43,7 @@ def check_closed(method: F) -> F:
     """Decorator that checks if a connection or cursor is closed."""
 
     @wraps(method)
-    def wrapper(self, *args, **kwargs) -> Any:
+    def wrapper(self: "Cursor", *args: Any, **kwargs: Any) -> Any:
         if self.closed:
             raise ProgrammingError(f"{self.__class__.__name__} already closed")
         return method(self, *args, **kwargs)
@@ -55,7 +55,7 @@ def check_result(method: F) -> F:
     """Decorator that checks if the cursor has results from `execute`."""
 
     @wraps(method)
-    def wrapper(self, *args, **kwargs) -> Any:
+    def wrapper(self: "Cursor", *args: Any, **kwargs: Any) -> Any:
         if self._results is None:
             raise ProgrammingError("Called before `execute`")
         return method(self, *args, **kwargs)
