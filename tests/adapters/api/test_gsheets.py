@@ -15,6 +15,7 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
+from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Impossible
 from shillelagh.filters import Range
@@ -81,18 +82,18 @@ def test_execute(mocker):
     )
     adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%200",
+        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
         json={
             "version": "0.6",
             "reqId": "0",
             "status": "ok",
-            "sig": "2050160589",
+            "sig": "1453301915",
             "table": {
                 "cols": [
                     {"id": "A", "label": "country", "type": "string"},
                     {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
                 ],
-                "rows": [],
+                "rows": [{"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]}],
                 "parsedNumHeaders": 0,
             },
         },
@@ -152,18 +153,18 @@ def test_execute_filter(mocker):
     )
     adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%200",
+        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
         json={
             "version": "0.6",
             "reqId": "0",
             "status": "ok",
-            "sig": "2050160589",
+            "sig": "1453301915",
             "table": {
                 "cols": [
                     {"id": "A", "label": "country", "type": "string"},
                     {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
                 ],
-                "rows": [],
+                "rows": [{"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]}],
                 "parsedNumHeaders": 0,
             },
         },
@@ -302,12 +303,12 @@ def test_convert_rows(mocker):
     )
     adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/2/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%200",
+        "https://docs.google.com/spreadsheets/d/2/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
         json={
             "version": "0.6",
             "reqId": "0",
             "status": "ok",
-            "sig": "430810096",
+            "sig": "1819058448",
             "table": {
                 "cols": [
                     {
@@ -332,7 +333,18 @@ def test_convert_rows(mocker):
                     },
                     {"id": "F", "label": "string", "type": "string"},
                 ],
-                "rows": [],
+                "rows": [
+                    {
+                        "c": [
+                            {"v": "Date(2018,8,1,0,0,0)", "f": "9/1/2018 0:00:00"},
+                            {"v": 1.0, "f": "1"},
+                            {"v": True, "f": "TRUE"},
+                            {"v": "Date(2018,0,1)", "f": "1/1/2018"},
+                            {"v": [17, 0, 0, 0], "f": "5:00:00 PM"},
+                            {"v": "test"},
+                        ],
+                    },
+                ],
                 "parsedNumHeaders": 0,
             },
         },
@@ -602,7 +614,7 @@ def test_api_bugs(mocker):
     # use content= so that the response has no encoding
     adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/3/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%200",
+        "https://docs.google.com/spreadsheets/d/3/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
         content=json.dumps(
             {
                 "version": "0.6",
@@ -619,13 +631,13 @@ def test_api_bugs(mocker):
                             "pattern": "General",
                         },
                     ],
-                    "rows": [],
+                    "rows": [{"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]}],
                     "parsedNumHeaders": 0,
                 },
             },
         ).encode(),
     )
-    # the API actually returns "200 OK" on errors, but let's assume for a second
+    # the API actually returns "201 OK" on errors, but let's assume for a second
     # that it uses HTTP status codes correctly...
     adapter.register_uri(
         "GET",
@@ -672,7 +684,7 @@ def test_execute_json_prefix(mocker):
     )
     adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/4/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%200",
+        "https://docs.google.com/spreadsheets/d/4/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
         json={
             "version": "0.6",
             "reqId": "0",
@@ -683,7 +695,7 @@ def test_execute_json_prefix(mocker):
                     {"id": "A", "label": "country", "type": "string"},
                     {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
                 ],
-                "rows": [],
+                "rows": [{"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]}],
                 "parsedNumHeaders": 0,
             },
         },
@@ -751,7 +763,7 @@ def test_execute_invalid_json(mocker):
     )
     adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/5/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%200",
+        "https://docs.google.com/spreadsheets/d/5/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
         text="NOT JSON",
     )
 
@@ -783,7 +795,7 @@ def test_execute_error_response(mocker):
     )
     adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/6/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%200",
+        "https://docs.google.com/spreadsheets/d/6/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
         json={
             "version": "0.6",
             "reqId": "0",
@@ -839,3 +851,138 @@ def test_build_sql(mocker):
     with pytest.raises(ProgrammingError) as excinfo:
         adapter._build_sql(bounds, order)
     assert str(excinfo.value) == "Invalid filter: 1"
+
+
+def test_headers_not_detected(mocker):
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    adapter = requests_mock.Adapter()
+    session = requests.Session()
+    session.mount("https://docs.google.com/spreadsheets/d/7", adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/7/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
+        json={
+            "version": "0.6",
+            "reqId": "0",
+            "status": "ok",
+            "sig": "1227631590",
+            "table": {
+                "cols": [
+                    {"id": "A", "label": "", "type": "string"},
+                    {"id": "B", "label": "", "type": "string"},
+                    {"id": "C", "label": "", "type": "string"},
+                ],
+                "rows": [
+                    {"c": [{"v": "Investor"}, {"v": "InvestorName"}, {"v": "Company"}]},
+                ],
+                "parsedNumHeaders": 0,
+            },
+        },
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/7/gviz/tq?gid=0&tq=SELECT%20%2A%20OFFSET%201",
+        json={
+            "version": "0.6",
+            "reqId": "0",
+            "status": "ok",
+            "sig": "1227631590",
+            "table": {
+                "cols": [
+                    {"id": "A", "label": "", "type": "string"},
+                    {"id": "B", "label": "", "type": "string"},
+                    {"id": "C", "label": "", "type": "string"},
+                ],
+                "rows": [
+                    {
+                        "c": [
+                            {"v": "Bye Combinator"},
+                            {"v": "John Doe"},
+                            {"v": "Avocado & Hummus"},
+                        ],
+                    },
+                ],
+                "parsedNumHeaders": 0,
+            },
+        },
+    )
+
+    connection = connect(":memory:", ["gsheetsapi"])
+    cursor = connection.cursor()
+
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/7/edit#gid=0"'''
+    data = list(cursor.execute(sql))
+    assert data == [("Bye Combinator", "John Doe", "Avocado & Hummus")]
+
+
+def test_headers_not_detected_no_rows(mocker):
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    adapter = requests_mock.Adapter()
+    session = requests.Session()
+    session.mount("https://docs.google.com/spreadsheets/d/8", adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/8/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
+        json={
+            "version": "0.6",
+            "reqId": "0",
+            "status": "ok",
+            "sig": "1227631590",
+            "table": {
+                "cols": [
+                    {"id": "A", "label": "", "type": "string"},
+                    {"id": "B", "label": "", "type": "string"},
+                    {"id": "C", "label": "", "type": "string"},
+                ],
+                "rows": [],
+                "parsedNumHeaders": 0,
+            },
+        },
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/8/gviz/tq?gid=0&tq=SELECT%20%2A",
+        json={
+            "version": "0.6",
+            "reqId": "0",
+            "status": "ok",
+            "sig": "1227631590",
+            "table": {
+                "cols": [
+                    {"id": "A", "label": "", "type": "string"},
+                    {"id": "B", "label": "", "type": "string"},
+                    {"id": "C", "label": "", "type": "string"},
+                ],
+                "rows": [],
+                "parsedNumHeaders": 0,
+            },
+        },
+    )
+
+    connection = connect(":memory:", ["gsheetsapi"])
+    cursor = connection.cursor()
+
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/8/edit#gid=0"'''
+    data = list(cursor.execute(sql))
+    assert data == []
+
+    gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/8/#gid=0")
+    assert list(gsheets_adapter.columns) == ["A", "B", "C"]

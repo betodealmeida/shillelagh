@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.4.2 - 2021-04-18
+==========================
+
+- Fix for some Google sheets where headers are not picked up
+
 Version 0.4.1 - 2021-04-12
 ==========================
 

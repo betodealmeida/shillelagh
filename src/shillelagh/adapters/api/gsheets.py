@@ -275,6 +275,7 @@ class GSheetsAPI(Adapter):
             if service_account_info
             else None
         )
+        self._offset = 0
         self._set_columns()
 
     def _get_session(self) -> Session:
@@ -287,6 +288,7 @@ class GSheetsAPI(Adapter):
         quoted_sql = urllib.parse.quote(sql, safe="/()")
         url = f"{self.url}&tq={quoted_sql}"
         headers = {"X-DataSource-Auth": "true"}
+        print(url)
 
         session = self._get_session()
         response = session.get(url, headers=headers)
@@ -313,16 +315,23 @@ class GSheetsAPI(Adapter):
         return cast(QueryResults, result)
 
     def _set_columns(self) -> None:
-        results = self._run_query("SELECT * LIMIT 0")
+        results = self._run_query("SELECT * LIMIT 1")
+        cols = results["table"]["cols"]
+        rows = results["table"]["rows"]
 
-        # map between column letter (A, B, etc.) to column name
-        self._column_map = {col["label"]: col["id"] for col in results["table"]["cols"]}
+        # if the columns have no labels, use the first row as the labels if
+        # it exists; otherwise use just the column letters
+        if all(col["label"] == "" for col in cols):
+            if rows:
+                self._offset = 1
+                for col, cell in zip(cols, rows[0]["c"]):
+                    col["label"] = cell["v"]
+            else:
+                for col in cols:
+                    col["label"] = col["id"]
 
-        self.columns = {
-            col["label"]: get_field(col)
-            for col in results["table"]["cols"]
-            if col["label"]
-        }
+        self._column_map = {col["label"]: col["id"] for col in cols}
+        self.columns = {col["label"]: get_field(col) for col in cols if col["label"]}
 
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
@@ -359,6 +368,8 @@ class GSheetsAPI(Adapter):
             column_order.append(f"{column_name}{desc}")
         if column_order:
             sql = f"{sql} ORDER BY {', '.join(column_order)}"
+        if self._offset > 0:
+            sql = f"{sql} OFFSET {self._offset}"
 
         return sql
 
@@ -372,8 +383,7 @@ class GSheetsAPI(Adapter):
         cols = results["table"]["cols"]
         rows = convert_rows(cols, results["table"]["rows"])
 
-        column_names = [col["label"] for col in cols]
         for i, row in enumerate(rows):
-            data = dict(zip(column_names, row))
+            data = dict(zip(self.columns, row))
             data["rowid"] = i
             yield data
