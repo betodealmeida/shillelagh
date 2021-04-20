@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.4.3 - 2021-04-20
+==========================
+
+- Import Literal from typing_extensions for Python 3.7 compatibility
+
 Version 0.4.2 - 2021-04-18
 ==========================
 

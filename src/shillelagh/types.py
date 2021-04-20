@@ -4,7 +4,6 @@ import time
 from typing import Any
 from typing import Dict
 from typing import List
-from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -13,6 +12,7 @@ from typing import Union
 
 from shillelagh.fields import Field
 from shillelagh.fields import Order
+from typing_extensions import Literal
 
 # A value corresponding to a constraint is one of:
 #     None
