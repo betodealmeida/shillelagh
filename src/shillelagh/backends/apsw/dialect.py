@@ -7,7 +7,11 @@ from typing import Optional
 from typing import Tuple
 
 import apsw
+import google.oauth2.credentials
+import google.oauth2.service_account
 import sqlalchemy.types
+from google.auth.credentials import Credentials
+from shillelagh.adapters.api.gsheets import SCOPES
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw import db
 from shillelagh.backends.apsw.vt import VTTable
@@ -130,6 +134,7 @@ class APSWGSheetsDialect(APSWDialect):
 
     def __init__(
         self,
+        access_token: Optional[str] = None,
         service_account_file: Optional[str] = None,
         service_account_info: Optional[Dict[str, Any]] = None,
         subject: Optional[str] = None,
@@ -138,10 +143,9 @@ class APSWGSheetsDialect(APSWDialect):
     ):
         super().__init__(*args, **kwargs)
 
+        self.access_token = access_token
+        self.service_account_file = service_account_file
         self.service_account_info = service_account_info
-        if service_account_file:
-            with open(service_account_file) as fp:
-                self.service_account_info = json.load(fp)
         self.subject = subject
 
     def create_connect_args(
@@ -151,9 +155,14 @@ class APSWGSheetsDialect(APSWDialect):
         Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], bool, Optional[str]],
         Dict[str, Any],
     ]:
-        adapter_args: Dict[str, Any] = {}
-        if self.service_account_info:
-            adapter_args["gsheetsapi"] = (self.service_account_info, self.subject)
+        adapter_args: Dict[str, Any] = {
+            "gsheetsapi": (
+                self.access_token,
+                self.service_account_file,
+                self.service_account_info,
+                self.subject,
+            ),
+        }
 
         return (
             ":memory:",
