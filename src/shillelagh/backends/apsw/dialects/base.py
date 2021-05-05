@@ -7,11 +7,9 @@ from typing import Optional
 from typing import Tuple
 
 import apsw
-import google.oauth2.credentials
-import google.oauth2.service_account
 import sqlalchemy.types
-from google.auth.credentials import Credentials
-from shillelagh.adapters.api.gsheets import SCOPES
+from google.auth.transport.requests import AuthorizedSession
+from shillelagh.adapters.api.gsheets import get_credentials
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw import db
 from shillelagh.backends.apsw.vt import VTTable
@@ -176,6 +174,67 @@ class APSWGSheetsDialect(APSWDialect):
         self, connection: _ConnectionFairy, **kwargs: Any
     ) -> List[str]:
         return []
+
+    def get_table_names(
+        self, connection: _ConnectionFairy, schema: str = None, **kwargs: Any
+    ) -> List[str]:
+        credentials = get_credentials(
+            self.access_token,
+            self.service_account_file,
+            self.service_account_info,
+            self.subject,
+        )
+        if not credentials:
+            return []
+
+        session = AuthorizedSession(credentials)
+        response = session.get(
+            "https://spreadsheets.google.com/feeds/spreadsheets/private/full",
+        )
+        import xml.etree.ElementTree as ET
+        import urllib.parse
+
+        ns = "{http://www.w3.org/2005/Atom}"
+        root = ET.fromstring(response.text)
+        worksheet_feeds = [
+            entry.attrib["href"]
+            for entry in root.findall(
+                f"*/{ns}link"
+                "[@rel='http://schemas.google.com/spreadsheets/2006#worksheetsfeed']",
+            )
+        ]
+
+        tables = []
+        for worksheet_feed in worksheet_feeds:
+            response = session.get(worksheet_feed)
+            try:
+                root = ET.fromstring(response.text)
+            except ET.ParseError:
+                continue
+            links = root.findall(
+                f"*/{ns}link"
+                "[@rel='http://schemas.google.com/visualization/2008#visualizationApi']",
+            )
+            for link in links:
+                href = link.attrib["href"]
+                parsed = urllib.parse.urlparse(href)
+                params = urllib.parse.parse_qs(parsed.query)
+                path = parsed.path.replace("gviz/tq", "edit")
+                gid = params["gid"][-1]
+                fragment = f"gid={gid}"
+                url = urllib.parse.urlunparse(
+                    (
+                        parsed.scheme,
+                        parsed.netloc,
+                        path,
+                        "",
+                        "",
+                        fragment,
+                    ),
+                )
+                tables.append(url)
+
+        return tables
 
 
 class APSWSafeDialect(APSWDialect):
