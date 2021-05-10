@@ -11,8 +11,10 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 
+import google.oauth2.credentials
+import google.oauth2.service_account
+from google.auth.credentials import Credentials
 from google.auth.transport.requests import AuthorizedSession
-from google.oauth2.service_account import Credentials
 from requests import Session
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
@@ -34,8 +36,9 @@ from typing_extensions import Literal
 from typing_extensions import TypedDict
 
 # Google API scopes for authentication
-# https://developers.google.com/chart/interactive/docs/spreadsheets
-SCOPES = ["https://spreadsheets.google.com/feeds"]
+SCOPES = [
+    "https://www.googleapis.com/auth/drive.readonly",
+]
 
 JSON_PAYLOAD_PREFIX = ")]}'\n"
 
@@ -244,6 +247,32 @@ def convert_rows(
         ]
 
 
+def get_credentials(
+    access_token: Optional[str],
+    service_account_file: Optional[str],
+    service_account_info: Optional[Dict[str, Any]],
+    subject: Optional[str],
+) -> Optional[Credentials]:
+    if access_token:
+        return google.oauth2.credentials.Credentials(access_token)
+
+    if service_account_file:
+        return google.oauth2.service_account.Credentials.from_service_account_file(
+            service_account_file,
+            scopes=SCOPES,
+            subject=subject,
+        )
+
+    if service_account_info:
+        return google.oauth2.service_account.Credentials.from_service_account_info(
+            service_account_info,
+            scopes=SCOPES,
+            subject=subject,
+        )
+
+    return None
+
+
 class GSheetsAPI(Adapter):
 
     safe = True
@@ -262,19 +291,19 @@ class GSheetsAPI(Adapter):
     def __init__(
         self,
         uri: str,
+        access_token: Optional[str] = None,
+        service_account_file: Optional[str] = None,
         service_account_info: Optional[Dict[str, Any]] = None,
         subject: Optional[str] = None,
     ):
         self.url = get_url(uri)
-        self.credentials = (
-            Credentials.from_service_account_info(
-                service_account_info,
-                scopes=SCOPES,
-                subject=subject,
-            )
-            if service_account_info
-            else None
+        self.credentials = get_credentials(
+            access_token,
+            service_account_file,
+            service_account_info,
+            subject,
         )
+
         self._offset = 0
         self._set_columns()
 
@@ -288,7 +317,6 @@ class GSheetsAPI(Adapter):
         quoted_sql = urllib.parse.quote(sql, safe="/()")
         url = f"{self.url}&tq={quoted_sql}"
         headers = {"X-DataSource-Auth": "true"}
-        print(url)
 
         session = self._get_session()
         response = session.get(url, headers=headers)

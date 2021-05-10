@@ -1,4 +1,3 @@
-import json
 from typing import Any
 from typing import cast
 from typing import Dict
@@ -6,16 +5,13 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-import apsw
 import sqlalchemy.types
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw import db
 from shillelagh.backends.apsw.vt import VTTable
 from shillelagh.exceptions import ProgrammingError
-from sqlalchemy import exc
 from sqlalchemy.dialects.sqlite.base import SQLiteDialect
 from sqlalchemy.engine.url import URL
-from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.pool.base import _ConnectionFairy
 from sqlalchemy.sql.visitors import VisitableType
 from typing_extensions import TypedDict
@@ -121,81 +117,3 @@ class APSWDialect(SQLiteDialect):
         uri_args = adapter.parse_uri(table_name)
         adapter_args = raw_connection._adapter_args.get(adapter.__name__.lower(), ())
         return adapter(*uri_args, *adapter_args)
-
-
-class APSWGSheetsDialect(APSWDialect):
-    """Drop-in replacement for gsheetsdb."""
-
-    name = "gsheets"
-
-    def __init__(
-        self,
-        service_account_file: Optional[str] = None,
-        service_account_info: Optional[Dict[str, Any]] = None,
-        subject: Optional[str] = None,
-        *args: Any,
-        **kwargs: Any,
-    ):
-        super().__init__(*args, **kwargs)
-
-        self.service_account_info = service_account_info
-        if service_account_file:
-            with open(service_account_file) as fp:
-                self.service_account_info = json.load(fp)
-        self.subject = subject
-
-    def create_connect_args(
-        self,
-        url: URL,
-    ) -> Tuple[
-        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], bool, Optional[str]],
-        Dict[str, Any],
-    ]:
-        adapter_args: Dict[str, Any] = {}
-        if self.service_account_info:
-            adapter_args["gsheetsapi"] = (self.service_account_info, self.subject)
-
-        return (
-            ":memory:",
-            ["gsheetsapi"],
-            adapter_args,
-            True,
-            self.isolation_level,
-        ), {}
-
-    def get_schema_names(
-        self, connection: _ConnectionFairy, **kwargs: Any
-    ) -> List[str]:
-        return []
-
-
-class APSWSafeDialect(APSWDialect):
-    def __init__(
-        self,
-        adapters: Optional[List[str]] = None,
-        adapter_args: Optional[Dict[str, Any]] = None,
-        *args: Any,
-        **kwargs: Any,
-    ):
-        super().__init__(*args, **kwargs)
-        self._adapters = adapters
-        self._adapter_args = adapter_args
-        self._safe = True
-
-    def create_connect_args(
-        self,
-        url: URL,
-    ) -> Tuple[
-        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], bool, Optional[str]],
-        Dict[str, Any],
-    ]:
-        return (
-            (
-                ":memory:",
-                self._adapters,
-                self._adapter_args,
-                True,
-                self.isolation_level,
-            ),
-            {},
-        )

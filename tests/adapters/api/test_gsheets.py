@@ -8,6 +8,7 @@ import requests
 import requests_mock
 from freezegun import freeze_time
 from shillelagh.adapters.api.gsheets import format_error_message
+from shillelagh.adapters.api.gsheets import get_credentials
 from shillelagh.adapters.api.gsheets import get_url
 from shillelagh.adapters.api.gsheets import GSheetsAPI
 from shillelagh.adapters.api.gsheets import quote
@@ -63,6 +64,45 @@ def test_credentials(mocker):
             ),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
         ],
+    )
+
+
+def test_get_credentials(mocker):
+    service_account = mocker.patch(
+        "shillelagh.adapters.api.gsheets.google.oauth2.service_account.Credentials",
+    )
+    credentials = mocker.patch(
+        "shillelagh.adapters.api.gsheets.google.oauth2.credentials.Credentials",
+    )
+
+    # no credentials
+    get_credentials(None, None, None, None)
+    credentials.assert_not_called()
+    service_account.assert_not_called()
+
+    # access_token
+    get_credentials("token", None, None, None)
+    credentials.assert_called_with("token")
+    credentials.reset_mock()
+    service_account.assert_not_called()
+
+    # service_account_file
+    get_credentials(None, "credentials.json", None, None)
+    credentials.assert_not_called()
+    service_account.from_service_account_file.assert_called_with(
+        "credentials.json",
+        scopes=["https://www.googleapis.com/auth/drive.readonly"],
+        subject=None,
+    )
+    service_account.reset_mock()
+
+    # service_account_info
+    get_credentials(None, None, {"secret": "XXX"}, "user@example.com")
+    credentials.assert_not_called()
+    service_account.from_service_account_info.assert_called_with(
+        {"secret": "XXX"},
+        scopes=["https://www.googleapis.com/auth/drive.readonly"],
+        subject="user@example.com",
     )
 
 
@@ -568,8 +608,8 @@ def test_get_session(mocker):
     mock_session = mock.MagicMock()
     mocker.patch("shillelagh.adapters.api.gsheets.Session", mock_session)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.Credentials.from_service_account_info",
-        return_value="SECRET",
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value=None,
     )
 
     # prevent network call
@@ -586,6 +626,10 @@ def test_get_session(mocker):
     mock_authorized_session.reset_mock()
     mock_session.reset_mock()
 
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value="SECRET",
+    )
     adapter = GSheetsAPI(
         "https://docs.google.com/spreadsheets/d/1",
         service_account_info={"secret": "XXX"},

@@ -8,7 +8,6 @@ from typing import List
 from typing import Tuple
 
 import dateutil.parser
-import requests
 import requests_cache
 from shillelagh.adapters.base import Adapter
 from shillelagh.fields import Boolean
@@ -21,13 +20,6 @@ from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
-
-
-requests_cache.install_cache(
-    cache_name="weatherapi_cache",
-    backend="sqlite",
-    expire_after=180,
-)
 
 
 class WeatherAPI(Adapter):
@@ -91,6 +83,12 @@ class WeatherAPI(Adapter):
         self.location = location
         self.api_key = api_key
 
+        self._session = requests_cache.CachedSession(
+            cache_name="weatherapi_cache",
+            backend="sqlite",
+            expire_after=180,
+        )
+
     def get_data(
         self,
         bounds: Dict[str, Filter],
@@ -128,7 +126,7 @@ class WeatherAPI(Adapter):
                 f"https://api.weatherapi.com/v1/history.json?key={self.api_key}"
                 f"&q={self.location}&dt={start}"
             )
-            response = requests.get(url)
+            response = self._session.get(url)
             if response.ok:
                 payload = response.json()
                 hourly_data = payload["forecast"]["forecastday"][0]["hour"]
