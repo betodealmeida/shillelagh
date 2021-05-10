@@ -37,7 +37,6 @@ from typing_extensions import TypedDict
 
 # Google API scopes for authentication
 SCOPES = [
-    # "https://www.googleapis.com/auth/spreadsheets.readonly",
     "https://www.googleapis.com/auth/drive.readonly",
 ]
 
