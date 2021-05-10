@@ -14,9 +14,9 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.db import Connection
 from shillelagh.backends.apsw.db import Cursor
-from shillelagh.backends.apsw.dialect import APSWDialect
-from shillelagh.backends.apsw.dialect import APSWGSheetsDialect
-from shillelagh.backends.apsw.dialect import APSWSafeDialect
+from shillelagh.backends.apsw.dialects.base import APSWDialect
+from shillelagh.backends.apsw.dialects.gsheets import APSWGSheetsDialect
+from shillelagh.backends.apsw.dialects.safe import APSWSafeDialect
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float

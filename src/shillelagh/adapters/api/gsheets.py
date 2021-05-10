@@ -36,8 +36,10 @@ from typing_extensions import Literal
 from typing_extensions import TypedDict
 
 # Google API scopes for authentication
-# https://developers.google.com/chart/interactive/docs/spreadsheets
-SCOPES = ["https://spreadsheets.google.com/feeds"]
+SCOPES = [
+    # "https://www.googleapis.com/auth/spreadsheets.readonly",
+    "https://www.googleapis.com/auth/drive.readonly",
+]
 
 JSON_PAYLOAD_PREFIX = ")]}'\n"
 
