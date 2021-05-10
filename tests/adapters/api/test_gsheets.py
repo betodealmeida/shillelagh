@@ -568,8 +568,8 @@ def test_get_session(mocker):
     mock_session = mock.MagicMock()
     mocker.patch("shillelagh.adapters.api.gsheets.Session", mock_session)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.Credentials.from_service_account_info",
-        return_value="SECRET",
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value=None,
     )
 
     # prevent network call
@@ -586,6 +586,10 @@ def test_get_session(mocker):
     mock_authorized_session.reset_mock()
     mock_session.reset_mock()
 
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value="SECRET",
+    )
     adapter = GSheetsAPI(
         "https://docs.google.com/spreadsheets/d/1",
         service_account_info={"secret": "XXX"},
