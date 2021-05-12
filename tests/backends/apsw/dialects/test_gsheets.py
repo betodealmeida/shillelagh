@@ -36,9 +36,6 @@ def test_gsheets_dialect():
         {},
     )
 
-    with open("credentials.json", "w") as fp:
-        json.dump({"secret": "YYY"}, fp)
-
     dialect = APSWGSheetsDialect(
         service_account_file="credentials.json",
         subject="user@example.com",
