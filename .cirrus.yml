@@ -1,0 +1,110 @@
+# Cirrus CI configuration file using the matrix feature
+# Read more under https://cirrus-ci.org/guide/writing-tasks/
+# THIS FILE IS SUPPOSED TO BE AN EXAMPLE. MODIFY IT ACCORDING TO YOUR NEEDS!
+---
+# Default values to be merged into tasks:
+auto_cancellation: false
+env:
+  PATH: ${HOME}/.local/bin:${PATH}
+  # ^  add user paths
+  COVERALLS_REPO_TOKEN: ENCRYPTED[286f8b4300995acbe4199e03f471dc19bcd99fb6507261875039d21b75c6f8c4ba4784b9c31ba0506174dcb801614b4d]
+  # ^ ADD YOUR ENCRYPTED TOKEN HERE: https://cirrus-ci.org/guide/writing-tasks/#encrypted-variables
+  PIP_CACHE: ${HOME}/.cache/pip
+  LC_ALL: C.UTF-8
+  LANG: C.UTF-8
+  COVERAGE: NO
+
+# This template is used in most of the tasks
+.regular_task_template: &REGULAR_TASK_TEMPLATE
+  pip_cache: &pip-cache
+    folder: $PIP_CACHE
+  tox_install_script:
+    - python -m pip install --upgrade pip setuptools tox
+  prepare_script: &prepare
+    # This script is also used in Windows, so the shell is not POSIX
+    - git config --global user.email "roberto@dealmeida.net"
+    - git config --global user.name "Beto Dealmeida"
+  clean_workspace_script:
+    # Avoid information carried from one run to the other
+    - rm -rf .coverage junit-*.xml .tox
+  # The following scripts are also used in Windows, be aware the shell is not POSIX
+  build_script: &build
+    - python -m tox -e build  # Ensure PEP517-style build works
+  test_script: &test
+    - python -m tox -- -rfEx --durations 10 --color yes
+    # ^  tox is better if invoked as a module on Windows/OSX
+
+
+# ---- Task definitions ----
+
+linux_mac_task:
+  # Use custom cloning since otherwise git tags are missing
+  clone_script: &clone |
+    if [ -z "$CIRRUS_PR" ]; then
+      git clone --recursive --branch=$CIRRUS_BRANCH https://x-access-token:${CIRRUS_REPO_CLONE_TOKEN}@github.com/${CIRRUS_REPO_FULL_NAME}.git $CIRRUS_WORKING_DIR
+      git reset --hard $CIRRUS_CHANGE_IN_REPO
+    else
+      git clone --recursive https://x-access-token:${CIRRUS_REPO_CLONE_TOKEN}@github.com/${CIRRUS_REPO_FULL_NAME}.git $CIRRUS_WORKING_DIR
+      git fetch origin pull/$CIRRUS_PR/head:pull/$CIRRUS_PR
+      git reset --hard $CIRRUS_CHANGE_IN_REPO
+    fi
+  matrix:
+    - name: test (Linux - 3.7)
+      container: {image: "python:3.7-buster"}
+      install_script: &debian-install
+        - apt-get install -y git
+    - name: test (Linux - 3.8)
+      container: {image: "python:3.8-buster"}
+      install_script: *debian-install
+    - name: test (Linux - 3.9)
+      container: {image: "python:3.9-buster"}
+      install_script: *debian-install
+    - name: test (Linux - Anaconda)
+      container: {image: "continuumio/anaconda3:2021.04"}
+      install_script: *debian-install
+      extra_install_script:
+        - apt-get update
+        - apt-get install -y --fix-missing gcc python3-dev
+          # ^  required by a weird conda bug - apparently this is needed for isolated builds
+          #    https://cirrus-ci.com/task/5049814234693632?command=test#L251
+    - name: test (OS X)
+      osx_instance: {image: "catalina-xcode"}
+      env:
+        PYTHON_VERSION: 3.7
+        # ^  update when the default version of python in homebrew changes
+        PATH: "${HOME}/.local/bin:${HOME}/Library/Python/${PYTHON_VERSION}/bin:/usr/local/opt/python/libexec/bin:${PATH}"
+        # ^  add user and homebrew paths
+        PIP_CACHE: "${HOME}/Library/Caches/pip"
+      brew_cache:
+        folder: "$HOME/Library/Caches/Homebrew"
+      install_script:
+        - brew install python gnu-tar
+        - brew cleanup
+  <<: *REGULAR_TASK_TEMPLATE
+
+
+coverage_task:
+  name: coverage (Linux)
+  clone_script: *clone
+  container: {image: "python:3.9-buster"}
+  env:
+    COVERAGE: yes
+    PRE_COMMIT_HOME: ${HOME}/.cache/pre-commit
+  depends_on:
+    - test (Linux - 3.9)
+  install_script: *debian-install
+  pip_install_script:
+    pip install --user --upgrade coverage coveralls pre-commit
+  precommit_script:
+    - pre-commit install
+    - pre-commit run --all-files
+  <<: *REGULAR_TASK_TEMPLATE
+  coverage_script:
+    - coveralls
+  pre_commit_cache: &pre-commit-cache
+    folder: $PRE_COMMIT_HOME
+    fingerprint_script:
+      - echo $CIRRUS_OS
+      - python --version
+      - pre-commit --version
+      - cat .pre-commit-config.yaml

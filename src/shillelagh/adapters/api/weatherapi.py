@@ -8,6 +8,7 @@ from typing import List
 from typing import Tuple
 
 import dateutil.parser
+import dateutil.tz
 import requests_cache
 from shillelagh.adapters.base import Adapter
 from shillelagh.fields import Boolean
@@ -129,11 +130,15 @@ class WeatherAPI(Adapter):
             response = self._session.get(url)
             if response.ok:
                 payload = response.json()
+                tz = dateutil.tz.gettz(payload["location"]["tz_id"])
                 hourly_data = payload["forecast"]["forecastday"][0]["hour"]
                 columns = self.get_columns()
                 for record in hourly_data:
                     row = {column: record[column] for column in columns}
-                    row["time"] = dateutil.parser.parse(record["time"])
+                    row["time"] = dateutil.parser.parse(record["time"]).replace(
+                        tzinfo=tz,
+                    )
+                    print(record["time"], row["time"])
                     row["rowid"] = int(row["time_epoch"])
                     yield row
 

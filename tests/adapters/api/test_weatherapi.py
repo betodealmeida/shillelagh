@@ -24,7 +24,7 @@ def test_weatherapi(requests_mock):
         """CREATE VIRTUAL TABLE iceland USING weatherapi('"iceland"', '"XXX"')""",
     )
 
-    sql = "SELECT * FROM iceland WHERE time = '2021-03-17T12:00:00'"
+    sql = "SELECT * FROM iceland WHERE time = '2021-03-17T12:00:00+00:00'"
     data = list(cursor.execute(sql))
     assert data == [
         (
@@ -47,7 +47,7 @@ def test_weatherapi(requests_mock):
             1023.0,
             6.7,
             44.1,
-            "2021-03-17T12:00:00",
+            "2021-03-17T12:00:00+00:00",
             1615982400.0,
             2.0,
             1.0,
@@ -79,7 +79,7 @@ def test_weatherapi_impossible(requests_mock):
         f"""CREATE VIRTUAL TABLE iceland USING weatherapi('"iceland"', '"XXX"')""",
     )
 
-    sql = "SELECT * FROM iceland WHERE time = '2021-03-17T12:00:00' AND time = '2021-03-18T12:00:00'"
+    sql = "SELECT * FROM iceland WHERE time = '2021-03-17T12:00:00+00:00' AND time = '2021-03-18T12:00:00+00:00'"
     with pytest.raises(Exception) as excinfo:
         cursor.execute(sql)
 
@@ -106,7 +106,7 @@ def test_weatherapi_api_error(requests_mock):
         f"""CREATE VIRTUAL TABLE iceland USING weatherapi('"iceland"', '"XXX"')""",
     )
 
-    sql = "SELECT * FROM iceland WHERE time >= '2021-03-17T12:00:00' AND time <= '2021-03-18T12:00:00'"
+    sql = "SELECT * FROM iceland WHERE time >= '2021-03-17T12:00:00+00:00' AND time <= '2021-03-18T12:00:00+00:00'"
     data = list(cursor.execute(sql))
     assert data == [
         (
@@ -129,7 +129,7 @@ def test_weatherapi_api_error(requests_mock):
             1023.0,
             6.7,
             44.1,
-            "2021-03-17T12:00:00",
+            "2021-03-17T12:00:00+00:00",
             1615982400.0,
             2.0,
             1.0,
@@ -162,7 +162,7 @@ def test_weatherapi_api_error(requests_mock):
             1023.0,
             6.9,
             44.5,
-            "2021-03-17T13:00:00",
+            "2021-03-17T13:00:00+00:00",
             1615986000.0,
             4.7,
             2.0,
@@ -195,7 +195,7 @@ def test_weatherapi_api_error(requests_mock):
             1024.0,
             7.2,
             44.9,
-            "2021-03-17T14:00:00",
+            "2021-03-17T14:00:00+00:00",
             1615989600.0,
             7.3,
             4.0,
@@ -228,7 +228,7 @@ def test_weatherapi_api_error(requests_mock):
             1024.0,
             7.4,
             45.3,
-            "2021-03-17T15:00:00",
+            "2021-03-17T15:00:00+00:00",
             1615993200.0,
             10.0,
             6.0,
@@ -261,7 +261,7 @@ def test_weatherapi_api_error(requests_mock):
             1024.0,
             7.3,
             45.1,
-            "2021-03-17T16:00:00",
+            "2021-03-17T16:00:00+00:00",
             1615996800.0,
             10.0,
             6.0,
@@ -294,7 +294,7 @@ def test_weatherapi_api_error(requests_mock):
             1024.0,
             7.2,
             45.0,
-            "2021-03-17T17:00:00",
+            "2021-03-17T17:00:00+00:00",
             1616000400.0,
             10.0,
             6.0,
@@ -327,7 +327,7 @@ def test_weatherapi_api_error(requests_mock):
             1024.0,
             7.1,
             44.8,
-            "2021-03-17T18:00:00",
+            "2021-03-17T18:00:00+00:00",
             1616004000.0,
             10.0,
             6.0,
@@ -360,7 +360,7 @@ def test_weatherapi_api_error(requests_mock):
             1024.0,
             7.0,
             44.7,
-            "2021-03-17T19:00:00",
+            "2021-03-17T19:00:00+00:00",
             1616007600.0,
             10.0,
             6.0,
@@ -393,7 +393,7 @@ def test_weatherapi_api_error(requests_mock):
             1025.0,
             7.0,
             44.5,
-            "2021-03-17T20:00:00",
+            "2021-03-17T20:00:00+00:00",
             1616011200.0,
             10.0,
             6.0,
@@ -426,7 +426,7 @@ def test_weatherapi_api_error(requests_mock):
             1025.0,
             6.9,
             44.4,
-            "2021-03-17T21:00:00",
+            "2021-03-17T21:00:00+00:00",
             1616014800.0,
             10.0,
             6.0,
@@ -459,7 +459,7 @@ def test_weatherapi_api_error(requests_mock):
             1026.0,
             6.8,
             44.3,
-            "2021-03-17T22:00:00",
+            "2021-03-17T22:00:00+00:00",
             1616018400.0,
             10.0,
             6.0,
@@ -492,7 +492,7 @@ def test_weatherapi_api_error(requests_mock):
             1026.0,
             6.8,
             44.2,
-            "2021-03-17T23:00:00",
+            "2021-03-17T23:00:00+00:00",
             1616022000.0,
             10.0,
             6.0,
@@ -529,7 +529,7 @@ def test_dispatch(mocker, requests_mock):
     sql = (
         "SELECT * FROM "
         '"https://api.weatherapi.com/v1/history.json?key=XXX&q=iceland" '
-        "WHERE time = '2021-03-17T12:00:00'"
+        "WHERE time = '2021-03-17T12:00:00+00:00'"
     )
     data = list(cursor.execute(sql))
     assert data == [
@@ -553,7 +553,7 @@ def test_dispatch(mocker, requests_mock):
             1023.0,
             6.7,
             44.1,
-            datetime(2021, 3, 17, 19, 0, tzinfo=timezone.utc),
+            datetime(2021, 3, 17, 12, 0, tzinfo=timezone.utc),
             1615982400.0,
             2.0,
             1.0,
