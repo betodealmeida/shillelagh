@@ -2,11 +2,12 @@
 Changelog
 =========
 
-Version 0.5.0 - 2021-??-??
+Version 0.5.0 - 2021-05-22
 ==========================
 
 - Use new Google Sheets API v4
 - Implement ``get_table_names`` for GSheets dialect
+- Allow passing parameters to GSheets dialect via URL query
 
 Version 0.4.3 - 2021-04-20
 ==========================

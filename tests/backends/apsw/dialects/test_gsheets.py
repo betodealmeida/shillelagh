@@ -4,6 +4,7 @@ from unittest import mock
 import requests
 import requests_mock
 from shillelagh.backends.apsw.dialects.gsheets import APSWGSheetsDialect
+from shillelagh.backends.apsw.dialects.gsheets import extract_query
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine.url import make_url
 
@@ -101,3 +102,9 @@ def test_get_table_names(mocker):
         "https://docs.google.com/spreadsheets/d/1/edit#gid=1",
         "https://docs.google.com/spreadsheets/d/2/edit#gid=0",
     ]
+
+
+def test_extract_query():
+    assert extract_query(make_url("gsheets://")) == {}
+    assert extract_query(make_url("gsheets://?foo=bar")) == {"foo": "bar"}
+    assert extract_query(make_url("gsheets:///?foo=bar")) == {"foo": "bar"}

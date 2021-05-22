@@ -1,3 +1,4 @@
+import urllib.parse
 from typing import Any
 from typing import Dict
 from typing import List
@@ -10,6 +11,30 @@ from shillelagh.adapters.api.gsheets import get_credentials
 from shillelagh.backends.apsw.dialects.base import APSWDialect
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
+
+
+def extract_query(url: URL) -> Dict[str, str]:
+    """
+    Extract the query from the SQLAlchemy URL.
+
+    There's a bug in how SQLAlchemy handles URLs without hosts:
+
+        >>> from sqlalchemy.engine.url import make_url
+        >>> url = make_url("gsheets://")
+        >>> url.query["subject"] = "user@example.com"
+        >>> url
+        gsheets://?subject=user%40example.com
+        >>> make_url(str(url)).query
+        {}
+        >>> make_url(str(url)).host
+        '?subject=user%40example.com'
+
+    """
+    if url.query:
+        return dict(url.query)
+    if url.host and url.host.startswith("?"):
+        return dict(urllib.parse.parse_qsl(url.host[1:]))
+    return {}
 
 
 class APSWGSheetsDialect(APSWDialect):
@@ -40,12 +65,13 @@ class APSWGSheetsDialect(APSWDialect):
         Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], bool, Optional[str]],
         Dict[str, Any],
     ]:
+        query = extract_query(url)
         adapter_args: Dict[str, Any] = {
             "gsheetsapi": (
-                self.access_token,
-                self.service_account_file,
-                self.service_account_info,
-                self.subject,
+                query.get("access_token", self.access_token),
+                query.get("service_account_file", self.service_account_file),
+                query.get("service_account_info", self.service_account_info),
+                query.get("subject", self.subject),
             ),
         }
 
