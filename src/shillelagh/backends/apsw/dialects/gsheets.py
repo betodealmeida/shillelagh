@@ -1,3 +1,4 @@
+import logging
 import urllib.parse
 from typing import Any
 from typing import Dict
@@ -9,8 +10,11 @@ from google.auth.credentials import Credentials
 from google.auth.transport.requests import AuthorizedSession
 from shillelagh.adapters.api.gsheets import get_credentials
 from shillelagh.backends.apsw.dialects.base import APSWDialect
+from shillelagh.exceptions import ProgrammingError
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
+
+_logger = logging.getLogger(__name__)
 
 
 def extract_query(url: URL) -> Dict[str, str]:
@@ -97,6 +101,7 @@ class APSWGSheetsDialect(APSWDialect):
             self.service_account_info,
             self.subject,
         )
+        print(connection)
         if not credentials:
             return []
 
@@ -107,6 +112,9 @@ class APSWGSheetsDialect(APSWDialect):
             "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'",
         )
         payload = response.json()
+        if "error" in payload:
+            raise ProgrammingError(payload["error"]["message"])
+
         files = payload["files"]
         for file in files:
             spreadsheet_id = file["id"]
@@ -114,6 +122,13 @@ class APSWGSheetsDialect(APSWDialect):
                 f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}?includeGridData=false",
             )
             payload = response.json()
+            if "error" in payload:
+                _logger.warning(
+                    "Error loading sheets from file: %s",
+                    payload["error"]["message"],
+                )
+                continue
+
             sheets = payload["sheets"]
             for sheet in sheets:
                 sheet_id = sheet["properties"]["sheetId"]
