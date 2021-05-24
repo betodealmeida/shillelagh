@@ -8,6 +8,8 @@ shillelagh
    :target: https://travis-ci.org/betodealmeida/shillelagh
 .. image:: https://badge.fury.io/py/shillelagh.svg
    :target: https://badge.fury.io/py/shillelagh
+.. image:: https://img.shields.io/pypi/pyversions/shillelagh
+   :alt: PyPI - Python Version
 
 Shillelagh is a library that makes it easy to write adapters to APIs so that they can be queried via SQL.
 
