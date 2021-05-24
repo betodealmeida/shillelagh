@@ -2,7 +2,7 @@
 Changelog
 =========
 
-Version 0.5.1 - 2021-MM-DD
+Version 0.5.1 - 2021-05-24
 ==========================
 
 - Better error handling in the GSheets dialect
