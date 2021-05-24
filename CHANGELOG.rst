@@ -6,6 +6,7 @@ Version 0.5.1 - 2021-MM-DD
 ==========================
 
 - Better error handling in the GSheets dialect
+- Use GSheets URL parameters on get_table_names
 
 Version 0.5.0 - 2021-05-22
 ==========================

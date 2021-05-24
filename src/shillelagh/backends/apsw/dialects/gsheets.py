@@ -95,13 +95,13 @@ class APSWGSheetsDialect(APSWDialect):
     def get_table_names(
         self, connection: _ConnectionFairy, schema: str = None, **kwargs: Any
     ) -> List[str]:
+        query = extract_query(connection.url) if hasattr(connection, "url") else {}
         credentials = get_credentials(
-            self.access_token,
-            self.service_account_file,
+            query.get("access_token", self.access_token),
+            query.get("service_account_file", self.service_account_file),
             self.service_account_info,
-            self.subject,
+            query.get("subject", self.subject),
         )
-        print(connection)
         if not credentials:
             return []
 
