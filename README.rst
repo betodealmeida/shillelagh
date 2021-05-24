@@ -6,6 +6,8 @@ shillelagh
    :target: https://coveralls.io/github/betodealmeida/shillelagh?branch=master
 .. image:: https://travis-ci.org/betodealmeida/shillelagh.svg?branch=master
    :target: https://travis-ci.org/betodealmeida/shillelagh
+.. image:: https://badge.fury.io/py/shillelagh.svg
+   :target: https://badge.fury.io/py/shillelagh
 
 Shillelagh is a library that makes it easy to write adapters to APIs so that they can be queried via SQL.
 
