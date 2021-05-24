@@ -708,8 +708,13 @@ def test_api_bugs(mocker):
     cursor = connection.cursor()
 
     sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/3/edit#gid=0"'''
-    with pytest.raises(ProgrammingError):
+    with pytest.raises(ProgrammingError) as excinfo:
         cursor.execute(sql)
+
+    assert (
+        str(excinfo.value)
+        == '{"version": "0.6", "reqId": "0", "status": "error", "errors": [{"reason": "invalid_query", "message": "INVALID_QUERY", "detailed_message": "Invalid query: NO_COLUMN: C"}]}'
+    )
 
 
 def test_execute_json_prefix(mocker):
