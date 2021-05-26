@@ -138,7 +138,6 @@ class WeatherAPI(Adapter):
                     row["time"] = dateutil.parser.parse(record["time"]).replace(
                         tzinfo=tz,
                     )
-                    print(record["time"], row["time"])
                     row["rowid"] = int(row["time_epoch"])
                     yield row
 
