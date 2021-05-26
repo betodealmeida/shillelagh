@@ -12,10 +12,24 @@ shillelagh
 .. image:: https://img.shields.io/pypi/pyversions/shillelagh
    :alt: PyPI - Python Version
 
-Shillelagh is a library that makes it easy to write adapters to APIs so that they can be queried via SQL.
+Shillelagh is a `Python DB API <https://www.python.org/dev/peps/pep-0249/>`_ and `SQLAlchemy <https://www.sqlalchemy.org/>`_ dialect for querying non-SQL resources like APIs and files. You can use it to write queries like this:
 
-Quick example
-=============
+.. code-block:: sql
+
+    INSERT INTO "csv:///path/to/file.csv"
+    SELECT time, chance_of_rain
+    FROM "https://api.weatherapi.com/v1/history.json?key=XXX&q=London"
+    WHERE strftime('%Y-%m-%d', time) IN (
+      SELECT day
+      FROM "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=2064361835"
+    )
+
+The query above reads holidays from a Google Sheet, uses the days to get weather data from `WeatherAPI <https://www.weatherapi.com/>`_, and writes the  change of rain at each hour of the holidays into a (pre-existing) CSV file.
+
+Each of these resources is implemented via an **adapter**, and writing adapters is relatively straightforward.
+
+Writing a new adapter
+=====================
 
 Let's say we want to fetch data from `WeatherAPI <https://www.weatherapi.com/docs/>`_ using SQL. Their API is pretty straightforward — to fetch data for a given day in a given location all we need is an HTTP request:
 
