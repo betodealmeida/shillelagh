@@ -104,3 +104,9 @@ class NotSupportedError(DatabaseError):
     connection that does not support transaction or has transactions
     turned off. It must be a subclass of DatabaseError.
     """
+
+
+class ImpossibleFilterError(Exception):
+    """
+    Raised when a condition impossible to meet is found (eg, 1=0).
+    """

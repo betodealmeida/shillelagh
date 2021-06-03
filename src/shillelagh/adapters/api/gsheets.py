@@ -136,7 +136,7 @@ def get_field(col: QueryResultsColumn) -> Field:
     class_, filters = type_map.get(col["type"], (String, [Equal]))
     return class_(
         filters=filters,
-        order=Order.NONE,
+        order=Order.ANY,
         exact=True,
     )
 

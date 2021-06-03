@@ -1,87 +1,4 @@
-import operator
-import urllib.parse
-from typing import Any
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
-
-from shillelagh.adapters.base import Adapter
-from shillelagh.fields import Float
-from shillelagh.fields import Integer
-from shillelagh.fields import Order
-from shillelagh.fields import String
-from shillelagh.filters import Equal
-from shillelagh.filters import Filter
-from shillelagh.filters import Range
-from shillelagh.types import RequestedOrder
-from shillelagh.types import Row
-
-
-class FakeEntryPoint:
-    def __init__(self, name: str, adapter: Adapter):
-        self.name = name
-        self.adapter = adapter
-
-    def load(self) -> Adapter:
-        return self.adapter
-
-
-class FakeAdapter(Adapter):
-
-    safe = False
-
-    age = Float(filters=[Range], order=Order.ANY, exact=True)
-    name = String(filters=[Equal], order=Order.ANY, exact=True)
-    pets = Integer(order=Order.ANY)
-
-    @staticmethod
-    def supports(uri: str) -> bool:
-        parsed = urllib.parse.urlparse(uri)
-        return parsed.scheme == "dummy"
-
-    @staticmethod
-    def parse_uri(uri: str) -> Tuple[()]:
-        return ()
-
-    def __init__(self):
-        self.data = [
-            {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
-            {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
-        ]
-
-    def get_data(
-        self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
-    ) -> Iterator[Dict[str, Any]]:
-        data = self.data[:]
-
-        for column in ["name", "age"]:
-            if column in bounds:
-                data = [row for row in data if bounds[column].check(row[column])]
-
-        for column_name, requested_order in order:
-            reverse = requested_order == Order.DESCENDING
-            data.sort(key=operator.itemgetter(column_name), reverse=reverse)
-
-        yield from iter(data)
-
-    def insert_row(self, row: Row) -> int:
-        row_id: Optional[int] = row["rowid"]
-        if row_id is None:
-            row["rowid"] = row_id = max(row["rowid"] for row in self.data) + 1
-
-        self.data.append(row)
-
-        return row_id
-
-    def delete_row(self, row_id: int) -> None:
-        self.data = [row for row in self.data if row["rowid"] != row_id]
-
-
-weatherapi_response = {
+{
     "location": {
         "name": "Reykjavik",
         "region": "Gullbringusysla",
@@ -90,7 +7,7 @@ weatherapi_response = {
         "lon": -21.95,
         "tz_id": "Atlantic/Reykjavik",
         "localtime_epoch": 1616202420,
-        "localtime": "2021-03-20 1:07",
+        "localtime": "2021-03-20 1:07"
     },
     "forecast": {
         "forecastday": [
@@ -114,9 +31,9 @@ weatherapi_response = {
                     "condition": {
                         "text": "Light rain",
                         "icon": "//cdn.weatherapi.com/weather/64x64/day/296.png",
-                        "code": 1183,
+                        "code": 1183
                     },
-                    "uv": 0.0,
+                    "uv": 0.0
                 },
                 "astro": {
                     "sunrise": "07:39 AM",
@@ -124,7 +41,7 @@ weatherapi_response = {
                     "moonrise": "08:37 AM",
                     "moonset": "No moonset",
                     "moon_phase": "Waxing Crescent",
-                    "moon_illumination": "23",
+                    "moon_illumination": "23"
                 },
                 "hour": [
                     {
@@ -136,7 +53,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Overcast",
                             "icon": "//cdn.weatherapi.com/weather/64x64/night/122.png",
-                            "code": 1009,
+                            "code": 1009
                         },
                         "wind_mph": 13.2,
                         "wind_kph": 21.2,
@@ -163,7 +80,7 @@ weatherapi_response = {
                         "vis_km": 10.0,
                         "vis_miles": 6.0,
                         "gust_mph": 22.1,
-                        "gust_kph": 35.6,
+                        "gust_kph": 35.6
                     },
                     {
                         "time_epoch": 1615942800,
@@ -174,7 +91,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Overcast",
                             "icon": "//cdn.weatherapi.com/weather/64x64/night/122.png",
-                            "code": 1009,
+                            "code": 1009
                         },
                         "wind_mph": 12.8,
                         "wind_kph": 20.6,
@@ -201,7 +118,7 @@ weatherapi_response = {
                         "vis_km": 9.7,
                         "vis_miles": 6.0,
                         "gust_mph": 22.1,
-                        "gust_kph": 35.5,
+                        "gust_kph": 35.5
                     },
                     {
                         "time_epoch": 1615946400,
@@ -212,7 +129,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Light rain",
                             "icon": "//cdn.weatherapi.com/weather/64x64/night/296.png",
-                            "code": 1183,
+                            "code": 1183
                         },
                         "wind_mph": 12.5,
                         "wind_kph": 20.0,
@@ -239,7 +156,7 @@ weatherapi_response = {
                         "vis_km": 9.3,
                         "vis_miles": 5.0,
                         "gust_mph": 22.0,
-                        "gust_kph": 35.4,
+                        "gust_kph": 35.4
                     },
                     {
                         "time_epoch": 1615950000,
@@ -250,7 +167,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Light rain",
                             "icon": "//cdn.weatherapi.com/weather/64x64/night/296.png",
-                            "code": 1183,
+                            "code": 1183
                         },
                         "wind_mph": 12.1,
                         "wind_kph": 19.4,
@@ -277,7 +194,7 @@ weatherapi_response = {
                         "vis_km": 9.0,
                         "vis_miles": 5.0,
                         "gust_mph": 21.9,
-                        "gust_kph": 35.3,
+                        "gust_kph": 35.3
                     },
                     {
                         "time_epoch": 1615953600,
@@ -288,7 +205,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Light rain",
                             "icon": "//cdn.weatherapi.com/weather/64x64/night/296.png",
-                            "code": 1183,
+                            "code": 1183
                         },
                         "wind_mph": 11.7,
                         "wind_kph": 18.8,
@@ -315,7 +232,7 @@ weatherapi_response = {
                         "vis_km": 9.0,
                         "vis_miles": 5.0,
                         "gust_mph": 21.6,
-                        "gust_kph": 34.8,
+                        "gust_kph": 34.8
                     },
                     {
                         "time_epoch": 1615957200,
@@ -326,7 +243,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Light rain",
                             "icon": "//cdn.weatherapi.com/weather/64x64/night/296.png",
-                            "code": 1183,
+                            "code": 1183
                         },
                         "wind_mph": 11.3,
                         "wind_kph": 18.2,
@@ -353,7 +270,7 @@ weatherapi_response = {
                         "vis_km": 9.0,
                         "vis_miles": 5.0,
                         "gust_mph": 21.3,
-                        "gust_kph": 34.3,
+                        "gust_kph": 34.3
                     },
                     {
                         "time_epoch": 1615960800,
@@ -364,7 +281,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Light rain",
                             "icon": "//cdn.weatherapi.com/weather/64x64/night/296.png",
-                            "code": 1183,
+                            "code": 1183
                         },
                         "wind_mph": 11.0,
                         "wind_kph": 17.6,
@@ -391,7 +308,7 @@ weatherapi_response = {
                         "vis_km": 9.0,
                         "vis_miles": 5.0,
                         "gust_mph": 21.0,
-                        "gust_kph": 33.8,
+                        "gust_kph": 33.8
                     },
                     {
                         "time_epoch": 1615964400,
@@ -402,7 +319,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Light rain",
                             "icon": "//cdn.weatherapi.com/weather/64x64/night/296.png",
-                            "code": 1183,
+                            "code": 1183
                         },
                         "wind_mph": 11.3,
                         "wind_kph": 18.1,
@@ -429,7 +346,7 @@ weatherapi_response = {
                         "vis_km": 6.7,
                         "vis_miles": 4.0,
                         "gust_mph": 21.5,
-                        "gust_kph": 34.6,
+                        "gust_kph": 34.6
                     },
                     {
                         "time_epoch": 1615968000,
@@ -440,7 +357,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Light drizzle",
                             "icon": "//cdn.weatherapi.com/weather/64x64/day/266.png",
-                            "code": 1153,
+                            "code": 1153
                         },
                         "wind_mph": 11.6,
                         "wind_kph": 18.6,
@@ -467,7 +384,7 @@ weatherapi_response = {
                         "vis_km": 4.3,
                         "vis_miles": 2.0,
                         "gust_mph": 21.9,
-                        "gust_kph": 35.3,
+                        "gust_kph": 35.3
                     },
                     {
                         "time_epoch": 1615971600,
@@ -478,7 +395,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Light drizzle",
                             "icon": "//cdn.weatherapi.com/weather/64x64/day/266.png",
-                            "code": 1153,
+                            "code": 1153
                         },
                         "wind_mph": 11.9,
                         "wind_kph": 19.1,
@@ -505,7 +422,7 @@ weatherapi_response = {
                         "vis_km": 2.0,
                         "vis_miles": 1.0,
                         "gust_mph": 22.4,
-                        "gust_kph": 36.0,
+                        "gust_kph": 36.0
                     },
                     {
                         "time_epoch": 1615975200,
@@ -516,7 +433,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Light drizzle",
                             "icon": "//cdn.weatherapi.com/weather/64x64/day/266.png",
-                            "code": 1153,
+                            "code": 1153
                         },
                         "wind_mph": 11.9,
                         "wind_kph": 19.2,
@@ -543,7 +460,7 @@ weatherapi_response = {
                         "vis_km": 2.0,
                         "vis_miles": 1.0,
                         "gust_mph": 22.1,
-                        "gust_kph": 35.5,
+                        "gust_kph": 35.5
                     },
                     {
                         "time_epoch": 1615978800,
@@ -554,7 +471,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Light drizzle",
                             "icon": "//cdn.weatherapi.com/weather/64x64/day/266.png",
-                            "code": 1153,
+                            "code": 1153
                         },
                         "wind_mph": 12.0,
                         "wind_kph": 19.3,
@@ -581,7 +498,7 @@ weatherapi_response = {
                         "vis_km": 2.0,
                         "vis_miles": 1.0,
                         "gust_mph": 21.8,
-                        "gust_kph": 35.0,
+                        "gust_kph": 35.0
                     },
                     {
                         "time_epoch": 1615982400,
@@ -592,7 +509,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Light drizzle",
                             "icon": "//cdn.weatherapi.com/weather/64x64/day/266.png",
-                            "code": 1153,
+                            "code": 1153
                         },
                         "wind_mph": 12.1,
                         "wind_kph": 19.4,
@@ -619,7 +536,7 @@ weatherapi_response = {
                         "vis_km": 2.0,
                         "vis_miles": 1.0,
                         "gust_mph": 21.5,
-                        "gust_kph": 34.6,
+                        "gust_kph": 34.6
                     },
                     {
                         "time_epoch": 1615986000,
@@ -630,7 +547,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Light drizzle",
                             "icon": "//cdn.weatherapi.com/weather/64x64/day/266.png",
-                            "code": 1153,
+                            "code": 1153
                         },
                         "wind_mph": 12.9,
                         "wind_kph": 20.8,
@@ -657,7 +574,7 @@ weatherapi_response = {
                         "vis_km": 4.7,
                         "vis_miles": 2.0,
                         "gust_mph": 22.8,
-                        "gust_kph": 36.7,
+                        "gust_kph": 36.7
                     },
                     {
                         "time_epoch": 1615989600,
@@ -668,7 +585,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Cloudy",
                             "icon": "//cdn.weatherapi.com/weather/64x64/day/119.png",
-                            "code": 1006,
+                            "code": 1006
                         },
                         "wind_mph": 13.7,
                         "wind_kph": 22.1,
@@ -695,7 +612,7 @@ weatherapi_response = {
                         "vis_km": 7.3,
                         "vis_miles": 4.0,
                         "gust_mph": 24.2,
-                        "gust_kph": 38.9,
+                        "gust_kph": 38.9
                     },
                     {
                         "time_epoch": 1615993200,
@@ -706,7 +623,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Cloudy",
                             "icon": "//cdn.weatherapi.com/weather/64x64/day/119.png",
-                            "code": 1006,
+                            "code": 1006
                         },
                         "wind_mph": 14.5,
                         "wind_kph": 23.4,
@@ -733,7 +650,7 @@ weatherapi_response = {
                         "vis_km": 10.0,
                         "vis_miles": 6.0,
                         "gust_mph": 25.5,
-                        "gust_kph": 41.0,
+                        "gust_kph": 41.0
                     },
                     {
                         "time_epoch": 1615996800,
@@ -744,7 +661,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Cloudy",
                             "icon": "//cdn.weatherapi.com/weather/64x64/day/119.png",
-                            "code": 1006,
+                            "code": 1006
                         },
                         "wind_mph": 15.1,
                         "wind_kph": 24.4,
@@ -771,7 +688,7 @@ weatherapi_response = {
                         "vis_km": 10.0,
                         "vis_miles": 6.0,
                         "gust_mph": 26.5,
-                        "gust_kph": 42.6,
+                        "gust_kph": 42.6
                     },
                     {
                         "time_epoch": 1616000400,
@@ -782,7 +699,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Patchy rain possible",
                             "icon": "//cdn.weatherapi.com/weather/64x64/day/176.png",
-                            "code": 1063,
+                            "code": 1063
                         },
                         "wind_mph": 15.7,
                         "wind_kph": 25.3,
@@ -809,7 +726,7 @@ weatherapi_response = {
                         "vis_km": 10.0,
                         "vis_miles": 6.0,
                         "gust_mph": 27.4,
-                        "gust_kph": 44.2,
+                        "gust_kph": 44.2
                     },
                     {
                         "time_epoch": 1616004000,
@@ -820,7 +737,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Patchy rain possible",
                             "icon": "//cdn.weatherapi.com/weather/64x64/day/176.png",
-                            "code": 1063,
+                            "code": 1063
                         },
                         "wind_mph": 16.3,
                         "wind_kph": 26.3,
@@ -847,7 +764,7 @@ weatherapi_response = {
                         "vis_km": 10.0,
                         "vis_miles": 6.0,
                         "gust_mph": 28.4,
-                        "gust_kph": 45.7,
+                        "gust_kph": 45.7
                     },
                     {
                         "time_epoch": 1616007600,
@@ -858,7 +775,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Patchy rain possible",
                             "icon": "//cdn.weatherapi.com/weather/64x64/day/176.png",
-                            "code": 1063,
+                            "code": 1063
                         },
                         "wind_mph": 15.8,
                         "wind_kph": 25.4,
@@ -885,7 +802,7 @@ weatherapi_response = {
                         "vis_km": 10.0,
                         "vis_miles": 6.0,
                         "gust_mph": 27.8,
-                        "gust_kph": 44.8,
+                        "gust_kph": 44.8
                     },
                     {
                         "time_epoch": 1616011200,
@@ -896,7 +813,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Overcast",
                             "icon": "//cdn.weatherapi.com/weather/64x64/night/122.png",
-                            "code": 1009,
+                            "code": 1009
                         },
                         "wind_mph": 15.3,
                         "wind_kph": 24.6,
@@ -923,7 +840,7 @@ weatherapi_response = {
                         "vis_km": 10.0,
                         "vis_miles": 6.0,
                         "gust_mph": 27.2,
-                        "gust_kph": 43.8,
+                        "gust_kph": 43.8
                     },
                     {
                         "time_epoch": 1616014800,
@@ -934,7 +851,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Overcast",
                             "icon": "//cdn.weatherapi.com/weather/64x64/night/122.png",
-                            "code": 1009,
+                            "code": 1009
                         },
                         "wind_mph": 14.8,
                         "wind_kph": 23.8,
@@ -961,7 +878,7 @@ weatherapi_response = {
                         "vis_km": 10.0,
                         "vis_miles": 6.0,
                         "gust_mph": 26.6,
-                        "gust_kph": 42.8,
+                        "gust_kph": 42.8
                     },
                     {
                         "time_epoch": 1616018400,
@@ -972,7 +889,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Overcast",
                             "icon": "//cdn.weatherapi.com/weather/64x64/night/122.png",
-                            "code": 1009,
+                            "code": 1009
                         },
                         "wind_mph": 14.5,
                         "wind_kph": 23.3,
@@ -999,7 +916,7 @@ weatherapi_response = {
                         "vis_km": 10.0,
                         "vis_miles": 6.0,
                         "gust_mph": 26.1,
-                        "gust_kph": 42.0,
+                        "gust_kph": 42.0
                     },
                     {
                         "time_epoch": 1616022000,
@@ -1010,7 +927,7 @@ weatherapi_response = {
                         "condition": {
                             "text": "Overcast",
                             "icon": "//cdn.weatherapi.com/weather/64x64/night/122.png",
-                            "code": 1009,
+                            "code": 1009
                         },
                         "wind_mph": 14.2,
                         "wind_kph": 22.8,
@@ -1037,10 +954,10 @@ weatherapi_response = {
                         "vis_km": 10.0,
                         "vis_miles": 6.0,
                         "gust_mph": 25.6,
-                        "gust_kph": 41.2,
-                    },
-                ],
-            },
-        ],
-    },
+                        "gust_kph": 41.2
+                    }
+                ]
+            }
+        ]
+    }
 }
