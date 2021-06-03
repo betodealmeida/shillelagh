@@ -110,6 +110,9 @@ class Date(Field):
         except dateutil.parser.ParserError:
             return None
 
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+
         return dt.astimezone(datetime.timezone.utc).date()
 
 
@@ -127,6 +130,9 @@ class Time(Field):
         except dateutil.parser.ParserError:
             return None
 
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+
         return dt.astimezone(datetime.timezone.utc).timetz()
 
 
@@ -143,6 +149,9 @@ class DateTime(Field):
             dt = dateutil.parser.parse(value)
         except dateutil.parser.ParserError:
             return None
+
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
 
         return dt.astimezone(datetime.timezone.utc)
 

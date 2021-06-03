@@ -188,5 +188,6 @@ def test_drive_api_disabled(mocker):
 
 def test_extract_query():
     assert extract_query(make_url("gsheets://")) == {}
+    assert extract_query(make_url("gsheets://host")) == {}
     assert extract_query(make_url("gsheets://?foo=bar")) == {"foo": "bar"}
     assert extract_query(make_url("gsheets:///?foo=bar")) == {"foo": "bar"}

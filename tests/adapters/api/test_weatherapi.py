@@ -76,7 +76,7 @@ def test_weatherapi_impossible(requests_mock):
     cursor = connection.cursor()
     connection.createmodule("weatherapi", VTModule(WeatherAPI))
     cursor.execute(
-        f"""CREATE VIRTUAL TABLE iceland USING weatherapi('"iceland"', '"XXX"')""",
+        """CREATE VIRTUAL TABLE iceland USING weatherapi('"iceland"', '"XXX"')""",
     )
 
     sql = "SELECT * FROM iceland WHERE time = '2021-03-17T12:00:00+00:00' AND time = '2021-03-18T12:00:00+00:00'"
@@ -103,7 +103,7 @@ def test_weatherapi_api_error(requests_mock):
     cursor = connection.cursor()
     connection.createmodule("weatherapi", VTModule(WeatherAPI))
     cursor.execute(
-        f"""CREATE VIRTUAL TABLE iceland USING weatherapi('"iceland"', '"XXX"')""",
+        """CREATE VIRTUAL TABLE iceland USING weatherapi('"iceland"', '"XXX"')""",
     )
 
     sql = "SELECT * FROM iceland WHERE time >= '2021-03-17T12:00:00+00:00' AND time <= '2021-03-18T12:00:00+00:00'"

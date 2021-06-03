@@ -1,0 +1,5437 @@
+{
+  "id" : "unsk-b7fc",
+  "name" : "COVID-19 Vaccinations in the United States,Jurisdiction",
+  "assetType" : "dataset",
+  "attribution" : "IISInfo",
+  "averageRating" : 0,
+  "category" : "Vaccinations",
+  "createdAt" : 1621883240,
+  "description" : "Overall US COVID-19 Vaccine deliveries and administration data at national and jurisdiction level. Data represents all vaccine partners including jurisdictional partner clinics, retail pharmacies, long-term care facilities, dialysis centers, Federal Emergency Management Agency and Health Resources and Services Administration partner sites, and federal entity facilities. ",
+  "displayType" : "table",
+  "downloadCount" : 17961,
+  "hideFromCatalog" : false,
+  "hideFromDataJson" : false,
+  "licenseId" : "USGOV_WORKS",
+  "newBackend" : true,
+  "numberOfComments" : 0,
+  "oid" : 37233533,
+  "provenance" : "official",
+  "publicationAppendEnabled" : false,
+  "publicationDate" : 1621883283,
+  "publicationGroup" : 18329580,
+  "publicationStage" : "published",
+  "rowsUpdatedAt" : 1622737758,
+  "rowsUpdatedBy" : "3suw-ciyu",
+  "tableId" : 18329580,
+  "totalTimesRated" : 0,
+  "viewCount" : 3891,
+  "viewLastModified" : 1622737744,
+  "viewType" : "tabular",
+  "approvals" : [ {
+    "reviewedAt" : 1622055125,
+    "reviewedAutomatically" : true,
+    "state" : "approved",
+    "submissionId" : 3663074,
+    "submissionObject" : "public_audience_request",
+    "submissionOutcome" : "change_audience",
+    "submittedAt" : 1622055125,
+    "workflowId" : 2100,
+    "submissionDetails" : {
+      "permissionType" : "READ"
+    },
+    "submissionOutcomeApplication" : {
+      "endedAt" : 1622055125,
+      "failureCount" : 0,
+      "startedAt" : 1622055125,
+      "status" : "success"
+    },
+    "submitter" : {
+      "id" : "3suw-ciyu",
+      "displayName" : "NCIRD"
+    }
+  } ],
+  "columns" : [ {
+    "id" : 541132666,
+    "name" : "Date",
+    "dataTypeName" : "calendar_date",
+    "description" : "Date",
+    "fieldName" : "date",
+    "position" : 1,
+    "renderTypeName" : "calendar_date",
+    "tableColumnId" : 138085003,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "2021-06-03T00:00:00.000",
+      "null" : "0",
+      "top" : [ {
+        "item" : "2021-01-17T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-05-16T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-05-27T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-03-25T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-04-08T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-04-30T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-03-18T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-02-15T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-03-29T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-04-22T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-02-08T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-04-19T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-04-16T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-02-27T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-01-14T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-05-24T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-04-03T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-05-21T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-03-28T00:00:00.000",
+        "count" : "66"
+      }, {
+        "item" : "2021-01-07T00:00:00.000",
+        "count" : "66"
+      } ],
+      "smallest" : "2020-12-13T00:00:00.000",
+      "cardinality" : "173"
+    },
+    "format" : {
+      "view" : "date"
+    }
+  }, {
+    "id" : 541132623,
+    "name" : "MMWR_week",
+    "dataTypeName" : "number",
+    "description" : "MMWR week",
+    "fieldName" : "mmwr_week",
+    "position" : 2,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084977,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "53",
+      "null" : "0",
+      "top" : [ {
+        "item" : "15",
+        "count" : "462"
+      }, {
+        "item" : "14",
+        "count" : "462"
+      }, {
+        "item" : "21",
+        "count" : "462"
+      }, {
+        "item" : "17",
+        "count" : "462"
+      }, {
+        "item" : "7",
+        "count" : "462"
+      }, {
+        "item" : "16",
+        "count" : "462"
+      }, {
+        "item" : "12",
+        "count" : "462"
+      }, {
+        "item" : "10",
+        "count" : "462"
+      }, {
+        "item" : "18",
+        "count" : "462"
+      }, {
+        "item" : "1",
+        "count" : "462"
+      }, {
+        "item" : "20",
+        "count" : "462"
+      }, {
+        "item" : "4",
+        "count" : "462"
+      }, {
+        "item" : "8",
+        "count" : "462"
+      }, {
+        "item" : "5",
+        "count" : "462"
+      }, {
+        "item" : "6",
+        "count" : "462"
+      }, {
+        "item" : "9",
+        "count" : "462"
+      }, {
+        "item" : "19",
+        "count" : "462"
+      }, {
+        "item" : "13",
+        "count" : "462"
+      }, {
+        "item" : "2",
+        "count" : "462"
+      }, {
+        "item" : "3",
+        "count" : "462"
+      } ],
+      "smallest" : "1",
+      "cardinality" : "25"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132619,
+    "name" : "Location",
+    "dataTypeName" : "text",
+    "description" : "State/Territory/Federal Entity",
+    "fieldName" : "location",
+    "position" : 3,
+    "renderTypeName" : "text",
+    "tableColumnId" : 138084975,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "WY",
+      "null" : "0",
+      "top" : [ {
+        "item" : "MP",
+        "count" : "173"
+      }, {
+        "item" : "US",
+        "count" : "173"
+      }, {
+        "item" : "AS",
+        "count" : "173"
+      }, {
+        "item" : "VI",
+        "count" : "173"
+      }, {
+        "item" : "GU",
+        "count" : "173"
+      }, {
+        "item" : "LTC",
+        "count" : "173"
+      }, {
+        "item" : "IN",
+        "count" : "172"
+      }, {
+        "item" : "NE",
+        "count" : "172"
+      }, {
+        "item" : "WV",
+        "count" : "172"
+      }, {
+        "item" : "FL",
+        "count" : "172"
+      }, {
+        "item" : "ME",
+        "count" : "172"
+      }, {
+        "item" : "AR",
+        "count" : "172"
+      }, {
+        "item" : "CT",
+        "count" : "172"
+      }, {
+        "item" : "SD",
+        "count" : "172"
+      }, {
+        "item" : "IH2",
+        "count" : "172"
+      }, {
+        "item" : "VA2",
+        "count" : "172"
+      }, {
+        "item" : "WY",
+        "count" : "172"
+      }, {
+        "item" : "LA",
+        "count" : "172"
+      }, {
+        "item" : "MT",
+        "count" : "172"
+      }, {
+        "item" : "MI",
+        "count" : "172"
+      } ],
+      "smallest" : "AK",
+      "cardinality" : "66"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132636,
+    "name" : "Distributed",
+    "dataTypeName" : "number",
+    "description" : "Total number of distributed doses",
+    "fieldName" : "distributed",
+    "position" : 4,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084987,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "368375195",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "181"
+      }, {
+        "item" : "51300",
+        "count" : "84"
+      }, {
+        "item" : "24600",
+        "count" : "54"
+      }, {
+        "item" : "54030",
+        "count" : "36"
+      }, {
+        "item" : "63200",
+        "count" : "33"
+      }, {
+        "item" : "72330",
+        "count" : "31"
+      }, {
+        "item" : "43810",
+        "count" : "29"
+      }, {
+        "item" : "21000",
+        "count" : "29"
+      }, {
+        "item" : "6000",
+        "count" : "28"
+      }, {
+        "item" : "29650",
+        "count" : "28"
+      }, {
+        "item" : "62910",
+        "count" : "28"
+      }, {
+        "item" : "29450",
+        "count" : "28"
+      }, {
+        "item" : "4875",
+        "count" : "27"
+      }, {
+        "item" : "18650",
+        "count" : "27"
+      }, {
+        "item" : "87860",
+        "count" : "26"
+      }, {
+        "item" : "13600",
+        "count" : "25"
+      }, {
+        "item" : "5850",
+        "count" : "25"
+      }, {
+        "item" : "6239605",
+        "count" : "23"
+      }, {
+        "item" : "9200",
+        "count" : "23"
+      }, {
+        "item" : "77800",
+        "count" : "23"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "6479"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132617,
+    "name" : "Distributed_Janssen",
+    "dataTypeName" : "number",
+    "description" : "Total number of J&J/Janssen doses delivered",
+    "fieldName" : "distributed_janssen",
+    "position" : 5,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084974,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "21266600",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5450"
+      }, {
+        "item" : "600",
+        "count" : "104"
+      }, {
+        "item" : "10800",
+        "count" : "74"
+      }, {
+        "item" : "2600",
+        "count" : "71"
+      }, {
+        "item" : "11100",
+        "count" : "55"
+      }, {
+        "item" : "3800",
+        "count" : "54"
+      }, {
+        "item" : "800",
+        "count" : "45"
+      }, {
+        "item" : "400",
+        "count" : "42"
+      }, {
+        "item" : "1600",
+        "count" : "34"
+      }, {
+        "item" : "61100",
+        "count" : "28"
+      }, {
+        "item" : "700",
+        "count" : "28"
+      }, {
+        "item" : "520200",
+        "count" : "28"
+      }, {
+        "item" : "1300",
+        "count" : "27"
+      }, {
+        "item" : "58000",
+        "count" : "25"
+      }, {
+        "item" : "520400",
+        "count" : "24"
+      }, {
+        "item" : "10200",
+        "count" : "23"
+      }, {
+        "item" : "900",
+        "count" : "22"
+      }, {
+        "item" : "51600",
+        "count" : "22"
+      }, {
+        "item" : "7300",
+        "count" : "21"
+      }, {
+        "item" : "53300",
+        "count" : "21"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "1941"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132668,
+    "name" : "Distributed_Moderna",
+    "dataTypeName" : "number",
+    "description" : "Total number of Moderna doses delivered ",
+    "fieldName" : "distributed_moderna",
+    "position" : 6,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085004,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "152141160",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5405"
+      }, {
+        "item" : "20800",
+        "count" : "61"
+      }, {
+        "item" : "40500",
+        "count" : "58"
+      }, {
+        "item" : "12400",
+        "count" : "49"
+      }, {
+        "item" : "15600",
+        "count" : "42"
+      }, {
+        "item" : "17800",
+        "count" : "39"
+      }, {
+        "item" : "61600",
+        "count" : "39"
+      }, {
+        "item" : "20200",
+        "count" : "33"
+      }, {
+        "item" : "53200",
+        "count" : "33"
+      }, {
+        "item" : "35000",
+        "count" : "33"
+      }, {
+        "item" : "14600",
+        "count" : "30"
+      }, {
+        "item" : "38200",
+        "count" : "28"
+      }, {
+        "item" : "12800",
+        "count" : "25"
+      }, {
+        "item" : "2985500",
+        "count" : "23"
+      }, {
+        "item" : "67600",
+        "count" : "23"
+      }, {
+        "item" : "46600",
+        "count" : "21"
+      }, {
+        "item" : "74200",
+        "count" : "16"
+      }, {
+        "item" : "21700",
+        "count" : "14"
+      }, {
+        "item" : "2984700",
+        "count" : "14"
+      }, {
+        "item" : "63700",
+        "count" : "14"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "3388"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132726,
+    "name" : "Distributed_Pfizer",
+    "dataTypeName" : "number",
+    "description" : "Total number of Pfizer-BioNTech doses delivered",
+    "fieldName" : "distributed_pfizer",
+    "position" : 7,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085037,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "194967435",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5678"
+      }, {
+        "item" : "30810",
+        "count" : "80"
+      }, {
+        "item" : "49530",
+        "count" : "38"
+      }, {
+        "item" : "37830",
+        "count" : "36"
+      }, {
+        "item" : "42510",
+        "count" : "35"
+      }, {
+        "item" : "48360",
+        "count" : "34"
+      }, {
+        "item" : "2733705",
+        "count" : "24"
+      }, {
+        "item" : "76440",
+        "count" : "21"
+      }, {
+        "item" : "41340",
+        "count" : "19"
+      }, {
+        "item" : "122070",
+        "count" : "15"
+      }, {
+        "item" : "98670",
+        "count" : "15"
+      }, {
+        "item" : "43680",
+        "count" : "14"
+      }, {
+        "item" : "385905",
+        "count" : "13"
+      }, {
+        "item" : "74100",
+        "count" : "13"
+      }, {
+        "item" : "27300",
+        "count" : "12"
+      }, {
+        "item" : "99450",
+        "count" : "11"
+      }, {
+        "item" : "46020",
+        "count" : "11"
+      }, {
+        "item" : "213915",
+        "count" : "10"
+      }, {
+        "item" : "455715",
+        "count" : "10"
+      }, {
+        "item" : "1974570",
+        "count" : "10"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "2900"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132724,
+    "name" : "Distributed_Unk_Manuf",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses from unknown manufacturer delivered",
+    "fieldName" : "distributed_unk_manuf",
+    "position" : 8,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085036,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "0",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "11320"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "1"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132660,
+    "name" : "Dist_Per_100K",
+    "dataTypeName" : "number",
+    "description" : "Delivered doses per 100,000 census population",
+    "fieldName" : "dist_per_100k",
+    "position" : 9,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085001,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "147016",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "924"
+      }, {
+        "item" : "87823",
+        "count" : "58"
+      }, {
+        "item" : "137376",
+        "count" : "54"
+      }, {
+        "item" : "97021",
+        "count" : "36"
+      }, {
+        "item" : "60979",
+        "count" : "33"
+      }, {
+        "item" : "127158",
+        "count" : "31"
+      }, {
+        "item" : "78669",
+        "count" : "29"
+      }, {
+        "item" : "110597",
+        "count" : "28"
+      }, {
+        "item" : "52125",
+        "count" : "28"
+      }, {
+        "item" : "33506",
+        "count" : "28"
+      }, {
+        "item" : "52883",
+        "count" : "28"
+      }, {
+        "item" : "35951",
+        "count" : "28"
+      }, {
+        "item" : "32787",
+        "count" : "27"
+      }, {
+        "item" : "53002",
+        "count" : "26"
+      }, {
+        "item" : "30947",
+        "count" : "26"
+      }, {
+        "item" : "28946",
+        "count" : "24"
+      }, {
+        "item" : "23282",
+        "count" : "23"
+      }, {
+        "item" : "75065",
+        "count" : "23"
+      }, {
+        "item" : "51377",
+        "count" : "23"
+      }, {
+        "item" : "84902",
+        "count" : "21"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5998"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132690,
+    "name" : "Distributed_Per_100k_12Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of delivered doses per 100,000 12+ population",
+    "fieldName" : "distributed_per_100k_12plus",
+    "position" : 10,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085019,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "170161",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "10000"
+      }, {
+        "item" : "87901",
+        "count" : "22"
+      }, {
+        "item" : "160868",
+        "count" : "22"
+      }, {
+        "item" : "148901",
+        "count" : "22"
+      }, {
+        "item" : "113611",
+        "count" : "22"
+      }, {
+        "item" : "102839",
+        "count" : "22"
+      }, {
+        "item" : "146487",
+        "count" : "15"
+      }, {
+        "item" : "119604",
+        "count" : "8"
+      }, {
+        "item" : "122540",
+        "count" : "6"
+      }, {
+        "item" : "81358",
+        "count" : "5"
+      }, {
+        "item" : "108082",
+        "count" : "5"
+      }, {
+        "item" : "118272",
+        "count" : "5"
+      }, {
+        "item" : "126814",
+        "count" : "5"
+      }, {
+        "item" : "132430",
+        "count" : "5"
+      }, {
+        "item" : "102996",
+        "count" : "5"
+      }, {
+        "item" : "141486",
+        "count" : "5"
+      }, {
+        "item" : "117871",
+        "count" : "5"
+      }, {
+        "item" : "121669",
+        "count" : "5"
+      }, {
+        "item" : "124309",
+        "count" : "4"
+      }, {
+        "item" : "112896",
+        "count" : "4"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "789"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132621,
+    "name" : "Distributed_Per_100k_18Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of delivered doses per 100,000 18+ population",
+    "fieldName" : "distributed_per_100k_18plus",
+    "position" : 11,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084976,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "179640",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "4660"
+      }, {
+        "item" : "112594",
+        "count" : "58"
+      }, {
+        "item" : "176129",
+        "count" : "54"
+      }, {
+        "item" : "124387",
+        "count" : "36"
+      }, {
+        "item" : "78177",
+        "count" : "33"
+      }, {
+        "item" : "163023",
+        "count" : "31"
+      }, {
+        "item" : "100859",
+        "count" : "29"
+      }, {
+        "item" : "141791",
+        "count" : "28"
+      }, {
+        "item" : "67951",
+        "count" : "26"
+      }, {
+        "item" : "96237",
+        "count" : "23"
+      }, {
+        "item" : "58633",
+        "count" : "21"
+      }, {
+        "item" : "108848",
+        "count" : "21"
+      }, {
+        "item" : "99477",
+        "count" : "20"
+      }, {
+        "item" : "37109",
+        "count" : "19"
+      }, {
+        "item" : "67799",
+        "count" : "19"
+      }, {
+        "item" : "46091",
+        "count" : "18"
+      }, {
+        "item" : "66827",
+        "count" : "17"
+      }, {
+        "item" : "65870",
+        "count" : "17"
+      }, {
+        "item" : "39675",
+        "count" : "17"
+      }, {
+        "item" : "105964",
+        "count" : "16"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "4152"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132644,
+    "name" : "Distributed_Per_100k_65Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of delivered doses per 100,000 65+ population",
+    "fieldName" : "distributed_per_100k_65plus",
+    "position" : 12,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084994,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "1187920",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5916"
+      }, {
+        "item" : "516616",
+        "count" : "58"
+      }, {
+        "item" : "808147",
+        "count" : "54"
+      }, {
+        "item" : "570719",
+        "count" : "36"
+      }, {
+        "item" : "358704",
+        "count" : "33"
+      }, {
+        "item" : "747983",
+        "count" : "31"
+      }, {
+        "item" : "462765",
+        "count" : "29"
+      }, {
+        "item" : "650569",
+        "count" : "28"
+      }, {
+        "item" : "441569",
+        "count" : "23"
+      }, {
+        "item" : "499414",
+        "count" : "21"
+      }, {
+        "item" : "311770",
+        "count" : "20"
+      }, {
+        "item" : "269028",
+        "count" : "18"
+      }, {
+        "item" : "735850",
+        "count" : "15"
+      }, {
+        "item" : "615557",
+        "count" : "14"
+      }, {
+        "item" : "360524",
+        "count" : "14"
+      }, {
+        "item" : "486202",
+        "count" : "13"
+      }, {
+        "item" : "456428",
+        "count" : "13"
+      }, {
+        "item" : "358510",
+        "count" : "12"
+      }, {
+        "item" : "460949",
+        "count" : "11"
+      }, {
+        "item" : "492773",
+        "count" : "10"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "3440"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132642,
+    "name" : "Administered",
+    "dataTypeName" : "number",
+    "description" : "Total number of administered vaccines based on state where administered",
+    "fieldName" : "administered",
+    "position" : 13,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084993,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "297720928",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "385"
+      }, {
+        "item" : "3791",
+        "count" : "24"
+      }, {
+        "item" : "8185",
+        "count" : "10"
+      }, {
+        "item" : "20625",
+        "count" : "9"
+      }, {
+        "item" : "40879",
+        "count" : "9"
+      }, {
+        "item" : "24300",
+        "count" : "7"
+      }, {
+        "item" : "510267",
+        "count" : "7"
+      }, {
+        "item" : "5",
+        "count" : "6"
+      }, {
+        "item" : "10",
+        "count" : "6"
+      }, {
+        "item" : "38461",
+        "count" : "6"
+      }, {
+        "item" : "1022",
+        "count" : "6"
+      }, {
+        "item" : "41907",
+        "count" : "6"
+      }, {
+        "item" : "21625",
+        "count" : "6"
+      }, {
+        "item" : "271",
+        "count" : "6"
+      }, {
+        "item" : "42511",
+        "count" : "6"
+      }, {
+        "item" : "39666",
+        "count" : "6"
+      }, {
+        "item" : "16544",
+        "count" : "5"
+      }, {
+        "item" : "193246",
+        "count" : "5"
+      }, {
+        "item" : "298",
+        "count" : "5"
+      }, {
+        "item" : "33635",
+        "count" : "5"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "10232"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132698,
+    "name" : "Administered_12Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administered to people 12+ based on the jurisdiction where recipient lives",
+    "fieldName" : "administered_12plus",
+    "position" : 14,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085022,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "297578075",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "9912"
+      }, {
+        "item" : "42509",
+        "count" : "6"
+      }, {
+        "item" : "38454",
+        "count" : "6"
+      }, {
+        "item" : "41905",
+        "count" : "6"
+      }, {
+        "item" : "20625",
+        "count" : "5"
+      }, {
+        "item" : "24225",
+        "count" : "5"
+      }, {
+        "item" : "30234",
+        "count" : "5"
+      }, {
+        "item" : "29582",
+        "count" : "4"
+      }, {
+        "item" : "40523",
+        "count" : "4"
+      }, {
+        "item" : "23549",
+        "count" : "4"
+      }, {
+        "item" : "42994",
+        "count" : "3"
+      }, {
+        "item" : "28703",
+        "count" : "3"
+      }, {
+        "item" : "48584",
+        "count" : "3"
+      }, {
+        "item" : "41014",
+        "count" : "3"
+      }, {
+        "item" : "29715",
+        "count" : "3"
+      }, {
+        "item" : "182277",
+        "count" : "3"
+      }, {
+        "item" : "23351",
+        "count" : "2"
+      }, {
+        "item" : "2588945",
+        "count" : "2"
+      }, {
+        "item" : "40447",
+        "count" : "2"
+      }, {
+        "item" : "71075",
+        "count" : "2"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "1340"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132614,
+    "name" : "Administered_18Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administered to people 18+ based on the jurisdiction where recipient lives",
+    "fieldName" : "administered_18plus",
+    "position" : 15,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084972,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "288987238",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "4216"
+      }, {
+        "item" : "8185",
+        "count" : "10"
+      }, {
+        "item" : "20625",
+        "count" : "9"
+      }, {
+        "item" : "23637",
+        "count" : "7"
+      }, {
+        "item" : "38321",
+        "count" : "6"
+      }, {
+        "item" : "38437",
+        "count" : "6"
+      }, {
+        "item" : "40401",
+        "count" : "6"
+      }, {
+        "item" : "21328",
+        "count" : "6"
+      }, {
+        "item" : "40963",
+        "count" : "6"
+      }, {
+        "item" : "30187",
+        "count" : "5"
+      }, {
+        "item" : "24225",
+        "count" : "5"
+      }, {
+        "item" : "13381",
+        "count" : "5"
+      }, {
+        "item" : "16544",
+        "count" : "5"
+      }, {
+        "item" : "34845",
+        "count" : "5"
+      }, {
+        "item" : "30782",
+        "count" : "4"
+      }, {
+        "item" : "27100",
+        "count" : "4"
+      }, {
+        "item" : "23549",
+        "count" : "4"
+      }, {
+        "item" : "29538",
+        "count" : "4"
+      }, {
+        "item" : "13429",
+        "count" : "4"
+      }, {
+        "item" : "37454",
+        "count" : "4"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "6826"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132605,
+    "name" : "Administered_65Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administered to people 65+ based on the jurisdiction where recipient lives",
+    "fieldName" : "administered_65plus",
+    "position" : 16,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084971,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "87518861",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5496"
+      }, {
+        "item" : "2920",
+        "count" : "11"
+      }, {
+        "item" : "3383",
+        "count" : "7"
+      }, {
+        "item" : "4742",
+        "count" : "6"
+      }, {
+        "item" : "3442",
+        "count" : "6"
+      }, {
+        "item" : "4717",
+        "count" : "6"
+      }, {
+        "item" : "4599",
+        "count" : "6"
+      }, {
+        "item" : "2785",
+        "count" : "5"
+      }, {
+        "item" : "1740",
+        "count" : "5"
+      }, {
+        "item" : "2674",
+        "count" : "5"
+      }, {
+        "item" : "1812",
+        "count" : "5"
+      }, {
+        "item" : "1690",
+        "count" : "5"
+      }, {
+        "item" : "3481",
+        "count" : "5"
+      }, {
+        "item" : "2503",
+        "count" : "5"
+      }, {
+        "item" : "4344",
+        "count" : "5"
+      }, {
+        "item" : "3043",
+        "count" : "5"
+      }, {
+        "item" : "4067",
+        "count" : "4"
+      }, {
+        "item" : "3004",
+        "count" : "4"
+      }, {
+        "item" : "1639",
+        "count" : "4"
+      }, {
+        "item" : "1781",
+        "count" : "4"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5541"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132635,
+    "name" : "Administered_Janssen",
+    "dataTypeName" : "number",
+    "description" : "Total number of J&J/Janssen doses administered",
+    "fieldName" : "administered_janssen",
+    "position" : 17,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084986,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "10939901",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5587"
+      }, {
+        "item" : "22",
+        "count" : "28"
+      }, {
+        "item" : "43",
+        "count" : "24"
+      }, {
+        "item" : "35",
+        "count" : "22"
+      }, {
+        "item" : "197",
+        "count" : "22"
+      }, {
+        "item" : "95",
+        "count" : "20"
+      }, {
+        "item" : "3",
+        "count" : "18"
+      }, {
+        "item" : "1",
+        "count" : "18"
+      }, {
+        "item" : "26",
+        "count" : "17"
+      }, {
+        "item" : "34",
+        "count" : "14"
+      }, {
+        "item" : "2",
+        "count" : "13"
+      }, {
+        "item" : "10",
+        "count" : "11"
+      }, {
+        "item" : "1299",
+        "count" : "11"
+      }, {
+        "item" : "4",
+        "count" : "9"
+      }, {
+        "item" : "5",
+        "count" : "8"
+      }, {
+        "item" : "298",
+        "count" : "8"
+      }, {
+        "item" : "48",
+        "count" : "7"
+      }, {
+        "item" : "126",
+        "count" : "7"
+      }, {
+        "item" : "40",
+        "count" : "7"
+      }, {
+        "item" : "657",
+        "count" : "7"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5105"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132664,
+    "name" : "Administered_Moderna",
+    "dataTypeName" : "number",
+    "description" : "Total number of Moderna doses administered",
+    "fieldName" : "administered_moderna",
+    "position" : 18,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085002,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "125508313",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "693"
+      }, {
+        "item" : "1",
+        "count" : "46"
+      }, {
+        "item" : "3",
+        "count" : "29"
+      }, {
+        "item" : "2",
+        "count" : "27"
+      }, {
+        "item" : "13237",
+        "count" : "13"
+      }, {
+        "item" : "19325",
+        "count" : "11"
+      }, {
+        "item" : "8184",
+        "count" : "10"
+      }, {
+        "item" : "6",
+        "count" : "9"
+      }, {
+        "item" : "9623",
+        "count" : "9"
+      }, {
+        "item" : "5332",
+        "count" : "7"
+      }, {
+        "item" : "233289",
+        "count" : "7"
+      }, {
+        "item" : "50",
+        "count" : "6"
+      }, {
+        "item" : "10",
+        "count" : "6"
+      }, {
+        "item" : "37804",
+        "count" : "6"
+      }, {
+        "item" : "19275",
+        "count" : "6"
+      }, {
+        "item" : "10226",
+        "count" : "6"
+      }, {
+        "item" : "9959",
+        "count" : "6"
+      }, {
+        "item" : "2360",
+        "count" : "6"
+      }, {
+        "item" : "5043",
+        "count" : "6"
+      }, {
+        "item" : "11",
+        "count" : "6"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "9773"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132696,
+    "name" : "Administered_Pfizer",
+    "dataTypeName" : "number",
+    "description" : "Total number of Pfizer-BioNTech doses administered",
+    "fieldName" : "administered_pfizer",
+    "position" : 19,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085021,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "161050513",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "722"
+      }, {
+        "item" : "1",
+        "count" : "117"
+      }, {
+        "item" : "3791",
+        "count" : "24"
+      }, {
+        "item" : "31255",
+        "count" : "9"
+      }, {
+        "item" : "972",
+        "count" : "8"
+      }, {
+        "item" : "276978",
+        "count" : "7"
+      }, {
+        "item" : "18968",
+        "count" : "7"
+      }, {
+        "item" : "271",
+        "count" : "6"
+      }, {
+        "item" : "30640",
+        "count" : "6"
+      }, {
+        "item" : "18458",
+        "count" : "6"
+      }, {
+        "item" : "16582",
+        "count" : "6"
+      }, {
+        "item" : "32259",
+        "count" : "6"
+      }, {
+        "item" : "31922",
+        "count" : "6"
+      }, {
+        "item" : "585",
+        "count" : "5"
+      }, {
+        "item" : "33549",
+        "count" : "5"
+      }, {
+        "item" : "27953",
+        "count" : "5"
+      }, {
+        "item" : "1907",
+        "count" : "5"
+      }, {
+        "item" : "1377379",
+        "count" : "5"
+      }, {
+        "item" : "298",
+        "count" : "5"
+      }, {
+        "item" : "5",
+        "count" : "5"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "9805"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132648,
+    "name" : "Administered_Unk_Manuf",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses from unknown manufacturer administered",
+    "fieldName" : "administered_unk_manuf",
+    "position" : 20,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084995,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "222201",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "3725"
+      }, {
+        "item" : "1",
+        "count" : "197"
+      }, {
+        "item" : "13",
+        "count" : "175"
+      }, {
+        "item" : "399",
+        "count" : "168"
+      }, {
+        "item" : "27",
+        "count" : "161"
+      }, {
+        "item" : "329",
+        "count" : "152"
+      }, {
+        "item" : "475",
+        "count" : "150"
+      }, {
+        "item" : "2",
+        "count" : "148"
+      }, {
+        "item" : "93760",
+        "count" : "129"
+      }, {
+        "item" : "6020",
+        "count" : "121"
+      }, {
+        "item" : "119",
+        "count" : "80"
+      }, {
+        "item" : "9",
+        "count" : "60"
+      }, {
+        "item" : "3",
+        "count" : "52"
+      }, {
+        "item" : "7",
+        "count" : "47"
+      }, {
+        "item" : "6",
+        "count" : "47"
+      }, {
+        "item" : "4",
+        "count" : "46"
+      }, {
+        "item" : "24",
+        "count" : "46"
+      }, {
+        "item" : "122",
+        "count" : "45"
+      }, {
+        "item" : "17",
+        "count" : "42"
+      }, {
+        "item" : "15",
+        "count" : "42"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "2097"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132638,
+    "name" : "Administered_Fed_LTC",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administed to long-term care facilities",
+    "fieldName" : "administered_fed_ltc",
+    "position" : 21,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084989,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "7849459",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "2428"
+      }, {
+        "item" : "1",
+        "count" : "242"
+      }, {
+        "item" : "100",
+        "count" : "101"
+      }, {
+        "item" : "56",
+        "count" : "55"
+      }, {
+        "item" : "25934",
+        "count" : "39"
+      }, {
+        "item" : "6779",
+        "count" : "39"
+      }, {
+        "item" : "106",
+        "count" : "34"
+      }, {
+        "item" : "25937",
+        "count" : "30"
+      }, {
+        "item" : "151",
+        "count" : "28"
+      }, {
+        "item" : "6597",
+        "count" : "27"
+      }, {
+        "item" : "6598",
+        "count" : "23"
+      }, {
+        "item" : "21380",
+        "count" : "17"
+      }, {
+        "item" : "122",
+        "count" : "16"
+      }, {
+        "item" : "29007",
+        "count" : "16"
+      }, {
+        "item" : "6580",
+        "count" : "15"
+      }, {
+        "item" : "24792",
+        "count" : "14"
+      }, {
+        "item" : "21734",
+        "count" : "14"
+      }, {
+        "item" : "37908",
+        "count" : "13"
+      }, {
+        "item" : "138",
+        "count" : "13"
+      }, {
+        "item" : "6778",
+        "count" : "12"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "6964"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132684,
+    "name" : "Administered_Fed_LTC_Residents",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administed to long-term care facility residents",
+    "fieldName" : "administered_fed_ltc_residents",
+    "position" : 22,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085013,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "3654135",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "3041"
+      }, {
+        "item" : "2072",
+        "count" : "49"
+      }, {
+        "item" : "7985",
+        "count" : "47"
+      }, {
+        "item" : "1400",
+        "count" : "38"
+      }, {
+        "item" : "3",
+        "count" : "37"
+      }, {
+        "item" : "2993",
+        "count" : "31"
+      }, {
+        "item" : "8500",
+        "count" : "31"
+      }, {
+        "item" : "22122",
+        "count" : "21"
+      }, {
+        "item" : "10564",
+        "count" : "20"
+      }, {
+        "item" : "4",
+        "count" : "20"
+      }, {
+        "item" : "10565",
+        "count" : "20"
+      }, {
+        "item" : "20616",
+        "count" : "17"
+      }, {
+        "item" : "11905",
+        "count" : "16"
+      }, {
+        "item" : "2073",
+        "count" : "16"
+      }, {
+        "item" : "22123",
+        "count" : "16"
+      }, {
+        "item" : "7701",
+        "count" : "15"
+      }, {
+        "item" : "11027",
+        "count" : "15"
+      }, {
+        "item" : "4181",
+        "count" : "15"
+      }, {
+        "item" : "20604",
+        "count" : "14"
+      }, {
+        "item" : "11768",
+        "count" : "14"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "6138"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132632,
+    "name" : "Administered_Fed_LTC_Staff",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administed to long-term care facility staff",
+    "fieldName" : "administered_fed_ltc_staff",
+    "position" : 23,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084983,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "2691998",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "2929"
+      }, {
+        "item" : "2232",
+        "count" : "81"
+      }, {
+        "item" : "692",
+        "count" : "66"
+      }, {
+        "item" : "56",
+        "count" : "55"
+      }, {
+        "item" : "106",
+        "count" : "34"
+      }, {
+        "item" : "7185",
+        "count" : "29"
+      }, {
+        "item" : "151",
+        "count" : "29"
+      }, {
+        "item" : "2083",
+        "count" : "27"
+      }, {
+        "item" : "12491",
+        "count" : "25"
+      }, {
+        "item" : "1323",
+        "count" : "22"
+      }, {
+        "item" : "1322",
+        "count" : "22"
+      }, {
+        "item" : "1",
+        "count" : "21"
+      }, {
+        "item" : "2079",
+        "count" : "19"
+      }, {
+        "item" : "7229",
+        "count" : "17"
+      }, {
+        "item" : "7240",
+        "count" : "16"
+      }, {
+        "item" : "122",
+        "count" : "16"
+      }, {
+        "item" : "3929",
+        "count" : "16"
+      }, {
+        "item" : "3928",
+        "count" : "15"
+      }, {
+        "item" : "15228",
+        "count" : "15"
+      }, {
+        "item" : "7187",
+        "count" : "14"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "6313"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132688,
+    "name" : "Administered_Fed_LTC_Unk",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administed to other people in long-term care facility",
+    "fieldName" : "administered_fed_ltc_unk",
+    "position" : 24,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085017,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "1503326",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "3215"
+      }, {
+        "item" : "1",
+        "count" : "233"
+      }, {
+        "item" : "100",
+        "count" : "101"
+      }, {
+        "item" : "3203",
+        "count" : "97"
+      }, {
+        "item" : "1274",
+        "count" : "97"
+      }, {
+        "item" : "13517",
+        "count" : "97"
+      }, {
+        "item" : "51998",
+        "count" : "97"
+      }, {
+        "item" : "8757",
+        "count" : "97"
+      }, {
+        "item" : "859",
+        "count" : "97"
+      }, {
+        "item" : "4321",
+        "count" : "97"
+      }, {
+        "item" : "4687",
+        "count" : "97"
+      }, {
+        "item" : "42672",
+        "count" : "84"
+      }, {
+        "item" : "15890",
+        "count" : "84"
+      }, {
+        "item" : "15704",
+        "count" : "83"
+      }, {
+        "item" : "14003",
+        "count" : "76"
+      }, {
+        "item" : "79496",
+        "count" : "71"
+      }, {
+        "item" : "15476",
+        "count" : "70"
+      }, {
+        "item" : "23906",
+        "count" : "70"
+      }, {
+        "item" : "25934",
+        "count" : "70"
+      }, {
+        "item" : "44782",
+        "count" : "70"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "3149"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132711,
+    "name" : "Administered_Fed_LTC_Dose1",
+    "dataTypeName" : "number",
+    "description" : "Total number of people with at least one dose of any vaccine in long-term care facilities",
+    "fieldName" : "administered_fed_ltc_dose1",
+    "position" : 25,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085029,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "4904106",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "2428"
+      }, {
+        "item" : "1",
+        "count" : "242"
+      }, {
+        "item" : "97",
+        "count" : "102"
+      }, {
+        "item" : "56",
+        "count" : "55"
+      }, {
+        "item" : "3918",
+        "count" : "48"
+      }, {
+        "item" : "4338",
+        "count" : "44"
+      }, {
+        "item" : "17465",
+        "count" : "39"
+      }, {
+        "item" : "57",
+        "count" : "34"
+      }, {
+        "item" : "17468",
+        "count" : "30"
+      }, {
+        "item" : "89",
+        "count" : "28"
+      }, {
+        "item" : "13783",
+        "count" : "24"
+      }, {
+        "item" : "16436",
+        "count" : "21"
+      }, {
+        "item" : "28089",
+        "count" : "21"
+      }, {
+        "item" : "19060",
+        "count" : "20"
+      }, {
+        "item" : "23864",
+        "count" : "20"
+      }, {
+        "item" : "14350",
+        "count" : "18"
+      }, {
+        "item" : "8504",
+        "count" : "18"
+      }, {
+        "item" : "13780",
+        "count" : "17"
+      }, {
+        "item" : "72",
+        "count" : "16"
+      }, {
+        "item" : "8545",
+        "count" : "16"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "6546"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132717,
+    "name" : "Administered_Fed_LTC_Dose1_Residents",
+    "dataTypeName" : "number",
+    "description" : "Total number of residents with at least one dose of any vaccine in long-term care facilities",
+    "fieldName" : "administered_fed_ltc_dose1_1",
+    "position" : 26,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085032,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "2144456",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "3041"
+      }, {
+        "item" : "1385",
+        "count" : "50"
+      }, {
+        "item" : "756",
+        "count" : "48"
+      }, {
+        "item" : "4701",
+        "count" : "48"
+      }, {
+        "item" : "3",
+        "count" : "37"
+      }, {
+        "item" : "6581",
+        "count" : "37"
+      }, {
+        "item" : "1609",
+        "count" : "31"
+      }, {
+        "item" : "7978",
+        "count" : "30"
+      }, {
+        "item" : "5083",
+        "count" : "29"
+      }, {
+        "item" : "6711",
+        "count" : "23"
+      }, {
+        "item" : "6792",
+        "count" : "22"
+      }, {
+        "item" : "1608",
+        "count" : "21"
+      }, {
+        "item" : "4833",
+        "count" : "21"
+      }, {
+        "item" : "6579",
+        "count" : "20"
+      }, {
+        "item" : "6580",
+        "count" : "20"
+      }, {
+        "item" : "6097",
+        "count" : "20"
+      }, {
+        "item" : "12725",
+        "count" : "20"
+      }, {
+        "item" : "4",
+        "count" : "20"
+      }, {
+        "item" : "6100",
+        "count" : "18"
+      }, {
+        "item" : "5078",
+        "count" : "18"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5897"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132721,
+    "name" : "Administered_Fed_LTC_Dose1_Staff",
+    "dataTypeName" : "number",
+    "description" : "Total number of staff with at least one dose of any vaccine in long-term care facilities",
+    "fieldName" : "administered_fed_ltc_dose1_2",
+    "position" : 27,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085034,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "1619060",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "2929"
+      }, {
+        "item" : "1213",
+        "count" : "81"
+      }, {
+        "item" : "409",
+        "count" : "81"
+      }, {
+        "item" : "56",
+        "count" : "55"
+      }, {
+        "item" : "921",
+        "count" : "44"
+      }, {
+        "item" : "2374",
+        "count" : "43"
+      }, {
+        "item" : "1445",
+        "count" : "40"
+      }, {
+        "item" : "7277",
+        "count" : "39"
+      }, {
+        "item" : "57",
+        "count" : "36"
+      }, {
+        "item" : "4637",
+        "count" : "31"
+      }, {
+        "item" : "2933",
+        "count" : "30"
+      }, {
+        "item" : "89",
+        "count" : "28"
+      }, {
+        "item" : "1446",
+        "count" : "27"
+      }, {
+        "item" : "4639",
+        "count" : "24"
+      }, {
+        "item" : "1",
+        "count" : "21"
+      }, {
+        "item" : "920",
+        "count" : "20"
+      }, {
+        "item" : "7626",
+        "count" : "18"
+      }, {
+        "item" : "72",
+        "count" : "16"
+      }, {
+        "item" : "2384",
+        "count" : "15"
+      }, {
+        "item" : "10957",
+        "count" : "14"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5952"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132692,
+    "name" : "Administered_Fed_LTC_Dose1_Unk",
+    "dataTypeName" : "number",
+    "description" : "Total number of other people with at least one dose of any vaccine in long-term care facilities",
+    "fieldName" : "administered_fed_ltc_dose1_3",
+    "position" : 28,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085020,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "1140590",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "3215"
+      }, {
+        "item" : "1",
+        "count" : "233"
+      }, {
+        "item" : "97",
+        "count" : "102"
+      }, {
+        "item" : "7064",
+        "count" : "98"
+      }, {
+        "item" : "38853",
+        "count" : "97"
+      }, {
+        "item" : "976",
+        "count" : "97"
+      }, {
+        "item" : "3292",
+        "count" : "97"
+      }, {
+        "item" : "2753",
+        "count" : "97"
+      }, {
+        "item" : "2032",
+        "count" : "97"
+      }, {
+        "item" : "8670",
+        "count" : "97"
+      }, {
+        "item" : "733",
+        "count" : "97"
+      }, {
+        "item" : "12948",
+        "count" : "85"
+      }, {
+        "item" : "12435",
+        "count" : "84"
+      }, {
+        "item" : "33684",
+        "count" : "84"
+      }, {
+        "item" : "10358",
+        "count" : "83"
+      }, {
+        "item" : "10523",
+        "count" : "76"
+      }, {
+        "item" : "62891",
+        "count" : "71"
+      }, {
+        "item" : "4923",
+        "count" : "71"
+      }, {
+        "item" : "11641",
+        "count" : "70"
+      }, {
+        "item" : "17465",
+        "count" : "70"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "3144"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132603,
+    "name" : "Admin_Per_100K",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administered per 100,000 census population based on the jurisdiction where recipient lives",
+    "fieldName" : "admin_per_100k",
+    "position" : 29,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084970,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "135282",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "1145"
+      }, {
+        "item" : "2287",
+        "count" : "24"
+      }, {
+        "item" : "3",
+        "count" : "13"
+      }, {
+        "item" : "45708",
+        "count" : "10"
+      }, {
+        "item" : "115178",
+        "count" : "9"
+      }, {
+        "item" : "10",
+        "count" : "9"
+      }, {
+        "item" : "1355",
+        "count" : "9"
+      }, {
+        "item" : "15916",
+        "count" : "8"
+      }, {
+        "item" : "1",
+        "count" : "8"
+      }, {
+        "item" : "1278",
+        "count" : "8"
+      }, {
+        "item" : "1150",
+        "count" : "7"
+      }, {
+        "item" : "43635",
+        "count" : "7"
+      }, {
+        "item" : "1835",
+        "count" : "6"
+      }, {
+        "item" : "38832",
+        "count" : "6"
+      }, {
+        "item" : "285",
+        "count" : "6"
+      }, {
+        "item" : "76336",
+        "count" : "6"
+      }, {
+        "item" : "75252",
+        "count" : "6"
+      }, {
+        "item" : "6",
+        "count" : "6"
+      }, {
+        "item" : "71228",
+        "count" : "6"
+      }, {
+        "item" : "37109",
+        "count" : "6"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "8873"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132682,
+    "name" : "Admin_Per_100k_12Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administered to people 18+ per 100,000 12+ populations",
+    "fieldName" : "admin_per_100k_12plus",
+    "position" : 30,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085011,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "158416",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "10000"
+      }, {
+        "item" : "43446",
+        "count" : "6"
+      }, {
+        "item" : "89385",
+        "count" : "6"
+      }, {
+        "item" : "88115",
+        "count" : "6"
+      }, {
+        "item" : "60609",
+        "count" : "5"
+      }, {
+        "item" : "134874",
+        "count" : "5"
+      }, {
+        "item" : "158416",
+        "count" : "5"
+      }, {
+        "item" : "59302",
+        "count" : "4"
+      }, {
+        "item" : "85209",
+        "count" : "4"
+      }, {
+        "item" : "153996",
+        "count" : "4"
+      }, {
+        "item" : "70177",
+        "count" : "3"
+      }, {
+        "item" : "46339",
+        "count" : "3"
+      }, {
+        "item" : "57539",
+        "count" : "3"
+      }, {
+        "item" : "48576",
+        "count" : "3"
+      }, {
+        "item" : "99872",
+        "count" : "3"
+      }, {
+        "item" : "59568",
+        "count" : "3"
+      }, {
+        "item" : "100016",
+        "count" : "3"
+      }, {
+        "item" : "102467",
+        "count" : "2"
+      }, {
+        "item" : "82440",
+        "count" : "2"
+      }, {
+        "item" : "85464",
+        "count" : "2"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "1234"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132670,
+    "name" : "Admin_Per_100k_18Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administered to people 18+ per 100,000 18+ populations",
+    "fieldName" : "admin_per_100k_18plus",
+    "position" : 31,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085005,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "173445",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "4660"
+      }, {
+        "item" : "58602",
+        "count" : "10"
+      }, {
+        "item" : "147670",
+        "count" : "9"
+      }, {
+        "item" : "54417",
+        "count" : "7"
+      }, {
+        "item" : "93011",
+        "count" : "6"
+      }, {
+        "item" : "88222",
+        "count" : "6"
+      }, {
+        "item" : "49101",
+        "count" : "6"
+      }, {
+        "item" : "47546",
+        "count" : "6"
+      }, {
+        "item" : "94304",
+        "count" : "6"
+      }, {
+        "item" : "173445",
+        "count" : "5"
+      }, {
+        "item" : "66255",
+        "count" : "5"
+      }, {
+        "item" : "80220",
+        "count" : "5"
+      }, {
+        "item" : "95804",
+        "count" : "5"
+      }, {
+        "item" : "70866",
+        "count" : "5"
+      }, {
+        "item" : "118451",
+        "count" : "5"
+      }, {
+        "item" : "96148",
+        "count" : "4"
+      }, {
+        "item" : "90082",
+        "count" : "4"
+      }, {
+        "item" : "38598",
+        "count" : "4"
+      }, {
+        "item" : "59479",
+        "count" : "4"
+      }, {
+        "item" : "86226",
+        "count" : "4"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "6216"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132722,
+    "name" : "Admin_Per_100k_65Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administered to people 65+ per 100,000 65+ populations",
+    "fieldName" : "admin_per_100k_65plus",
+    "position" : 32,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085035,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "198359",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5916"
+      }, {
+        "item" : "95926",
+        "count" : "11"
+      }, {
+        "item" : "35735",
+        "count" : "7"
+      }, {
+        "item" : "19536",
+        "count" : "6"
+      }, {
+        "item" : "49826",
+        "count" : "6"
+      }, {
+        "item" : "48579",
+        "count" : "6"
+      }, {
+        "item" : "50090",
+        "count" : "6"
+      }, {
+        "item" : "99967",
+        "count" : "5"
+      }, {
+        "item" : "17523",
+        "count" : "5"
+      }, {
+        "item" : "87845",
+        "count" : "5"
+      }, {
+        "item" : "17019",
+        "count" : "5"
+      }, {
+        "item" : "91491",
+        "count" : "5"
+      }, {
+        "item" : "45886",
+        "count" : "5"
+      }, {
+        "item" : "18248",
+        "count" : "5"
+      }, {
+        "item" : "136121",
+        "count" : "4"
+      }, {
+        "item" : "98686",
+        "count" : "4"
+      }, {
+        "item" : "42960",
+        "count" : "4"
+      }, {
+        "item" : "48041",
+        "count" : "4"
+      }, {
+        "item" : "17936",
+        "count" : "4"
+      }, {
+        "item" : "17956",
+        "count" : "4"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5045"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132689,
+    "name" : "Recip_Administered",
+    "dataTypeName" : "number",
+    "description" : "Total number of administered vaccines based on the jurisdiction of residence",
+    "fieldName" : "recip_administered",
+    "position" : 33,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085018,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "297720928",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "4256"
+      }, {
+        "item" : "20810",
+        "count" : "7"
+      }, {
+        "item" : "30316",
+        "count" : "5"
+      }, {
+        "item" : "24416",
+        "count" : "5"
+      }, {
+        "item" : "42766",
+        "count" : "4"
+      }, {
+        "item" : "29659",
+        "count" : "4"
+      }, {
+        "item" : "40771",
+        "count" : "4"
+      }, {
+        "item" : "23740",
+        "count" : "4"
+      }, {
+        "item" : "13568",
+        "count" : "4"
+      }, {
+        "item" : "16016",
+        "count" : "3"
+      }, {
+        "item" : "80683",
+        "count" : "3"
+      }, {
+        "item" : "48615",
+        "count" : "3"
+      }, {
+        "item" : "38963",
+        "count" : "3"
+      }, {
+        "item" : "42155",
+        "count" : "3"
+      }, {
+        "item" : "182278",
+        "count" : "3"
+      }, {
+        "item" : "38716",
+        "count" : "3"
+      }, {
+        "item" : "42157",
+        "count" : "3"
+      }, {
+        "item" : "20485",
+        "count" : "3"
+      }, {
+        "item" : "11208",
+        "count" : "2"
+      }, {
+        "item" : "33725",
+        "count" : "2"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "6959"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132637,
+    "name" : "Administered_Dose1_Recip",
+    "dataTypeName" : "number",
+    "description" : "Total number of people with at least one dose based on the jurisdiction where recipient lives",
+    "fieldName" : "administered_dose1_recip",
+    "position" : 34,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084988,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "169090262",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "4252"
+      }, {
+        "item" : "12975",
+        "count" : "7"
+      }, {
+        "item" : "23419",
+        "count" : "6"
+      }, {
+        "item" : "16497",
+        "count" : "5"
+      }, {
+        "item" : "22122",
+        "count" : "5"
+      }, {
+        "item" : "13703",
+        "count" : "5"
+      }, {
+        "item" : "22512",
+        "count" : "4"
+      }, {
+        "item" : "8456",
+        "count" : "4"
+      }, {
+        "item" : "22498",
+        "count" : "4"
+      }, {
+        "item" : "15995",
+        "count" : "4"
+      }, {
+        "item" : "13166",
+        "count" : "4"
+      }, {
+        "item" : "12988",
+        "count" : "3"
+      }, {
+        "item" : "12655",
+        "count" : "3"
+      }, {
+        "item" : "26167",
+        "count" : "3"
+      }, {
+        "item" : "8928",
+        "count" : "3"
+      }, {
+        "item" : "100561",
+        "count" : "3"
+      }, {
+        "item" : "14073",
+        "count" : "3"
+      }, {
+        "item" : "11204",
+        "count" : "3"
+      }, {
+        "item" : "21732",
+        "count" : "3"
+      }, {
+        "item" : "5147",
+        "count" : "3"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "6909"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132654,
+    "name" : "Administered_Dose1_Pop_Pct",
+    "dataTypeName" : "number",
+    "description" : "Percent of population with at lease one dose based on the jurisdiction where recipient lives",
+    "fieldName" : "administered_dose1_pop_pct",
+    "position" : 35,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084998,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "76.5",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "4567"
+      }, {
+        "item" : "31.8",
+        "count" : "27"
+      }, {
+        "item" : "33.7",
+        "count" : "27"
+      }, {
+        "item" : "42.2",
+        "count" : "27"
+      }, {
+        "item" : "11.9",
+        "count" : "26"
+      }, {
+        "item" : "22.2",
+        "count" : "26"
+      }, {
+        "item" : "19.8",
+        "count" : "26"
+      }, {
+        "item" : "45.3",
+        "count" : "25"
+      }, {
+        "item" : "35.4",
+        "count" : "25"
+      }, {
+        "item" : "34.9",
+        "count" : "25"
+      }, {
+        "item" : "38.8",
+        "count" : "25"
+      }, {
+        "item" : "28.7",
+        "count" : "24"
+      }, {
+        "item" : "36",
+        "count" : "24"
+      }, {
+        "item" : "39",
+        "count" : "24"
+      }, {
+        "item" : "34.3",
+        "count" : "24"
+      }, {
+        "item" : "33.2",
+        "count" : "24"
+      }, {
+        "item" : "39.5",
+        "count" : "24"
+      }, {
+        "item" : "41.6",
+        "count" : "23"
+      }, {
+        "item" : "37.2",
+        "count" : "23"
+      }, {
+        "item" : "15.2",
+        "count" : "23"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "599"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132615,
+    "name" : "Administered_Dose1_Recip_12Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 12+ with at least one dose based on the jurisdiction where recipient lives",
+    "fieldName" : "administered_dose1_recip_1",
+    "position" : 36,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084973,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "168954018",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "9912"
+      }, {
+        "item" : "23418",
+        "count" : "6"
+      }, {
+        "item" : "16481",
+        "count" : "5"
+      }, {
+        "item" : "13703",
+        "count" : "5"
+      }, {
+        "item" : "13166",
+        "count" : "4"
+      }, {
+        "item" : "22506",
+        "count" : "4"
+      }, {
+        "item" : "15979",
+        "count" : "4"
+      }, {
+        "item" : "22497",
+        "count" : "4"
+      }, {
+        "item" : "23159",
+        "count" : "3"
+      }, {
+        "item" : "23160",
+        "count" : "3"
+      }, {
+        "item" : "100560",
+        "count" : "3"
+      }, {
+        "item" : "12975",
+        "count" : "3"
+      }, {
+        "item" : "26167",
+        "count" : "3"
+      }, {
+        "item" : "12988",
+        "count" : "3"
+      }, {
+        "item" : "22504",
+        "count" : "2"
+      }, {
+        "item" : "25238",
+        "count" : "2"
+      }, {
+        "item" : "12985",
+        "count" : "2"
+      }, {
+        "item" : "37724",
+        "count" : "2"
+      }, {
+        "item" : "12976",
+        "count" : "2"
+      }, {
+        "item" : "15856",
+        "count" : "2"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "1359"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132719,
+    "name" : "Administered_Dose1_Recip_12PlusPop_Pct",
+    "dataTypeName" : "number",
+    "description" : "Percent of 12+ population with at least one dose based on the jurisdiction where recipient lives",
+    "fieldName" : "administered_dose1_recip_2",
+    "position" : 37,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085033,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "89.6",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "10000"
+      }, {
+        "item" : "49.6",
+        "count" : "12"
+      }, {
+        "item" : "48.7",
+        "count" : "11"
+      }, {
+        "item" : "42.2",
+        "count" : "11"
+      }, {
+        "item" : "40.1",
+        "count" : "10"
+      }, {
+        "item" : "54.4",
+        "count" : "10"
+      }, {
+        "item" : "84.9",
+        "count" : "10"
+      }, {
+        "item" : "55.6",
+        "count" : "10"
+      }, {
+        "item" : "53.9",
+        "count" : "10"
+      }, {
+        "item" : "52.7",
+        "count" : "10"
+      }, {
+        "item" : "49.2",
+        "count" : "9"
+      }, {
+        "item" : "59.6",
+        "count" : "9"
+      }, {
+        "item" : "54.5",
+        "count" : "9"
+      }, {
+        "item" : "56.8",
+        "count" : "9"
+      }, {
+        "item" : "53.4",
+        "count" : "8"
+      }, {
+        "item" : "49.4",
+        "count" : "8"
+      }, {
+        "item" : "55.5",
+        "count" : "8"
+      }, {
+        "item" : "50.5",
+        "count" : "8"
+      }, {
+        "item" : "52.2",
+        "count" : "8"
+      }, {
+        "item" : "63.5",
+        "count" : "8"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "386"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132641,
+    "name" : "Administered_Dose1_Recip_18Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 18+ with at least one dose based on the jurisdiction where recipient lives",
+    "fieldName" : "administered_dose1_recip_3",
+    "position" : 38,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084992,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "162560820",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "4258"
+      }, {
+        "item" : "12975",
+        "count" : "7"
+      }, {
+        "item" : "22528",
+        "count" : "6"
+      }, {
+        "item" : "13702",
+        "count" : "5"
+      }, {
+        "item" : "16447",
+        "count" : "5"
+      }, {
+        "item" : "21349",
+        "count" : "5"
+      }, {
+        "item" : "22492",
+        "count" : "4"
+      }, {
+        "item" : "8456",
+        "count" : "4"
+      }, {
+        "item" : "21702",
+        "count" : "4"
+      }, {
+        "item" : "15947",
+        "count" : "4"
+      }, {
+        "item" : "13165",
+        "count" : "4"
+      }, {
+        "item" : "17528",
+        "count" : "4"
+      }, {
+        "item" : "12655",
+        "count" : "3"
+      }, {
+        "item" : "49551",
+        "count" : "3"
+      }, {
+        "item" : "8928",
+        "count" : "3"
+      }, {
+        "item" : "11178",
+        "count" : "3"
+      }, {
+        "item" : "11933",
+        "count" : "3"
+      }, {
+        "item" : "100560",
+        "count" : "3"
+      }, {
+        "item" : "16840",
+        "count" : "3"
+      }, {
+        "item" : "24835",
+        "count" : "3"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "6892"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132626,
+    "name" : "Administered_Dose1_Recip_18PlusPop_Pct",
+    "dataTypeName" : "number",
+    "description" : "Percent of 18+ population with at least one dose based on the jurisdiction where recipient lives",
+    "fieldName" : "administered_dose1_recip_4",
+    "position" : 39,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084979,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "98.1",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "4678"
+      }, {
+        "item" : "42",
+        "count" : "22"
+      }, {
+        "item" : "45.3",
+        "count" : "22"
+      }, {
+        "item" : "52.6",
+        "count" : "21"
+      }, {
+        "item" : "36.1",
+        "count" : "21"
+      }, {
+        "item" : "51.9",
+        "count" : "21"
+      }, {
+        "item" : "47.1",
+        "count" : "20"
+      }, {
+        "item" : "45.1",
+        "count" : "20"
+      }, {
+        "item" : "43.1",
+        "count" : "20"
+      }, {
+        "item" : "49.1",
+        "count" : "20"
+      }, {
+        "item" : "17.2",
+        "count" : "20"
+      }, {
+        "item" : "44.1",
+        "count" : "20"
+      }, {
+        "item" : "17",
+        "count" : "20"
+      }, {
+        "item" : "25.2",
+        "count" : "19"
+      }, {
+        "item" : "45.8",
+        "count" : "19"
+      }, {
+        "item" : "43.7",
+        "count" : "19"
+      }, {
+        "item" : "22.4",
+        "count" : "19"
+      }, {
+        "item" : "43.4",
+        "count" : "19"
+      }, {
+        "item" : "50.5",
+        "count" : "19"
+      }, {
+        "item" : "34.4",
+        "count" : "19"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "720"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132686,
+    "name" : "Administered_Dose1_Recip_65Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 65+ with at least one dose based on the jurisdiction where recipient lives",
+    "fieldName" : "administered_dose1_recip_5",
+    "position" : 40,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085015,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "47053094",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5496"
+      }, {
+        "item" : "1610",
+        "count" : "19"
+      }, {
+        "item" : "1477",
+        "count" : "9"
+      }, {
+        "item" : "1957",
+        "count" : "6"
+      }, {
+        "item" : "2234",
+        "count" : "5"
+      }, {
+        "item" : "993",
+        "count" : "5"
+      }, {
+        "item" : "920",
+        "count" : "5"
+      }, {
+        "item" : "1314",
+        "count" : "5"
+      }, {
+        "item" : "1660",
+        "count" : "5"
+      }, {
+        "item" : "1450",
+        "count" : "5"
+      }, {
+        "item" : "1459",
+        "count" : "5"
+      }, {
+        "item" : "949",
+        "count" : "5"
+      }, {
+        "item" : "1386",
+        "count" : "5"
+      }, {
+        "item" : "1374",
+        "count" : "4"
+      }, {
+        "item" : "2486",
+        "count" : "4"
+      }, {
+        "item" : "2531",
+        "count" : "4"
+      }, {
+        "item" : "2547",
+        "count" : "4"
+      }, {
+        "item" : "2182",
+        "count" : "4"
+      }, {
+        "item" : "967",
+        "count" : "4"
+      }, {
+        "item" : "1627",
+        "count" : "4"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5553"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132679,
+    "name" : "Administered_Dose1_Recip_65PlusPop_Pct",
+    "dataTypeName" : "number",
+    "description" : "Percent of 65+ population with at lease one dose based on the jurisdiction where recipient lives",
+    "fieldName" : "administered_dose1_recip_6",
+    "position" : 41,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085009,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "109",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5916"
+      }, {
+        "item" : "99.9",
+        "count" : "35"
+      }, {
+        "item" : "78.8",
+        "count" : "30"
+      }, {
+        "item" : "82",
+        "count" : "30"
+      }, {
+        "item" : "73.2",
+        "count" : "29"
+      }, {
+        "item" : "78.5",
+        "count" : "29"
+      }, {
+        "item" : "75.1",
+        "count" : "28"
+      }, {
+        "item" : "76",
+        "count" : "28"
+      }, {
+        "item" : "80.8",
+        "count" : "27"
+      }, {
+        "item" : "82.3",
+        "count" : "27"
+      }, {
+        "item" : "80",
+        "count" : "26"
+      }, {
+        "item" : "81",
+        "count" : "26"
+      }, {
+        "item" : "75.5",
+        "count" : "25"
+      }, {
+        "item" : "74.2",
+        "count" : "25"
+      }, {
+        "item" : "79.4",
+        "count" : "25"
+      }, {
+        "item" : "78.7",
+        "count" : "25"
+      }, {
+        "item" : "82.5",
+        "count" : "25"
+      }, {
+        "item" : "78.2",
+        "count" : "25"
+      }, {
+        "item" : "81.6",
+        "count" : "25"
+      }, {
+        "item" : "76.9",
+        "count" : "24"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "662"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132631,
+    "name" : "Series_Complete_Yes",
+    "dataTypeName" : "number",
+    "description" : "Total number of people who are fully vaccinated (have second dose of a two-dose vaccine or one dose of a single-dose vaccine) based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_yes",
+    "position" : 42,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084982,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "136644618",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5496"
+      }, {
+        "item" : "9130",
+        "count" : "7"
+      }, {
+        "item" : "13971",
+        "count" : "5"
+      }, {
+        "item" : "12337",
+        "count" : "5"
+      }, {
+        "item" : "5299",
+        "count" : "4"
+      }, {
+        "item" : "13755",
+        "count" : "4"
+      }, {
+        "item" : "19251",
+        "count" : "4"
+      }, {
+        "item" : "11965",
+        "count" : "4"
+      }, {
+        "item" : "3137",
+        "count" : "4"
+      }, {
+        "item" : "13704",
+        "count" : "4"
+      }, {
+        "item" : "18182",
+        "count" : "4"
+      }, {
+        "item" : "17142",
+        "count" : "3"
+      }, {
+        "item" : "6780",
+        "count" : "3"
+      }, {
+        "item" : "8706",
+        "count" : "3"
+      }, {
+        "item" : "8855",
+        "count" : "3"
+      }, {
+        "item" : "3129",
+        "count" : "3"
+      }, {
+        "item" : "14846",
+        "count" : "3"
+      }, {
+        "item" : "5464",
+        "count" : "3"
+      }, {
+        "item" : "16606",
+        "count" : "3"
+      }, {
+        "item" : "18902",
+        "count" : "3"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5688"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132713,
+    "name" : "Series_Complete_Pop_Pct",
+    "dataTypeName" : "number",
+    "description" : "Percent of people who are fully vaccinated (have second dose of a two-dose vaccine or one dose of a single-dose vaccine) based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_pop_pct",
+    "position" : 43,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085030,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "68.9",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5769"
+      }, {
+        "item" : "11.6",
+        "count" : "32"
+      }, {
+        "item" : "14.8",
+        "count" : "30"
+      }, {
+        "item" : "16",
+        "count" : "28"
+      }, {
+        "item" : "29.8",
+        "count" : "26"
+      }, {
+        "item" : "29",
+        "count" : "26"
+      }, {
+        "item" : "12.7",
+        "count" : "25"
+      }, {
+        "item" : "32",
+        "count" : "25"
+      }, {
+        "item" : "26",
+        "count" : "25"
+      }, {
+        "item" : "14.1",
+        "count" : "25"
+      }, {
+        "item" : "31.8",
+        "count" : "25"
+      }, {
+        "item" : "12.3",
+        "count" : "24"
+      }, {
+        "item" : "26.6",
+        "count" : "24"
+      }, {
+        "item" : "9.7",
+        "count" : "24"
+      }, {
+        "item" : "11.8",
+        "count" : "23"
+      }, {
+        "item" : "26.9",
+        "count" : "23"
+      }, {
+        "item" : "16.1",
+        "count" : "23"
+      }, {
+        "item" : "29.5",
+        "count" : "23"
+      }, {
+        "item" : "29.9",
+        "count" : "23"
+      }, {
+        "item" : "31.2",
+        "count" : "23"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "488"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132640,
+    "name" : "Series_Complete_12Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 12+ who are fully vaccinated (have second dose of a two-dose vaccine or one dose of a single-dose vaccine) based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_12plus",
+    "position" : 44,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084991,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "136635500",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "9912"
+      }, {
+        "item" : "12337",
+        "count" : "5"
+      }, {
+        "item" : "13964",
+        "count" : "5"
+      }, {
+        "item" : "13697",
+        "count" : "4"
+      }, {
+        "item" : "19250",
+        "count" : "4"
+      }, {
+        "item" : "11965",
+        "count" : "4"
+      }, {
+        "item" : "18181",
+        "count" : "4"
+      }, {
+        "item" : "16605",
+        "count" : "3"
+      }, {
+        "item" : "18901",
+        "count" : "3"
+      }, {
+        "item" : "87094",
+        "count" : "3"
+      }, {
+        "item" : "22705",
+        "count" : "3"
+      }, {
+        "item" : "9130",
+        "count" : "3"
+      }, {
+        "item" : "18899",
+        "count" : "3"
+      }, {
+        "item" : "13180",
+        "count" : "2"
+      }, {
+        "item" : "10946",
+        "count" : "2"
+      }, {
+        "item" : "22940",
+        "count" : "2"
+      }, {
+        "item" : "17910",
+        "count" : "2"
+      }, {
+        "item" : "82812",
+        "count" : "2"
+      }, {
+        "item" : "11855",
+        "count" : "2"
+      }, {
+        "item" : "69697",
+        "count" : "2"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "1367"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132628,
+    "name" : "Series_Complete_12PlusPop_Pct",
+    "dataTypeName" : "number",
+    "description" : "Percent of people 12+ who are fully vaccinated (have second dose of a two-dose vaccine or one dose of a single-dose vaccine) based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_12pluspop",
+    "position" : 45,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084980,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "80.7",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "10000"
+      }, {
+        "item" : "37",
+        "count" : "12"
+      }, {
+        "item" : "50.4",
+        "count" : "12"
+      }, {
+        "item" : "40.5",
+        "count" : "12"
+      }, {
+        "item" : "46.7",
+        "count" : "11"
+      }, {
+        "item" : "43",
+        "count" : "11"
+      }, {
+        "item" : "49.2",
+        "count" : "11"
+      }, {
+        "item" : "45.8",
+        "count" : "11"
+      }, {
+        "item" : "50.8",
+        "count" : "11"
+      }, {
+        "item" : "43.4",
+        "count" : "11"
+      }, {
+        "item" : "39.7",
+        "count" : "10"
+      }, {
+        "item" : "40.2",
+        "count" : "10"
+      }, {
+        "item" : "39.2",
+        "count" : "10"
+      }, {
+        "item" : "51.9",
+        "count" : "9"
+      }, {
+        "item" : "35.8",
+        "count" : "9"
+      }, {
+        "item" : "43.7",
+        "count" : "9"
+      }, {
+        "item" : "49.6",
+        "count" : "9"
+      }, {
+        "item" : "50.3",
+        "count" : "9"
+      }, {
+        "item" : "39.6",
+        "count" : "9"
+      }, {
+        "item" : "36.2",
+        "count" : "9"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "326"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132700,
+    "name" : "Series_Complete_18Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 18+ who are fully vaccinated (have second dose of a two-dose vaccine or one dose of a single-dose vaccine) based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_18plus",
+    "position" : 46,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085023,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "134306642",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5496"
+      }, {
+        "item" : "9130",
+        "count" : "7"
+      }, {
+        "item" : "12337",
+        "count" : "5"
+      }, {
+        "item" : "13949",
+        "count" : "5"
+      }, {
+        "item" : "18598",
+        "count" : "5"
+      }, {
+        "item" : "5299",
+        "count" : "4"
+      }, {
+        "item" : "3137",
+        "count" : "4"
+      }, {
+        "item" : "11965",
+        "count" : "4"
+      }, {
+        "item" : "17585",
+        "count" : "4"
+      }, {
+        "item" : "13683",
+        "count" : "4"
+      }, {
+        "item" : "13348",
+        "count" : "4"
+      }, {
+        "item" : "7511",
+        "count" : "3"
+      }, {
+        "item" : "22158",
+        "count" : "3"
+      }, {
+        "item" : "4752",
+        "count" : "3"
+      }, {
+        "item" : "18269",
+        "count" : "3"
+      }, {
+        "item" : "5250",
+        "count" : "3"
+      }, {
+        "item" : "9776",
+        "count" : "3"
+      }, {
+        "item" : "3129",
+        "count" : "3"
+      }, {
+        "item" : "15970",
+        "count" : "3"
+      }, {
+        "item" : "14395",
+        "count" : "3"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5677"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132709,
+    "name" : "Series_Complete_18PlusPop_Pct",
+    "dataTypeName" : "number",
+    "description" : "Percent of people 18+ who are fully vaccinated (have second dose of a two-dose vaccine or one dose of a single-dose vaccine) based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_18pluspop",
+    "position" : 47,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085028,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "88.3",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5860"
+      }, {
+        "item" : "16.2",
+        "count" : "26"
+      }, {
+        "item" : "19.6",
+        "count" : "25"
+      }, {
+        "item" : "19.5",
+        "count" : "24"
+      }, {
+        "item" : "26.4",
+        "count" : "22"
+      }, {
+        "item" : "37.6",
+        "count" : "21"
+      }, {
+        "item" : "14.9",
+        "count" : "21"
+      }, {
+        "item" : "20.5",
+        "count" : "21"
+      }, {
+        "item" : "20",
+        "count" : "21"
+      }, {
+        "item" : "23.4",
+        "count" : "20"
+      }, {
+        "item" : "42.8",
+        "count" : "20"
+      }, {
+        "item" : "18.4",
+        "count" : "20"
+      }, {
+        "item" : "42.1",
+        "count" : "20"
+      }, {
+        "item" : "22.4",
+        "count" : "20"
+      }, {
+        "item" : "39.6",
+        "count" : "20"
+      }, {
+        "item" : "18.3",
+        "count" : "20"
+      }, {
+        "item" : "30.6",
+        "count" : "19"
+      }, {
+        "item" : "45.6",
+        "count" : "19"
+      }, {
+        "item" : "40.5",
+        "count" : "19"
+      }, {
+        "item" : "33.2",
+        "count" : "19"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "584"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132702,
+    "name" : "Series_Complete_65Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 65+ with at least one dose based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_65plus",
+    "position" : 48,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085024,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "41039623",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5496"
+      }, {
+        "item" : "1503",
+        "count" : "11"
+      }, {
+        "item" : "1149",
+        "count" : "7"
+      }, {
+        "item" : "1612",
+        "count" : "6"
+      }, {
+        "item" : "1415",
+        "count" : "6"
+      }, {
+        "item" : "1441",
+        "count" : "6"
+      }, {
+        "item" : "2285",
+        "count" : "6"
+      }, {
+        "item" : "1070",
+        "count" : "5"
+      }, {
+        "item" : "1601",
+        "count" : "5"
+      }, {
+        "item" : "1481",
+        "count" : "5"
+      }, {
+        "item" : "1342",
+        "count" : "5"
+      }, {
+        "item" : "773",
+        "count" : "5"
+      }, {
+        "item" : "800",
+        "count" : "5"
+      }, {
+        "item" : "832",
+        "count" : "5"
+      }, {
+        "item" : "1346",
+        "count" : "4"
+      }, {
+        "item" : "450",
+        "count" : "4"
+      }, {
+        "item" : "825",
+        "count" : "4"
+      }, {
+        "item" : "2228",
+        "count" : "4"
+      }, {
+        "item" : "2200",
+        "count" : "4"
+      }, {
+        "item" : "2049",
+        "count" : "4"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5562"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132672,
+    "name" : "Series_Complete_65PlusPop_Pct",
+    "dataTypeName" : "number",
+    "description" : "Percent of 65+ population with at least one dose based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_65pluspop",
+    "position" : 49,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085006,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "91.5",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5916"
+      }, {
+        "item" : "68.3",
+        "count" : "23"
+      }, {
+        "item" : "69.7",
+        "count" : "22"
+      }, {
+        "item" : "69.8",
+        "count" : "22"
+      }, {
+        "item" : "69.9",
+        "count" : "21"
+      }, {
+        "item" : "72.1",
+        "count" : "21"
+      }, {
+        "item" : "73.9",
+        "count" : "20"
+      }, {
+        "item" : "69.6",
+        "count" : "19"
+      }, {
+        "item" : "72.4",
+        "count" : "19"
+      }, {
+        "item" : "65.3",
+        "count" : "19"
+      }, {
+        "item" : "68.4",
+        "count" : "19"
+      }, {
+        "item" : "70.3",
+        "count" : "19"
+      }, {
+        "item" : "71.8",
+        "count" : "19"
+      }, {
+        "item" : "71.2",
+        "count" : "19"
+      }, {
+        "item" : "64.4",
+        "count" : "19"
+      }, {
+        "item" : "70.4",
+        "count" : "18"
+      }, {
+        "item" : "66.9",
+        "count" : "18"
+      }, {
+        "item" : "72.3",
+        "count" : "18"
+      }, {
+        "item" : "70.6",
+        "count" : "18"
+      }, {
+        "item" : "72.2",
+        "count" : "18"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "770"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132683,
+    "name" : "Series_Complete_Janssen",
+    "dataTypeName" : "number",
+    "description" : "Total number of people who are fully vaccinated with the J&J/Janssen vaccine based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_janssen",
+    "position" : 50,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085012,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "10810492",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5597"
+      }, {
+        "item" : "1",
+        "count" : "40"
+      }, {
+        "item" : "2",
+        "count" : "39"
+      }, {
+        "item" : "6",
+        "count" : "31"
+      }, {
+        "item" : "197",
+        "count" : "22"
+      }, {
+        "item" : "39",
+        "count" : "21"
+      }, {
+        "item" : "47",
+        "count" : "20"
+      }, {
+        "item" : "29",
+        "count" : "20"
+      }, {
+        "item" : "98",
+        "count" : "17"
+      }, {
+        "item" : "3",
+        "count" : "15"
+      }, {
+        "item" : "35",
+        "count" : "14"
+      }, {
+        "item" : "5",
+        "count" : "12"
+      }, {
+        "item" : "4",
+        "count" : "12"
+      }, {
+        "item" : "1299",
+        "count" : "11"
+      }, {
+        "item" : "34",
+        "count" : "11"
+      }, {
+        "item" : "28",
+        "count" : "11"
+      }, {
+        "item" : "52",
+        "count" : "8"
+      }, {
+        "item" : "340",
+        "count" : "7"
+      }, {
+        "item" : "33",
+        "count" : "7"
+      }, {
+        "item" : "312",
+        "count" : "7"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5163"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132685,
+    "name" : "Series_Complete_Moderna",
+    "dataTypeName" : "number",
+    "description" : "Total number of people who are fully vaccinated with the Moderna vaccine based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_moderna",
+    "position" : 51,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085014,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "55594087",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5496"
+      }, {
+        "item" : "5094",
+        "count" : "11"
+      }, {
+        "item" : "7813",
+        "count" : "10"
+      }, {
+        "item" : "3124",
+        "count" : "6"
+      }, {
+        "item" : "13718",
+        "count" : "5"
+      }, {
+        "item" : "4421",
+        "count" : "5"
+      }, {
+        "item" : "2088",
+        "count" : "5"
+      }, {
+        "item" : "1691",
+        "count" : "5"
+      }, {
+        "item" : "10687",
+        "count" : "5"
+      }, {
+        "item" : "2127",
+        "count" : "4"
+      }, {
+        "item" : "2838",
+        "count" : "4"
+      }, {
+        "item" : "15916",
+        "count" : "4"
+      }, {
+        "item" : "10549",
+        "count" : "4"
+      }, {
+        "item" : "13569",
+        "count" : "4"
+      }, {
+        "item" : "5460",
+        "count" : "4"
+      }, {
+        "item" : "610",
+        "count" : "4"
+      }, {
+        "item" : "2230",
+        "count" : "4"
+      }, {
+        "item" : "3911",
+        "count" : "4"
+      }, {
+        "item" : "4293",
+        "count" : "4"
+      }, {
+        "item" : "3118",
+        "count" : "3"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5616"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132707,
+    "name" : "Series_Complete_Pfizer",
+    "dataTypeName" : "number",
+    "description" : "Total number of people who are fully vaccinated with the Pfizer vaccine based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_pfizer",
+    "position" : 52,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085027,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "70181369",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5496"
+      }, {
+        "item" : "2",
+        "count" : "35"
+      }, {
+        "item" : "20",
+        "count" : "30"
+      }, {
+        "item" : "19",
+        "count" : "30"
+      }, {
+        "item" : "13",
+        "count" : "18"
+      }, {
+        "item" : "14",
+        "count" : "18"
+      }, {
+        "item" : "4",
+        "count" : "16"
+      }, {
+        "item" : "18",
+        "count" : "15"
+      }, {
+        "item" : "15",
+        "count" : "11"
+      }, {
+        "item" : "3",
+        "count" : "10"
+      }, {
+        "item" : "6",
+        "count" : "9"
+      }, {
+        "item" : "1",
+        "count" : "8"
+      }, {
+        "item" : "9",
+        "count" : "7"
+      }, {
+        "item" : "6895",
+        "count" : "7"
+      }, {
+        "item" : "23",
+        "count" : "7"
+      }, {
+        "item" : "31",
+        "count" : "6"
+      }, {
+        "item" : "21",
+        "count" : "6"
+      }, {
+        "item" : "34",
+        "count" : "6"
+      }, {
+        "item" : "29",
+        "count" : "5"
+      }, {
+        "item" : "10913",
+        "count" : "5"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5493"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132681,
+    "name" : "Series_Complete_Unk_Manuf",
+    "dataTypeName" : "number",
+    "description" : "Total number of people who are fully vaccinated with two doses from an uknown two-dose vaccine manufacturer based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_unk_manuf",
+    "position" : 53,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085010,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "58670",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "6520"
+      }, {
+        "item" : "1",
+        "count" : "237"
+      }, {
+        "item" : "5",
+        "count" : "98"
+      }, {
+        "item" : "8",
+        "count" : "72"
+      }, {
+        "item" : "26",
+        "count" : "69"
+      }, {
+        "item" : "7",
+        "count" : "67"
+      }, {
+        "item" : "20",
+        "count" : "55"
+      }, {
+        "item" : "6",
+        "count" : "54"
+      }, {
+        "item" : "10",
+        "count" : "51"
+      }, {
+        "item" : "22",
+        "count" : "49"
+      }, {
+        "item" : "9",
+        "count" : "46"
+      }, {
+        "item" : "16",
+        "count" : "45"
+      }, {
+        "item" : "13",
+        "count" : "44"
+      }, {
+        "item" : "24",
+        "count" : "43"
+      }, {
+        "item" : "11",
+        "count" : "42"
+      }, {
+        "item" : "12",
+        "count" : "41"
+      }, {
+        "item" : "3",
+        "count" : "40"
+      }, {
+        "item" : "35",
+        "count" : "38"
+      }, {
+        "item" : "28",
+        "count" : "37"
+      }, {
+        "item" : "25",
+        "count" : "36"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "1288"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132652,
+    "name" : "Series_Complete_Janssen_12Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 12+ who are fully vaccinated with the J&J/Janssen vaccine based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_janssen_12plus",
+    "position" : 54,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084997,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "10808798",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "9912"
+      }, {
+        "item" : "34",
+        "count" : "11"
+      }, {
+        "item" : "1299",
+        "count" : "7"
+      }, {
+        "item" : "29",
+        "count" : "6"
+      }, {
+        "item" : "1305",
+        "count" : "6"
+      }, {
+        "item" : "244",
+        "count" : "6"
+      }, {
+        "item" : "129",
+        "count" : "6"
+      }, {
+        "item" : "33",
+        "count" : "5"
+      }, {
+        "item" : "1630",
+        "count" : "5"
+      }, {
+        "item" : "1396",
+        "count" : "4"
+      }, {
+        "item" : "659",
+        "count" : "4"
+      }, {
+        "item" : "6258",
+        "count" : "3"
+      }, {
+        "item" : "280",
+        "count" : "3"
+      }, {
+        "item" : "713",
+        "count" : "2"
+      }, {
+        "item" : "708",
+        "count" : "2"
+      }, {
+        "item" : "230",
+        "count" : "2"
+      }, {
+        "item" : "31624",
+        "count" : "2"
+      }, {
+        "item" : "2443",
+        "count" : "2"
+      }, {
+        "item" : "142",
+        "count" : "2"
+      }, {
+        "item" : "99",
+        "count" : "2"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "1337"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132705,
+    "name" : "Series_Complete_Moderna_12Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 12+ who are fully vaccinated with the Moderna vaccine based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_moderna_12plus",
+    "position" : 55,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085026,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "55590873",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "9912"
+      }, {
+        "item" : "7813",
+        "count" : "5"
+      }, {
+        "item" : "10687",
+        "count" : "5"
+      }, {
+        "item" : "13711",
+        "count" : "5"
+      }, {
+        "item" : "10549",
+        "count" : "4"
+      }, {
+        "item" : "15915",
+        "count" : "4"
+      }, {
+        "item" : "4292",
+        "count" : "4"
+      }, {
+        "item" : "4420",
+        "count" : "4"
+      }, {
+        "item" : "13562",
+        "count" : "4"
+      }, {
+        "item" : "3044",
+        "count" : "3"
+      }, {
+        "item" : "32890",
+        "count" : "3"
+      }, {
+        "item" : "4103",
+        "count" : "3"
+      }, {
+        "item" : "13076",
+        "count" : "3"
+      }, {
+        "item" : "17267",
+        "count" : "3"
+      }, {
+        "item" : "2900",
+        "count" : "2"
+      }, {
+        "item" : "2779",
+        "count" : "2"
+      }, {
+        "item" : "18311",
+        "count" : "2"
+      }, {
+        "item" : "4421",
+        "count" : "2"
+      }, {
+        "item" : "23168",
+        "count" : "2"
+      }, {
+        "item" : "30783",
+        "count" : "2"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "1356"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132675,
+    "name" : "Series_Complete_Pfizer_12Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 12+ who are fully vaccinated with the Pfizer vaccine based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_pfizer_12plus",
+    "position" : 56,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085007,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "70177185",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "9912"
+      }, {
+        "item" : "20",
+        "count" : "14"
+      }, {
+        "item" : "6",
+        "count" : "9"
+      }, {
+        "item" : "9",
+        "count" : "7"
+      }, {
+        "item" : "31",
+        "count" : "6"
+      }, {
+        "item" : "34",
+        "count" : "6"
+      }, {
+        "item" : "19",
+        "count" : "5"
+      }, {
+        "item" : "14575",
+        "count" : "5"
+      }, {
+        "item" : "5",
+        "count" : "5"
+      }, {
+        "item" : "18",
+        "count" : "3"
+      }, {
+        "item" : "47946",
+        "count" : "3"
+      }, {
+        "item" : "14049",
+        "count" : "3"
+      }, {
+        "item" : "39851",
+        "count" : "3"
+      }, {
+        "item" : "14795",
+        "count" : "3"
+      }, {
+        "item" : "38",
+        "count" : "3"
+      }, {
+        "item" : "37",
+        "count" : "3"
+      }, {
+        "item" : "19381",
+        "count" : "3"
+      }, {
+        "item" : "18102",
+        "count" : "2"
+      }, {
+        "item" : "19875",
+        "count" : "2"
+      }, {
+        "item" : "382808",
+        "count" : "2"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "1332"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132656,
+    "name" : "Series_Complete_Unk_Manuf_12Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 12+ who are fully vaccinated with two doses from an uknown two-dose vaccine manufacturer based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_unk_manuf_1",
+    "position" : 57,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084999,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "58643",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "10110"
+      }, {
+        "item" : "1",
+        "count" : "88"
+      }, {
+        "item" : "24",
+        "count" : "18"
+      }, {
+        "item" : "35",
+        "count" : "16"
+      }, {
+        "item" : "63",
+        "count" : "14"
+      }, {
+        "item" : "11",
+        "count" : "13"
+      }, {
+        "item" : "28",
+        "count" : "12"
+      }, {
+        "item" : "75",
+        "count" : "12"
+      }, {
+        "item" : "210",
+        "count" : "11"
+      }, {
+        "item" : "9",
+        "count" : "11"
+      }, {
+        "item" : "22",
+        "count" : "11"
+      }, {
+        "item" : "34",
+        "count" : "10"
+      }, {
+        "item" : "19",
+        "count" : "9"
+      }, {
+        "item" : "10",
+        "count" : "9"
+      }, {
+        "item" : "20",
+        "count" : "9"
+      }, {
+        "item" : "82",
+        "count" : "9"
+      }, {
+        "item" : "26",
+        "count" : "9"
+      }, {
+        "item" : "18060",
+        "count" : "9"
+      }, {
+        "item" : "18061",
+        "count" : "9"
+      }, {
+        "item" : "94",
+        "count" : "9"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "547"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132658,
+    "name" : "Series_Complete_Janssen_18Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 18+ who are fully vaccinated with the J&J/Janssen vaccine based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_janssen_18plus",
+    "position" : 58,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085000,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "10765875",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5597"
+      }, {
+        "item" : "1",
+        "count" : "41"
+      }, {
+        "item" : "2",
+        "count" : "38"
+      }, {
+        "item" : "6",
+        "count" : "31"
+      }, {
+        "item" : "197",
+        "count" : "22"
+      }, {
+        "item" : "39",
+        "count" : "21"
+      }, {
+        "item" : "47",
+        "count" : "20"
+      }, {
+        "item" : "29",
+        "count" : "20"
+      }, {
+        "item" : "98",
+        "count" : "17"
+      }, {
+        "item" : "3",
+        "count" : "15"
+      }, {
+        "item" : "35",
+        "count" : "14"
+      }, {
+        "item" : "4",
+        "count" : "13"
+      }, {
+        "item" : "5",
+        "count" : "11"
+      }, {
+        "item" : "28",
+        "count" : "11"
+      }, {
+        "item" : "34",
+        "count" : "11"
+      }, {
+        "item" : "1299",
+        "count" : "11"
+      }, {
+        "item" : "312",
+        "count" : "8"
+      }, {
+        "item" : "52",
+        "count" : "8"
+      }, {
+        "item" : "33",
+        "count" : "7"
+      }, {
+        "item" : "143",
+        "count" : "7"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5137"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132715,
+    "name" : "Series_Complete_Moderna_18Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 18+ who are fully vaccinated with the Moderna vaccine based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_moderna_18plus",
+    "position" : 59,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085031,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "55406921",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5496"
+      }, {
+        "item" : "5094",
+        "count" : "11"
+      }, {
+        "item" : "7813",
+        "count" : "10"
+      }, {
+        "item" : "3124",
+        "count" : "6"
+      }, {
+        "item" : "1691",
+        "count" : "5"
+      }, {
+        "item" : "13697",
+        "count" : "5"
+      }, {
+        "item" : "10687",
+        "count" : "5"
+      }, {
+        "item" : "2088",
+        "count" : "5"
+      }, {
+        "item" : "610",
+        "count" : "4"
+      }, {
+        "item" : "15912",
+        "count" : "4"
+      }, {
+        "item" : "2230",
+        "count" : "4"
+      }, {
+        "item" : "2126",
+        "count" : "4"
+      }, {
+        "item" : "4409",
+        "count" : "4"
+      }, {
+        "item" : "10549",
+        "count" : "4"
+      }, {
+        "item" : "3900",
+        "count" : "4"
+      }, {
+        "item" : "13549",
+        "count" : "4"
+      }, {
+        "item" : "2836",
+        "count" : "4"
+      }, {
+        "item" : "4281",
+        "count" : "4"
+      }, {
+        "item" : "5459",
+        "count" : "3"
+      }, {
+        "item" : "4093",
+        "count" : "3"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5626"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132630,
+    "name" : "Series_Complete_Pfizer_18Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 18+ who are fully vaccinated with the Pfizer vaccine based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_pfizer_18plus",
+    "position" : 60,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084981,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "68075462",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5496"
+      }, {
+        "item" : "2",
+        "count" : "35"
+      }, {
+        "item" : "19",
+        "count" : "30"
+      }, {
+        "item" : "20",
+        "count" : "30"
+      }, {
+        "item" : "14",
+        "count" : "18"
+      }, {
+        "item" : "13",
+        "count" : "18"
+      }, {
+        "item" : "4",
+        "count" : "16"
+      }, {
+        "item" : "18",
+        "count" : "15"
+      }, {
+        "item" : "5",
+        "count" : "14"
+      }, {
+        "item" : "15",
+        "count" : "11"
+      }, {
+        "item" : "3",
+        "count" : "10"
+      }, {
+        "item" : "1",
+        "count" : "8"
+      }, {
+        "item" : "8",
+        "count" : "7"
+      }, {
+        "item" : "23",
+        "count" : "7"
+      }, {
+        "item" : "6692",
+        "count" : "7"
+      }, {
+        "item" : "31",
+        "count" : "6"
+      }, {
+        "item" : "21",
+        "count" : "6"
+      }, {
+        "item" : "34",
+        "count" : "6"
+      }, {
+        "item" : "13956",
+        "count" : "5"
+      }, {
+        "item" : "10508",
+        "count" : "5"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5473"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132687,
+    "name" : "Series_Complete_Unk_Manuf_18Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 18+ who are fully vaccinated with two doses from an uknown two-dose vaccine manufacturer based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_unk_manuf_2",
+    "position" : 61,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085016,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "58383",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "6520"
+      }, {
+        "item" : "1",
+        "count" : "239"
+      }, {
+        "item" : "5",
+        "count" : "98"
+      }, {
+        "item" : "26",
+        "count" : "74"
+      }, {
+        "item" : "8",
+        "count" : "72"
+      }, {
+        "item" : "7",
+        "count" : "67"
+      }, {
+        "item" : "22",
+        "count" : "61"
+      }, {
+        "item" : "6",
+        "count" : "54"
+      }, {
+        "item" : "10",
+        "count" : "53"
+      }, {
+        "item" : "20",
+        "count" : "52"
+      }, {
+        "item" : "16",
+        "count" : "48"
+      }, {
+        "item" : "9",
+        "count" : "46"
+      }, {
+        "item" : "13",
+        "count" : "44"
+      }, {
+        "item" : "35",
+        "count" : "42"
+      }, {
+        "item" : "12",
+        "count" : "41"
+      }, {
+        "item" : "3",
+        "count" : "40"
+      }, {
+        "item" : "11",
+        "count" : "40"
+      }, {
+        "item" : "19",
+        "count" : "40"
+      }, {
+        "item" : "29",
+        "count" : "39"
+      }, {
+        "item" : "24",
+        "count" : "39"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "1279"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132634,
+    "name" : "Series_Complete_Janssen_65Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 65+ who are fully vaccinated with the J&J/Janssen vaccine based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_janssen_65plus",
+    "position" : 62,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084985,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "17168014",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5639"
+      }, {
+        "item" : "2",
+        "count" : "63"
+      }, {
+        "item" : "1",
+        "count" : "49"
+      }, {
+        "item" : "6",
+        "count" : "33"
+      }, {
+        "item" : "7",
+        "count" : "31"
+      }, {
+        "item" : "3",
+        "count" : "28"
+      }, {
+        "item" : "39",
+        "count" : "26"
+      }, {
+        "item" : "91",
+        "count" : "22"
+      }, {
+        "item" : "4",
+        "count" : "21"
+      }, {
+        "item" : "151",
+        "count" : "21"
+      }, {
+        "item" : "41",
+        "count" : "20"
+      }, {
+        "item" : "9",
+        "count" : "18"
+      }, {
+        "item" : "30",
+        "count" : "16"
+      }, {
+        "item" : "99",
+        "count" : "14"
+      }, {
+        "item" : "5",
+        "count" : "14"
+      }, {
+        "item" : "31",
+        "count" : "13"
+      }, {
+        "item" : "27",
+        "count" : "13"
+      }, {
+        "item" : "131",
+        "count" : "10"
+      }, {
+        "item" : "83",
+        "count" : "9"
+      }, {
+        "item" : "73",
+        "count" : "8"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "4622"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132633,
+    "name" : "Series_Complete_Moderna_65Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 65+ who are fully vaccinated with the Moderna vaccine based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_moderna_65plus",
+    "position" : 63,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084984,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "83913861",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5496"
+      }, {
+        "item" : "1251",
+        "count" : "13"
+      }, {
+        "item" : "1344",
+        "count" : "11"
+      }, {
+        "item" : "1343",
+        "count" : "10"
+      }, {
+        "item" : "867",
+        "count" : "9"
+      }, {
+        "item" : "1062",
+        "count" : "7"
+      }, {
+        "item" : "1142",
+        "count" : "7"
+      }, {
+        "item" : "1342",
+        "count" : "6"
+      }, {
+        "item" : "555",
+        "count" : "6"
+      }, {
+        "item" : "910",
+        "count" : "6"
+      }, {
+        "item" : "346",
+        "count" : "6"
+      }, {
+        "item" : "598",
+        "count" : "6"
+      }, {
+        "item" : "329",
+        "count" : "6"
+      }, {
+        "item" : "1411",
+        "count" : "6"
+      }, {
+        "item" : "1495",
+        "count" : "6"
+      }, {
+        "item" : "816",
+        "count" : "5"
+      }, {
+        "item" : "309",
+        "count" : "5"
+      }, {
+        "item" : "1129",
+        "count" : "5"
+      }, {
+        "item" : "1101",
+        "count" : "5"
+      }, {
+        "item" : "820",
+        "count" : "5"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5459"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132624,
+    "name" : "Series_Complete_Pfizer_65Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 65+ who are fully vaccinated with the Pfizer vaccine based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_pfizer_65plus",
+    "position" : 64,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084978,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "19460610",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "5587"
+      }, {
+        "item" : "8",
+        "count" : "83"
+      }, {
+        "item" : "5",
+        "count" : "66"
+      }, {
+        "item" : "4",
+        "count" : "25"
+      }, {
+        "item" : "1179",
+        "count" : "9"
+      }, {
+        "item" : "7",
+        "count" : "8"
+      }, {
+        "item" : "845",
+        "count" : "7"
+      }, {
+        "item" : "1213",
+        "count" : "7"
+      }, {
+        "item" : "1315",
+        "count" : "6"
+      }, {
+        "item" : "1360",
+        "count" : "6"
+      }, {
+        "item" : "1368",
+        "count" : "6"
+      }, {
+        "item" : "1453",
+        "count" : "6"
+      }, {
+        "item" : "883",
+        "count" : "5"
+      }, {
+        "item" : "1421",
+        "count" : "5"
+      }, {
+        "item" : "1234",
+        "count" : "4"
+      }, {
+        "item" : "1262",
+        "count" : "4"
+      }, {
+        "item" : "1737",
+        "count" : "4"
+      }, {
+        "item" : "1290",
+        "count" : "4"
+      }, {
+        "item" : "1406",
+        "count" : "4"
+      }, {
+        "item" : "860",
+        "count" : "4"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "5325"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132639,
+    "name" : "Series_Complete_Unk_Manuf_65Plus",
+    "dataTypeName" : "number",
+    "description" : "Total number of people 65+ who are fully vaccinated with two doses from an uknown two-dose vaccine manufacturer based on the jurisdiction where recipient lives",
+    "fieldName" : "series_complete_unk_manuf_3",
+    "position" : 65,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084990,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "1544335",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "6693"
+      }, {
+        "item" : "3",
+        "count" : "177"
+      }, {
+        "item" : "1",
+        "count" : "144"
+      }, {
+        "item" : "2",
+        "count" : "114"
+      }, {
+        "item" : "4",
+        "count" : "109"
+      }, {
+        "item" : "5",
+        "count" : "89"
+      }, {
+        "item" : "9",
+        "count" : "87"
+      }, {
+        "item" : "13",
+        "count" : "81"
+      }, {
+        "item" : "7",
+        "count" : "80"
+      }, {
+        "item" : "6",
+        "count" : "75"
+      }, {
+        "item" : "15",
+        "count" : "73"
+      }, {
+        "item" : "14",
+        "count" : "66"
+      }, {
+        "item" : "10",
+        "count" : "65"
+      }, {
+        "item" : "1409",
+        "count" : "65"
+      }, {
+        "item" : "25",
+        "count" : "64"
+      }, {
+        "item" : "11",
+        "count" : "56"
+      }, {
+        "item" : "19",
+        "count" : "50"
+      }, {
+        "item" : "8",
+        "count" : "50"
+      }, {
+        "item" : "20",
+        "count" : "47"
+      }, {
+        "item" : "16",
+        "count" : "42"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "969"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132704,
+    "name" : "Series_Complete_FedLTC",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administed to long-term care facilities",
+    "fieldName" : "series_complete_fedltc",
+    "position" : 66,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085025,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "2898847",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "6315"
+      }, {
+        "item" : "3",
+        "count" : "91"
+      }, {
+        "item" : "2838",
+        "count" : "60"
+      }, {
+        "item" : "7571",
+        "count" : "40"
+      }, {
+        "item" : "8403",
+        "count" : "37"
+      }, {
+        "item" : "49",
+        "count" : "34"
+      }, {
+        "item" : "8400",
+        "count" : "33"
+      }, {
+        "item" : "50",
+        "count" : "29"
+      }, {
+        "item" : "62",
+        "count" : "28"
+      }, {
+        "item" : "8666",
+        "count" : "24"
+      }, {
+        "item" : "2217",
+        "count" : "23"
+      }, {
+        "item" : "2216",
+        "count" : "22"
+      }, {
+        "item" : "53137",
+        "count" : "21"
+      }, {
+        "item" : "20191",
+        "count" : "20"
+      }, {
+        "item" : "13957",
+        "count" : "18"
+      }, {
+        "item" : "19419",
+        "count" : "17"
+      }, {
+        "item" : "7936",
+        "count" : "17"
+      }, {
+        "item" : "2222",
+        "count" : "16"
+      }, {
+        "item" : "9858",
+        "count" : "16"
+      }, {
+        "item" : "10247",
+        "count" : "16"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "3095"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132677,
+    "name" : "Series_Complete_FedLTC_Residents",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administed to long-term care facility residents",
+    "fieldName" : "series_complete_fedltc_1",
+    "position" : 67,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138085008,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "1480489",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "6530"
+      }, {
+        "item" : "666",
+        "count" : "65"
+      }, {
+        "item" : "3972",
+        "count" : "61"
+      }, {
+        "item" : "638",
+        "count" : "60"
+      }, {
+        "item" : "1366",
+        "count" : "50"
+      }, {
+        "item" : "3222",
+        "count" : "47"
+      }, {
+        "item" : "9802",
+        "count" : "38"
+      }, {
+        "item" : "3",
+        "count" : "37"
+      }, {
+        "item" : "7734",
+        "count" : "35"
+      }, {
+        "item" : "4727",
+        "count" : "29"
+      }, {
+        "item" : "4180",
+        "count" : "27"
+      }, {
+        "item" : "4117",
+        "count" : "25"
+      }, {
+        "item" : "637",
+        "count" : "21"
+      }, {
+        "item" : "2614",
+        "count" : "21"
+      }, {
+        "item" : "2617",
+        "count" : "20"
+      }, {
+        "item" : "1684",
+        "count" : "20"
+      }, {
+        "item" : "4",
+        "count" : "20"
+      }, {
+        "item" : "6688",
+        "count" : "19"
+      }, {
+        "item" : "9811",
+        "count" : "19"
+      }, {
+        "item" : "7744",
+        "count" : "17"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "2733"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132601,
+    "name" : "Series_Complete_FedLTC_Staff",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administed to long-term care facility staff",
+    "fieldName" : "series_complete_fedltc_staff",
+    "position" : 68,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084969,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "1052901",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "6497"
+      }, {
+        "item" : "1013",
+        "count" : "81"
+      }, {
+        "item" : "280",
+        "count" : "65"
+      }, {
+        "item" : "2531",
+        "count" : "51"
+      }, {
+        "item" : "8395",
+        "count" : "36"
+      }, {
+        "item" : "49",
+        "count" : "34"
+      }, {
+        "item" : "633",
+        "count" : "31"
+      }, {
+        "item" : "2753",
+        "count" : "30"
+      }, {
+        "item" : "50",
+        "count" : "29"
+      }, {
+        "item" : "62",
+        "count" : "28"
+      }, {
+        "item" : "4251",
+        "count" : "25"
+      }, {
+        "item" : "386",
+        "count" : "24"
+      }, {
+        "item" : "1537",
+        "count" : "24"
+      }, {
+        "item" : "387",
+        "count" : "23"
+      }, {
+        "item" : "7167",
+        "count" : "20"
+      }, {
+        "item" : "630",
+        "count" : "19"
+      }, {
+        "item" : "4254",
+        "count" : "18"
+      }, {
+        "item" : "2762",
+        "count" : "17"
+      }, {
+        "item" : "7233",
+        "count" : "16"
+      }, {
+        "item" : "392",
+        "count" : "16"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "2808"
+    },
+    "format" : { }
+  }, {
+    "id" : 541132650,
+    "name" : "Series_Complete_FedLTC_Unknown",
+    "dataTypeName" : "number",
+    "description" : "Total number of doses administed to other people in long-term care facility",
+    "fieldName" : "series_complete_fedltc_unknown",
+    "position" : 69,
+    "renderTypeName" : "number",
+    "tableColumnId" : 138084996,
+    "cachedContents" : {
+      "non_null" : "11320",
+      "largest" : "365457",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0",
+        "count" : "6406"
+      }, {
+        "item" : "1164",
+        "count" : "91"
+      }, {
+        "item" : "13127",
+        "count" : "91"
+      }, {
+        "item" : "298",
+        "count" : "91"
+      }, {
+        "item" : "125",
+        "count" : "91"
+      }, {
+        "item" : "3",
+        "count" : "91"
+      }, {
+        "item" : "1920",
+        "count" : "91"
+      }, {
+        "item" : "1455",
+        "count" : "91"
+      }, {
+        "item" : "1003",
+        "count" : "91"
+      }, {
+        "item" : "4813",
+        "count" : "91"
+      }, {
+        "item" : "1685",
+        "count" : "91"
+      }, {
+        "item" : "3466",
+        "count" : "83"
+      }, {
+        "item" : "8400",
+        "count" : "81"
+      }, {
+        "item" : "4601",
+        "count" : "78"
+      }, {
+        "item" : "8943",
+        "count" : "78"
+      }, {
+        "item" : "3452",
+        "count" : "78"
+      }, {
+        "item" : "12203",
+        "count" : "78"
+      }, {
+        "item" : "5290",
+        "count" : "77"
+      }, {
+        "item" : "1222",
+        "count" : "77"
+      }, {
+        "item" : "9681",
+        "count" : "77"
+      } ],
+      "smallest" : "0",
+      "cardinality" : "531"
+    },
+    "format" : { }
+  } ],
+  "grants" : [ {
+    "inherited" : false,
+    "type" : "viewer",
+    "flags" : [ "public" ]
+  } ],
+  "license" : {
+    "name" : "Public Domain U.S. Government",
+    "termsLink" : "https://www.usa.gov/government-works"
+  },
+  "metadata" : {
+    "attachments" : [ {
+      "filename" : "DataDictionary_v4_06012021.xlsx",
+      "assetId" : "5942f30a-d2b6-4182-aa31-7608ebd96d95",
+      "name" : "DataDictionary_v4_06012021.xlsx"
+    } ],
+    "custom_fields" : {
+      "Data Quality" : {
+        "Geospatial Resolution" : "State",
+        "Update Frequency" : "R/P1D",
+        "Temporal Applicability" : "2020-12-13/Present",
+        "Analytical Methods Reference" : "ETL",
+        "Geographic Coverage" : "US"
+      },
+      "Common Core" : {
+        "Contact Email" : "iisinfo@cdc.gov",
+        "References" : "https://www.cdc.gov/coronavirus/2019-ncov/vaccines/distributing/about-vaccine-data.html",
+        "Contact Name" : "NCIRD",
+        "Update Frequency" : "R/P1D",
+        "Temporal Applicability" : "2020-12-13/Present",
+        "License" : "Public Domain U.S. Government",
+        "Program Code" : "009:020",
+        "Publisher" : "CDC",
+        "Bureau Code" : "009:20",
+        "Public Access Level" : "Public"
+      }
+    },
+    "availableDisplayTypes" : [ "table", "fatrow", "page" ]
+  },
+  "owner" : {
+    "id" : "3suw-ciyu",
+    "displayName" : "NCIRD",
+    "screenName" : "NCIRD",
+    "type" : "interactive",
+    "flags" : [ "acceptedEula", "mayBeStoriesCoOwner" ]
+  },
+  "query" : { },
+  "rights" : [ "read" ],
+  "tableAuthor" : {
+    "id" : "3suw-ciyu",
+    "displayName" : "NCIRD",
+    "screenName" : "NCIRD",
+    "type" : "interactive",
+    "flags" : [ "acceptedEula", "mayBeStoriesCoOwner" ]
+  },
+  "tags" : [ "covid-19", "coronavirus", "izdl", "immunization", "administration", "vaccination", "age" ],
+  "flags" : [ "default", "ownerMayBeContacted", "restorable", "restorePossibleForType" ]
+}

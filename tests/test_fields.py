@@ -42,12 +42,22 @@ def test_blob():
 
 def test_date():
     assert Date.parse("2020-01-01") == datetime.date(2020, 1, 1)
+    assert Date.parse("2020-01-01T00:00+00:00") == datetime.date(
+        2020,
+        1,
+        1,
+    )
     assert Date.parse(None) is None
     assert Date.parse("invalid") is None
 
 
 def test_time():
     assert Time.parse("12:00+00:00") == datetime.time(
+        12,
+        0,
+        tzinfo=datetime.timezone.utc,
+    )
+    assert Time.parse("12:00") == datetime.time(
         12,
         0,
         tzinfo=datetime.timezone.utc,
