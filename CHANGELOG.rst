@@ -2,7 +2,7 @@
 Changelog
 =========
 
-Version 0.5.2 - 2021-MM-DD
+Version 0.5.2 - 2021-06-03
 ==========================
 
 - Adapter for Socrata
