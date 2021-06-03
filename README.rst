@@ -31,7 +31,7 @@ Each of these resources is implemented via an **adapter**, and writing adapters 
 Writing a new adapter
 =====================
 
-Let's say we want to fetch data from `WeatherAPI <https://www.weatherapi.com/docs/>`_ using SQL. Their API is pretty straightforward — to fetch data for a given day in a given location all we need is an HTTP request:
+Let's say we want to fetch data from `WeatherAPI <https://www.weatherapi.com/>`_ using SQL. Their API is pretty straightforward — to fetch data for a given day in a given location all we need is an HTTP request:
 
 .. code-block::
 
