@@ -2,9 +2,6 @@ from datetime import datetime
 from datetime import timezone
 
 import pytest
-from shillelagh.adapters.api.socrata import build_sql
-from shillelagh.adapters.api.socrata import convert_rows
-from shillelagh.adapters.api.socrata import quote
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import DateTime
@@ -69,24 +66,6 @@ def test_socrata_no_data(requests_mock):
     assert data == []
 
 
-def test_build_sql():
-    sql = build_sql({"a": Range(1, 10, False, True)}, [])
-    assert sql == "SELECT * WHERE a > 1 AND a <= 10"
-
-    sql = build_sql({"a": Range(1, None, True, False)}, [])
-    assert sql == "SELECT * WHERE a >= 1"
-
-    sql = build_sql({"a": Range(None, 10, True, False)}, [])
-    assert sql == "SELECT * WHERE a < 10"
-
-    sql = build_sql({}, [])
-    assert sql == "SELECT *"
-
-    with pytest.raises(ProgrammingError) as excinfo:
-        build_sql({"a": [1, 2, 3]}, [])
-    assert str(excinfo.value) == "Invalid filter: [1, 2, 3]"
-
-
 def test_socrata_impossible(requests_mock):
     metadata_url = "https://data.cdc.gov/api/views/unsk-b7fc"
     requests_mock.get(metadata_url, json=cdc_metadata_response)
@@ -102,28 +81,3 @@ def test_socrata_impossible(requests_mock):
     """
     data = list(cursor.execute(sql))
     assert data == []
-
-
-def test_quote():
-    assert quote(1) == "1"
-    assert quote(1.0) == "1.0"
-    assert quote("one") == "'one'"
-    assert (
-        quote(datetime(2021, 6, 3, 7, 0, tzinfo=timezone.utc))
-        == "'2021-06-03T07:00:00+00:00'"
-    )
-
-    with pytest.raises(Exception) as excinfo:
-        quote([1])
-    assert str(excinfo.value) == "Can't quote value: [1]"
-
-
-def test_convert_rows():
-    columns = {"a": String(), "b": DateTime()}
-    rows = [
-        {"a": "one", "b": "2021-06-03T07:00:00+00:00"},
-    ]
-    converted = convert_rows(columns, rows)
-    assert list(converted) == [
-        {"a": "one", "b": datetime(2021, 6, 3, 7, 0, tzinfo=timezone.utc)},
-    ]

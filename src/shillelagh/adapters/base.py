@@ -10,6 +10,7 @@ from typing import TypeVar
 
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
+from shillelagh.fields import Integer
 from shillelagh.filters import Filter
 from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
@@ -47,7 +48,28 @@ class Adapter:
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
     ) -> Iterator[Row]:
+        """
+        Yield rows as DB-specific types.
+        """
         raise NotImplementedError("Subclasses must implement `get_data`")
+
+    def get_rows(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> Iterator[Row]:
+        """
+        Yield rows as native Python types.
+        """
+        columns = self.get_columns()
+        parsers = {column_name: field.parse for column_name, field in columns.items()}
+        parsers["rowid"] = Integer.parse
+
+        for row in self.get_data(bounds, order):
+            yield {
+                column_name: parsers[column_name](value)
+                for column_name, value in row.items()
+            }
 
     def insert_row(self, row: Row) -> int:
         raise NotImplementedError("Subclasses must implement `insert_row`")

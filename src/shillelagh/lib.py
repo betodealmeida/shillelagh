@@ -8,11 +8,18 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 
+from shillelagh.exceptions import ImpossibleFilterError
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
 from shillelagh.fields import Order
 from shillelagh.fields import String
+from shillelagh.filters import Equal
+from shillelagh.filters import Filter
+from shillelagh.filters import Impossible
+from shillelagh.filters import Range
+from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
 
 DELETED = range(-1, 0)
@@ -150,3 +157,45 @@ def serialize(value: Any) -> str:
 
 def deserialize(value: str) -> Any:
     return json.loads(unquote(value[1:-1]))
+
+
+def build_sql(
+    columns: Dict[str, Field],
+    bounds: Dict[str, Filter],
+    order: List[Tuple[str, RequestedOrder]],
+    column_map: Optional[Dict[str, str]] = None,
+    offset: int = 0,
+) -> str:
+    sql = "SELECT *"
+
+    conditions = []
+    for column_name, filter_ in bounds.items():
+        field = columns[column_name]
+        id_ = column_map[column_name] if column_map else column_name
+        if isinstance(filter_, Impossible):
+            raise ImpossibleFilterError()
+        if isinstance(filter_, Equal):
+            conditions.append(f"{id_} = {field.quote(filter_.value)}")
+        elif isinstance(filter_, Range):
+            if filter_.start is not None:
+                op = ">=" if filter_.include_start else ">"
+                conditions.append(f"{id_} {op} {field.quote(filter_.start)}")
+            if filter_.end is not None:
+                op = "<=" if filter_.include_end else "<"
+                conditions.append(f"{id_} {op} {field.quote(filter_.end)}")
+        else:
+            raise ProgrammingError(f"Invalid filter: {filter_}")
+    if conditions:
+        sql = f"{sql} WHERE {' AND '.join(conditions)}"
+
+    column_order: List[str] = []
+    for column_name, requested_order in order:
+        id_ = column_map[column_name] if column_map else column_name
+        desc = " DESC" if requested_order == Order.DESCENDING else ""
+        column_order.append(f"{id_}{desc}")
+    if column_order:
+        sql = f"{sql} ORDER BY {', '.join(column_order)}"
+    if offset > 0:
+        sql = f"{sql} OFFSET {offset}"
+
+    return sql

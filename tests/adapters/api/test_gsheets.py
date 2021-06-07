@@ -11,7 +11,10 @@ from shillelagh.adapters.api.gsheets import format_error_message
 from shillelagh.adapters.api.gsheets import get_credentials
 from shillelagh.adapters.api.gsheets import get_url
 from shillelagh.adapters.api.gsheets import GSheetsAPI
-from shillelagh.adapters.api.gsheets import quote
+from shillelagh.adapters.api.gsheets import GSheetsBoolean
+from shillelagh.adapters.api.gsheets import GSheetsDate
+from shillelagh.adapters.api.gsheets import GSheetsDateTime
+from shillelagh.adapters.api.gsheets import GSheetsTime
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
@@ -211,27 +214,6 @@ def test_execute_filter(mocker):
     )
     adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20WHERE%20B%20%3E%205.0",
-        json={
-            "version": "0.6",
-            "reqId": "0",
-            "status": "ok",
-            "sig": "11559839",
-            "table": {
-                "cols": [
-                    {"id": "A", "label": "country", "type": "string"},
-                    {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
-                ],
-                "rows": [
-                    {"c": [{"v": "ZA"}, {"v": 6.0, "f": "6"}]},
-                    {"c": [{"v": "CR"}, {"v": 10.0, "f": "10"}]},
-                ],
-                "parsedNumHeaders": 1,
-            },
-        },
-    )
-    adapter.register_uri(
-        "GET",
         "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20WHERE%20B%20%3C%205.0",
         json={
             "version": "0.6",
@@ -266,19 +248,48 @@ def test_execute_filter(mocker):
     ]
 
 
-@freeze_time("2020-01-01")
-def test_quote():
-    assert quote("value") == "'value'"
-    assert quote(True) == "true"
-    assert quote(False) == "false"
-    assert quote(1) == "1"
-    assert quote(datetime.datetime.now()) == "datetime '2020-01-01 00:00:00'"
-    assert quote(datetime.time(0, 0, 0)) == "timeofday '00:00:00'"
-    assert quote(datetime.date.today()) == "date '2020-01-01'"
+def test_execute_impossible(mocker):
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
 
-    with pytest.raises(Exception) as excinfo:
-        quote([1])
-    assert str(excinfo.value) == "Can't quote value: [1]"
+    adapter = requests_mock.Adapter()
+    session = requests.Session()
+    session.mount("https://docs.google.com/spreadsheets/d/1", adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
+        json={
+            "version": "0.6",
+            "reqId": "0",
+            "status": "ok",
+            "sig": "1453301915",
+            "table": {
+                "cols": [
+                    {"id": "A", "label": "country", "type": "string"},
+                    {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
+                ],
+                "rows": [{"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]}],
+                "parsedNumHeaders": 0,
+            },
+        },
+    )
+
+    connection = connect(":memory:", ["gsheetsapi"])
+    cursor = connection.cursor()
+    sql = (
+        "SELECT * FROM "
+        '"https://docs.google.com/spreadsheets/d/1/edit#gid=0" '
+        "WHERE cnt < 5 AND cnt > 5"
+    )
+    data = list(cursor.execute(sql))
+    assert data == []
 
 
 def test_get_url():
@@ -868,40 +879,6 @@ def test_execute_error_response(mocker):
     assert str(excinfo.value) == "Invalid query: NO_COLUMN: C"
 
 
-def test_build_sql(mocker):
-    # prevent network call
-    mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_columns",
-        mock.MagicMock(),
-    )
-
-    adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1")
-    adapter._column_map = {f"col{i}_": letter for i, letter in enumerate("ABCDE")}
-
-    bounds = {}
-    order = []
-    assert adapter._build_sql(bounds, order) == "SELECT *"
-
-    bounds = {
-        "col0_": Impossible(),
-        "col1_": Equal(1),
-        "col2_": Range(start=0, end=1, include_start=True, include_end=False),
-        "col3_": Range(start=None, end=1, include_start=False, include_end=True),
-        "col4_": Range(start=0, end=None, include_start=False, include_end=True),
-    }
-    order = [("col0_", Order.ASCENDING), ("col1_", Order.DESCENDING)]
-    assert adapter._build_sql(bounds, order) == (
-        "SELECT * WHERE 1 = 0 AND B = 1 AND C >= 0 AND C < 1 AND D <= 1 AND E > 0 "
-        "ORDER BY col0_, col1_ DESC"
-    )
-
-    bounds = {"col0_": 1}
-    order = []
-    with pytest.raises(ProgrammingError) as excinfo:
-        adapter._build_sql(bounds, order)
-    assert str(excinfo.value) == "Invalid filter: 1"
-
-
 def test_headers_not_detected(mocker):
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
@@ -1035,3 +1012,42 @@ def test_headers_not_detected_no_rows(mocker):
 
     gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/8/#gid=0")
     assert list(gsheets_adapter.columns) == ["A", "B", "C"]
+
+
+def test_fields():
+    assert GSheetsDateTime.parse(None) is None
+    assert GSheetsDateTime.parse("Date(2018,8,9,0,0,0)") == datetime.datetime(
+        2018,
+        9,
+        9,
+        0,
+        0,
+        tzinfo=datetime.timezone.utc,
+    )
+    assert (
+        GSheetsDateTime.quote(
+            datetime.datetime(2018, 9, 9, 0, 0, tzinfo=datetime.timezone.utc),
+        )
+        == "datetime '2018-09-09 00:00:00+00:00'"
+    )
+
+    assert GSheetsDate.parse(None) is None
+    assert GSheetsDate.parse("Date(2018,0,1)") == datetime.date(2018, 1, 1)
+    assert GSheetsDate.quote(datetime.date(2018, 1, 1)) == "date '2018-01-01'"
+
+    assert GSheetsTime.parse(None) is None
+    assert GSheetsTime.parse([17, 0, 0, 0]) == datetime.time(
+        17,
+        0,
+        tzinfo=datetime.timezone.utc,
+    )
+    assert (
+        GSheetsTime.quote(datetime.time(17, 0, tzinfo=datetime.timezone.utc))
+        == "timeofday '17:00:00+00:00'"
+    )
+
+    assert GSheetsBoolean.parse(None) is None
+    assert GSheetsBoolean.parse("TRUE")
+    assert not GSheetsBoolean.parse("FALSE")
+    assert GSheetsBoolean.quote(True) == "true"
+    assert GSheetsBoolean.quote(False) == "false"

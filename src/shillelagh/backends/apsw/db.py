@@ -154,6 +154,7 @@ class Cursor(object):
         if not self.description:
             return
 
+        # convert from SQLite types (ISO string for datetime, eg) to native Python types
         for row in cursor:
             yield tuple(desc[1].parse(col) for col, desc in zip(row, self.description))
 
