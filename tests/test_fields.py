@@ -1,5 +1,6 @@
 import datetime
 
+import pytest
 from shillelagh.fields import Blob
 from shillelagh.fields import Boolean
 from shillelagh.fields import Date
@@ -31,6 +32,7 @@ def test_integer():
     assert Integer.parse(1) == 1
     assert Integer.parse("1") == 1
     assert Integer.parse(None) is None
+    assert Integer.quote(1) == "1"
 
 
 def test_blob():
@@ -38,6 +40,7 @@ def test_blob():
     assert Blob.parse("test") == "test"
     assert Blob.parse(b"test") == b"test"
     assert Blob.parse(None) is None
+    assert Blob.quote(1) == "1"
 
 
 def test_date():
@@ -49,6 +52,7 @@ def test_date():
     )
     assert Date.parse(None) is None
     assert Date.parse("invalid") is None
+    assert Date.quote(datetime.date(2020, 1, 1)) == "'2020-01-01'"
 
 
 def test_time():
@@ -64,6 +68,10 @@ def test_time():
     )
     assert Time.parse(None) is None
     assert Time.parse("invalid") is None
+    assert (
+        Time.quote(datetime.time(12, 0, tzinfo=datetime.timezone.utc))
+        == "'12:00:00+00:00'"
+    )
 
 
 def test_datetime():
@@ -78,6 +86,12 @@ def test_datetime():
     )
     assert DateTime.parse(None) is None
     assert DateTime.parse("invalid") is None
+    assert (
+        DateTime.quote(
+            datetime.datetime(2020, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc),
+        )
+        == "'2020-01-01T12:00:00+00:00'"
+    )
 
 
 def test_boolean():
@@ -85,6 +99,8 @@ def test_boolean():
     assert Boolean.parse(False) is False
     assert Boolean.parse("true") is True
     assert Boolean.parse(0) is False
+    assert Boolean.quote(True) == "TRUE"
+    assert Boolean.quote(False) == "FALSE"
 
 
 def test_type_code():
@@ -98,3 +114,15 @@ def test_type_code():
     assert Boolean == NUMBER
 
     assert not NUMBER == 1
+
+
+def test_quote():
+    assert Integer.quote(1) == "1"
+    assert Float.quote(1.0) == "1.0"
+    assert String.quote("one") == "'one'"
+    assert (
+        DateTime.quote(
+            datetime.datetime(2021, 6, 3, 7, 0, tzinfo=datetime.timezone.utc),
+        )
+        == "'2021-06-03T07:00:00+00:00'"
+    )

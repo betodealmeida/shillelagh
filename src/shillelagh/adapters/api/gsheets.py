@@ -2,7 +2,6 @@ import datetime
 import json
 import urllib.parse
 from typing import Any
-from typing import Callable
 from typing import cast
 from typing import Dict
 from typing import Iterator
@@ -17,6 +16,7 @@ from google.auth.credentials import Credentials
 from google.auth.transport.requests import AuthorizedSession
 from requests import Session
 from shillelagh.adapters.base import Adapter
+from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Boolean
 from shillelagh.fields import Date
@@ -28,8 +28,8 @@ from shillelagh.fields import String
 from shillelagh.fields import Time
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
-from shillelagh.filters import Impossible
 from shillelagh.filters import Range
+from shillelagh.lib import build_sql
 from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
 from typing_extensions import Literal
@@ -122,13 +122,64 @@ class QueryResults(TypedDict, total=False):
     errors: List[QueryResultsError]
 
 
+class GSheetsDateTime(DateTime):
+    @staticmethod
+    def parse(value: Optional[str]) -> Optional[datetime.datetime]:
+        if value is None:
+            return None
+
+        args = [int(number) for number in value[len("Date(") : -1].split(",")]
+        args[1] += 1  # month is zero indexed in the response
+        return datetime.datetime(*args, tzinfo=datetime.timezone.utc)  # type: ignore
+
+    @staticmethod
+    def quote(value: Any) -> str:
+        return f"datetime '{value}'"
+
+
+class GSheetsDate(Date):
+    @staticmethod
+    def parse(value: Optional[str]) -> Optional[datetime.date]:
+        """Parse a string like 'Date(2018,0,1)'."""
+        if value is None:
+            return None
+
+        args = [int(number) for number in value[len("Date(") : -1].split(",")]
+        args[1] += 1  # month is zero indexed in the response
+        return datetime.date(*args)
+
+    @staticmethod
+    def quote(value: Any) -> str:
+        return f"date '{value}'"
+
+
+class GSheetsTime(Time):
+    @staticmethod
+    def parse(values: Optional[List[int]]) -> Optional[datetime.time]:
+        """Parse time of day as returned from the API."""
+        if values is None:
+            return None
+
+        return datetime.time(*values, tzinfo=datetime.timezone.utc)  # type: ignore
+
+    @staticmethod
+    def quote(value: Any) -> str:
+        return f"timeofday '{value}'"
+
+
+class GSheetsBoolean(Boolean):
+    @staticmethod
+    def quote(value: bool) -> str:
+        return "true" if value else "false"
+
+
 type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
     "string": (String, [Equal]),
     "number": (Float, [Range]),
-    "boolean": (Boolean, [Equal]),
-    "date": (Date, [Range]),
-    "datetime": (DateTime, [Range]),
-    "timeofday": (Time, [Range]),
+    "boolean": (GSheetsBoolean, [Equal]),
+    "date": (GSheetsDate, [Range]),
+    "datetime": (GSheetsDateTime, [Range]),
+    "timeofday": (GSheetsTime, [Range]),
 }
 
 
@@ -139,24 +190,6 @@ def get_field(col: QueryResultsColumn) -> Field:
         order=Order.ANY,
         exact=True,
     )
-
-
-def quote(value: Any) -> str:
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, (int, float)):
-        return str(value)
-    if isinstance(value, str):
-        escaped_value = value.replace("'", "''")
-        return f"'{escaped_value}'"
-    if isinstance(value, datetime.datetime):
-        return f"datetime '{value}'"
-    if isinstance(value, datetime.date):
-        return f"date '{value}'"
-    if isinstance(value, datetime.time):
-        return f"timeofday '{value}'"
-
-    raise Exception(f"Can't quote value: {value}")
 
 
 def format_error_message(errors: List[QueryResultsError]) -> str:
@@ -201,50 +234,6 @@ def get_url(
     return urllib.parse.urlunparse(
         (parts.scheme, parts.netloc, path, None, params, None),
     )
-
-
-def parse_datetime(value: str) -> datetime.datetime:
-    """Parse a string like 'Date(2018,0,1,0,0,0)'."""
-    args = [int(number) for number in value[len("Date(") : -1].split(",")]
-    args[1] += 1  # month is zero indexed in the response
-    return datetime.datetime(*args, tzinfo=datetime.timezone.utc)  # type: ignore
-
-
-def parse_date(value: str) -> datetime.date:
-    """Parse a string like 'Date(2018,0,1)'."""
-    args = [int(number) for number in value[len("Date(") : -1].split(",")]
-    args[1] += 1  # month is zero indexed in the response
-    return datetime.date(*args)
-
-
-def parse_timeofday(values: List[int]) -> datetime.time:
-    """Parse time of day as returned from the API."""
-    return datetime.time(*values, tzinfo=datetime.timezone.utc)  # type: ignore
-
-
-converters: Dict[str, Callable[[Any], Any]] = {
-    "string": lambda v: v,
-    "number": lambda v: v,
-    "boolean": bool,
-    "date": parse_date,
-    "datetime": parse_datetime,
-    "timeofday": parse_timeofday,
-}
-
-
-def convert_rows(
-    cols: List[QueryResultsColumn],
-    rows: List[QueryResultsRow],
-) -> Iterator[List[Any]]:
-    """Convert custom Google sheets types."""
-    row_converters: Optional[List[Callable[[Any], Any]]] = None
-    for row in rows:
-        if row_converters is None:
-            row_converters = [converters[col["type"]] for col in cols]
-        yield [
-            converter(cell["v"]) if cell else None
-            for cell, converter in zip(row["c"], row_converters)
-        ]
 
 
 def get_credentials(
@@ -366,54 +355,24 @@ class GSheetsAPI(Adapter):
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
 
-    def _build_sql(
-        self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
-    ) -> str:
-        sql = "SELECT *"
-
-        conditions = []
-        for column_name, filter_ in bounds.items():
-            id_ = self._column_map[column_name]
-            if isinstance(filter_, Impossible):
-                conditions.append("1 = 0")
-            elif isinstance(filter_, Equal):
-                conditions.append(f"{id_} = {quote(filter_.value)}")
-            elif isinstance(filter_, Range):
-                if filter_.start is not None:
-                    op = ">=" if filter_.include_start else ">"
-                    conditions.append(f"{id_} {op} {quote(filter_.start)}")
-                if filter_.end is not None:
-                    op = "<=" if filter_.include_end else "<"
-                    conditions.append(f"{id_} {op} {quote(filter_.end)}")
-            else:
-                raise ProgrammingError(f"Invalid filter: {filter_}")
-        if conditions:
-            sql = f"{sql} WHERE {' AND '.join(conditions)}"
-
-        column_order: List[str] = []
-        for column_name, requested_order in order:
-            desc = " DESC" if requested_order == Order.DESCENDING else ""
-            column_order.append(f"{column_name}{desc}")
-        if column_order:
-            sql = f"{sql} ORDER BY {', '.join(column_order)}"
-        if self._offset > 0:
-            sql = f"{sql} OFFSET {self._offset}"
-
-        return sql
-
     def get_data(
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
     ) -> Iterator[Row]:
-        sql = self._build_sql(bounds, order)
-        results = self._run_query(sql)
-        cols = results["table"]["cols"]
-        rows = convert_rows(cols, results["table"]["rows"])
+        try:
+            sql = build_sql(self.columns, bounds, order, self._column_map, self._offset)
+        except ImpossibleFilterError:
+            return
 
+        payload = self._run_query(sql)
+        rows = [
+            {
+                column_name: cell["v"] if cell else None
+                for column_name, cell in zip(self.columns, row["c"])
+            }
+            for row in payload["table"]["rows"]
+        ]
         for i, row in enumerate(rows):
-            data = dict(zip(self.columns, row))
-            data["rowid"] = i
-            yield data
+            row["rowid"] = i
+            yield row

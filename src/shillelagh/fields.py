@@ -59,6 +59,10 @@ class Field:
     def parse(value: Any) -> Any:
         raise NotImplementedError("Subclasses must implement `parse`")
 
+    @staticmethod
+    def quote(value: Any) -> str:
+        raise NotImplementedError("Subclasses must implement `quote`")
+
 
 class Integer(Field):
     type = "INTEGER"
@@ -70,6 +74,10 @@ class Integer(Field):
             return None
 
         return int(value)
+
+    @staticmethod
+    def quote(value: Any) -> str:
+        return str(value)
 
 
 class Float(Field):
@@ -83,6 +91,10 @@ class Float(Field):
 
         return float(value)
 
+    @staticmethod
+    def quote(value: Any) -> str:
+        return str(value)
+
 
 class String(Field):
     type = "TEXT"
@@ -94,6 +106,11 @@ class String(Field):
             return None
 
         return str(value)
+
+    @staticmethod
+    def quote(value: Any) -> str:
+        escaped_value = value.replace("'", "''")
+        return f"'{escaped_value}'"
 
 
 class Date(Field):
@@ -115,6 +132,10 @@ class Date(Field):
 
         return dt.astimezone(datetime.timezone.utc).date()
 
+    @staticmethod
+    def quote(value: Any) -> str:
+        return f"'{value.isoformat()}'"
+
 
 class Time(Field):
     type = "TIME"
@@ -134,6 +155,10 @@ class Time(Field):
             dt = dt.replace(tzinfo=datetime.timezone.utc)
 
         return dt.astimezone(datetime.timezone.utc).timetz()
+
+    @staticmethod
+    def quote(value: Any) -> str:
+        return f"'{value.isoformat()}'"
 
 
 class DateTime(Field):
@@ -155,6 +180,10 @@ class DateTime(Field):
 
         return dt.astimezone(datetime.timezone.utc)
 
+    @staticmethod
+    def quote(value: Any) -> str:
+        return f"'{value.isoformat()}'"
+
 
 class Blob(Field):
     type = "BLOB"
@@ -163,6 +192,10 @@ class Blob(Field):
     @staticmethod
     def parse(value: T) -> T:
         return value
+
+    @staticmethod
+    def quote(value: Any) -> str:
+        return str(value)
 
 
 class Boolean(Field):
@@ -177,6 +210,10 @@ class Boolean(Field):
         if isinstance(value, bool):
             return value
         return bool(strtobool(str(value)))
+
+    @staticmethod
+    def quote(value: Any) -> str:
+        return "TRUE" if value else "FALSE"
 
 
 type_map = {

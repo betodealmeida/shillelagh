@@ -5,6 +5,7 @@ from typing import Any
 from typing import cast
 from typing import DefaultDict
 from typing import Dict
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Set
@@ -15,6 +16,7 @@ import apsw
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
+from shillelagh.fields import Integer
 from shillelagh.fields import Order
 from shillelagh.filters import Filter
 from shillelagh.filters import Operator
@@ -44,8 +46,15 @@ def convert_value(value: Any) -> Any:
     return str(value)
 
 
-def convert_row(row: Row) -> Row:
-    return {name: convert_value(value) for name, value in row.items()}
+def convert_rows(rows: Iterator[Row]) -> Iterator[Row]:
+    """
+    Convert row types to types understood by SQLite.
+
+    Native Python types like `datetime.datetime` are not supported by SQLite; instead
+    we need to cast them to strings or numbers.
+    """
+    for row in rows:
+        yield {column_name: convert_value(value) for column_name, value in row.items()}
 
 
 class VTModule:
@@ -206,7 +215,7 @@ class VTCursor:
             for column_index, descending in orderbys
         ]
 
-        rows = (convert_row(row) for row in self.adapter.get_data(bounds, order))
+        rows = convert_rows(self.adapter.get_rows(bounds, order))
         self.data = (
             tuple(row[name] for name in ["rowid"] + column_names) for row in rows
         )

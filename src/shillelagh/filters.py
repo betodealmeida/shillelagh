@@ -151,8 +151,22 @@ class Range(Filter):
             else:
                 raise Exception(f"Invalid operator: {operator}")
 
-            if (end is not None and new_start is not None and new_start > end) or (
-                start is not None and new_end is not None and new_end < start
+            if (
+                end is not None
+                and new_start is not None
+                and (
+                    new_start > end
+                    or (new_start >= end and (not new_include_start or not include_end))
+                )
+            ):
+                return Impossible()
+            if (
+                start is not None
+                and new_end is not None
+                and (
+                    new_end < start
+                    or (new_end <= start and (not include_start or not new_include_end))
+                )
             ):
                 return Impossible()
 
