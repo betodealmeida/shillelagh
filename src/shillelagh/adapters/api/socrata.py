@@ -12,7 +12,8 @@ from typing import Type
 import requests_cache
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError
-from shillelagh.fields import DateTime
+from shillelagh.exceptions import ProgrammingError
+from shillelagh.fields import Date
 from shillelagh.fields import Field
 from shillelagh.fields import Float
 from shillelagh.fields import Order
@@ -43,7 +44,7 @@ class MetadataColumn(TypedDict):
 
 
 type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
-    "calendar_date": (DateTime, [Range]),
+    "calendar_date": (Date, [Range]),
     "number": (Float, [Range]),
     "text": (String, [Equal]),
 }
@@ -118,7 +119,12 @@ class SocrataAPI(Adapter):
         url = f"https://{self.netloc}/resource/{self.dataset_id}.json"
         headers = {"X-App-Token": self.app_token} if self.app_token else {}
         response = self._session.get(url, params={"$query": sql}, headers=headers)
-        rows = response.json()
-        for i, row in enumerate(rows):
+        payload = response.json()
+
+        # {'message': 'Invalid SoQL query', 'errorCode': 'query.soql.invalid', 'data': {}}
+        if "errorCode" in payload:
+            raise ProgrammingError(payload["message"])
+
+        for i, row in enumerate(payload):
             row["rowid"] = i
             yield row
