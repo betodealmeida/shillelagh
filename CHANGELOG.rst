@@ -6,6 +6,7 @@ Version 0.6.0 - 2021-MM-DD
 ==========================
 
 - Handle type conversion via fields
+- Fix Socrata, mapping `calendar_date` to `Date`
 
 Version 0.5.2 - 2021-06-03
 ==========================

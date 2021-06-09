@@ -84,6 +84,15 @@ def test_datetime():
         0,
         tzinfo=datetime.timezone.utc,
     )
+    assert DateTime.parse("2020-01-01T12:00") == datetime.datetime(
+        2020,
+        1,
+        1,
+        12,
+        0,
+        0,
+        tzinfo=datetime.timezone.utc,
+    )
     assert DateTime.parse(None) is None
     assert DateTime.parse("invalid") is None
     assert (
