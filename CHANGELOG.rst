@@ -2,7 +2,7 @@
 Changelog
 =========
 
-Version 0.6.0 - 2021-MM-DD
+Version 0.6.0 - 2021-06-17
 ==========================
 
 - Handle type conversion via fields
