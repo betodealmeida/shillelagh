@@ -25,6 +25,7 @@ from shillelagh.types import Constraint
 from shillelagh.types import Index
 from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
+from shillelagh.types import SQLiteValidType
 
 
 operator_map = {
@@ -36,10 +37,10 @@ operator_map = {
 }
 
 
-def convert_value(value: Any) -> Any:
+def convert_value(value: Any) -> SQLiteValidType:
     if isinstance(value, bool):
         return int(value)
-    if isinstance(value, (int, float, str, type(None))):
+    if isinstance(value, (int, float, str, bytes, type(None))):
         return value
     if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
         return value.isoformat()

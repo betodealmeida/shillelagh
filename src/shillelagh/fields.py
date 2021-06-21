@@ -194,8 +194,8 @@ class Blob(Field):
         return value
 
     @staticmethod
-    def quote(value: Any) -> str:
-        return str(value)
+    def quote(value: bytes) -> str:
+        return f"X'{value.hex()}'"
 
 
 class Boolean(Field):

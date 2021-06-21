@@ -16,6 +16,7 @@ from typing import TypeVar
 import apsw
 from pkg_resources import iter_entry_points
 from shillelagh.adapters.base import Adapter
+from shillelagh.backends.apsw.vt import convert_value
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import Error
 from shillelagh.exceptions import NotSupportedError
@@ -129,6 +130,10 @@ class Cursor(object):
 
         self.description = None
         self._rowcount = -1
+
+        # convert parameters (bindings) to types accepted by SQLite
+        if parameters:
+            parameters = tuple(convert_value(parameter) for parameter in parameters)
 
         # this is where the magic happens: instead of forcing users to register
         # their virtual tables explicitly, we do it for them when they first try

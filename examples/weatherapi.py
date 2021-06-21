@@ -7,7 +7,7 @@ from shillelagh.backends.apsw.db import connect
 
 
 if __name__ == "__main__":
-    three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%dT12:00:00")
+    three_days_ago = datetime.now() - timedelta(days=3)
 
     # sign up for an API key at https://www.weatherapi.com/my/
     api_key = sys.argv[1]
@@ -15,13 +15,12 @@ if __name__ == "__main__":
     connection = connect(":memory:")
     cursor = connection.cursor()
 
-    # TODO: use datetime functions?
     sql = f"""
     SELECT *
     FROM "https://api.weatherapi.com/v1/history.json?key={api_key}&q=94923" AS bodega_bay
-    WHERE time >= '{three_days_ago}'
+    WHERE time >= ?
     """
-    for row in cursor.execute(sql):
+    for row in cursor.execute(sql, (three_days_ago,)):
         print(row)
 
     sql = f"""

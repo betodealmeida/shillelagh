@@ -118,7 +118,7 @@ def test_csvfile(fs):
     connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
     connection.createmodule("csvfile", VTModule(CSVFile))
-    cursor.execute(f"""CREATE VIRTUAL TABLE test USING csvfile('"test.csv"')""")
+    cursor.execute("""CREATE VIRTUAL TABLE test USING csvfile('"test.csv"')""")
 
     sql = 'SELECT * FROM test WHERE "index" > 11'
     data = list(cursor.execute(sql))
