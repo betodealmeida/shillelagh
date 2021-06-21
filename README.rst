@@ -28,6 +28,142 @@ The query above reads holidays from a Google Sheet, uses the days to get weather
 
 Each of these resources is implemented via an **adapter**, and writing adapters is relatively straightforward.
 
+Using Shillelagh
+================
+
+You can use Shillelagh similar to how you would use `SQLite <https://sqlite.org/index.html>`_  (Shillelagh is built on top of `APSW <https://rogerbinns.github.io/apsw/>`_):
+
+.. code-block:: python
+
+    # currently there's just the APSW backend, but in the future
+    # we could implement more
+    from shillelagh.backends.apsw.db import connect
+
+    connection = connect(":memory:")  # or connect("database.sqlite")
+    cursor = connection.cursor()
+
+    query = "SELECT * FROM some_table"
+    for row in cursor.execute(query):
+        print(row)
+        
+You can also use it with SQLAlchemy:
+
+.. code-block:: python
+
+    from sqlalchemy.engine import create_engine
+    
+    engine = create_engine("shillelagh://")
+    connection = engine.connect()
+   
+The main advantage of Shillelagh is that it allows you to treat non-SQL resources like a table. For example, if you have a Google Spreadsheet URL you can query it directly:
+
+.. code-block:: sql
+
+    SELECT country, SUM(cnt)
+    FROM "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=1648320094"
+    WHERE cnt > 0
+    GROUP BY country
+    
+When you run the query above Shillelagh will automatically create a new `virtual table <https://sqlite.org/vtab.html>`_ (if it doesn't exist) and associate it with an **adapter**.
+    
+Supported adapters
+==================
+
+Currently, Shillelagh supports the following adapters:
+
+CSV files
+~~~~~~~~~
+
+CSV (comma separated values) are supported via the ``csv://`` scheme (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/csvfile.py>`_):
+
+.. code-block:: sql
+
+    SELECT * FROM "csv:///path/to/file.csv"
+    
+The adapter supports full DML, so you can also ``INSERT``, ``UPDATE``, or ``DELETE`` rows from the CSV file. Deleted rows are marked for deletion, modified and inserted rows are appended at the end of the file, and garbage cleanup is applied when the connection is closed.
+
+Google Spreadsheets
+~~~~~~~~~~~~~~~~~~~
+
+Google Spreadsheets can be accessed as tables, though currently in read-only mode. To ``SELECT`` data from a spreadsheets simply use its URL as the table name (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/gsheets.py>`_):
+
+.. code-block:: sql
+
+    SELECT country, SUM(cnt)
+    FROM "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=1648320094"
+    WHERE cnt > 0
+    GROUP BY country
+    
+Authentication is supported. You need to pass credentials via the ``service_account_info`` or ``service_account_files`` arguments when creating the connection:
+
+.. code-block:: python
+
+    service_account_info = {
+        "type": "service_account",
+        "project_id": "XXX",
+        ...,
+    }
+    
+    engine = create_engine(
+        "shillelagh://",
+        adapter_args={
+            "gsheetsapi": (None, None, service_account_info, "user@example.com"),
+        },
+    )
+    
+When present, the ``subject`` email will be used to impersonate a given user; if not present the connection will have full access to all spreadsheets in a given project, so be careful.
+
+Shillelagh also defines a custom dialect called ``gsheets://`` which has only the Google Spreadsheets adapter enabled. Use this is you don't want users connecting to other resources supported by Shillelagh.
+
+.. code-block:: python
+
+    engine = create_engine(
+        "gsheets://",
+        service_account_info=service_account_info,
+        subject="user@example.com",
+    )
+    
+Socrata
+~~~~~~~
+
+The `Socrata Open Data API <https://dev.socrata.com/>`_ is a simple API used by many governments, non-profits, and NGOs around the world, including the `CDC <https://www.cdc.gov/>`_. Similarly to the Google Spreadsheets adapter, with the Socrata adapter you can query any API URL directly (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/socrata.py>`_): 
+
+.. code-block:: sql
+
+    SELECT date, administered_dose1_recip_4
+    FROM "https://data.cdc.gov/resource/unsk-b7fc.json"
+    WHERE location = 'US'
+    ORDER BY date DESC
+    LIMIT 10
+    
+The adapter is currently read-only.
+
+WeatherAPI
+~~~~~~~~~~
+
+The `WeatherAPI <https://www.weatherapi.com/>`_ adapter was the first one to be written, and provides access to historical weather data (forecasts should be easy to implement as well). You need an API key in order to use it (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/weatherapi.py>`_):
+
+.. code-block:: python
+
+    from datetime import datetime, timedelta
+    from shillelagh.backends.apsw.db import connect
+
+    three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%dT12:00:00")
+
+    # sign up for an API key at https://www.weatherapi.com/my/
+    api_key = "XXX"
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = f"""
+    SELECT *
+    FROM "https://api.weatherapi.com/v1/history.json?key={api_key}&q=94923" AS bodega_bay
+    WHERE time >= '{three_days_ago}'
+    """
+    for row in cursor.execute(sql):
+        print(row)
+
 Writing a new adapter
 =====================
 
