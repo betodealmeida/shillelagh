@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.6.1 - 2021-MM-DD
+==========================
+
+- Parse bindings in ``execute``, allowing native Python types
+
 Version 0.6.0 - 2021-06-17
 ==========================
 

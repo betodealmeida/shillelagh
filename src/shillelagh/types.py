@@ -34,6 +34,8 @@ Index = Tuple[int, int]
 
 RequestedOrder = Union[Literal[Order.ASCENDING], Literal[Order.DESCENDING]]
 
+SQLiteValidType = Union[None, int, float, str, bytes]
+
 
 class DBAPIType:
     def __init__(self, name: str):

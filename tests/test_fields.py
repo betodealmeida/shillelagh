@@ -40,7 +40,7 @@ def test_blob():
     assert Blob.parse("test") == "test"
     assert Blob.parse(b"test") == b"test"
     assert Blob.parse(None) is None
-    assert Blob.quote(1) == "1"
+    assert Blob.quote(b"\x00") == "X'00'"
 
 
 def test_date():
