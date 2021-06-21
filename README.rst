@@ -106,8 +106,11 @@ Authentication is supported. You need to pass credentials via the ``service_acco
     
     engine = create_engine(
         "shillelagh://",
-        adapter_args={
-            "gsheetsapi": (None, None, service_account_info, "user@example.com"),
+        adapter_kwargs={
+            "gsheetsapi": {
+                "service_account_info": service_account_info,
+                "subject": "user@example.com",
+            },
         },
     )
     

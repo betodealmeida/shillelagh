@@ -66,7 +66,14 @@ class APSWGSheetsDialect(APSWDialect):
         self,
         url: URL,
     ) -> Tuple[
-        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], bool, Optional[str]],
+        Tuple[
+            str,
+            Optional[List[str]],
+            Optional[Dict[str, Tuple[Any, ...]]],
+            Optional[Dict[str, Dict[str, Any]]],
+            bool,
+            Optional[str],
+        ],
         Dict[str, Any],
     ]:
         query = extract_query(url)
@@ -83,6 +90,7 @@ class APSWGSheetsDialect(APSWDialect):
             ":memory:",
             ["gsheetsapi"],
             adapter_args,
+            {},
             True,
             self.isolation_level,
         ), {}

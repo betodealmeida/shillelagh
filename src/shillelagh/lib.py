@@ -1,6 +1,8 @@
+import inspect
 import itertools
 import json
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Iterator
 from typing import List
@@ -199,3 +201,18 @@ def build_sql(
         sql = f"{sql} OFFSET {offset}"
 
     return sql
+
+
+def combine_args_kwargs(
+    func: Callable[..., Any], *args: Any, **kwargs: Any
+) -> Tuple[Any, ...]:
+    """
+    Combine args and kwargs into args.
+
+    This is needed because we allow users to pass custom kwargs to adapters,
+    but when creating the virtual table we serialize only args.
+    """
+    signature = inspect.signature(func)
+    bound_args = signature.bind(*args, **kwargs)
+    bound_args.apply_defaults()
+    return bound_args.args
