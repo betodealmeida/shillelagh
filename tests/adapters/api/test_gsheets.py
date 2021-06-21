@@ -38,11 +38,11 @@ def test_credentials(mocker):
     connection = connect(
         ":memory:",
         ["gsheetsapi"],
-        adapter_args={
-            "gsheetsapi": (
-                {"secret": "XXX"},
-                "user@example.com",
-            ),
+        adapter_kwargs={
+            "gsheetsapi": {
+                "service_account_info": {"secret": "XXX"},
+                "subject": "user@example.com",
+            },
         },
         isolation_level="IMMEDIATE",
     )
@@ -63,7 +63,7 @@ def test_credentials(mocker):
             mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
             mock.call(
-                """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" USING GSheetsAPI('"https://docs.google.com/spreadsheets/d/1"', '{"secret": "XXX"}', '"user@example.com"')""",
+                """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" USING GSheetsAPI('"https://docs.google.com/spreadsheets/d/1"', 'null', 'null', '{"secret": "XXX"}', '"user@example.com"')""",
             ),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
         ],

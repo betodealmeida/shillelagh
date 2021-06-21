@@ -24,6 +24,7 @@ from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Blob
 from shillelagh.fields import Field
 from shillelagh.fields import type_map
+from shillelagh.lib import combine_args_kwargs
 from shillelagh.lib import quote
 from shillelagh.lib import serialize
 from shillelagh.types import Description
@@ -76,12 +77,14 @@ class Cursor(object):
         self,
         cursor: "apsw.Cursor",
         adapters: List[Type[Adapter]],
-        adapter_args: Dict[str, Any],
+        adapter_args: Dict[str, Tuple[Any, ...]],
+        adapter_kwargs: Dict[str, Dict[str, Any]],
         isolation_level: Optional[str] = None,
     ):
         self._cursor = cursor
         self._adapters = adapters
         self._adapter_args = adapter_args
+        self._adapter_kwargs = adapter_kwargs
 
         self.in_transaction = False
         self.isolation_level = isolation_level
@@ -171,12 +174,12 @@ class Cursor(object):
             raise ProgrammingError(f"Unsupported table: {uri}")
 
         # collect arguments from URI and connection and serialize them
-        args = [
-            serialize(arg)
-            for arg in adapter.parse_uri(uri)
-            + self._adapter_args.get(adapter.__name__.lower(), ())
-        ]
-        formatted_args = ", ".join(args)
+        key = adapter.__name__.lower()
+        args = adapter.parse_uri(uri) + self._adapter_args.get(key, ())
+        kwargs = self._adapter_kwargs.get(key, {})
+        formatted_args = ", ".join(
+            serialize(arg) for arg in combine_args_kwargs(adapter, *args, **kwargs)
+        )
         table_name = quote(uri)
         self._cursor.execute(
             f'CREATE VIRTUAL TABLE "{table_name}" USING {adapter.__name__}({formatted_args})',
@@ -281,7 +284,8 @@ class Connection(object):
         self,
         path: str,
         adapters: List[Type[Adapter]],
-        adapter_args: Dict[str, Any],
+        adapter_args: Dict[str, Tuple[Any, ...]],
+        adapter_kwargs: Dict[str, Dict[str, Any]],
         isolation_level: Optional[str] = None,
     ):
         # create underlying APSW connection
@@ -293,6 +297,7 @@ class Connection(object):
             self._connection.createmodule(adapter.__name__, VTModule(adapter))
         self._adapters = adapters
         self._adapter_args = adapter_args
+        self._adapter_kwargs = adapter_kwargs
 
         self.closed = False
         self.cursors: List[Cursor] = []
@@ -328,6 +333,7 @@ class Connection(object):
             self._connection.cursor(),
             self._adapters,
             self._adapter_args,
+            self._adapter_kwargs,
             self.isolation_level,
         )
         self.cursors.append(cursor)
@@ -354,7 +360,8 @@ class Connection(object):
 def connect(
     path: str,
     adapters: Optional[List[str]] = None,
-    adapter_args: Optional[Dict[str, Any]] = None,
+    adapter_args: Optional[Dict[str, Tuple[Any, ...]]] = None,
+    adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     safe: bool = False,
     isolation_level: Optional[str] = None,
 ) -> Connection:
@@ -374,4 +381,10 @@ def connect(
     if safe:
         enabled_adapters = [adapter for adapter in enabled_adapters if adapter.safe]
 
-    return Connection(path, enabled_adapters, adapter_args or {}, isolation_level)
+    return Connection(
+        path,
+        enabled_adapters,
+        adapter_args or {},
+        adapter_kwargs or {},
+        isolation_level,
+    )

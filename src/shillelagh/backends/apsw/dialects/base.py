@@ -37,7 +37,8 @@ class APSWDialect(SQLiteDialect):
     def __init__(
         self,
         adapters: Optional[List[str]] = None,
-        adapter_args: Optional[Dict[str, Any]] = None,
+        adapter_args: Optional[Dict[str, Tuple[Any, ...]]] = None,
+        adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
         safe: bool = False,
         *args: Any,
         **kwargs: Any,
@@ -45,13 +46,21 @@ class APSWDialect(SQLiteDialect):
         super().__init__(*args, **kwargs)
         self._adapters = adapters
         self._adapter_args = adapter_args
+        self._adapter_kwargs = adapter_kwargs
         self._safe = safe
 
     def create_connect_args(
         self,
         url: URL,
     ) -> Tuple[
-        Tuple[str, Optional[List[str]], Optional[Dict[str, Any]], bool, Optional[str]],
+        Tuple[
+            str,
+            Optional[List[str]],
+            Optional[Dict[str, Tuple[Any, ...]]],
+            Optional[Dict[str, Dict[str, Any]]],
+            bool,
+            Optional[str],
+        ],
         Dict[str, Any],
     ]:
         path = str(url.database) if url.database else ":memory:"
@@ -60,6 +69,7 @@ class APSWDialect(SQLiteDialect):
                 path,
                 self._adapters,
                 self._adapter_args,
+                self._adapter_kwargs,
                 self._safe,
                 self.isolation_level,
             ),
@@ -114,6 +124,10 @@ class APSWDialect(SQLiteDialect):
         else:
             raise ProgrammingError(f"Unsupported table: {table_name}")
 
-        uri_args = adapter.parse_uri(table_name)
-        adapter_args = raw_connection._adapter_args.get(adapter.__name__.lower(), ())
-        return adapter(*uri_args, *adapter_args)
+        key = adapter.__name__.lower()
+        adapter_args = adapter.parse_uri(table_name) + raw_connection._adapter_args.get(
+            key,
+            (),
+        )
+        adapter_kwargs = raw_connection._adapter_kwargs.get(key, {})
+        return adapter(*adapter_args, **adapter_kwargs)  # type: ignore

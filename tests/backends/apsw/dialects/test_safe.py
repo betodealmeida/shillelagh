@@ -9,6 +9,7 @@ def test_safe_dialect(fs):
             ":memory:",
             None,
             None,
+            None,
             True,
             None,
         ),
