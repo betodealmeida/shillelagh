@@ -94,7 +94,7 @@ Google Spreadsheets can be accessed as tables, though currently in read-only mod
     WHERE cnt > 0
     GROUP BY country
     
-Authentication is supported. You need to pass credentials via the ``service_account_info`` or ``service_account_files`` arguments when creating the connection:
+Authentication is supported. You need to pass credentials via the ``service_account_info`` or ``service_account_file`` arguments when creating the connection:
 
 .. code-block:: python
 
