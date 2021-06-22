@@ -2,16 +2,17 @@
 Changelog
 =========
 
-Version 0.6.1 - 2021-MM-DD
+Version 0.6.1 - 2021-06-22
 ==========================
 
 - Parse bindings in ``execute``, allowing native Python types
+- Allow configuring adapters via kwargs in addition to args
 
 Version 0.6.0 - 2021-06-17
 ==========================
 
 - Handle type conversion via fields
-- Fix Socrata, mapping `calendar_date` to `Date`
+- Fix Socrata, mapping ``calendar_date`` to ``Date``
 
 Version 0.5.2 - 2021-06-03
 ==========================
