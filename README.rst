@@ -114,7 +114,7 @@ Authentication is supported. You need to pass credentials via the ``service_acco
         },
     )
     
-When present, the ``subject`` email will be used to impersonate a given user; if not present the connection will have full access to all spreadsheets in a given project, so be careful.
+When present, the ``subject`` email will be used to impersonate a given user; if not present the connection will have full access to all spreadsheets in a given project, so be careful. Also, make sure the service account has access to the `https://www.googleapis.com/auth/drive.readonly,` scope, and that the Google Drive and Google Sheets APIs are active in the project.
 
 Shillelagh also defines a custom dialect called ``gsheets://`` which has only the Google Spreadsheets adapter enabled. Use this is you don't want users connecting to other resources supported by Shillelagh.
 
