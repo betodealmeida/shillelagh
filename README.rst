@@ -74,7 +74,7 @@ Currently, Shillelagh supports the following adapters:
 CSV files
 ~~~~~~~~~
 
-CSV (comma separated values) are supported via the ``csv://`` scheme (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/csvfile.py>`_):
+CSV (comma separated values) are supported via the ``csv://`` scheme (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/csvfile.py>`__):
 
 .. code-block:: sql
 
@@ -85,7 +85,7 @@ The adapter supports full DML, so you can also ``INSERT``, ``UPDATE``, or ``DELE
 Google Spreadsheets
 ~~~~~~~~~~~~~~~~~~~
 
-Google Spreadsheets can be accessed as tables, though currently in read-only mode. To ``SELECT`` data from a spreadsheets simply use its URL as the table name (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/gsheets.py>`_):
+Google Spreadsheets can be accessed as tables, though currently in read-only mode. To ``SELECT`` data from a spreadsheets simply use its URL as the table name (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/gsheets.py>`__):
 
 .. code-block:: sql
 
@@ -129,7 +129,7 @@ Shillelagh also defines a custom dialect called ``gsheets://`` which has only th
 Socrata
 ~~~~~~~
 
-The `Socrata Open Data API <https://dev.socrata.com/>`_ is a simple API used by many governments, non-profits, and NGOs around the world, including the `CDC <https://www.cdc.gov/>`_. Similarly to the Google Spreadsheets adapter, with the Socrata adapter you can query any API URL directly (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/socrata.py>`_): 
+The `Socrata Open Data API <https://dev.socrata.com/>`_ is a simple API used by many governments, non-profits, and NGOs around the world, including the `CDC <https://www.cdc.gov/>`_. Similarly to the Google Spreadsheets adapter, with the Socrata adapter you can query any API URL directly (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/socrata.py>`__):
 
 .. code-block:: sql
 
@@ -144,7 +144,7 @@ The adapter is currently read-only.
 WeatherAPI
 ~~~~~~~~~~
 
-The `WeatherAPI <https://www.weatherapi.com/>`_ adapter was the first one to be written, and provides access to historical weather data (forecasts should be easy to implement as well). You need an API key in order to use it (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/weatherapi.py>`_):
+The `WeatherAPI <https://www.weatherapi.com/>`_ adapter was the first one to be written, and provides access to historical weather data (forecasts should be easy to implement as well). You need an API key in order to use it (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/weatherapi.py>`__):
 
 .. code-block:: python
 
