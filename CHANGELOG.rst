@@ -23,7 +23,7 @@ Version 0.5.1 - 2021-05-24
 ==========================
 
 - Better error handling in the GSheets dialect
-- Use GSheets URL parameters on get_table_names
+- Use GSheets URL parameters on ``get_table_names``
 
 Version 0.5.0 - 2021-05-22
 ==========================
@@ -35,7 +35,7 @@ Version 0.5.0 - 2021-05-22
 Version 0.4.3 - 2021-04-20
 ==========================
 
-- Import Literal from typing_extensions for Python 3.7 compatibility
+- Import ``Literal`` from ``typing_extensions`` for Python 3.7 compatibility
 
 Version 0.4.2 - 2021-04-18
 ==========================
@@ -45,19 +45,19 @@ Version 0.4.2 - 2021-04-18
 Version 0.4.1 - 2021-04-12
 ==========================
 
-- Make parse_uri signature more generic
+- Make ``parse_uri`` signature more generic
 
 Version 0.4 - 2021-04-10
 ========================
 
 - Allow adapters to return complex types (eg, datetime)
-- Implement Order.ANY for columns that can be sorted by the adapter
+- Implement ``Order.ANY`` for columns that can be sorted by the adapter
 - Add all columns to the weatherapi.com adapter
 
 Version 0.3.1 - 2021-03-19
 ==========================
 
-- Add safe mode through shillelagh+safe://
+- Add safe mode through ``shillelagh+safe://``
 - Fix isolation levels for apsw
 
 Version 0.3.0 - 2021-03-18
@@ -76,7 +76,7 @@ Version 0.2 - 2021-02-17
 - Added DB API 2.0 layer
 - Added SQLAlchemy dialect
 - Added Google Spreadsheets adapter
-- Added drop-in replacement for gsheets:// dialect
+- Added drop-in replacement for ``gsheets://`` dialect
 
 Version 0.1 - 2020-10-26
 ========================
