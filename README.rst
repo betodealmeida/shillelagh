@@ -151,7 +151,7 @@ The `WeatherAPI <https://www.weatherapi.com/>`_ adapter was the first one to be 
     from datetime import datetime, timedelta
     from shillelagh.backends.apsw.db import connect
 
-    three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%dT12:00:00")
+    three_days_ago = datetime.now() - timedelta(days=3)
 
     # sign up for an API key at https://www.weatherapi.com/my/
     api_key = "XXX"
@@ -162,9 +162,9 @@ The `WeatherAPI <https://www.weatherapi.com/>`_ adapter was the first one to be 
     sql = f"""
     SELECT *
     FROM "https://api.weatherapi.com/v1/history.json?key={api_key}&q=94923" AS bodega_bay
-    WHERE time >= '{three_days_ago}'
+    WHERE time >= ?
     """
-    for row in cursor.execute(sql):
+    for row in cursor.execute(sql, three_days_ago):
         print(row)
 
 Writing a new adapter
