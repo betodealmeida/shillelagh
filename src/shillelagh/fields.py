@@ -60,6 +60,13 @@ class Field:
         raise NotImplementedError("Subclasses must implement `parse`")
 
     @staticmethod
+    def format(value: Any) -> Any:
+        if value is None:
+            return None
+
+        return value
+
+    @staticmethod
     def quote(value: Any) -> str:
         raise NotImplementedError("Subclasses must implement `quote`")
 
@@ -133,6 +140,13 @@ class Date(Field):
         return dt.astimezone(datetime.timezone.utc).date()
 
     @staticmethod
+    def format(value: Optional[datetime.date]) -> Optional[str]:
+        if value is None:
+            return None
+
+        return value.isoformat()
+
+    @staticmethod
     def quote(value: Any) -> str:
         return f"'{value.isoformat()}'"
 
@@ -157,6 +171,13 @@ class Time(Field):
         return dt.astimezone(datetime.timezone.utc).timetz()
 
     @staticmethod
+    def format(value: Optional[datetime.date]) -> Optional[str]:
+        if value is None:
+            return None
+
+        return value.isoformat()
+
+    @staticmethod
     def quote(value: Any) -> str:
         return f"'{value.isoformat()}'"
 
@@ -179,6 +200,13 @@ class DateTime(Field):
             dt = dt.replace(tzinfo=datetime.timezone.utc)
 
         return dt.astimezone(datetime.timezone.utc)
+
+    @staticmethod
+    def format(value: Optional[datetime.date]) -> Optional[str]:
+        if value is None:
+            return None
+
+        return value.isoformat()
 
     @staticmethod
     def quote(value: Any) -> str:

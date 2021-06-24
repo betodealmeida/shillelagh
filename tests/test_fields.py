@@ -33,6 +33,8 @@ def test_integer():
     assert Integer.parse("1") == 1
     assert Integer.parse(None) is None
     assert Integer.quote(1) == "1"
+    assert Integer.format(1) == 1
+    assert Integer.format(None) is None
 
 
 def test_float():
@@ -40,6 +42,8 @@ def test_float():
     assert Float.parse("1.0") == 1.0
     assert Float.parse(None) is None
     assert Float.quote(1.0) == "1.0"
+    assert Float.format(1.0) == 1.0
+    assert Float.format(None) is None
 
 
 def test_string():
@@ -48,6 +52,8 @@ def test_string():
     assert String.parse(None) is None
     assert String.quote("1.0") == "'1.0'"
     assert String.quote("O'Malley's") == "'O''Malley''s'"
+    assert String.format("test") == "test"
+    assert String.format(None) is None
 
 
 def test_blob():
@@ -56,6 +62,8 @@ def test_blob():
     assert Blob.parse(b"test") == b"test"
     assert Blob.parse(None) is None
     assert Blob.quote(b"\x00") == "X'00'"
+    assert Blob.format(b"test") == b"test"
+    assert Blob.format(None) is None
 
 
 def test_date():
@@ -68,6 +76,8 @@ def test_date():
     assert Date.parse(None) is None
     assert Date.parse("invalid") is None
     assert Date.quote(datetime.date(2020, 1, 1)) == "'2020-01-01'"
+    assert Date.format(datetime.date(2020, 1, 1)) == "2020-01-01"
+    assert Date.format(None) is None
 
 
 def test_time():
@@ -87,6 +97,11 @@ def test_time():
         Time.quote(datetime.time(12, 0, tzinfo=datetime.timezone.utc))
         == "'12:00:00+00:00'"
     )
+    assert (
+        Time.format(datetime.time(12, 0, tzinfo=datetime.timezone.utc))
+        == "12:00:00+00:00"
+    )
+    assert Time.format(None) is None
 
 
 def test_datetime():
@@ -116,6 +131,13 @@ def test_datetime():
         )
         == "'2020-01-01T12:00:00+00:00'"
     )
+    assert (
+        DateTime.format(
+            datetime.datetime(2020, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc),
+        )
+        == "2020-01-01T12:00:00+00:00"
+    )
+    assert DateTime.format(None) is None
 
 
 def test_boolean():
@@ -126,6 +148,8 @@ def test_boolean():
     assert Boolean.parse(None) is None
     assert Boolean.quote(True) == "TRUE"
     assert Boolean.quote(False) == "FALSE"
+    assert Boolean.format(True) is True
+    assert Boolean.format(None) is None
 
 
 def test_type_code():

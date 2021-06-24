@@ -1,10 +1,15 @@
+from datetime import datetime
+from datetime import timezone
 from typing import Any
 from typing import Dict
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import Tuple
 
 from shillelagh.adapters.base import Adapter
+from shillelagh.backends.apsw.db import connect
+from shillelagh.fields import DateTime
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
 from shillelagh.fields import Order
@@ -15,6 +20,17 @@ from shillelagh.filters import Range
 from shillelagh.types import Row
 
 from ..fakes import FakeAdapter
+from ..fakes import FakeEntryPoint
+
+
+class FakeAdapterWithDateTime(FakeAdapter):
+
+    birthday = DateTime(filters=[Range], order=Order.ANY, exact=True)
+
+    data: List[Row] = []
+
+    def __init__(self):
+        pass
 
 
 def test_adapter_get_columns():
@@ -122,3 +138,44 @@ def test_from_uri():
     adapter = FakeAdapter.from_uri("foo:bar")
     assert adapter.a == "foo"
     assert adapter.b == "bar"
+
+
+def test_type_conversion(mocker):
+
+    entry_points = [FakeEntryPoint("dummy", FakeAdapterWithDateTime)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM "dummy://"')
+    assert cursor.fetchall() == []
+
+    cursor.execute(
+        'INSERT INTO "dummy://" (birthday) VALUES (?)',
+        (datetime(2021, 1, 1, 0, 0),),
+    )
+    cursor.execute('SELECT * FROM "dummy://"')
+    assert cursor.fetchall() == [
+        (
+            None,
+            datetime(2021, 1, 1, 0, 0, tzinfo=timezone.utc),
+            None,
+            None,
+        ),
+    ]
+
+    # make sure datetime is stored as a string
+    assert FakeAdapterWithDateTime.data == [
+        {
+            "age": None,
+            "birthday": "2021-01-01T00:00:00+00:00",
+            "name": None,
+            "pets": None,
+            "rowid": 1,
+        },
+    ]
+    assert isinstance(FakeAdapterWithDateTime.data[0]["birthday"], str)
