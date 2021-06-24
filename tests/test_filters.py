@@ -73,11 +73,14 @@ def test_range_equal():
 def test_range_equal_impossible():
     operations = [
         (Operator.GT, 0),
-        (Operator.EQ, 13),
-        (Operator.LT, 10),
-        (Operator.GT, 2),
-        (Operator.LE, 4),
-        (Operator.GE, 2),
+        (Operator.LT, -1),
+    ]
+    filter_ = Range.build(operations)
+    assert isinstance(filter_, Impossible)
+
+    operations = [
+        (Operator.LT, -1),
+        (Operator.GT, 0),
     ]
     filter_ = Range.build(operations)
     assert isinstance(filter_, Impossible)

@@ -35,6 +35,21 @@ def test_integer():
     assert Integer.quote(1) == "1"
 
 
+def test_float():
+    assert Float.parse(1.0) == 1.0
+    assert Float.parse("1.0") == 1.0
+    assert Float.parse(None) is None
+    assert Float.quote(1.0) == "1.0"
+
+
+def test_string():
+    assert String.parse(1.0) == "1.0"
+    assert String.parse("1.0") == "1.0"
+    assert String.parse(None) is None
+    assert String.quote("1.0") == "'1.0'"
+    assert String.quote("O'Malley's") == "'O''Malley''s'"
+
+
 def test_blob():
     assert Blob.parse(1) == 1
     assert Blob.parse("test") == "test"
@@ -108,6 +123,7 @@ def test_boolean():
     assert Boolean.parse(False) is False
     assert Boolean.parse("true") is True
     assert Boolean.parse(0) is False
+    assert Boolean.parse(None) is None
     assert Boolean.quote(True) == "TRUE"
     assert Boolean.quote(False) == "FALSE"
 

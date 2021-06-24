@@ -1,4 +1,5 @@
 import pytest
+from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
@@ -9,8 +10,13 @@ from shillelagh.filters import Impossible
 from shillelagh.filters import Range
 from shillelagh.lib import analyse
 from shillelagh.lib import build_sql
+from shillelagh.lib import combine_args_kwargs
 from shillelagh.lib import DELETED
+from shillelagh.lib import deserialize
+from shillelagh.lib import quote
 from shillelagh.lib import RowIDManager
+from shillelagh.lib import serialize
+from shillelagh.lib import unquote
 from shillelagh.lib import update_order
 
 
@@ -104,6 +110,12 @@ def test_update_order():
     assert order == Order.NONE
 
 
+def test_update_order_none():
+    order = update_order(Order.NONE, previous=None, current=1, num_rows=1)
+    order = update_order(order, previous=1, current=None, num_rows=2)
+    assert order == Order.NONE
+
+
 def test_build_sql():
     columns = {"a": String(), "b": Float()}
 
@@ -137,8 +149,42 @@ def test_build_sql_with_map():
     }
     order = [("col0_", Order.ASCENDING), ("col1_", Order.DESCENDING)]
     column_map = {f"col{i}_": letter for i, letter in enumerate("ABCD")}
-    sql = build_sql(columns, bounds, order, column_map)
+    sql = build_sql(columns, bounds, order, column_map, 1)
     assert (
         sql
-        == "SELECT * WHERE A = 1 AND B >= 0 AND B < 1 AND C <= 1 AND D > 0 ORDER BY A, B DESC"
+        == "SELECT * WHERE A = 1 AND B >= 0 AND B < 1 AND C <= 1 AND D > 0 ORDER BY A, B DESC OFFSET 1"
     )
+
+
+def test_build_sql_impossible():
+    columns = {"a": String(), "b": Float()}
+
+    with pytest.raises(ImpossibleFilterError):
+        build_sql(columns, {"a": Impossible()}, [])
+
+
+def test_quote():
+    assert quote("1") == "1"
+    assert quote("O'Malley's") == "O''Malley''s"
+
+
+def test_unquote():
+    assert unquote("1") == "1"
+    assert unquote("O''Malley''s") == "O'Malley's"
+
+
+def test_serialize():
+    assert serialize(["O'Malley's"]) == """'["O''Malley''s"]'"""
+
+
+def test_deserialize():
+    assert deserialize("""'["O''Malley''s"]'""") == ["O'Malley's"]
+
+
+def test_combine_args_kwargs():
+    def func(a: int = 0, b: str = "test", c: float = 10.0) -> None:
+        pass
+
+    args = ()
+    kwargs = {"b": "TEST"}
+    assert combine_args_kwargs(func, *args, **kwargs) == (0, "TEST", 10.0)

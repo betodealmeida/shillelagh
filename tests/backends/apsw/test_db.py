@@ -1,5 +1,6 @@
 import re
 import urllib.parse
+from datetime import datetime
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -68,6 +69,21 @@ def test_connect(mocker):
     assert cursor.fetchmany(1000) == [(23.0, "Bob", 3)]
     assert cursor.fetchall() == []
     assert cursor.rowcount == 2
+
+
+def test_execute_with_native_parameters(mocker):
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM "dummy://" WHERE name = ?', (datetime.now(),))
+    assert cursor.fetchall() == []
+    assert cursor.rowcount == -1  # can't determine
 
 
 def test_check_closed(mocker):

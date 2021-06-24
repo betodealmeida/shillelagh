@@ -148,6 +148,7 @@ class VTTable:
 
     Destroy = Disconnect
 
+    # TODO: convert to native type?
     def UpdateInsertRow(self, rowid: Optional[int], fields: Tuple[Any, ...]) -> int:
         column_names = ["rowid"] + list(self.adapter.get_columns().keys())
         row = dict(zip(column_names, [rowid] + list(fields)))
@@ -156,6 +157,7 @@ class VTTable:
     def UpdateDeleteRow(self, rowid: int) -> None:
         self.adapter.delete_row(rowid)
 
+    # TODO: convert to native type?
     def UpdateChangeRow(
         self,
         rowid: int,

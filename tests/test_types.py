@@ -3,10 +3,13 @@ from datetime import datetime
 from datetime import time
 from datetime import timezone
 
+import pytest
 from shillelagh.backends.apsw.db import connect
+from shillelagh.fields import String
 from shillelagh.types import Binary
 from shillelagh.types import Date
 from shillelagh.types import DateFromTicks
+from shillelagh.types import STRING
 from shillelagh.types import Time
 from shillelagh.types import TimeFromTicks
 from shillelagh.types import Timestamp
@@ -70,3 +73,8 @@ def test_types():
             b"\xf0\x9f\xa6\xa5",
         ),
     ]
+
+
+def test_comparison():
+    assert STRING == String
+    assert not STRING == 1
