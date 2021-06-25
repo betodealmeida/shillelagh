@@ -278,7 +278,7 @@ class Cursor(object):
 
 class Connection(object):
 
-    """Connection to a Google Spreadsheet."""
+    """Connection."""
 
     def __init__(
         self,
