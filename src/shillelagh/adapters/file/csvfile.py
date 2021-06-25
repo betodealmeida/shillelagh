@@ -1,3 +1,4 @@
+import atexit
 import csv
 import operator
 import os
@@ -53,6 +54,11 @@ class CSVFile(Adapter):
         return (parsed.path or parsed.netloc,)
 
     def __init__(self, path: str):
+        # ensure we do GC on the file if we exit without closing the
+        # connection
+        self.modified = False
+        atexit.register(self.close)
+
         self.path = Path(path)
 
         with open(self.path) as fp:
@@ -140,6 +146,7 @@ class CSVFile(Adapter):
                 num_rows=self.num_rows,
             )
         self.last_row = row
+        self.modified = True
 
         return row_id
 
@@ -147,8 +154,12 @@ class CSVFile(Adapter):
         # mark row as deleted
         self.row_id_manager.delete(row_id)
         self.num_rows -= 1
+        self.modified = True
 
     def close(self) -> None:
+        if not self.modified:
+            return
+
         # garbage collect
         with open(self.path) as fp:
             reader = csv.reader(fp, quoting=csv.QUOTE_NONNUMERIC)
@@ -161,3 +172,4 @@ class CSVFile(Adapter):
                 writer.writerows(data)
 
         os.replace(self.path.with_suffix(".csv.bak"), self.path)
+        self.modified = False
