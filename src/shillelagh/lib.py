@@ -88,6 +88,7 @@ def analyse(
     types: Dict[str, Type[Field]] = {}
 
     previous_row: Optional[Row] = None
+    i = 0
     for i, row in enumerate(data):
         for column_name, value in row.items():
             # determine order
