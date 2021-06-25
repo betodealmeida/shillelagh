@@ -60,9 +60,11 @@ class FakeAdapter(Adapter):
     ) -> Iterator[Dict[str, Any]]:
         data = self.data[:]
 
-        for column in ["name", "age"]:
-            if column in bounds:
-                data = [row for row in data if bounds[column].check(row[column])]
+        for column_name, field in self.get_columns().items():
+            if field.filters and column_name in bounds:
+                data = [
+                    row for row in data if bounds[column_name].check(row[column_name])
+                ]
 
         for column_name, requested_order in order:
             reverse = requested_order == Order.DESCENDING
@@ -70,16 +72,17 @@ class FakeAdapter(Adapter):
 
         yield from iter(data)
 
-    def insert_row(self, row: Row) -> int:
+    def insert_data(self, row: Row) -> int:
         row_id: Optional[int] = row["rowid"]
         if row_id is None:
-            row["rowid"] = row_id = max(row["rowid"] for row in self.data) + 1
+            max_rowid = max(row["rowid"] for row in self.data) if self.data else 0
+            row["rowid"] = row_id = max_rowid + 1
 
         self.data.append(row)
 
         return row_id
 
-    def delete_row(self, row_id: int) -> None:
+    def delete_data(self, row_id: int) -> None:
         self.data = [row for row in self.data if row["rowid"] != row_id]
 
 
