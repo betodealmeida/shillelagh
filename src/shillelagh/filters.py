@@ -51,6 +51,9 @@ class Equal(Filter):
     def check(self, value: Any) -> bool:
         return bool(value == self.value)
 
+    def __repr__(self) -> str:
+        return f"== {self.value}"
+
 
 class Range(Filter):
     def __init__(
@@ -203,3 +206,16 @@ class Range(Filter):
                 return False
 
         return True
+
+    def __repr__(self) -> str:
+        if self.start == self.end and self.include_start and self.include_end:
+            return f"== {self.start}"
+
+        comparisons = []
+        if self.start is not None:
+            op = ">=" if self.include_start else ">"
+            comparisons.append(f"{op}{self.start}")
+        if self.end is not None:
+            op = "<=" if self.include_end else "<"
+            comparisons.append(f"{op}{self.end}")
+        return ",".join(comparisons)
