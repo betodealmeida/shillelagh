@@ -62,8 +62,7 @@ class Field:
             and self.exact == other.exact
         )
 
-    @staticmethod
-    def parse(value: Any) -> Any:
+    def parse(self, value: Any) -> Any:
         """
         Convert from a DB type to a native Python type.
 
@@ -83,8 +82,7 @@ class Field:
         """
         raise NotImplementedError("Subclasses must implement `parse`")
 
-    @staticmethod
-    def format(value: Any) -> Any:
+    def format(self, value: Any) -> Any:
         """
         Convert from a native Python type to a DB type.
 
@@ -92,8 +90,7 @@ class Field:
         """
         raise NotImplementedError("Subclasses must implement `format`")
 
-    @staticmethod
-    def quote(value: Any) -> str:
+    def quote(self, value: Any) -> str:
         """
         Quote values.
 
@@ -113,8 +110,7 @@ class Integer(Field):
     type = "INTEGER"
     db_api_type = "NUMBER"
 
-    @staticmethod
-    def parse(value: Any) -> Optional[int]:
+    def parse(self, value: Any) -> Optional[int]:
         if value is None:
             return None
 
@@ -122,8 +118,7 @@ class Integer(Field):
 
     format = parse
 
-    @staticmethod
-    def quote(value: Any) -> str:
+    def quote(self, value: Any) -> str:
         return str(value)
 
 
@@ -131,8 +126,7 @@ class Float(Field):
     type = "REAL"
     db_api_type = "NUMBER"
 
-    @staticmethod
-    def parse(value: Any) -> Optional[float]:
+    def parse(self, value: Any) -> Optional[float]:
         if value is None:
             return None
 
@@ -140,8 +134,7 @@ class Float(Field):
 
     format = parse
 
-    @staticmethod
-    def quote(value: Any) -> str:
+    def quote(self, value: Any) -> str:
         return str(value)
 
 
@@ -149,8 +142,7 @@ class String(Field):
     type = "TEXT"
     db_api_type = "STRING"
 
-    @staticmethod
-    def parse(value: Any) -> Optional[str]:
+    def parse(self, value: Any) -> Optional[str]:
         if value is None:
             return None
 
@@ -158,8 +150,7 @@ class String(Field):
 
     format = parse
 
-    @staticmethod
-    def quote(value: Any) -> str:
+    def quote(self, value: Any) -> str:
         escaped_value = value.replace("'", "''")
         return f"'{escaped_value}'"
 
@@ -168,8 +159,7 @@ class Date(Field):
     type = "DATE"
     db_api_type = "DATETIME"
 
-    @staticmethod
-    def parse(value: Any) -> Optional[datetime.date]:
+    def parse(self, value: Any) -> Optional[datetime.date]:
         if value is None:
             return None
 
@@ -183,25 +173,21 @@ class Date(Field):
 
         return dt.astimezone(datetime.timezone.utc).date()
 
-    @staticmethod
-    def format(value: Optional[datetime.date]) -> Optional[str]:
+    def format(self, value: Optional[datetime.date]) -> Optional[str]:
         if value is None:
             return None
 
         return value.isoformat()
 
-    @staticmethod
-    def quote(value: Any) -> str:
-        formatted_value = Date.format(value)
-        return f"'{formatted_value}'"
+    def quote(self, value: Any) -> str:
+        return f"'{self.format(value)}'"
 
 
 class Time(Field):
     type = "TIME"
     db_api_type = "DATETIME"
 
-    @staticmethod
-    def parse(value: Any) -> Optional[datetime.time]:
+    def parse(self, value: Any) -> Optional[datetime.time]:
         if value is None:
             return None
 
@@ -215,25 +201,21 @@ class Time(Field):
 
         return dt.astimezone(datetime.timezone.utc).timetz()
 
-    @staticmethod
-    def format(value: Optional[datetime.date]) -> Optional[str]:
+    def format(self, value: Optional[datetime.time]) -> Optional[str]:
         if value is None:
             return None
 
         return value.isoformat()
 
-    @staticmethod
-    def quote(value: Any) -> str:
-        formatted_value = Time.format(value)
-        return f"'{formatted_value}'"
+    def quote(self, value: Any) -> str:
+        return f"'{self.format(value)}'"
 
 
 class DateTime(Field):
     type = "TIMESTAMP"
     db_api_type = "DATETIME"
 
-    @staticmethod
-    def parse(value: Any) -> Optional[datetime.datetime]:
+    def parse(self, value: Any) -> Optional[datetime.datetime]:
         if value is None:
             return None
 
@@ -247,25 +229,21 @@ class DateTime(Field):
 
         return dt.astimezone(datetime.timezone.utc)
 
-    @staticmethod
-    def format(value: Optional[datetime.date]) -> Optional[str]:
+    def format(self, value: Optional[datetime.datetime]) -> Optional[str]:
         if value is None:
             return None
 
         return value.isoformat()
 
-    @staticmethod
-    def quote(value: Any) -> str:
-        formatted_value = DateTime.format(value)
-        return f"'{formatted_value}'"
+    def quote(self, value: Any) -> str:
+        return f"'{self.format(value)}'"
 
 
 class Blob(Field):
     type = "BLOB"
     db_api_type = "BINARY"
 
-    @staticmethod
-    def parse(value: Any) -> Any:
+    def parse(self, value: Any) -> Any:
         if value is None:
             return None
 
@@ -274,8 +252,7 @@ class Blob(Field):
         except Exception:
             return value
 
-    @staticmethod
-    def format(value: Any) -> Optional[str]:
+    def format(self, value: Any) -> Optional[str]:
         if value is None:
             return None
 
@@ -284,18 +261,15 @@ class Blob(Field):
 
         return cast(str, value.hex())
 
-    @staticmethod
-    def quote(value: bytes) -> str:
-        formatted_value = Blob.format(value)
-        return f"X'{formatted_value}'"
+    def quote(self, value: bytes) -> str:
+        return f"X'{self.format(value)}'"
 
 
 class Boolean(Field):
     type = "BOOLEAN"
     db_api_type = "NUMBER"
 
-    @staticmethod
-    def parse(value: Any) -> Optional[bool]:
+    def parse(self, value: Any) -> Optional[bool]:
         if value is None:
             return None
 
@@ -303,16 +277,14 @@ class Boolean(Field):
             return value
         return bool(strtobool(str(value)))
 
-    @staticmethod
-    def format(value: Optional[bool]) -> Optional[str]:
+    def format(self, value: Optional[bool]) -> Optional[str]:
         if value is None:
             return None
 
         return "TRUE" if value else "FALSE"
 
-    @staticmethod
-    def quote(value: Any) -> str:
-        return cast(str, Boolean.format(value))
+    def quote(self, value: Any) -> str:
+        return cast(str, self.format(value))
 
 
 type_map = {

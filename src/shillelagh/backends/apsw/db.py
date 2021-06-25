@@ -182,7 +182,7 @@ class Cursor(object):
         for row in cursor:
             yield tuple(
                 # convert from SQLite types to native Python types
-                type_map[desc[1].type].parse(col)
+                type_map[desc[1].type]().parse(col)
                 for col, desc in zip(row, self.description)
             )
 

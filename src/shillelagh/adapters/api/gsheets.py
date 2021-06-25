@@ -1,6 +1,8 @@
 import datetime
 import json
+import logging
 import urllib.parse
+from functools import partial
 from typing import Any
 from typing import cast
 from typing import Dict
@@ -10,6 +12,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 
+import dateutil.tz
 import google.oauth2.credentials
 import google.oauth2.service_account
 from google.auth.credentials import Credentials
@@ -35,9 +38,13 @@ from shillelagh.types import Row
 from typing_extensions import Literal
 from typing_extensions import TypedDict
 
+_logger = logging.getLogger(__name__)
+
 # Google API scopes for authentication
 SCOPES = [
     "https://www.googleapis.com/auth/drive.readonly",
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://spreadsheets.google.com/feeds",
 ]
 
 JSON_PAYLOAD_PREFIX = ")]}'\n"
@@ -123,14 +130,32 @@ class QueryResults(TypedDict, total=False):
 
 
 class GSheetsDateTime(DateTime):
-    @staticmethod
-    def parse(value: Optional[str]) -> Optional[datetime.datetime]:
+    def __init__(
+        self,
+        filters: Optional[List[Type[Filter]]] = None,
+        order: Order = Order.NONE,
+        exact: bool = False,
+        timezone: Optional[datetime.tzinfo] = None,
+    ):
+        super().__init__(filters, order, exact)
+        self.timezone = timezone
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.datetime]:
         if value is None:
             return None
 
         args = [int(number) for number in value[len("Date(") : -1].split(",")]
         args[1] += 1  # month is zero indexed in the response
-        return datetime.datetime(*args, tzinfo=datetime.timezone.utc)  # type: ignore
+        return datetime.datetime(*args, tzinfo=self.timezone)  # type: ignore
+
+    def format(self, value: Optional[datetime.datetime]) -> Optional[str]:
+        if value is None:
+            return None
+        # Google Sheets does not support timezones in datetime values, so we
+        # convert all timestamps to the sheet timezone
+        if self.timezone:
+            value = value.astimezone(self.timezone)
+        return value.strftime("%m/%d/%Y %H:%M:%S") if value else None
 
     @staticmethod
     def quote(value: Any) -> str:
@@ -145,7 +170,7 @@ class GSheetsDate(Date):
             return None
 
         args = [int(number) for number in value[len("Date(") : -1].split(",")]
-        args[1] += 1  # month is zero indexed in the response
+        args[1] += 1  # month is zero indexed in the response (WTF, Google!?)
         return datetime.date(*args)
 
     @staticmethod
@@ -160,7 +185,7 @@ class GSheetsTime(Time):
         if values is None:
             return None
 
-        return datetime.time(*values, tzinfo=datetime.timezone.utc)  # type: ignore
+        return datetime.time(*values)  # type: ignore
 
     @staticmethod
     def quote(value: Any) -> str:
@@ -173,17 +198,18 @@ class GSheetsBoolean(Boolean):
         return "true" if value else "false"
 
 
-type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
-    "string": (String, [Equal]),
-    "number": (Float, [Range]),
-    "boolean": (GSheetsBoolean, [Equal]),
-    "date": (GSheetsDate, [Range]),
-    "datetime": (GSheetsDateTime, [Range]),
-    "timeofday": (GSheetsTime, [Range]),
-}
-
-
-def get_field(col: QueryResultsColumn) -> Field:
+def get_field(
+    col: QueryResultsColumn,
+    timezone: Optional[datetime.tzinfo],
+) -> Field:
+    type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
+        "string": (String, [Equal]),
+        "number": (Float, [Range]),
+        "boolean": (GSheetsBoolean, [Equal]),
+        "date": (GSheetsDate, [Range]),
+        "datetime": (partial(GSheetsDateTime, timezone=timezone), [Range]),  # type: ignore
+        "timeofday": (GSheetsTime, [Range]),
+    }
     class_, filters = type_map.get(col["type"], (String, [Equal]))
     return class_(
         filters=filters,
@@ -294,7 +320,59 @@ class GSheetsAPI(Adapter):
         )
 
         self._offset = 0
+
+        # extra metadata
+        self._spreadsheet_id: Optional[str] = None
+        self._sheet_id: Optional[int] = None
+        self._sheet_name: Optional[str] = None
+        self._timezone: Optional[datetime.tzinfo] = None
+        self._set_metadata(uri)
+
+        # determine columns
+        self.columns: Dict[str, Field] = {}
         self._set_columns()
+
+        # store row ids for DML
+        self.row_ids: Dict[int, Row] = {}
+
+    def _set_metadata(self, uri: str) -> None:
+        """
+        Get spreadsheet ID, sheet ID, and sheet name.
+        """
+        parts = urllib.parse.urlparse(uri)
+
+        self._spreadsheet_id = parts.path.split("/")[3]
+
+        qs = urllib.parse.parse_qs(parts.query)
+        if "gid" in qs:
+            sheet_id = int(qs["gid"][-1])
+        elif parts.fragment.startswith("gid="):
+            sheet_id = int(parts.fragment[len("gid=") :])
+        else:
+            sheet_id = 0
+        self._sheet_id = sheet_id
+
+        if not self.credentials:
+            return
+
+        session = self._get_session()
+        response = session.get(
+            f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
+            "?includeGridData=false",
+        )
+        payload = response.json()
+        if "error" in payload:
+            raise ProgrammingError(payload["error"]["message"])
+
+        self._timezone = dateutil.tz.gettz(payload["properties"]["timeZone"])
+
+        sheets = payload["sheets"]
+        for sheet in sheets:
+            if sheet["properties"]["sheetId"] == sheet_id:
+                self._sheet_name = sheet["properties"]["title"]
+                break
+        else:
+            _logger.warning("Could not determine sheet name!")
 
     def _get_session(self) -> Session:
         return cast(
@@ -349,7 +427,9 @@ class GSheetsAPI(Adapter):
 
         self._column_map = {col["label"].strip(): col["id"] for col in cols}
         self.columns = {
-            col["label"].strip(): get_field(col) for col in cols if col["label"].strip()
+            col["label"].strip(): get_field(col, self._timezone)
+            for col in cols
+            if col["label"].strip()
         }
 
     def get_columns(self) -> Dict[str, Field]:
@@ -374,5 +454,95 @@ class GSheetsAPI(Adapter):
             for row in payload["table"]["rows"]
         ]
         for i, row in enumerate(rows):
+            self.row_ids[i] = row
             row["rowid"] = i
             yield row
+
+    def insert_data(self, row: Row) -> int:
+        row_id: Optional[int] = row.pop("rowid")
+        if row_id is None:
+            row_id = max(self.row_ids.keys()) + 1 if self.row_ids else 0
+        self.row_ids[row_id] = row
+
+        session = self._get_session()
+        body = {
+            "range": self._sheet_name,
+            "majorDimension": "ROWS",
+            "values": [
+                [row[column] for column in self.columns],
+            ],
+        }
+        response = session.post(
+            (
+                "https://sheets.googleapis.com/v4/spreadsheets/"
+                f"{self._spreadsheet_id}/values/{self._sheet_name}:append"
+            ),
+            json=body,
+            params={
+                # https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append
+                "valueInputOption": "USER_ENTERED",
+            },
+        )
+        payload = response.json()
+        if "error" in payload:
+            raise ProgrammingError(payload["error"]["message"])
+
+        return row_id
+
+    def _find_row_number(self, row: Row) -> int:
+        """
+        Return the 0-indexed number of a given row, defined by its values.
+        """
+        values = [row[column] for column in self.columns]
+
+        session = self._get_session()
+        response = session.get(
+            f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
+            f"/values/{self._sheet_name}",
+            params={"valueRenderOption": "UNFORMATTED_VALUE"},
+        )
+        payload = response.json()
+        if "error" in payload:
+            raise ProgrammingError(payload["error"]["message"])
+
+        for i, row_values in enumerate(payload["values"]):
+            if row_values == values:
+                return i
+
+        raise ProgrammingError(f"Could not find row: {row}")
+
+    def delete_data(self, row_id: int) -> None:
+        if row_id not in self.row_ids:
+            raise ProgrammingError(f"Invalid row to delete: {row_id}")
+
+        row = self.row_ids[row_id]
+        row_number = self._find_row_number(row)
+
+        session = self._get_session()
+        body = {
+            "requests": [
+                {
+                    "deleteDimension": {
+                        "range": {
+                            "sheetId": self._sheet_id,
+                            "dimension": "ROWS",
+                            "startIndex": row_number,
+                            "endIndex": row_number + 1,
+                        },
+                    },
+                },
+            ],
+        }
+        response = session.post(
+            (
+                "https://sheets.googleapis.com/v4/spreadsheets/"
+                f"{self._spreadsheet_id}:batchUpdate"
+            ),
+            json=body,
+        )
+        payload = response.json()
+        if "error" in payload:
+            raise ProgrammingError(payload["error"]["message"])
+
+        # only delete row_id on a successful request
+        del self.row_ids[row_id]

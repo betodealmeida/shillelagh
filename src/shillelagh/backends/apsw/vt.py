@@ -53,7 +53,7 @@ def convert_rows_to_sqlite(
     the conversion (not the adapter fields).
     """
     converters = {
-        column_name: type_map[column_field.type].format
+        column_name: type_map[column_field.type]().format
         for column_name, column_field in columns.items()
     }
     converters["rowid"] = Integer().format
@@ -76,7 +76,7 @@ def convert_rows_from_sqlite(
     the conversion (not the adapter fields).
     """
     converters = {
-        column_name: type_map[column_field.type].parse
+        column_name: type_map[column_field.type]().parse
         for column_name, column_field in columns.items()
     }
     converters["rowid"] = Integer().parse
@@ -232,7 +232,7 @@ class VTCursor:
             column_type = columns[column_name]
 
             # convert constraint to native Python type, then to DB specific type
-            constraint = type_map[column_type.type].parse(constraint)
+            constraint = type_map[column_type.type]().parse(constraint)
             value = column_type.format(constraint)
 
             all_bounds[column_name].add((operator, value))
