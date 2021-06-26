@@ -7,6 +7,7 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
+from shillelagh.adapters.api.weatherapi import NativeDateTime
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.fields import DateTime
@@ -25,7 +26,7 @@ from ..fakes import FakeEntryPoint
 
 class FakeAdapterWithDateTime(FakeAdapter):
 
-    birthday = DateTime(filters=[Range], order=Order.ANY, exact=True)
+    birthday = NativeDateTime(filters=[Range], order=Order.ANY, exact=True)
 
     data: List[Row] = []
 
@@ -78,7 +79,7 @@ def test_adapter_get_rows():
     assert list(data) == [
         {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
         {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
-        {"rowid": 2, "name": "Charlie", "age": 6, "pets": "1"},
+        {"rowid": 2, "name": "Charlie", "age": 6.0, "pets": 1},
     ]
 
     data = adapter.get_rows({}, [])
@@ -168,14 +169,22 @@ def test_type_conversion(mocker):
         ),
     ]
 
-    # make sure datetime is stored as a string
+    # make sure datetime is stored as a datetime
     assert FakeAdapterWithDateTime.data == [
         {
             "age": None,
-            "birthday": "2021-01-01T00:00:00+00:00",
+            "birthday": datetime(2021, 1, 1, 0, 0, tzinfo=timezone.utc),
             "name": None,
             "pets": None,
             "rowid": 1,
         },
     ]
-    assert isinstance(FakeAdapterWithDateTime.data[0]["birthday"], str)
+    assert isinstance(FakeAdapterWithDateTime.data[0]["birthday"], datetime)
+
+    cursor.execute(
+        'SELECT * FROM "dummy://" WHERE birthday > ?',
+        (datetime(2020, 12, 31, 0, 0),),
+    )
+    assert cursor.fetchall() == [
+        (None, datetime(2021, 1, 1, 0, 0, tzinfo=timezone.utc), None, None),
+    ]

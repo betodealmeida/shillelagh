@@ -18,6 +18,7 @@ from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.fields import Integer
 from shillelagh.fields import Order
+from shillelagh.fields import type_map
 from shillelagh.filters import Filter
 from shillelagh.filters import Operator
 from shillelagh.lib import deserialize
@@ -37,25 +38,53 @@ operator_map = {
 }
 
 
-def convert_value(value: Any) -> SQLiteValidType:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, (int, float, str, bytes, type(None))):
-        return value
-    if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
-        return value.isoformat()
-    return str(value)
+SQLiteRow = Dict[str, SQLiteValidType]
 
 
-def convert_rows(rows: Iterator[Row]) -> Iterator[Row]:
+def convert_rows_to_sqlite(
+    columns: Dict[str, Field],
+    rows: Iterator[Row],
+) -> Iterator[SQLiteRow]:
     """
-    Convert row types to types understood by SQLite.
+    Convert values from native Python types to SQLite types.
 
     Native Python types like `datetime.datetime` are not supported by SQLite; instead
-    we need to cast them to strings or numbers.
+    we need to cast them to strings or numbers. We use the original fields to handle
+    the conversion (not the adapter fields).
     """
+    converters = {
+        column_name: type_map[column_field.type].format
+        for column_name, column_field in columns.items()
+    }
+    converters["rowid"] = Integer().format
     for row in rows:
-        yield {column_name: convert_value(value) for column_name, value in row.items()}
+        yield {
+            column_name: converters[column_name](value)
+            for column_name, value in row.items()
+        }
+
+
+def convert_rows_from_sqlite(
+    columns: Dict[str, Field],
+    rows: Iterator[SQLiteRow],
+) -> Iterator[Row]:
+    """
+    Convert values from SQLite types to native Python types.
+
+    Native Python types like `datetime.datetime` are not supported by SQLite; instead
+    we need to cast them to strings or numbers. We use the original fields to handle
+    the conversion (not the adapter fields).
+    """
+    converters = {
+        column_name: type_map[column_field.type].parse
+        for column_name, column_field in columns.items()
+    }
+    converters["rowid"] = Integer().parse
+    for row in rows:
+        yield {
+            column_name: converters[column_name](value)
+            for column_name, value in row.items()
+        }
 
 
 class VTModule:
@@ -150,11 +179,10 @@ class VTTable:
 
     def UpdateInsertRow(self, rowid: Optional[int], fields: Tuple[Any, ...]) -> int:
         columns = self.adapter.get_columns()
-        row = {
-            column_name: column_field.parse(field)
-            for field, (column_name, column_field) in zip(fields, columns.items())
-        }
+
+        row = {column_name: field for field, column_name in zip(fields, columns.keys())}
         row["rowid"] = rowid
+        row = next(convert_rows_from_sqlite(columns, iter([row])))
 
         return cast(int, self.adapter.insert_row(row))
 
@@ -168,11 +196,10 @@ class VTTable:
         fields: Tuple[Any, ...],
     ) -> None:
         columns = self.adapter.get_columns()
-        row = {
-            column_name: column_field.parse(field)
-            for field, (column_name, column_field) in zip(fields, columns.items())
-        }
+
+        row = {column_name: field for field, column_name in zip(fields, columns.keys())}
         row["rowid"] = newrowid
+        row = next(convert_rows_from_sqlite(columns, iter([row])))
 
         self.adapter.update_row(rowid, row)
 
@@ -203,7 +230,11 @@ class VTCursor:
             operator = operator_map[sqlite_index_constraint]
             column_name = column_names[column_index]
             column_type = columns[column_name]
-            value = column_type.parse(constraint)
+
+            # convert constraint to native Python type, then to DB specific type
+            constraint = type_map[column_type.type].parse(constraint)
+            value = column_type.format(constraint)
+
             all_bounds[column_name].add((operator, value))
 
         # find the filter that works with all the operations and build it
@@ -226,7 +257,8 @@ class VTCursor:
             for column_index, descending in orderbys
         ]
 
-        rows = convert_rows(self.adapter.get_rows(bounds, order))
+        rows = self.adapter.get_rows(bounds, order)
+        rows = convert_rows_to_sqlite(columns, rows)
         self.data = (
             tuple(row[name] for name in ["rowid"] + column_names) for row in rows
         )

@@ -1,6 +1,6 @@
+import datetime
 import re
 import urllib.parse
-from datetime import datetime
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -13,6 +13,7 @@ import pytest
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.db import Connection
+from shillelagh.backends.apsw.db import convert_binding
 from shillelagh.backends.apsw.db import Cursor
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
@@ -81,7 +82,10 @@ def test_execute_with_native_parameters(mocker):
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
-    cursor.execute('SELECT * FROM "dummy://" WHERE name = ?', (datetime.now(),))
+    cursor.execute(
+        'SELECT * FROM "dummy://" WHERE name = ?',
+        (datetime.datetime.now(),),
+    )
     assert cursor.fetchall() == []
     assert cursor.rowcount == -1  # can't determine
 
@@ -294,3 +298,24 @@ def test_connect_safe(mocker):
 
     connection = connect(":memory:", ["dummy"], safe=True, isolation_level="IMMEDIATE")
     assert connection._adapters == []
+
+
+def test_convert_binding():
+    assert convert_binding(1) == 1
+    assert convert_binding(1.0) == 1.0
+    assert convert_binding("test") == "test"
+    assert convert_binding(None) is None
+    assert convert_binding(datetime.datetime(2021, 1, 1)) == "2021-01-01T00:00:00"
+    assert convert_binding(datetime.date(2021, 1, 1)) == "2021-01-01"
+    assert convert_binding(datetime.time(12, 0, 0)) == "12:00:00"
+    assert (
+        convert_binding(datetime.datetime(2021, 1, 1, tzinfo=datetime.timezone.utc))
+        == "2021-01-01T00:00:00+00:00"
+    )
+    assert (
+        convert_binding(datetime.time(12, 0, 0, tzinfo=datetime.timezone.utc))
+        == "12:00:00+00:00"
+    )
+    assert convert_binding(True) == 1
+    assert convert_binding(False) == 0
+    assert convert_binding({}) == "{}"
