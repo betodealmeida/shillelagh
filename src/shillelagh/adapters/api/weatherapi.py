@@ -5,6 +5,7 @@ from datetime import timedelta
 from typing import Dict
 from typing import Iterator
 from typing import List
+from typing import Optional
 from typing import Tuple
 
 import dateutil.parser
@@ -23,11 +24,19 @@ from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
 
 
+class NativeDateTime(DateTime):
+    @staticmethod
+    def parse(value: Optional[datetime]) -> Optional[datetime]:
+        return value
+
+    format = parse  # type: ignore
+
+
 class WeatherAPI(Adapter):
 
     safe = True
 
-    time = DateTime(filters=[Range], order=Order.ASCENDING, exact=False)
+    time = NativeDateTime(filters=[Range], order=Order.ASCENDING, exact=False)
     time_epoch = Float(filters=[Range], order=Order.ASCENDING, exact=False)
     temp_c = Float()
     temp_f = Float()
@@ -135,12 +144,8 @@ class WeatherAPI(Adapter):
                 columns = self.get_columns()
                 for record in hourly_data:
                     row = {column: record[column] for column in columns}
-                    row["time"] = (
-                        dateutil.parser.parse(record["time"])
-                        .replace(
-                            tzinfo=tz,
-                        )
-                        .isoformat()
+                    row["time"] = dateutil.parser.parse(record["time"]).replace(
+                        tzinfo=tz,
                     )
                     row["rowid"] = int(row["time_epoch"])
                     yield row

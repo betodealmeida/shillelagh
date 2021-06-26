@@ -230,7 +230,11 @@ class VTCursor:
             operator = operator_map[sqlite_index_constraint]
             column_name = column_names[column_index]
             column_type = columns[column_name]
-            value = column_type.parse(constraint)
+
+            # convert constraint to native Python type, then to DB specific type
+            constraint = type_map[column_type.type].parse(constraint)
+            value = column_type.format(constraint)
+
             all_bounds[column_name].add((operator, value))
 
         # find the filter that works with all the operations and build it
