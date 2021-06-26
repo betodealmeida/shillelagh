@@ -62,8 +62,10 @@ def test_blob():
     assert Blob.parse(b"test") == b"test"
     assert Blob.parse(None) is None
     assert Blob.quote(b"\x00") == "X'00'"
-    assert Blob.format(b"test") == b"test"
+    assert Blob.format(b"test") == "74657374"
     assert Blob.format(None) is None
+    assert Blob.format("test") == "74657374"
+    assert Blob.format(1) == "31"
 
 
 def test_date():
@@ -148,7 +150,7 @@ def test_boolean():
     assert Boolean.parse(None) is None
     assert Boolean.quote(True) == "TRUE"
     assert Boolean.quote(False) == "FALSE"
-    assert Boolean.format(True) is True
+    assert Boolean.format(True) == "TRUE"
     assert Boolean.format(None) is None
 
 

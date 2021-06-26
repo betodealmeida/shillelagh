@@ -1,3 +1,4 @@
+import datetime
 import itertools
 import json
 import urllib.parse
@@ -16,7 +17,6 @@ from typing import TypeVar
 import apsw
 from pkg_resources import iter_entry_points
 from shillelagh.adapters.base import Adapter
-from shillelagh.backends.apsw.vt import convert_value
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import Error
 from shillelagh.exceptions import NotSupportedError
@@ -28,6 +28,7 @@ from shillelagh.lib import combine_args_kwargs
 from shillelagh.lib import quote
 from shillelagh.lib import serialize
 from shillelagh.types import Description
+from shillelagh.types import SQLiteValidType
 
 apilevel = "2.0"
 threadsafety = 2
@@ -67,6 +68,22 @@ def check_result(method: F) -> F:
 
 def get_type_code(type_name: str) -> Type[Field]:
     return type_map.get(type_name, Blob)
+
+
+def convert_binding(binding: Any) -> SQLiteValidType:
+    """
+    Convert a binding to a SQLite type.
+
+    Eg, if the user is filtering a timestamp column we need to convert the
+    `datetime.datetime` object in the binding to a string.
+    """
+    if isinstance(binding, bool):
+        return int(binding)
+    if isinstance(binding, (int, float, str, bytes, type(None))):
+        return binding
+    if isinstance(binding, (datetime.datetime, datetime.date, datetime.time)):
+        return binding.isoformat()
+    return str(binding)
 
 
 class Cursor(object):
@@ -136,7 +153,7 @@ class Cursor(object):
 
         # convert parameters (bindings) to types accepted by SQLite
         if parameters:
-            parameters = tuple(convert_value(parameter) for parameter in parameters)
+            parameters = tuple(convert_binding(parameter) for parameter in parameters)
 
         # this is where the magic happens: instead of forcing users to register
         # their virtual tables explicitly, we do it for them when they first try
@@ -162,9 +179,12 @@ class Cursor(object):
         if not self.description:
             return
 
-        # convert from SQLite types (ISO string for datetime, eg) to native Python types
         for row in cursor:
-            yield tuple(desc[1].parse(col) for col, desc in zip(row, self.description))
+            yield tuple(
+                # convert from SQLite types to native Python types
+                type_map[desc[1].type].parse(col)
+                for col, desc in zip(row, self.description)
+            )
 
     def _create_table(self, uri: str) -> None:
         for adapter in self._adapters:

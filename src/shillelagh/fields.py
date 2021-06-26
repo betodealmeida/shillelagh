@@ -7,12 +7,9 @@ from typing import cast
 from typing import List
 from typing import Optional
 from typing import Type
-from typing import TypeVar
 
 import dateutil.parser
 from shillelagh.filters import Filter
-
-T = TypeVar("T")
 
 
 class Order(Enum):
@@ -32,6 +29,10 @@ class Order(Enum):
 
 class Field:
 
+    """
+    Represents a column in a table.
+    """
+
     type = ""
     db_api_type = "DBAPIType"
 
@@ -41,8 +42,14 @@ class Field:
         order: Order = Order.NONE,
         exact: bool = False,
     ):
+        # a list of what kind of filters can be used on the column
         self.filters = filters or []
+
+        # the ordering of the column
         self.order = order
+
+        # are the results returned for the column exact or do they require
+        # additional post-processing?
         self.exact = exact
 
     def __eq__(self, other: Any) -> bool:
@@ -57,17 +64,48 @@ class Field:
 
     @staticmethod
     def parse(value: Any) -> Any:
+        """
+        Convert from a DB type to a native Python type.
+
+        Some databases might represent booleans as integers, or timestamps
+        as strings. To convert those values to native Python types we call
+        the `parse` method in the field associated with the column.
+
+        The default methods are compliant with SQLite types, with booleans
+        represented as numbers, and time related types as strings. Custom
+        adapters can defined their own derived fields to handle special
+        formats.
+
+        Eg, the Google Sheets API returns dates as strings in its response,
+        using the format "Date(2018,0,1)" for "2018-01-01". A custom field
+        allows the adapter to simply return the original value, and have it
+        being automatically converted to a `datetime.date` object.
+        """
         raise NotImplementedError("Subclasses must implement `parse`")
 
     @staticmethod
     def format(value: Any) -> Any:
-        if value is None:
-            return None
+        """
+        Convert from a native Python type to a DB type.
 
-        return value
+        This should be the opposite of `parse`.
+        """
+        raise NotImplementedError("Subclasses must implement `format`")
 
     @staticmethod
     def quote(value: Any) -> str:
+        """
+        Quote values.
+
+        This method is used by some adapters to build a SQL expression.
+        Eg, Google Sheets represents dates (and other time related types)
+        with a prefix "date":
+
+            SELECT A, B WHERE C = date '2018-01-01'
+
+        In orded to handle that, the adapter defines its own time fields
+        with custom `quote` methods.
+        """
         raise NotImplementedError("Subclasses must implement `quote`")
 
 
@@ -81,6 +119,8 @@ class Integer(Field):
             return None
 
         return int(value)
+
+    format = parse
 
     @staticmethod
     def quote(value: Any) -> str:
@@ -98,6 +138,8 @@ class Float(Field):
 
         return float(value)
 
+    format = parse
+
     @staticmethod
     def quote(value: Any) -> str:
         return str(value)
@@ -113,6 +155,8 @@ class String(Field):
             return None
 
         return str(value)
+
+    format = parse
 
     @staticmethod
     def quote(value: Any) -> str:
@@ -148,7 +192,8 @@ class Date(Field):
 
     @staticmethod
     def quote(value: Any) -> str:
-        return f"'{value.isoformat()}'"
+        formatted_value = Date.format(value)
+        return f"'{formatted_value}'"
 
 
 class Time(Field):
@@ -179,7 +224,8 @@ class Time(Field):
 
     @staticmethod
     def quote(value: Any) -> str:
-        return f"'{value.isoformat()}'"
+        formatted_value = Time.format(value)
+        return f"'{formatted_value}'"
 
 
 class DateTime(Field):
@@ -210,7 +256,8 @@ class DateTime(Field):
 
     @staticmethod
     def quote(value: Any) -> str:
-        return f"'{value.isoformat()}'"
+        formatted_value = DateTime.format(value)
+        return f"'{formatted_value}'"
 
 
 class Blob(Field):
@@ -218,12 +265,29 @@ class Blob(Field):
     db_api_type = "BINARY"
 
     @staticmethod
-    def parse(value: T) -> T:
-        return value
+    def parse(value: Any) -> Any:
+        if value is None:
+            return None
+
+        try:
+            return bytes.fromhex(value)
+        except Exception:
+            return value
+
+    @staticmethod
+    def format(value: Any) -> Optional[str]:
+        if value is None:
+            return None
+
+        if not isinstance(value, bytes):
+            value = str(value).encode("utf-8")
+
+        return cast(str, value.hex())
 
     @staticmethod
     def quote(value: bytes) -> str:
-        return f"X'{value.hex()}'"
+        formatted_value = Blob.format(value)
+        return f"X'{formatted_value}'"
 
 
 class Boolean(Field):
@@ -240,8 +304,15 @@ class Boolean(Field):
         return bool(strtobool(str(value)))
 
     @staticmethod
-    def quote(value: Any) -> str:
+    def format(value: Optional[bool]) -> Optional[str]:
+        if value is None:
+            return None
+
         return "TRUE" if value else "FALSE"
+
+    @staticmethod
+    def quote(value: Any) -> str:
+        return cast(str, Boolean.format(value))
 
 
 type_map = {

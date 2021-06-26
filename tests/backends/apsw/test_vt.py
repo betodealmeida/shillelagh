@@ -7,7 +7,8 @@ from typing import Optional
 import apsw
 import pytest
 from shillelagh.adapters.base import Adapter
-from shillelagh.backends.apsw.vt import convert_value
+from shillelagh.backends.apsw.vt import convert_rows_from_sqlite
+from shillelagh.backends.apsw.vt import convert_rows_to_sqlite
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.backends.apsw.vt import VTTable
 from shillelagh.exceptions import ProgrammingError
@@ -16,6 +17,7 @@ from shillelagh.fields import Float
 from shillelagh.fields import Integer
 from shillelagh.fields import Order
 from shillelagh.fields import String
+from shillelagh.fields import type_map
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
@@ -195,7 +197,7 @@ def test_update_change_row():
     table.UpdateChangeRow(1, 2, [24, "Bob", 4])
     assert list(adapter.get_data({}, [])) == [
         {"age": 20, "name": "Alice", "pets": 0, "rowid": 0},
-        {"age": 24, "name": "Bob", "pets": 4, "rowid": 2},
+        {"age": 24.0, "name": "Bob", "pets": 4, "rowid": 2},
     ]
 
 
@@ -268,22 +270,109 @@ def test_adapter_with_no_columns():
     assert str(excinfo.value) == "Virtual table table has no columns"
 
 
-def test_convert_value():
-    assert convert_value(1) == 1
-    assert convert_value(1.0) == 1.0
-    assert convert_value("test") == "test"
-    assert convert_value(None) is None
-    assert convert_value(datetime.datetime(2021, 1, 1)) == "2021-01-01T00:00:00"
-    assert convert_value(datetime.date(2021, 1, 1)) == "2021-01-01"
-    assert convert_value(datetime.time(12, 0, 0)) == "12:00:00"
-    assert (
-        convert_value(datetime.datetime(2021, 1, 1, tzinfo=datetime.timezone.utc))
-        == "2021-01-01T00:00:00+00:00"
-    )
-    assert (
-        convert_value(datetime.time(12, 0, 0, tzinfo=datetime.timezone.utc))
-        == "12:00:00+00:00"
-    )
-    assert convert_value(True) == 1
-    assert convert_value(False) == 0
-    assert convert_value({}) == "{}"
+def test_convert_rows_to_sqlite():
+    rows = [
+        {
+            "INTEGER": 1,
+            "REAL": 1.0,
+            "TEXT": "test",
+            "TIMESTAMP": datetime.datetime(
+                2021,
+                1,
+                1,
+                0,
+                0,
+                tzinfo=datetime.timezone.utc,
+            ),
+            "DATE": datetime.date(2021, 1, 1),
+            "TIME": datetime.time(0, 0, tzinfo=datetime.timezone.utc),
+            "BOOLEAN": True,
+            "BLOB": b"test",
+        },
+        {
+            "INTEGER": None,
+            "REAL": None,
+            "TEXT": None,
+            "TIMESTAMP": None,
+            "DATE": None,
+            "TIME": None,
+            "BOOLEAN": None,
+            "BLOB": None,
+        },
+    ]
+    assert list(convert_rows_to_sqlite(type_map, iter(rows))) == [
+        {
+            "INTEGER": 1,
+            "REAL": 1.0,
+            "TEXT": "test",
+            "TIMESTAMP": "2021-01-01T00:00:00+00:00",
+            "DATE": "2021-01-01",
+            "TIME": "00:00:00+00:00",
+            "BOOLEAN": "TRUE",
+            "BLOB": "74657374",
+        },
+        {
+            "INTEGER": None,
+            "REAL": None,
+            "TEXT": None,
+            "TIMESTAMP": None,
+            "DATE": None,
+            "TIME": None,
+            "BOOLEAN": None,
+            "BLOB": None,
+        },
+    ]
+
+
+def test_convert_rows_from_sqlite():
+    rows = [
+        {
+            "INTEGER": 1,
+            "REAL": 1.0,
+            "TEXT": "test",
+            "TIMESTAMP": "2021-01-01T00:00:00+00:00",
+            "DATE": "2021-01-01",
+            "TIME": "00:00:00+00:00",
+            "BOOLEAN": "TRUE",
+            "BLOB": "74657374",
+        },
+        {
+            "INTEGER": None,
+            "REAL": None,
+            "TEXT": None,
+            "TIMESTAMP": None,
+            "DATE": None,
+            "TIME": None,
+            "BOOLEAN": None,
+            "BLOB": None,
+        },
+    ]
+    assert list(convert_rows_from_sqlite(type_map, iter(rows))) == [
+        {
+            "INTEGER": 1,
+            "REAL": 1.0,
+            "TEXT": "test",
+            "TIMESTAMP": datetime.datetime(
+                2021,
+                1,
+                1,
+                0,
+                0,
+                tzinfo=datetime.timezone.utc,
+            ),
+            "DATE": datetime.date(2021, 1, 1),
+            "TIME": datetime.time(0, 0, tzinfo=datetime.timezone.utc),
+            "BOOLEAN": True,
+            "BLOB": b"test",
+        },
+        {
+            "INTEGER": None,
+            "REAL": None,
+            "TEXT": None,
+            "TIMESTAMP": None,
+            "DATE": None,
+            "TIME": None,
+            "BOOLEAN": None,
+            "BLOB": None,
+        },
+    ]

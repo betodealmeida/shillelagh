@@ -78,7 +78,7 @@ def test_adapter_get_rows():
     assert list(data) == [
         {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
         {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
-        {"rowid": 2, "name": "Charlie", "age": 6, "pets": "1"},
+        {"rowid": 2, "name": "Charlie", "age": 6.0, "pets": 1},
     ]
 
     data = adapter.get_rows({}, [])
