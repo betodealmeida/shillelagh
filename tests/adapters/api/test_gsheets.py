@@ -10,12 +10,14 @@ import requests_mock
 from freezegun import freeze_time
 from shillelagh.adapters.api.gsheets import format_error_message
 from shillelagh.adapters.api.gsheets import get_credentials
+from shillelagh.adapters.api.gsheets import get_sync_mode
 from shillelagh.adapters.api.gsheets import get_url
 from shillelagh.adapters.api.gsheets import GSheetsAPI
 from shillelagh.adapters.api.gsheets import GSheetsBoolean
 from shillelagh.adapters.api.gsheets import GSheetsDate
 from shillelagh.adapters.api.gsheets import GSheetsDateTime
 from shillelagh.adapters.api.gsheets import GSheetsTime
+from shillelagh.adapters.api.gsheets import SyncMode
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
@@ -116,6 +118,23 @@ def simple_sheet_adapter():
                 },
             ],
             "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1/edit?ouid=111430789371895352716&urlBuilderDomain=dealmeida.net",
+        },
+    )
+    adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        json={
+            "range": "'Sheet1'!A1:Z983",
+            "majorDimension": "ROWS",
+            "values": [
+                ["country", "cnt"],
+                ["BR", 1],
+                ["BR", 3],
+                ["IN", 5],
+                ["ZA", 6],
+                ["UK", 10],
+                ["PY", 11],
+            ],
         },
     )
     yield adapter
@@ -1226,23 +1245,6 @@ def test_delete_data(mocker, simple_sheet_adapter):
         return_value=session,
     )
     simple_sheet_adapter.register_uri(
-        "GET",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
-        json={
-            "range": "'Sheet1'!A1:Z983",
-            "majorDimension": "ROWS",
-            "values": [
-                ["country", "cnt"],
-                ["BR", 1],
-                ["BR", 3],
-                ["IN", 5],
-                ["ZA", 6],
-                ["UK", 10],
-                ["PY", 11],
-            ],
-        },
-    )
-    simple_sheet_adapter.register_uri(
         "POST",
         "https://sheets.googleapis.com/v4/spreadsheets/1:batchUpdate",
         json={"spreadsheetId": "1", "replies": [{}]},
@@ -1325,23 +1327,6 @@ def test_update_data(mocker, simple_sheet_adapter):
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
         return_value=session,
-    )
-    simple_sheet_adapter.register_uri(
-        "GET",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
-        json={
-            "range": "'Sheet1'!A1:Z983",
-            "majorDimension": "ROWS",
-            "values": [
-                ["country", "cnt"],
-                ["BR", 1],
-                ["BR", 3],
-                ["IN", 5],
-                ["ZA", 6],
-                ["UK", 10],
-                ["PY", 11],
-            ],
-        },
     )
     simple_sheet_adapter.register_uri(
         "PUT",
@@ -1439,3 +1424,289 @@ def test_update_data(mocker, simple_sheet_adapter):
     with pytest.raises(ProgrammingError) as excinfo:
         gsheets_adapter.update_row(3, {"cnt": 13.0, "country": "PL"})
     assert str(excinfo.value) == "Requested entity was not found."
+
+
+def test_get_sync_mode():
+    assert get_sync_mode("https://docs.google.com/spreadsheets/d/1/edit#gid=42") is None
+    assert (
+        get_sync_mode(
+            "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=BATCH#gid=42",
+        )
+        == SyncMode.BATCH
+    )
+    assert (
+        get_sync_mode(
+            "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=1#gid=42",
+        )
+        == SyncMode.BIDIRECTIONAL
+    )
+    with pytest.raises(ProgrammingError) as excinfo:
+        get_sync_mode(
+            "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=0#gid=42",
+        )
+    assert str(excinfo.value) == "Invalid sync mode: 0"
+    with pytest.raises(ProgrammingError) as excinfo:
+        get_sync_mode(
+            "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=INVALID#gid=42",
+        )
+    assert str(excinfo.value) == "Invalid sync mode: INVALID"
+
+
+def test_batch_sync_mode(mocker, simple_sheet_adapter):
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value="SECRET",
+    )
+
+    session = requests.Session()
+    session.mount("https://", simple_sheet_adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    update = simple_sheet_adapter.register_uri(
+        "PUT",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueInputOption=USER_ENTERED",
+        json={
+            "spreadsheetId": "1",
+            "tableRange": "'Sheet1'!A1:F10",
+            "updates": {
+                "spreadsheetId": "1",
+                "updatedRange": "'Sheet1!A11",
+                "updatedRows": 1,
+                "updatedColumns": 1,
+                "updatedCells": 1,
+            },
+        },
+    )
+    get_values = simple_sheet_adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        json={
+            "range": "'Sheet1'!A1:Z983",
+            "majorDimension": "ROWS",
+            "values": [
+                ["country", "cnt"],
+                ["BR", 1],
+                ["BR", 3],
+                ["IN", 5],
+                ["ZA", 6],
+                ["UK", 10],
+                ["PY", 11],
+            ],
+        },
+    )
+
+    gsheets_adapter = GSheetsAPI(
+        "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=BATCH",
+        "XXX",
+    )
+
+    assert gsheets_adapter._values is None
+
+    row_id = gsheets_adapter.insert_row({"country": "UK", "cnt": 10, "rowid": None})
+    assert gsheets_adapter._values == [
+        ["country", "cnt"],
+        ["BR", 1],
+        ["BR", 3],
+        ["IN", 5],
+        ["ZA", 6],
+        ["UK", 10],
+        ["PY", 11],
+        ["UK", 10.0],
+    ]
+
+    gsheets_adapter.update_row(row_id, {"country": "UK", "cnt": 11, "rowid": row_id})
+    assert gsheets_adapter._values == [
+        ["country", "cnt"],
+        ["BR", 1],
+        ["BR", 3],
+        ["IN", 5],
+        ["ZA", 6],
+        ["UK", 11.0],
+        ["PY", 11],
+        ["UK", 10.0],
+    ]
+
+    gsheets_adapter.delete_row(row_id)
+    assert gsheets_adapter._values == [
+        ["country", "cnt"],
+        ["BR", 1],
+        ["BR", 3],
+        ["IN", 5],
+        ["ZA", 6],
+        ["PY", 11],
+        ["UK", 10.0],
+    ]
+
+    # test that get_values was called only once
+    assert get_values.call_count == 1
+
+    # test that changes haven't been pushed yet
+    assert update.call_count == 0
+    assert update.last_request is None
+
+    gsheets_adapter.close()
+
+    # test that changes have been pushed
+    assert update.call_count == 1
+    assert update.last_request.json() == {
+        "range": "Sheet1",
+        "majorDimension": "ROWS",
+        "values": [
+            ["country", "cnt"],
+            ["BR", 1],
+            ["BR", 3],
+            ["IN", 5],
+            ["ZA", 6],
+            ["PY", 11],
+            ["UK", 10.0],
+        ],
+    }
+
+    simple_sheet_adapter.register_uri(
+        "PUT",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueInputOption=USER_ENTERED",
+        json={
+            "error": {
+                "code": 404,
+                "message": "Requested entity was not found.",
+                "status": "NOT_FOUND",
+            },
+        },
+    )
+
+    _logger = mocker.patch("shillelagh.adapters.api.gsheets._logger")
+    gsheets_adapter = GSheetsAPI(
+        "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=BATCH",
+        "XXX",
+    )
+    gsheets_adapter._values = []
+    gsheets_adapter.modified = True
+    with pytest.raises(ProgrammingError) as excinfo:
+        gsheets_adapter.close()
+    assert str(excinfo.value) == "Requested entity was not found."
+    _logger.warning.assert_called_with(
+        "Unable to commit batch changes: %s",
+        "Requested entity was not found.",
+    )
+    # prevent atexit from running
+    gsheets_adapter.modified = False
+
+
+def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value="SECRET",
+    )
+
+    session = requests.Session()
+    session.mount("https://", simple_sheet_adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    insert = simple_sheet_adapter.register_uri(
+        "POST",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1:append?valueInputOption=USER_ENTERED",
+        json={
+            "spreadsheetId": "1",
+            "tableRange": "'Sheet1'!A1:F10",
+            "updates": {
+                "spreadsheetId": "1",
+                "updatedRange": "'Sheet1!A11",
+                "updatedRows": 1,
+                "updatedColumns": 1,
+                "updatedCells": 1,
+            },
+        },
+    )
+    update = simple_sheet_adapter.register_uri(
+        "PUT",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1!A6?valueInputOption=USER_ENTERED",
+        json={
+            "spreadsheetId": "1",
+            "tableRange": "'Sheet1'!A1:F10",
+            "updates": {
+                "spreadsheetId": "1",
+                "updatedRange": "'Sheet1!A11",
+                "updatedRows": 1,
+                "updatedColumns": 1,
+                "updatedCells": 1,
+            },
+        },
+    )
+    get_values = simple_sheet_adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        json={
+            "range": "'Sheet1'!A1:Z983",
+            "majorDimension": "ROWS",
+            "values": [
+                ["country", "cnt"],
+                ["BR", 1],
+                ["BR", 3],
+                ["IN", 5],
+                ["ZA", 6],
+                ["UK", 10],
+                ["PY", 11],
+            ],
+        },
+    )
+    delete = simple_sheet_adapter.register_uri(
+        "POST",
+        "https://sheets.googleapis.com/v4/spreadsheets/1:batchUpdate",
+        json={"spreadsheetId": "1", "replies": [{}]},
+    )
+
+    gsheets_adapter = GSheetsAPI(
+        "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=2",
+        "XXX",
+    )
+
+    assert gsheets_adapter._values is None
+
+    row_id = gsheets_adapter.insert_row({"country": "UK", "cnt": 10, "rowid": None})
+    assert gsheets_adapter._values == [
+        ["country", "cnt"],
+        ["BR", 1],
+        ["BR", 3],
+        ["IN", 5],
+        ["ZA", 6],
+        ["UK", 10],
+        ["PY", 11],
+        ["UK", 10.0],
+    ]
+
+    gsheets_adapter.update_row(row_id, {"country": "UK", "cnt": 11, "rowid": row_id})
+    assert gsheets_adapter._values == [
+        ["country", "cnt"],
+        ["BR", 1],
+        ["BR", 3],
+        ["IN", 5],
+        ["ZA", 6],
+        ["UK", 11.0],
+        ["PY", 11],
+        ["UK", 10.0],
+    ]
+
+    gsheets_adapter.delete_row(row_id)
+    assert gsheets_adapter._values == [
+        ["country", "cnt"],
+        ["BR", 1],
+        ["BR", 3],
+        ["IN", 5],
+        ["ZA", 6],
+        ["PY", 11],
+        ["UK", 10.0],
+    ]
+
+    # test that get_values was called only once
+    assert get_values.call_count == 1
+
+    # test that changes were pushed
+    assert insert.call_count == 1
+    assert update.call_count == 1
+    assert delete.call_count == 1
+
+    gsheets_adapter.close()

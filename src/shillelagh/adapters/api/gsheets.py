@@ -53,7 +53,7 @@ JSON_PAYLOAD_PREFIX = ")]}'\n"
 
 
 class SyncMode(Enum):
-    # all changes are pushed immediately, and the spreasheet is downloaded
+    # all changes are pushed immediately, and the spreadsheet is downloaded
     # before every UPDATE/DELETE
     BIDIRECTIONAL = 1
 
@@ -278,6 +278,24 @@ def get_url(
     )
 
 
+def get_sync_mode(uri: str) -> Optional[SyncMode]:
+    parts = urllib.parse.urlparse(uri)
+    qs = urllib.parse.parse_qs(parts.query)
+    if "sync_mode" not in qs:
+        return None
+
+    parameter = qs["sync_mode"][-1]
+    try:
+        sync_mode = SyncMode[parameter]
+    except KeyError:
+        try:
+            sync_mode = SyncMode(int(parameter))
+        except ValueError as ex:
+            raise ProgrammingError(f"Invalid sync mode: {parameter}") from ex
+
+    return sync_mode
+
+
 def get_credentials(
     access_token: Optional[str],
     service_account_file: Optional[str],
@@ -340,7 +358,7 @@ class GSheetsAPI(Adapter):
             subject,
         )
 
-        self._sync_mode = SyncMode.BIDIRECTIONAL
+        self._sync_mode = get_sync_mode(uri) or SyncMode.BIDIRECTIONAL
         self._values: Optional[List[List[Any]]] = None
 
         self._offset = 0
