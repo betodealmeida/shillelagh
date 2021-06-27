@@ -1312,3 +1312,130 @@ def test_delete_data(mocker, simple_sheet_adapter):
     with pytest.raises(ProgrammingError) as excinfo:
         gsheets_adapter.delete_row(3)
     assert str(excinfo.value) == "Requested entity was not found."
+
+
+def test_update_data(mocker, simple_sheet_adapter):
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value="SECRET",
+    )
+
+    session = requests.Session()
+    session.mount("https://", simple_sheet_adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    simple_sheet_adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        json={
+            "range": "'Sheet1'!A1:Z983",
+            "majorDimension": "ROWS",
+            "values": [
+                ["country", "cnt"],
+                ["BR", 1],
+                ["BR", 3],
+                ["IN", 5],
+                ["ZA", 6],
+                ["UK", 10],
+                ["PY", 11],
+            ],
+        },
+    )
+    simple_sheet_adapter.register_uri(
+        "PUT",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1!A6?valueInputOption=USER_ENTERED",
+        json={
+            "spreadsheetId": "1",
+            "tableRange": "'Sheet1'!A6:B6",
+            "updates": {
+                "spreadsheetId": "1",
+                "updatedRange": "'Sheet1!A6:B6",
+                "updatedRows": 1,
+                "updatedColumns": 1,
+                "updatedCells": 1,
+            },
+        },
+    )
+
+    gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit", "XXX")
+    gsheets_adapter.row_ids = {
+        0: {"cnt": 10.0, "country": "UK"},
+        3: {"cnt": 11.0, "country": "PY"},
+        4: {"cnt": 12.0, "country": "PL"},
+    }
+
+    gsheets_adapter.update_row(0, {"cnt": 12.0, "country": "UK", "rowid": 0})
+    assert gsheets_adapter.row_ids == {
+        0: {"cnt": 12.0, "country": "UK"},
+        3: {"cnt": 11.0, "country": "PY"},
+        4: {"cnt": 12.0, "country": "PL"},
+    }
+    assert simple_sheet_adapter.last_request.json() == {
+        "majorDimension": "ROWS",
+        "range": "Sheet1!A6",
+        "values": [["UK", 12.0]],
+    }
+
+    simple_sheet_adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        json={
+            "range": "'Sheet1'!A1:Z983",
+            "majorDimension": "ROWS",
+            "values": [
+                ["country", "cnt"],
+                ["BR", 1],
+                ["BR", 3],
+                ["IN", 5],
+                ["ZA", 6],
+                ["UK", 12],
+                ["PY", 11],
+            ],
+        },
+    )
+    gsheets_adapter.update_row(0, {"cnt": 12.0, "country": "UK", "rowid": 6})
+    assert gsheets_adapter.row_ids == {
+        6: {"cnt": 12.0, "country": "UK"},
+        3: {"cnt": 11.0, "country": "PY"},
+        4: {"cnt": 12.0, "country": "PL"},
+    }
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        gsheets_adapter.update_row(4, {"cnt": 13.0, "country": "PL"})
+    assert str(excinfo.value) == "Could not find row: {'cnt': 12.0, 'country': 'PL'}"
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        gsheets_adapter.update_row(5, {"cnt": 13.0, "country": "PL"})
+    assert str(excinfo.value) == "Invalid row to update: 5"
+
+    simple_sheet_adapter.register_uri(
+        "PUT",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1!A7?valueInputOption=USER_ENTERED",
+        json={
+            "error": {
+                "code": 404,
+                "message": "Requested entity was not found.",
+                "status": "NOT_FOUND",
+            },
+        },
+    )
+    with pytest.raises(ProgrammingError) as excinfo:
+        gsheets_adapter.update_row(3, {"cnt": 13.0, "country": "PL"})
+    assert str(excinfo.value) == "Requested entity was not found."
+
+    simple_sheet_adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        json={
+            "error": {
+                "code": 404,
+                "message": "Requested entity was not found.",
+                "status": "NOT_FOUND",
+            },
+        },
+    )
+    with pytest.raises(ProgrammingError) as excinfo:
+        gsheets_adapter.update_row(3, {"cnt": 13.0, "country": "PL"})
+    assert str(excinfo.value) == "Requested entity was not found."
