@@ -546,3 +546,39 @@ class GSheetsAPI(Adapter):
 
         # only delete row_id on a successful request
         del self.row_ids[row_id]
+
+    def update_data(self, row_id: int, row: Row) -> None:
+        if row_id not in self.row_ids:
+            raise ProgrammingError(f"Invalid row to update: {row_id}")
+
+        current_row = self.row_ids[row_id]
+        row_number = self._find_row_number(current_row)
+        range_ = f"{self._sheet_name}!A{row_number + 1}"
+
+        session = self._get_session()
+        body = {
+            "range": range_,
+            "majorDimension": "ROWS",
+            "values": [
+                [row[column] for column in self.columns],
+            ],
+        }
+        response = session.put(
+            (
+                "https://sheets.googleapis.com/v4/spreadsheets/"
+                f"{self._spreadsheet_id}/values/{range_}"
+            ),
+            json=body,
+            params={
+                "valueInputOption": "USER_ENTERED",
+            },
+        )
+        payload = response.json()
+        if "error" in payload:
+            raise ProgrammingError(payload["error"]["message"])
+
+        # the row_id might change on an update
+        new_row_id = row.pop("rowid")
+        if new_row_id != row_id:
+            del self.row_ids[row_id]
+        self.row_ids[new_row_id] = row
