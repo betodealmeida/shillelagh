@@ -643,9 +643,13 @@ def test_get_session(mocker):
         return_value=None,
     )
 
-    # prevent network call
+    # prevent network calls
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._set_columns",
+        mock.MagicMock(),
+    )
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_metadata",
         mock.MagicMock(),
     )
 
@@ -1287,7 +1291,7 @@ def test_delete_data(mocker, simple_sheet_adapter):
                 "code": 404,
                 "message": "Requested entity was not found.",
                 "status": "NOT_FOUND",
-            }
+            },
         },
     )
     with pytest.raises(ProgrammingError) as excinfo:
@@ -1302,7 +1306,7 @@ def test_delete_data(mocker, simple_sheet_adapter):
                 "code": 404,
                 "message": "Requested entity was not found.",
                 "status": "NOT_FOUND",
-            }
+            },
         },
     )
     with pytest.raises(ProgrammingError) as excinfo:
