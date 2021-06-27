@@ -68,7 +68,7 @@ class Adapter:
         """
         columns = self.get_columns()
         parsers = {column_name: field.parse for column_name, field in columns.items()}
-        parsers["rowid"] = Integer.parse
+        parsers["rowid"] = Integer().parse
 
         for row in self.get_data(bounds, order):
             yield {
@@ -83,7 +83,7 @@ class Adapter:
         """
         Convert native Python to DB-specific types.
         """
-        columns = self.get_columns()
+        columns = self.get_columns().copy()
         columns["rowid"] = Integer()
         row = {
             column_name: columns[column_name].format(value)
@@ -104,7 +104,7 @@ class Adapter:
 
     def update_row(self, row_id: int, row: Row) -> None:
         # Subclasses are free to implement inplace updates
-        columns = self.get_columns()
+        columns = self.get_columns().copy()
         columns["rowid"] = Integer()
         row = {
             column_name: columns[column_name].format(value)

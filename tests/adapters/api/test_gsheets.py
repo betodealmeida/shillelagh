@@ -3,6 +3,7 @@ import json
 from unittest import mock
 
 import apsw
+import dateutil.tz
 import pytest
 import requests
 import requests_mock
@@ -26,6 +27,98 @@ from shillelagh.filters import Range
 
 from ...fakes import FakeAdapter
 from ...fakes import FakeEntryPoint
+
+
+@pytest.fixture
+def simple_sheet_adapter():
+    adapter = requests_mock.Adapter()
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
+        json={
+            "version": "0.6",
+            "reqId": "0",
+            "status": "ok",
+            "sig": "1453301915",
+            "table": {
+                "cols": [
+                    {"id": "A", "label": "country", "type": "string"},
+                    {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
+                ],
+                "rows": [{"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]}],
+                "parsedNumHeaders": 0,
+            },
+        },
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A",
+        json={
+            "version": "0.6",
+            "reqId": "0",
+            "status": "ok",
+            "sig": "1642441872",
+            "table": {
+                "cols": [
+                    {"id": "A", "label": "country", "type": "string"},
+                    {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
+                ],
+                "rows": [
+                    {"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]},
+                    {"c": [{"v": "BR"}, {"v": 3.0, "f": "3"}]},
+                    {"c": [{"v": "IN"}, {"v": 5.0, "f": "5"}]},
+                    {"c": [{"v": "ZA"}, {"v": 6.0, "f": "6"}]},
+                    {"c": [{"v": "CR"}, {"v": 10.0, "f": "10"}]},
+                ],
+                "parsedNumHeaders": 1,
+            },
+        },
+    )
+    adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1?includeGridData=false",
+        json={
+            "spreadsheetId": "1",
+            "properties": {
+                "title": "Sheet1",
+                "locale": "en_US",
+                "autoRecalc": "ON_CHANGE",
+                "timeZone": "America/Los_Angeles",
+                "defaultFormat": {
+                    "backgroundColor": {"red": 1, "green": 1, "blue": 1},
+                    "padding": {"top": 2, "right": 3, "bottom": 2, "left": 3},
+                    "verticalAlignment": "BOTTOM",
+                    "wrapStrategy": "OVERFLOW_CELL",
+                    "textFormat": {
+                        "foregroundColor": {},
+                        "fontFamily": "arial,sans,sans-serif",
+                        "fontSize": 10,
+                        "bold": False,
+                        "italic": False,
+                        "strikethrough": False,
+                        "underline": False,
+                        "foregroundColorStyle": {"rgbColor": {}},
+                    },
+                    "backgroundColorStyle": {
+                        "rgbColor": {"red": 1, "green": 1, "blue": 1},
+                    },
+                },
+            },
+            "sheets": [
+                {
+                    "properties": {
+                        "sheetId": 0,
+                        "title": "Sheet1",
+                        "index": 0,
+                        "sheetType": "GRID",
+                        "gridProperties": {"rowCount": 985, "columnCount": 26},
+                    },
+                },
+            ],
+            "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1/edit?ouid=111430789371895352716&urlBuilderDomain=dealmeida.net",
+        },
+    )
+    yield adapter
 
 
 def test_credentials(mocker):
@@ -94,7 +187,11 @@ def test_get_credentials(mocker):
     credentials.assert_not_called()
     service_account.from_service_account_file.assert_called_with(
         "credentials.json",
-        scopes=["https://www.googleapis.com/auth/drive.readonly"],
+        scopes=[
+            "https://www.googleapis.com/auth/drive.readonly",
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://spreadsheets.google.com/feeds",
+        ],
         subject=None,
     )
     service_account.reset_mock()
@@ -104,66 +201,27 @@ def test_get_credentials(mocker):
     credentials.assert_not_called()
     service_account.from_service_account_info.assert_called_with(
         {"secret": "XXX"},
-        scopes=["https://www.googleapis.com/auth/drive.readonly"],
+        scopes=[
+            "https://www.googleapis.com/auth/drive.readonly",
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://spreadsheets.google.com/feeds",
+        ],
         subject="user@example.com",
     )
 
 
-def test_execute(mocker):
+def test_execute(mocker, simple_sheet_adapter):
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
     )
 
-    adapter = requests_mock.Adapter()
     session = requests.Session()
-    session.mount("https://docs.google.com/spreadsheets/d/1", adapter)
+    session.mount("https://", simple_sheet_adapter)
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
         return_value=session,
-    )
-    adapter.register_uri(
-        "GET",
-        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
-        json={
-            "version": "0.6",
-            "reqId": "0",
-            "status": "ok",
-            "sig": "1453301915",
-            "table": {
-                "cols": [
-                    {"id": "A", "label": "country", "type": "string"},
-                    {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
-                ],
-                "rows": [{"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]}],
-                "parsedNumHeaders": 0,
-            },
-        },
-    )
-    adapter.register_uri(
-        "GET",
-        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A",
-        json={
-            "version": "0.6",
-            "reqId": "0",
-            "status": "ok",
-            "sig": "1642441872",
-            "table": {
-                "cols": [
-                    {"id": "A", "label": "country", "type": "string"},
-                    {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
-                ],
-                "rows": [
-                    {"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]},
-                    {"c": [{"v": "BR"}, {"v": 3.0, "f": "3"}]},
-                    {"c": [{"v": "IN"}, {"v": 5.0, "f": "5"}]},
-                    {"c": [{"v": "ZA"}, {"v": 6.0, "f": "6"}]},
-                    {"c": [{"v": "CR"}, {"v": 10.0, "f": "10"}]},
-                ],
-                "parsedNumHeaders": 1,
-            },
-        },
     )
 
     connection = connect(":memory:", ["gsheetsapi"])
@@ -180,39 +238,20 @@ def test_execute(mocker):
     ]
 
 
-def test_execute_filter(mocker):
+def test_execute_filter(mocker, simple_sheet_adapter):
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
     )
 
-    adapter = requests_mock.Adapter()
     session = requests.Session()
-    session.mount("https://docs.google.com/spreadsheets/d/1", adapter)
+    session.mount("https://", simple_sheet_adapter)
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
         return_value=session,
     )
-    adapter.register_uri(
-        "GET",
-        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
-        json={
-            "version": "0.6",
-            "reqId": "0",
-            "status": "ok",
-            "sig": "1453301915",
-            "table": {
-                "cols": [
-                    {"id": "A", "label": "country", "type": "string"},
-                    {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
-                ],
-                "rows": [{"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]}],
-                "parsedNumHeaders": 0,
-            },
-        },
-    )
-    adapter.register_uri(
+    simple_sheet_adapter.register_uri(
         "GET",
         "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20WHERE%20B%20%3C%205.0",
         json={
@@ -248,37 +287,18 @@ def test_execute_filter(mocker):
     ]
 
 
-def test_execute_impossible(mocker):
+def test_execute_impossible(mocker, simple_sheet_adapter):
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
     )
 
-    adapter = requests_mock.Adapter()
     session = requests.Session()
-    session.mount("https://docs.google.com/spreadsheets/d/1", adapter)
+    session.mount("https://", simple_sheet_adapter)
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
         return_value=session,
-    )
-    adapter.register_uri(
-        "GET",
-        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
-        json={
-            "version": "0.6",
-            "reqId": "0",
-            "status": "ok",
-            "sig": "1453301915",
-            "table": {
-                "cols": [
-                    {"id": "A", "label": "country", "type": "string"},
-                    {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
-                ],
-                "rows": [{"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]}],
-                "parsedNumHeaders": 0,
-            },
-        },
     )
 
     connection = connect(":memory:", ["gsheetsapi"])
@@ -347,7 +367,7 @@ def test_convert_rows(mocker):
 
     adapter = requests_mock.Adapter()
     session = requests.Session()
-    session.mount("https://docs.google.com/spreadsheets/d/2", adapter)
+    session.mount("https://", adapter)
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
         return_value=session,
@@ -623,14 +643,18 @@ def test_get_session(mocker):
         return_value=None,
     )
 
-    # prevent network call
+    # prevent network calls
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._set_columns",
         mock.MagicMock(),
     )
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_metadata",
+        mock.MagicMock(),
+    )
 
-    adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1")
-    adapter._get_session()
+    gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1")
+    gsheets_adapter._get_session()
     mock_authorized_session.assert_not_called()
     mock_session.assert_called()
 
@@ -641,13 +665,13 @@ def test_get_session(mocker):
         "shillelagh.adapters.api.gsheets.get_credentials",
         return_value="SECRET",
     )
-    adapter = GSheetsAPI(
+    gsheets_adapter = GSheetsAPI(
         "https://docs.google.com/spreadsheets/d/1",
         service_account_info={"secret": "XXX"},
         subject="user@example.com",
     )
-    assert adapter.credentials == "SECRET"
-    adapter._get_session()
+    assert gsheets_adapter.credentials == "SECRET"
+    gsheets_adapter._get_session()
     mock_authorized_session.assert_called()
     mock_session.assert_not_called()
 
@@ -661,7 +685,7 @@ def test_api_bugs(mocker):
 
     adapter = requests_mock.Adapter()
     session = requests.Session()
-    session.mount("https://docs.google.com/spreadsheets/d/3", adapter)
+    session.mount("https://", adapter)
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
         return_value=session,
@@ -728,41 +752,22 @@ def test_api_bugs(mocker):
     )
 
 
-def test_execute_json_prefix(mocker):
+def test_execute_json_prefix(mocker, simple_sheet_adapter):
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
     )
 
-    adapter = requests_mock.Adapter()
     session = requests.Session()
-    session.mount("https://docs.google.com/spreadsheets/d/4", adapter)
+    session.mount("https://", simple_sheet_adapter)
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
         return_value=session,
     )
-    adapter.register_uri(
+    simple_sheet_adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/4/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
-        json={
-            "version": "0.6",
-            "reqId": "0",
-            "status": "ok",
-            "sig": "2050160589",
-            "table": {
-                "cols": [
-                    {"id": "A", "label": "country", "type": "string"},
-                    {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
-                ],
-                "rows": [{"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]}],
-                "parsedNumHeaders": 0,
-            },
-        },
-    )
-    adapter.register_uri(
-        "GET",
-        "https://docs.google.com/spreadsheets/d/4/gviz/tq?gid=0&tq=SELECT%20%2A",
+        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A",
         text=")]}'\n"
         + json.dumps(
             {
@@ -796,7 +801,7 @@ def test_execute_json_prefix(mocker):
     connection = connect(":memory:", ["gsheetsapi"])
     cursor = connection.cursor()
 
-    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/4/edit#gid=0"'''
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/1/edit#gid=0"'''
     data = list(cursor.execute(sql))
     assert data == [
         ("BR", 1),
@@ -816,7 +821,7 @@ def test_execute_invalid_json(mocker):
 
     adapter = requests_mock.Adapter()
     session = requests.Session()
-    session.mount("https://docs.google.com/spreadsheets/d/5", adapter)
+    session.mount("https://", adapter)
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
         return_value=session,
@@ -848,7 +853,7 @@ def test_execute_error_response(mocker):
 
     adapter = requests_mock.Adapter()
     session = requests.Session()
-    session.mount("https://docs.google.com/spreadsheets/d/6", adapter)
+    session.mount("https://", adapter)
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
         return_value=session,
@@ -888,7 +893,7 @@ def test_headers_not_detected(mocker):
 
     adapter = requests_mock.Adapter()
     session = requests.Session()
-    session.mount("https://docs.google.com/spreadsheets/d/7", adapter)
+    session.mount("https://", adapter)
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
         return_value=session,
@@ -959,7 +964,7 @@ def test_headers_not_detected_no_rows(mocker):
 
     adapter = requests_mock.Adapter()
     session = requests.Session()
-    session.mount("https://docs.google.com/spreadsheets/d/8", adapter)
+    session.mount("https://", adapter)
     mocker.patch(
         "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
         return_value=session,
@@ -1015,39 +1020,295 @@ def test_headers_not_detected_no_rows(mocker):
 
 
 def test_fields():
-    assert GSheetsDateTime.parse(None) is None
-    assert GSheetsDateTime.parse("Date(2018,8,9,0,0,0)") == datetime.datetime(
+    assert GSheetsDateTime().parse(None) is None
+    assert GSheetsDateTime().parse("Date(2018,8,9,0,0,0)") == datetime.datetime(
         2018,
         9,
         9,
         0,
         0,
-        tzinfo=datetime.timezone.utc,
     )
     assert (
-        GSheetsDateTime.quote(
+        GSheetsDateTime().quote(
             datetime.datetime(2018, 9, 9, 0, 0, tzinfo=datetime.timezone.utc),
         )
         == "datetime '2018-09-09 00:00:00+00:00'"
     )
 
-    assert GSheetsDate.parse(None) is None
-    assert GSheetsDate.parse("Date(2018,0,1)") == datetime.date(2018, 1, 1)
-    assert GSheetsDate.quote(datetime.date(2018, 1, 1)) == "date '2018-01-01'"
+    assert GSheetsDate().parse(None) is None
+    assert GSheetsDate().parse("Date(2018,0,1)") == datetime.date(2018, 1, 1)
+    assert GSheetsDate().quote(datetime.date(2018, 1, 1)) == "date '2018-01-01'"
 
-    assert GSheetsTime.parse(None) is None
-    assert GSheetsTime.parse([17, 0, 0, 0]) == datetime.time(
+    assert GSheetsTime().parse(None) is None
+    assert GSheetsTime().parse([17, 0, 0, 0]) == datetime.time(
         17,
         0,
-        tzinfo=datetime.timezone.utc,
     )
     assert (
-        GSheetsTime.quote(datetime.time(17, 0, tzinfo=datetime.timezone.utc))
+        GSheetsTime().quote(datetime.time(17, 0, tzinfo=datetime.timezone.utc))
         == "timeofday '17:00:00+00:00'"
     )
 
-    assert GSheetsBoolean.parse(None) is None
-    assert GSheetsBoolean.parse("TRUE")
-    assert not GSheetsBoolean.parse("FALSE")
-    assert GSheetsBoolean.quote(True) == "true"
-    assert GSheetsBoolean.quote(False) == "false"
+    assert GSheetsBoolean().parse(None) is None
+    assert GSheetsBoolean().parse("TRUE")
+    assert not GSheetsBoolean().parse("FALSE")
+    assert GSheetsBoolean().quote(True) == "true"
+    assert GSheetsBoolean().quote(False) == "false"
+
+    assert GSheetsDateTime().format(None) is None
+    assert (
+        GSheetsDateTime().format(
+            datetime.datetime(2018, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
+        )
+        == "01/01/2018 00:00:00"
+    )
+    tz = dateutil.tz.gettz("America/Los_Angeles")
+    assert (
+        GSheetsDateTime(timezone=tz).format(
+            datetime.datetime(2018, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
+        )
+        == "12/31/2017 16:00:00"
+    )
+
+
+def test_set_metadata(mocker, simple_sheet_adapter):
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_columns",
+    )
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value="SECRET",
+    )
+
+    session = requests.Session()
+    session.mount("https://", simple_sheet_adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+
+    gsheets_adapter = GSheetsAPI(
+        "https://docs.google.com/spreadsheets/d/1/edit#gid=0",
+        "XXX",
+    )
+    assert gsheets_adapter._spreadsheet_id == "1"
+    assert gsheets_adapter._sheet_id == 0
+    assert gsheets_adapter._sheet_name == "Sheet1"
+    assert gsheets_adapter._timezone == dateutil.tz.gettz("America/Los_Angeles")
+
+    gsheets_adapter = GSheetsAPI(
+        "https://docs.google.com/spreadsheets/d/1/edit?gid=0",
+        "XXX",
+    )
+    assert gsheets_adapter._sheet_id == 0
+    assert gsheets_adapter._sheet_name == "Sheet1"
+
+    _logger = mocker.patch("shillelagh.adapters.api.gsheets._logger")
+    gsheets_adapter = GSheetsAPI(
+        "https://docs.google.com/spreadsheets/d/1/edit#gid=43",
+        "XXX",
+    )
+    assert gsheets_adapter._sheet_name is None
+    _logger.warning.assert_called_with("Could not determine sheet name!")
+
+
+def test_set_metadata_error(mocker):
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_columns",
+    )
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value="SECRET",
+    )
+
+    adapter = requests_mock.Adapter()
+    session = requests.Session()
+    session.mount("https://", adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1?includeGridData=false",
+        json={
+            "error": {
+                "code": 404,
+                "message": "Requested entity was not found.",
+                "status": "NOT_FOUND",
+            },
+        },
+    )
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        GSheetsAPI(
+            "https://docs.google.com/spreadsheets/d/1/edit#gid=42",
+            "XXX",
+        )
+    assert str(excinfo.value) == "Requested entity was not found."
+
+
+def test_insert_data(mocker, simple_sheet_adapter):
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value="SECRET",
+    )
+
+    session = requests.Session()
+    session.mount("https://", simple_sheet_adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    simple_sheet_adapter.register_uri(
+        "POST",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1:append?valueInputOption=USER_ENTERED",
+        json={
+            "spreadsheetId": "1",
+            "tableRange": "'Sheet1'!A1:F10",
+            "updates": {
+                "spreadsheetId": "1",
+                "updatedRange": "'Sheet1!A11",
+                "updatedRows": 1,
+                "updatedColumns": 1,
+                "updatedCells": 1,
+            },
+        },
+    )
+
+    gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit", "XXX")
+
+    row_id = gsheets_adapter.insert_row({"country": "UK", "cnt": 10, "rowid": None})
+    assert row_id == 0
+    assert gsheets_adapter.row_ids == {0: {"cnt": 10.0, "country": "UK"}}
+    assert simple_sheet_adapter.last_request.json() == {
+        "range": "Sheet1",
+        "majorDimension": "ROWS",
+        "values": [["UK", 10.0]],
+    }
+
+    row_id = gsheets_adapter.insert_row({"country": "PY", "cnt": 11, "rowid": 3})
+    assert row_id == 3
+    assert gsheets_adapter.row_ids == {
+        0: {"cnt": 10.0, "country": "UK"},
+        3: {"cnt": 11.0, "country": "PY"},
+    }
+
+    simple_sheet_adapter.register_uri(
+        "POST",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1:append?valueInputOption=USER_ENTERED",
+        json={
+            "error": {
+                "code": 400,
+                "message": "Request range[WRONG] does not match value's range[Sheet1]",
+                "status": "INVALID_ARGUMENT",
+            },
+        },
+    )
+    with pytest.raises(ProgrammingError) as excinfo:
+        gsheets_adapter.insert_row({"country": "PY", "cnt": 11, "rowid": 3})
+    assert (
+        str(excinfo.value)
+        == "Request range[WRONG] does not match value's range[Sheet1]"
+    )
+
+
+def test_delete_data(mocker, simple_sheet_adapter):
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value="SECRET",
+    )
+
+    session = requests.Session()
+    session.mount("https://", simple_sheet_adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    simple_sheet_adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        json={
+            "range": "'Sheet1'!A1:Z983",
+            "majorDimension": "ROWS",
+            "values": [
+                ["country", "cnt"],
+                ["BR", 1],
+                ["BR", 3],
+                ["IN", 5],
+                ["ZA", 6],
+                ["UK", 10],
+                ["PY", 11],
+            ],
+        },
+    )
+    simple_sheet_adapter.register_uri(
+        "POST",
+        "https://sheets.googleapis.com/v4/spreadsheets/1:batchUpdate",
+        json={"spreadsheetId": "1", "replies": [{}]},
+    )
+
+    gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit", "XXX")
+    gsheets_adapter.row_ids = {
+        0: {"cnt": 10.0, "country": "UK"},
+        3: {"cnt": 11.0, "country": "PY"},
+        4: {"cnt": 12.0, "country": "PL"},
+    }
+
+    gsheets_adapter.delete_row(0)
+    assert gsheets_adapter.row_ids == {
+        3: {"cnt": 11.0, "country": "PY"},
+        4: {"cnt": 12.0, "country": "PL"},
+    }
+    assert simple_sheet_adapter.last_request.json() == {
+        "requests": [
+            {
+                "deleteDimension": {
+                    "range": {
+                        "sheetId": 0,
+                        "dimension": "ROWS",
+                        "startIndex": 5,
+                        "endIndex": 6,
+                    },
+                },
+            },
+        ],
+    }
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        gsheets_adapter.delete_row(4)
+    assert str(excinfo.value) == "Could not find row: {'cnt': 12.0, 'country': 'PL'}"
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        gsheets_adapter.delete_row(5)
+    assert str(excinfo.value) == "Invalid row to delete: 5"
+
+    simple_sheet_adapter.register_uri(
+        "POST",
+        "https://sheets.googleapis.com/v4/spreadsheets/1:batchUpdate",
+        json={
+            "error": {
+                "code": 404,
+                "message": "Requested entity was not found.",
+                "status": "NOT_FOUND",
+            },
+        },
+    )
+    with pytest.raises(ProgrammingError) as excinfo:
+        gsheets_adapter.delete_row(3)
+    assert str(excinfo.value) == "Requested entity was not found."
+
+    simple_sheet_adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        json={
+            "error": {
+                "code": 404,
+                "message": "Requested entity was not found.",
+                "status": "NOT_FOUND",
+            },
+        },
+    )
+    with pytest.raises(ProgrammingError) as excinfo:
+        gsheets_adapter.delete_row(3)
+    assert str(excinfo.value) == "Requested entity was not found."
