@@ -85,7 +85,7 @@ The adapter supports full DML, so you can also ``INSERT``, ``UPDATE``, or ``DELE
 Google Spreadsheets
 ~~~~~~~~~~~~~~~~~~~
 
-Google Spreadsheets can be accessed as tables, though currently in read-only mode. To ``SELECT`` data from a spreadsheets simply use its URL as the table name (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/gsheets.py>`__):
+Google Spreadsheets can be accessed as tables. To ``SELECT`` data from a spreadsheets simply use its URL as the table name (`example <https://github.com/betodealmeida/shillelagh/blob/main/examples/gsheets.py>`__):
 
 .. code-block:: sql
 
@@ -94,7 +94,7 @@ Google Spreadsheets can be accessed as tables, though currently in read-only mod
     WHERE cnt > 0
     GROUP BY country
     
-Authentication is supported. You need to pass credentials via the ``service_account_info`` or ``service_account_file`` arguments when creating the connection:
+Authentication is supported, and necessary if you want to use ``INSERT``, ``UPDATE`` or ``DELETE`` on the spreadsheets. You need to pass credentials via the ``service_account_info`` or ``service_account_file`` arguments when creating the connection:
 
 .. code-block:: python
 
@@ -114,7 +114,13 @@ Authentication is supported. You need to pass credentials via the ``service_acco
         },
     )
     
-When present, the ``subject`` email will be used to impersonate a given user; if not present the connection will have full access to all spreadsheets in a given project, so be careful. Also, make sure the service account has access to the `https://www.googleapis.com/auth/drive.readonly,` scope, and that the Google Drive and Google Sheets APIs are active in the project.
+When present, the ``subject`` email will be used to impersonate a given user; if not present the connection will have full access to all spreadsheets in a given project, so be careful. Also, make sure the service account has access to the following scopes:
+
+- ``https://www.googleapis.com/auth/drive.readonly``
+- ``https://www.googleapis.com/auth/spreadsheets``
+- ``https://spreadsheets.google.com/feeds``
+
+You should also confirm that the Google Drive and Google Sheets APIs are active in the project.
 
 Shillelagh also defines a custom dialect called ``gsheets://`` which has only the Google Spreadsheets adapter enabled. Use this is you don't want users connecting to other resources supported by Shillelagh.
 
