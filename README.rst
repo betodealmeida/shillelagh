@@ -80,7 +80,7 @@ CSV (comma separated values) are supported via the ``csv://`` scheme (`example <
 
     SELECT * FROM "csv:///path/to/file.csv"
     
-The adapter supports full DML, so you can also ``INSERT``, ``UPDATE``, or ``DELETE`` rows from the CSV file. Deleted rows are marked for deletion, modified and inserted rows are appended at the end of the file, and garbage cleanup is applied when the connection is closed.
+The adapter supports full DML, so you can also ``INSERT``, ``UPDATE``, or ``DELETE`` rows from the CSV file. Deleted rows are marked for deletion, modified and inserted rows are appended at the end of the file, and garbage collection is applied when the connection is closed.
 
 Google Spreadsheets
 ~~~~~~~~~~~~~~~~~~~
