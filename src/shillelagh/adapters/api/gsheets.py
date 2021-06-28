@@ -35,6 +35,7 @@ from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.lib import build_sql
+from shillelagh.lib import filter_data
 from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
 from typing_extensions import Literal
@@ -483,11 +484,19 @@ class GSheetsAPI(Adapter):
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
     ) -> Iterator[Row]:
-        if self.modified and self._sync_mode == SyncMode.BATCH:
-            _logger.warning(
-                "Spreadsheet has pending changes. If you are deleting or updating "
-                "rows the results might be incorrect!",
+        if self.modified and self._sync_mode in {
+            SyncMode.UNIDIRECTIONAL,
+            SyncMode.BATCH,
+        }:
+            data = (
+                {column_name: value for column_name, value in zip(self.columns, row)}
+                for row in self._get_values()[1:]
             )
+            for i, row in enumerate(filter_data(data, bounds, order)):
+                self._row_ids[i] = row
+                row["rowid"] = i
+                yield row
+            return
 
         try:
             sql = build_sql(self.columns, bounds, order, self._column_map, self._offset)

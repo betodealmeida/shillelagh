@@ -1523,12 +1523,11 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
         ["UK", 10.0],
     ]
 
-    data = list(gsheets_adapter.get_data({"country": Impossible()}, []))
-    assert data == []
-    _logger.warning.assert_called_with(
-        "Spreadsheet has pending changes. If you are deleting or updating "
-        "rows the results might be incorrect!",
-    )
+    data = list(gsheets_adapter.get_data({"country": Equal("UK")}, []))
+    assert data == [
+        {"rowid": 0, "country": "UK", "cnt": 10},
+        {"rowid": 1, "country": "UK", "cnt": 10},
+    ]
 
     gsheets_adapter.update_row(row_id, {"country": "UK", "cnt": 11, "rowid": row_id})
     assert gsheets_adapter._values == [
