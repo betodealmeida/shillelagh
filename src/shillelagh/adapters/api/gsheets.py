@@ -360,6 +360,7 @@ class GSheetsAPI(Adapter):
 
         self._sync_mode = get_sync_mode(uri) or SyncMode.BIDIRECTIONAL
         self._values: Optional[List[List[Any]]] = None
+        self._original_rows = 0
 
         self._offset = 0
 
@@ -559,6 +560,8 @@ class GSheetsAPI(Adapter):
             raise ProgrammingError(payload["error"]["message"])
 
         self._values = cast(List[List[Any]], payload["values"])
+        self._original_rows = len(self._values)
+
         return self._values
 
     def _find_row_number(self, row: Row) -> int:
@@ -658,18 +661,20 @@ class GSheetsAPI(Adapter):
         self.modified = True
 
     def close(self) -> None:
-        if not self.modified or not self._sync_mode == SyncMode.BATCH:
+        if not self.modified or self._sync_mode != SyncMode.BATCH:
             return
 
-        # TODO: delete existing data before updating values, since the
-        # number of rows might be smaller
+        # pad values with empty rows if needed
+        values = self._get_values()
+        values.extend([[]] * (self._original_rows - len(values)))
 
+        _logger.info("Pushing pending changes to the spreadsheet")
         session = self._get_session()
         range_ = f"{self._sheet_name}"
         body = {
             "range": range_,
             "majorDimension": "ROWS",
-            "values": self._values,
+            "values": values,
         }
         response = session.put(
             (
@@ -688,3 +693,4 @@ class GSheetsAPI(Adapter):
             raise ProgrammingError(message)
 
         self.modified = False
+        _logger.info("Success!")

@@ -1600,6 +1600,85 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
     gsheets_adapter.modified = False
 
 
+def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value="SECRET",
+    )
+
+    session = requests.Session()
+    session.mount("https://", simple_sheet_adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    update = simple_sheet_adapter.register_uri(
+        "PUT",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueInputOption=USER_ENTERED",
+        json={
+            "spreadsheetId": "1",
+            "tableRange": "'Sheet1'!A1:F10",
+            "updates": {
+                "spreadsheetId": "1",
+                "updatedRange": "'Sheet1!A11",
+                "updatedRows": 1,
+                "updatedColumns": 1,
+                "updatedCells": 1,
+            },
+        },
+    )
+    simple_sheet_adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        json={
+            "range": "'Sheet1'!A1:Z983",
+            "majorDimension": "ROWS",
+            "values": [
+                ["country", "cnt"],
+                ["BR", 1],
+                ["BR", 3],
+                ["IN", 5],
+                ["ZA", 6],
+                ["UK", 10],
+                ["PY", 11],
+            ],
+        },
+    )
+
+    gsheets_adapter = GSheetsAPI(
+        "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=BATCH",
+        "XXX",
+    )
+
+    row_id = 0
+    gsheets_adapter.row_ids = {row_id: {"cnt": 10.0, "country": "UK"}}
+    gsheets_adapter.delete_row(row_id)
+    assert gsheets_adapter._values == [
+        ["country", "cnt"],
+        ["BR", 1],
+        ["BR", 3],
+        ["IN", 5],
+        ["ZA", 6],
+        ["PY", 11],
+    ]
+
+    gsheets_adapter.close()
+
+    assert update.last_request.json() == {
+        "range": "Sheet1",
+        "majorDimension": "ROWS",
+        "values": [
+            ["country", "cnt"],
+            ["BR", 1],
+            ["BR", 3],
+            ["IN", 5],
+            ["ZA", 6],
+            ["PY", 11],
+            [],
+        ],
+    }
+
+
 def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
     mocker.patch(
         "shillelagh.adapters.api.gsheets.get_credentials",
