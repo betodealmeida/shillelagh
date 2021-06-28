@@ -5,7 +5,7 @@ Changelog
 Version 0.7.0 - 2021-MM-DD
 ==========================
 
-- Add support for DML in the Google Sheets adapter
+- Add support for DML to the Google Sheets adapter
 - Improved many small bugs in the type conversion system
 
 Version 0.6.1 - 2021-06-22
