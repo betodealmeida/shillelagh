@@ -1436,6 +1436,12 @@ def test_get_sync_mode():
     )
     assert (
         get_sync_mode(
+            "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=batch#gid=42",
+        )
+        == SyncMode.BATCH
+    )
+    assert (
+        get_sync_mode(
             "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=1#gid=42",
         )
         == SyncMode.BIDIRECTIONAL

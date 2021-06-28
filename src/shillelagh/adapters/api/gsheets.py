@@ -284,7 +284,7 @@ def get_sync_mode(uri: str) -> Optional[SyncMode]:
     if "sync_mode" not in qs:
         return None
 
-    parameter = qs["sync_mode"][-1]
+    parameter = qs["sync_mode"][-1].upper()
     try:
         sync_mode = SyncMode[parameter]
     except KeyError:
@@ -660,6 +660,9 @@ class GSheetsAPI(Adapter):
     def close(self) -> None:
         if not self.modified or not self._sync_mode == SyncMode.BATCH:
             return
+
+        # TODO: delete existing data before updating values, since the
+        # number of rows might be smaller
 
         session = self._get_session()
         range_ = f"{self._sheet_name}"
