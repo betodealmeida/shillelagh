@@ -483,6 +483,12 @@ class GSheetsAPI(Adapter):
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
     ) -> Iterator[Row]:
+        if self.modified and self._sync_mode == SyncMode.BATCH:
+            _logger.warning(
+                "Spreadsheet has pending changes. If you are deleting or updating "
+                "rows the results might be incorrect!",
+            )
+
         try:
             sql = build_sql(self.columns, bounds, order, self._column_map, self._offset)
         except ImpossibleFilterError:

@@ -1463,6 +1463,7 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
         "shillelagh.adapters.api.gsheets.get_credentials",
         return_value="SECRET",
     )
+    _logger = mocker.patch("shillelagh.adapters.api.gsheets._logger")
 
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
@@ -1521,6 +1522,13 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
         ["PY", 11],
         ["UK", 10.0],
     ]
+
+    data = list(gsheets_adapter.get_data({"country": Impossible()}, []))
+    assert data == []
+    _logger.warning.assert_called_with(
+        "Spreadsheet has pending changes. If you are deleting or updating "
+        "rows the results might be incorrect!",
+    )
 
     gsheets_adapter.update_row(row_id, {"country": "UK", "cnt": 11, "rowid": row_id})
     assert gsheets_adapter._values == [
@@ -1582,7 +1590,6 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
         },
     )
 
-    _logger = mocker.patch("shillelagh.adapters.api.gsheets._logger")
     gsheets_adapter = GSheetsAPI(
         "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=BATCH",
         "XXX",
