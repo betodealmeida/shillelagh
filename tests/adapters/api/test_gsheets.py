@@ -1199,7 +1199,7 @@ def test_insert_data(mocker, simple_sheet_adapter):
 
     row_id = gsheets_adapter.insert_row({"country": "UK", "cnt": 10, "rowid": None})
     assert row_id == 0
-    assert gsheets_adapter.row_ids == {0: {"cnt": 10.0, "country": "UK"}}
+    assert gsheets_adapter._row_ids == {0: {"cnt": 10.0, "country": "UK"}}
     assert simple_sheet_adapter.last_request.json() == {
         "range": "Sheet1",
         "majorDimension": "ROWS",
@@ -1208,7 +1208,7 @@ def test_insert_data(mocker, simple_sheet_adapter):
 
     row_id = gsheets_adapter.insert_row({"country": "PY", "cnt": 11, "rowid": 3})
     assert row_id == 3
-    assert gsheets_adapter.row_ids == {
+    assert gsheets_adapter._row_ids == {
         0: {"cnt": 10.0, "country": "UK"},
         3: {"cnt": 11.0, "country": "PY"},
     }
@@ -1251,14 +1251,14 @@ def test_delete_data(mocker, simple_sheet_adapter):
     )
 
     gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit", "XXX")
-    gsheets_adapter.row_ids = {
+    gsheets_adapter._row_ids = {
         0: {"cnt": 10.0, "country": "UK"},
         3: {"cnt": 11.0, "country": "PY"},
         4: {"cnt": 12.0, "country": "PL"},
     }
 
     gsheets_adapter.delete_row(0)
-    assert gsheets_adapter.row_ids == {
+    assert gsheets_adapter._row_ids == {
         3: {"cnt": 11.0, "country": "PY"},
         4: {"cnt": 12.0, "country": "PL"},
     }
@@ -1345,14 +1345,14 @@ def test_update_data(mocker, simple_sheet_adapter):
     )
 
     gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit", "XXX")
-    gsheets_adapter.row_ids = {
+    gsheets_adapter._row_ids = {
         0: {"cnt": 10.0, "country": "UK"},
         3: {"cnt": 11.0, "country": "PY"},
         4: {"cnt": 12.0, "country": "PL"},
     }
 
     gsheets_adapter.update_row(0, {"cnt": 12.0, "country": "UK", "rowid": 0})
-    assert gsheets_adapter.row_ids == {
+    assert gsheets_adapter._row_ids == {
         0: {"cnt": 12.0, "country": "UK"},
         3: {"cnt": 11.0, "country": "PY"},
         4: {"cnt": 12.0, "country": "PL"},
@@ -1381,7 +1381,7 @@ def test_update_data(mocker, simple_sheet_adapter):
         },
     )
     gsheets_adapter.update_row(0, {"cnt": 12.0, "country": "UK", "rowid": 6})
-    assert gsheets_adapter.row_ids == {
+    assert gsheets_adapter._row_ids == {
         6: {"cnt": 12.0, "country": "UK"},
         3: {"cnt": 11.0, "country": "PY"},
         4: {"cnt": 12.0, "country": "PL"},
@@ -1658,7 +1658,7 @@ def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
     )
 
     row_id = 0
-    gsheets_adapter.row_ids = {row_id: {"cnt": 10.0, "country": "UK"}}
+    gsheets_adapter._row_ids = {row_id: {"cnt": 10.0, "country": "UK"}}
     gsheets_adapter.delete_row(row_id)
     assert gsheets_adapter._values == [
         ["country", "cnt"],

@@ -376,7 +376,7 @@ class GSheetsAPI(Adapter):
         self._set_columns()
 
         # store row ids for DML
-        self.row_ids: Dict[int, Row] = {}
+        self._row_ids: Dict[int, Row] = {}
 
     def _set_metadata(self, uri: str) -> None:
         """
@@ -503,15 +503,15 @@ class GSheetsAPI(Adapter):
             for row in payload["table"]["rows"]
         ]
         for i, row in enumerate(rows):
-            self.row_ids[i] = row
+            self._row_ids[i] = row
             row["rowid"] = i
             yield row
 
     def insert_data(self, row: Row) -> int:
         row_id: Optional[int] = row.pop("rowid")
         if row_id is None:
-            row_id = max(self.row_ids.keys()) + 1 if self.row_ids else 0
-        self.row_ids[row_id] = row
+            row_id = max(self._row_ids.keys()) + 1 if self._row_ids else 0
+        self._row_ids[row_id] = row
 
         row_values = [row[column] for column in self.columns]
 
@@ -583,10 +583,10 @@ class GSheetsAPI(Adapter):
         raise ProgrammingError(f"Could not find row: {row}")
 
     def delete_data(self, row_id: int) -> None:
-        if row_id not in self.row_ids:
+        if row_id not in self._row_ids:
             raise ProgrammingError(f"Invalid row to delete: {row_id}")
 
-        row = self.row_ids[row_id]
+        row = self._row_ids[row_id]
         row_number = self._find_row_number(row)
 
         if self._sync_mode in {SyncMode.UNIDIRECTIONAL, SyncMode.BATCH}:
@@ -621,14 +621,14 @@ class GSheetsAPI(Adapter):
                 raise ProgrammingError(payload["error"]["message"])
 
         # only delete row_id on a successful request
-        del self.row_ids[row_id]
+        del self._row_ids[row_id]
         self.modified = True
 
     def update_data(self, row_id: int, row: Row) -> None:
-        if row_id not in self.row_ids:
+        if row_id not in self._row_ids:
             raise ProgrammingError(f"Invalid row to update: {row_id}")
 
-        current_row = self.row_ids[row_id]
+        current_row = self._row_ids[row_id]
         row_number = self._find_row_number(current_row)
 
         row_values = [row[column] for column in self.columns]
@@ -662,8 +662,8 @@ class GSheetsAPI(Adapter):
         # the row_id might change on an update
         new_row_id = row.pop("rowid")
         if new_row_id != row_id:
-            del self.row_ids[row_id]
-        self.row_ids[new_row_id] = row
+            del self._row_ids[row_id]
+        self._row_ids[new_row_id] = row
         self.modified = True
 
     def close(self) -> None:
