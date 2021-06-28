@@ -3,6 +3,7 @@ import itertools
 import json
 import urllib.parse
 from collections import Counter
+from functools import partial
 from functools import wraps
 from typing import Any
 from typing import Callable
@@ -17,6 +18,7 @@ from typing import TypeVar
 
 import apsw
 from pkg_resources import iter_entry_points
+from shillelagh import functions
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import Error
@@ -320,6 +322,18 @@ class Connection(object):
         self._adapters = adapters
         self._adapter_args = adapter_args
         self._adapter_kwargs = adapter_kwargs
+
+        # register functions
+        available_functions = {
+            "sleep": functions.sleep,
+            "get_metadata": partial(
+                functions.get_metadata,
+                self._adapter_args,
+                self._adapter_kwargs,
+            ),
+        }
+        for name, function in available_functions.items():
+            self._connection.createscalarfunction(name, function)
 
         self.closed = False
         self.cursors: List[Cursor] = []

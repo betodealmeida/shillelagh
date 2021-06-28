@@ -1801,3 +1801,87 @@ def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
     assert delete.call_count == 1
 
     gsheets_adapter.close()
+
+
+def test_get_metadata(mocker, simple_sheet_adapter):
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value="SECRET",
+    )
+
+    session = requests.Session()
+    session.mount("https://", simple_sheet_adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+
+    gsheets_adapter = GSheetsAPI(
+        "https://docs.google.com/spreadsheets/d/1/edit",
+        "XXX",
+    )
+    assert gsheets_adapter.get_metadata() == {
+        "Sheet title": "Sheet1",
+        "Spreadsheet title": "Sheet1",
+    }
+
+    simple_sheet_adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1?includeGridData=false",
+        json={
+            "error": {
+                "code": 404,
+                "message": "Requested entity was not found.",
+                "status": "NOT_FOUND",
+            },
+        },
+    )
+
+    assert gsheets_adapter.get_metadata() == {}
+
+    simple_sheet_adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/1?includeGridData=false",
+        json={
+            "spreadsheetId": "1",
+            "properties": {
+                "title": "Sheet1",
+                "locale": "en_US",
+                "autoRecalc": "ON_CHANGE",
+                "timeZone": "America/Los_Angeles",
+                "defaultFormat": {
+                    "backgroundColor": {"red": 1, "green": 1, "blue": 1},
+                    "padding": {"top": 2, "right": 3, "bottom": 2, "left": 3},
+                    "verticalAlignment": "BOTTOM",
+                    "wrapStrategy": "OVERFLOW_CELL",
+                    "textFormat": {
+                        "foregroundColor": {},
+                        "fontFamily": "arial,sans,sans-serif",
+                        "fontSize": 10,
+                        "bold": False,
+                        "italic": False,
+                        "strikethrough": False,
+                        "underline": False,
+                        "foregroundColorStyle": {"rgbColor": {}},
+                    },
+                    "backgroundColorStyle": {
+                        "rgbColor": {"red": 1, "green": 1, "blue": 1},
+                    },
+                },
+            },
+            "sheets": [
+                {
+                    "properties": {
+                        "sheetId": 1,
+                        "title": "Sheet1",
+                        "index": 0,
+                        "sheetType": "GRID",
+                        "gridProperties": {"rowCount": 985, "columnCount": 26},
+                    },
+                },
+            ],
+            "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1/edit?ouid=111430789371895352716&urlBuilderDomain=dealmeida.net",
+        },
+    )
+
+    assert gsheets_adapter.get_metadata() == {}

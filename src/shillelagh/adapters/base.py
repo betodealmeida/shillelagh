@@ -37,6 +37,9 @@ class Adapter:
     def parse_uri(uri: str) -> Tuple[Any, ...]:
         raise NotImplementedError("Subclasses must implement `parse_uri`")
 
+    def get_metadata(self) -> Dict[str, Any]:
+        return {}
+
     def get_columns(self) -> Dict[str, Field]:
         """This method is called for every query, so make sure it's cheap."""
         return dict(
