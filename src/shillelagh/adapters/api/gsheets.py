@@ -1,7 +1,9 @@
+import atexit
 import datetime
 import json
 import logging
 import urllib.parse
+from enum import Enum
 from functools import partial
 from typing import Any
 from typing import cast
@@ -48,6 +50,20 @@ SCOPES = [
 ]
 
 JSON_PAYLOAD_PREFIX = ")]}'\n"
+
+
+class SyncMode(Enum):
+    # all changes are pushed immediately, and the spreadsheet is downloaded
+    # before every UPDATE/DELETE
+    BIDIRECTIONAL = 1
+
+    # all changes are pushed imediately, but the spreadsheet is
+    # downloaded only once before the first UPDATE/DELETE
+    UNIDIRECTIONAL = 2
+
+    # all changes are pushed at once when the connection closes, and the
+    # spreadsheet is downloaded before the first UPDATE/DELETE
+    BATCH = 3
 
 
 class UrlArgs(TypedDict, total=False):
@@ -262,6 +278,24 @@ def get_url(
     )
 
 
+def get_sync_mode(uri: str) -> Optional[SyncMode]:
+    parts = urllib.parse.urlparse(uri)
+    qs = urllib.parse.parse_qs(parts.query)
+    if "sync_mode" not in qs:
+        return None
+
+    parameter = qs["sync_mode"][-1].upper()
+    try:
+        sync_mode = SyncMode[parameter]
+    except KeyError:
+        try:
+            sync_mode = SyncMode(int(parameter))
+        except ValueError as ex:
+            raise ProgrammingError(f"Invalid sync mode: {parameter}") from ex
+
+    return sync_mode
+
+
 def get_credentials(
     access_token: Optional[str],
     service_account_file: Optional[str],
@@ -311,6 +345,11 @@ class GSheetsAPI(Adapter):
         service_account_info: Optional[Dict[str, Any]] = None,
         subject: Optional[str] = None,
     ):
+        # commit changes in batch when the connection is closed or when the
+        # program terminates
+        self.modified = False
+        atexit.register(self.close)
+
         self.url = get_url(uri)
         self.credentials = get_credentials(
             access_token,
@@ -318,6 +357,10 @@ class GSheetsAPI(Adapter):
             service_account_info,
             subject,
         )
+
+        self._sync_mode = get_sync_mode(uri) or SyncMode.BIDIRECTIONAL
+        self._values: Optional[List[List[Any]]] = None
+        self._original_rows = 0
 
         self._offset = 0
 
@@ -333,7 +376,7 @@ class GSheetsAPI(Adapter):
         self._set_columns()
 
         # store row ids for DML
-        self.row_ids: Dict[int, Row] = {}
+        self._row_ids: Dict[int, Row] = {}
 
     def _set_metadata(self, uri: str) -> None:
         """
@@ -440,6 +483,12 @@ class GSheetsAPI(Adapter):
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
     ) -> Iterator[Row]:
+        if self.modified and self._sync_mode == SyncMode.BATCH:
+            _logger.warning(
+                "Spreadsheet has pending changes. If you are deleting or updating "
+                "rows the results might be incorrect!",
+            )
+
         try:
             sql = build_sql(self.columns, bounds, order, self._column_map, self._offset)
         except ImpossibleFilterError:
@@ -454,46 +503,57 @@ class GSheetsAPI(Adapter):
             for row in payload["table"]["rows"]
         ]
         for i, row in enumerate(rows):
-            self.row_ids[i] = row
+            self._row_ids[i] = row
             row["rowid"] = i
             yield row
 
     def insert_data(self, row: Row) -> int:
         row_id: Optional[int] = row.pop("rowid")
         if row_id is None:
-            row_id = max(self.row_ids.keys()) + 1 if self.row_ids else 0
-        self.row_ids[row_id] = row
+            row_id = max(self._row_ids.keys()) + 1 if self._row_ids else 0
+        self._row_ids[row_id] = row
 
-        session = self._get_session()
-        body = {
-            "range": self._sheet_name,
-            "majorDimension": "ROWS",
-            "values": [
-                [row[column] for column in self.columns],
-            ],
-        }
-        response = session.post(
-            (
-                "https://sheets.googleapis.com/v4/spreadsheets/"
-                f"{self._spreadsheet_id}/values/{self._sheet_name}:append"
-            ),
-            json=body,
-            params={
-                # https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append
-                "valueInputOption": "USER_ENTERED",
-            },
-        )
-        payload = response.json()
-        if "error" in payload:
-            raise ProgrammingError(payload["error"]["message"])
+        row_values = [row[column] for column in self.columns]
+
+        if self._sync_mode in {SyncMode.UNIDIRECTIONAL, SyncMode.BATCH}:
+            values = self._get_values()
+            values.append(row_values)
+
+        if self._sync_mode in {SyncMode.BIDIRECTIONAL, SyncMode.UNIDIRECTIONAL}:
+            session = self._get_session()
+            body = {
+                "range": self._sheet_name,
+                "majorDimension": "ROWS",
+                "values": [row_values],
+            }
+            response = session.post(
+                (
+                    "https://sheets.googleapis.com/v4/spreadsheets/"
+                    f"{self._spreadsheet_id}/values/{self._sheet_name}:append"
+                ),
+                json=body,
+                params={
+                    # https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append
+                    "valueInputOption": "USER_ENTERED",
+                },
+            )
+            payload = response.json()
+            if "error" in payload:
+                raise ProgrammingError(payload["error"]["message"])
+
+        self.modified = True
 
         return row_id
 
-    def _find_row_number(self, row: Row) -> int:
+    def _get_values(self) -> List[List[Any]]:
         """
-        Return the 0-indexed number of a given row, defined by its values.
+        Download all values from the spreadsheet.
         """
-        values = [row[column] for column in self.columns]
+        if self._values is not None and self._sync_mode in {
+            SyncMode.UNIDIRECTIONAL,
+            SyncMode.BATCH,
+        }:
+            return self._values
 
         session = self._get_session()
         response = session.get(
@@ -505,63 +565,124 @@ class GSheetsAPI(Adapter):
         if "error" in payload:
             raise ProgrammingError(payload["error"]["message"])
 
-        for i, row_values in enumerate(payload["values"]):
-            if row_values == values:
+        self._values = cast(List[List[Any]], payload["values"])
+        self._original_rows = len(self._values)
+
+        return self._values
+
+    def _find_row_number(self, row: Row) -> int:
+        """
+        Return the 0-indexed number of a given row, defined by its values.
+        """
+        target_row_values = [row[column] for column in self.columns]
+
+        for i, row_values in enumerate(self._get_values()):
+            if row_values == target_row_values:
                 return i
 
         raise ProgrammingError(f"Could not find row: {row}")
 
     def delete_data(self, row_id: int) -> None:
-        if row_id not in self.row_ids:
+        if row_id not in self._row_ids:
             raise ProgrammingError(f"Invalid row to delete: {row_id}")
 
-        row = self.row_ids[row_id]
+        row = self._row_ids[row_id]
         row_number = self._find_row_number(row)
 
-        session = self._get_session()
-        body = {
-            "requests": [
-                {
-                    "deleteDimension": {
-                        "range": {
-                            "sheetId": self._sheet_id,
-                            "dimension": "ROWS",
-                            "startIndex": row_number,
-                            "endIndex": row_number + 1,
+        if self._sync_mode in {SyncMode.UNIDIRECTIONAL, SyncMode.BATCH}:
+            values = self._get_values()
+            values.pop(row_number)
+
+        if self._sync_mode in {SyncMode.BIDIRECTIONAL, SyncMode.UNIDIRECTIONAL}:
+            session = self._get_session()
+            body = {
+                "requests": [
+                    {
+                        "deleteDimension": {
+                            "range": {
+                                "sheetId": self._sheet_id,
+                                "dimension": "ROWS",
+                                "startIndex": row_number,
+                                "endIndex": row_number + 1,
+                            },
                         },
                     },
-                },
-            ],
-        }
-        response = session.post(
-            (
-                "https://sheets.googleapis.com/v4/spreadsheets/"
-                f"{self._spreadsheet_id}:batchUpdate"
-            ),
-            json=body,
-        )
-        payload = response.json()
-        if "error" in payload:
-            raise ProgrammingError(payload["error"]["message"])
+                ],
+            }
+            response = session.post(
+                (
+                    "https://sheets.googleapis.com/v4/spreadsheets/"
+                    f"{self._spreadsheet_id}:batchUpdate"
+                ),
+                json=body,
+            )
+            payload = response.json()
+            if "error" in payload:
+                raise ProgrammingError(payload["error"]["message"])
 
         # only delete row_id on a successful request
-        del self.row_ids[row_id]
+        del self._row_ids[row_id]
+        self.modified = True
 
     def update_data(self, row_id: int, row: Row) -> None:
-        if row_id not in self.row_ids:
+        if row_id not in self._row_ids:
             raise ProgrammingError(f"Invalid row to update: {row_id}")
 
-        current_row = self.row_ids[row_id]
+        current_row = self._row_ids[row_id]
         row_number = self._find_row_number(current_row)
-        range_ = f"{self._sheet_name}!A{row_number + 1}"
 
+        row_values = [row[column] for column in self.columns]
+
+        if self._sync_mode in {SyncMode.UNIDIRECTIONAL, SyncMode.BATCH}:
+            values = self._get_values()
+            values[row_number] = row_values
+
+        if self._sync_mode in {SyncMode.BIDIRECTIONAL, SyncMode.UNIDIRECTIONAL}:
+            session = self._get_session()
+            range_ = f"{self._sheet_name}!A{row_number + 1}"
+            body = {
+                "range": range_,
+                "majorDimension": "ROWS",
+                "values": [row_values],
+            }
+            response = session.put(
+                (
+                    "https://sheets.googleapis.com/v4/spreadsheets/"
+                    f"{self._spreadsheet_id}/values/{range_}"
+                ),
+                json=body,
+                params={
+                    "valueInputOption": "USER_ENTERED",
+                },
+            )
+            payload = response.json()
+            if "error" in payload:
+                raise ProgrammingError(payload["error"]["message"])
+
+        # the row_id might change on an update
+        new_row_id = row.pop("rowid")
+        if new_row_id != row_id:
+            del self._row_ids[row_id]
+        self._row_ids[new_row_id] = row
+        self.modified = True
+
+    def close(self) -> None:
+        if not self.modified or self._sync_mode != SyncMode.BATCH:
+            return
+
+        values = self._get_values()
+
+        # pad values with empty rows if needed
+        dummy_row = [""] * len(self.columns)
+        values.extend([dummy_row] * (self._original_rows - len(values)))
+
+        _logger.info("Pushing pending changes to the spreadsheet")
         session = self._get_session()
+        range_ = f"{self._sheet_name}"
         body = {
             "range": range_,
             "majorDimension": "ROWS",
-            "values": [
-                [row[column] for column in self.columns],
-            ],
+            "values": values,
         }
         response = session.put(
             (
@@ -575,10 +696,9 @@ class GSheetsAPI(Adapter):
         )
         payload = response.json()
         if "error" in payload:
-            raise ProgrammingError(payload["error"]["message"])
+            message = payload["error"]["message"]
+            _logger.warning("Unable to commit batch changes: %s", message)
+            raise ProgrammingError(message)
 
-        # the row_id might change on an update
-        new_row_id = row.pop("rowid")
-        if new_row_id != row_id:
-            del self.row_ids[row_id]
-        self.row_ids[new_row_id] = row
+        self.modified = False
+        _logger.info("Success!")
