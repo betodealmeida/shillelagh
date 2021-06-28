@@ -1,6 +1,8 @@
 import inspect
 import itertools
 import json
+import operator
+from functools import reduce
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -217,3 +219,40 @@ def combine_args_kwargs(
     bound_args = signature.bind(*args, **kwargs)
     bound_args.apply_defaults()
     return bound_args.args
+
+
+def filter_data(
+    data: Iterator[Row],
+    bounds: Dict[str, Filter],
+    order: List[Tuple[str, RequestedOrder]],
+) -> Iterator[Row]:
+    for column_name, filter_ in bounds.items():
+
+        def apply_filter(
+            data: Iterator[Row],
+            op: Callable[[Any, Any], bool],
+            column_name: str,
+            value: Any,
+        ) -> Iterator[Row]:
+            return (row for row in data if op(row[column_name], value))
+
+        if isinstance(filter_, Impossible):
+            return
+        if isinstance(filter_, Equal):
+            data = apply_filter(data, operator.eq, column_name, filter_.value)
+        if isinstance(filter_, Range):
+            if filter_.start is not None:
+                op = operator.ge if filter_.include_start else operator.gt
+                data = apply_filter(data, op, column_name, filter_.start)
+            if filter_.end is not None:
+                op = operator.le if filter_.include_end else operator.lt
+                data = apply_filter(data, op, column_name, filter_.end)
+
+    if order:
+        rows = list(data)  # :(
+        for column_name, requested_order in order:
+            reverse = requested_order == Order.DESCENDING
+            rows.sort(key=operator.itemgetter(column_name), reverse=reverse)
+        data = iter(rows)
+
+    yield from data

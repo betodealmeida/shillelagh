@@ -11,7 +11,7 @@ from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.fields import Float
 from shillelagh.fields import Order
 from shillelagh.fields import String
-from shillelagh.filters import Equal
+from shillelagh.filters import Impossible
 from shillelagh.filters import Range
 
 from ...fakes import FakeEntryPoint
@@ -101,14 +101,11 @@ def test_csvfile_get_data(mocker):
     )
 
 
-def test_csvfile_get_data_invalid_filter(mocker):
+def test_csvfile_get_data_impossible_filter(mocker):
     mocker.patch("builtins.open", mock_open(read_data=contents))
 
     adapter = CSVFile("test.csv")
-    with pytest.raises(Exception) as excinfo:
-        next(adapter.get_data({"index": Equal(11)}, []))
-
-    assert str(excinfo.value) == "Invalid filter"
+    assert list(adapter.get_data({"index": Impossible()}, [])) == []
 
 
 def test_csvfile(fs):
