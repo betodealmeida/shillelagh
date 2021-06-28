@@ -260,7 +260,7 @@ class VTCursor:
         rows = self.adapter.get_rows(bounds, order)
         rows = convert_rows_to_sqlite(columns, rows)
         self.data = (
-            tuple(row[name] for name in ["rowid"] + column_names) for row in rows
+            tuple(row[name] for name in ["rowid", *column_names]) for row in rows
         )
         self.Next()
 

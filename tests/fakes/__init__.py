@@ -17,6 +17,7 @@ from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
+from shillelagh.lib import filter_data
 from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
 
@@ -58,19 +59,7 @@ class FakeAdapter(Adapter):
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
     ) -> Iterator[Dict[str, Any]]:
-        data = self.data[:]
-
-        for column_name, field in self.get_columns().items():
-            if field.filters and column_name in bounds:
-                data = [
-                    row for row in data if bounds[column_name].check(row[column_name])
-                ]
-
-        for column_name, requested_order in order:
-            reverse = requested_order == Order.DESCENDING
-            data.sort(key=operator.itemgetter(column_name), reverse=reverse)
-
-        yield from iter(data)
+        yield from filter_data(iter(self.data), bounds, order)
 
     def insert_data(self, row: Row) -> int:
         row_id: Optional[int] = row["rowid"]

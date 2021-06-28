@@ -1,9 +1,7 @@
 import atexit
 import csv
-import operator
 import os
 import urllib.parse
-from functools import reduce
 from pathlib import Path
 from typing import cast
 from typing import Dict
@@ -17,6 +15,7 @@ from shillelagh.fields import Field
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.lib import analyse
+from shillelagh.lib import filter_data
 from shillelagh.lib import RowIDManager
 from shillelagh.lib import update_order
 from shillelagh.types import RequestedOrder
@@ -90,41 +89,13 @@ class CSVFile(Adapter):
     ) -> Iterator[Row]:
         with open(self.path) as fp:
             reader = csv.reader(fp, quoting=csv.QUOTE_NONNUMERIC)
-            column_names = ["rowid"] + next(reader)
-            data = ([i, *row] for i, row in zip(self.row_id_manager, reader) if i != -1)
-
-            filters = []
-            for column_name, filter_ in bounds.items():
-                if not isinstance(filter_, Range):
-                    raise Exception("Invalid filter")
-
-                column_index = column_names.index(column_name)
-
-                if filter_.start is not None:
-                    start = filter_.start
-                    op = operator.ge if filter_.include_start else operator.gt
-                    filters.append(
-                        lambda row, value=start, i=column_index, op=op: op(
-                            row[i],
-                            value,
-                        ),
-                    )
-
-                if filter_.end is not None:
-                    end = filter_.end
-                    op = operator.le if filter_.include_end else operator.lt
-                    filters.append(
-                        lambda row, value=end, i=column_index, op=op: op(
-                            row[i],
-                            value,
-                        ),
-                    )
-
-            def combined_filters(row):
-                return reduce(lambda f1, f2: f1 and f2(row), filters, True)
-
-            for row in filter(combined_filters, data):
-                yield {col: value for col, value in zip(column_names, row)}
+            column_names = ["rowid", *next(reader)]
+            rows = ([i, *row] for i, row in zip(self.row_id_manager, reader) if i != -1)
+            data = (
+                {column_name: value for column_name, value in zip(column_names, row)}
+                for row in rows
+            )
+            yield from filter_data(data, bounds, order)
 
     def insert_row(self, row: Row) -> int:
         row_id: Optional[int] = row.pop("rowid")

@@ -13,6 +13,7 @@ from shillelagh.lib import build_sql
 from shillelagh.lib import combine_args_kwargs
 from shillelagh.lib import DELETED
 from shillelagh.lib import deserialize
+from shillelagh.lib import filter_data
 from shillelagh.lib import quote
 from shillelagh.lib import RowIDManager
 from shillelagh.lib import serialize
@@ -188,3 +189,47 @@ def test_combine_args_kwargs():
     args = ()
     kwargs = {"b": "TEST"}
     assert combine_args_kwargs(func, *args, **kwargs) == (0, "TEST", 10.0)
+
+
+def test_filter_data():
+    data = [
+        {"index": 10, "temperature": 15.2, "site": "Diamond_St"},
+        {"index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
+        {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
+        {"index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
+    ]
+
+    bounds = {"index": Equal(11)}
+    assert list(filter_data(data, bounds, [])) == [
+        {"index": 11, "site": "Blacktail_Loop", "temperature": 13.1},
+    ]
+
+    bounds = {"temperature": Range(13.1, None, False, False)}
+    assert list(filter_data(data, bounds, [])) == [
+        {"index": 10, "temperature": 15.2, "site": "Diamond_St"},
+        {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
+    ]
+
+    bounds = {"temperature": Range(None, 14, False, False)}
+    assert list(filter_data(data, bounds, [])) == [
+        {"index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
+        {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
+        {"index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
+    ]
+
+    bounds = {"temperature": Range(13.1, 14, True, False)}
+    assert list(filter_data(data, bounds, [])) == [
+        {"index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
+        {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
+    ]
+
+    order = [("index", Order.DESCENDING)]
+    assert list(filter_data(data, {}, order)) == [
+        {"index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
+        {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
+        {"index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
+        {"index": 10, "temperature": 15.2, "site": "Diamond_St"},
+    ]
+
+    bounds = {"index": Impossible()}
+    assert list(filter_data(data, bounds, [])) == []
