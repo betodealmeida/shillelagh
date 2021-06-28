@@ -1674,7 +1674,7 @@ def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
             ["IN", 5],
             ["ZA", 6],
             ["PY", 11],
-            [],
+            ["", ""],
         ],
     }
 

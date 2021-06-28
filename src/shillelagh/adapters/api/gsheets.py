@@ -664,9 +664,11 @@ class GSheetsAPI(Adapter):
         if not self.modified or self._sync_mode != SyncMode.BATCH:
             return
 
-        # pad values with empty rows if needed
         values = self._get_values()
-        values.extend([[]] * (self._original_rows - len(values)))
+
+        # pad values with empty rows if needed
+        dummy_row = [""] * len(self.columns)
+        values.extend([dummy_row] * (self._original_rows - len(values)))
 
         _logger.info("Pushing pending changes to the spreadsheet")
         session = self._get_session()
