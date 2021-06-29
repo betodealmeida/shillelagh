@@ -2,6 +2,7 @@ import datetime
 import itertools
 import json
 import urllib.parse
+from collections import Counter
 from functools import wraps
 from typing import Any
 from typing import Callable
@@ -19,6 +20,7 @@ from pkg_resources import iter_entry_points
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import Error
+from shillelagh.exceptions import InterfaceError
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Blob
@@ -393,13 +395,26 @@ def connect(
         >>> curs.execute("SELECT * FROM 'csv:///path/to/file.csv'")
 
     """
-    enabled_adapters = [
-        adapter.load()
-        for adapter in iter_entry_points("shillelagh.adapter")
-        if adapters is None or adapter.name in adapters
+    all_adapters = [
+        (entry_point.name, entry_point.load())
+        for entry_point in iter_entry_points("shillelagh.adapter")
     ]
+    all_adapters_names = [name for name, adapter in all_adapters]
+
+    # check if there are any repeated names, to prevent malicious adapters
     if safe:
-        enabled_adapters = [adapter for adapter in enabled_adapters if adapter.safe]
+        repeated = {
+            name for name, count in Counter(all_adapters_names).items() if count > 1
+        }
+        if repeated:
+            raise InterfaceError(f'Repeated adapter names found: {", ".join(repeated)}')
+
+    adapters = adapters or ([] if safe else all_adapters_names)
+    enabled_adapters = [
+        adapter
+        for (name, adapter) in all_adapters
+        if name in adapters and (adapter.safe or not safe)
+    ]
 
     return Connection(
         path,

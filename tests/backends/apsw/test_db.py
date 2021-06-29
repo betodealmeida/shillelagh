@@ -15,6 +15,7 @@ from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.db import Connection
 from shillelagh.backends.apsw.db import convert_binding
 from shillelagh.backends.apsw.db import Cursor
+from shillelagh.exceptions import InterfaceError
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
@@ -70,6 +71,80 @@ def test_connect(mocker):
     assert cursor.fetchmany(1000) == [(23.0, "Bob", 3)]
     assert cursor.fetchall() == []
     assert cursor.rowcount == 2
+
+
+def test_conect_safe(mocker):
+    class FakeAdapter1(FakeAdapter):
+        safe = True
+
+    class FakeAdapter2(FakeAdapter):
+        safe = False
+
+    class FakeAdapter3(FakeAdapter):
+        safe = False
+
+    entry_points = [
+        FakeEntryPoint("one", FakeAdapter1),
+        FakeEntryPoint("two", FakeAdapter2),
+        FakeEntryPoint("three", FakeAdapter3),
+    ]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+    db_Connection = mocker.patch("shillelagh.backends.apsw.db.Connection")
+
+    # if we don't specify adapters we should get all
+    connect(":memory:")
+    db_Connection.assert_called_with(
+        ":memory:",
+        [FakeAdapter1, FakeAdapter2, FakeAdapter3],
+        {},
+        {},
+        None,
+    )
+
+    connect(":memory:", ["two"])
+    db_Connection.assert_called_with(
+        ":memory:",
+        [FakeAdapter2],
+        {},
+        {},
+        None,
+    )
+
+    # in safe mode we need to specify adapters
+    connect(":memory:", safe=True)
+    db_Connection.assert_called_with(
+        ":memory:",
+        [],
+        {},
+        {},
+        None,
+    )
+
+    # in safe mode only safe adapters are returned
+    connect(":memory:", ["one", "two", "three"], safe=True)
+    db_Connection.assert_called_with(
+        ":memory:",
+        [FakeAdapter1],
+        {},
+        {},
+        None,
+    )
+
+    # prevent repeated names, in case anyone registers a malicious adapter
+    entry_points = [
+        FakeEntryPoint("one", FakeAdapter1),
+        FakeEntryPoint("one", FakeAdapter2),
+    ]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+    with pytest.raises(InterfaceError) as excinfo:
+        connect(":memory:", ["one"], safe=True)
+    assert str(excinfo.value) == "Repeated adapter names found: one"
 
 
 def test_execute_with_native_parameters(mocker):
