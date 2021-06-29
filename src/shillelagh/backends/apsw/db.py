@@ -330,6 +330,7 @@ class Connection(object):
                 functions.get_metadata,
                 self._adapter_args,
                 self._adapter_kwargs,
+                adapters,
             ),
         }
         for name, function in available_functions.items():

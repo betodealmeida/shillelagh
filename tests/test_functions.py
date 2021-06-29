@@ -24,23 +24,23 @@ def test_sleep_from_sql(mocker):
 
 
 def test_get_metadata(mocker):
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.functions.iter_entry_points",
-        return_value=entry_points,
-    )
     assert (
         get_metadata(
             {"dummy": ("foo",), "other": ("bar",)},
             {"dummy": {"key": "value"}, "other": {"one": "two"}},
+            [FakeAdapter],
             "dummy://",
         )
         == '{"extra": {}, "adapter": "FakeAdapter"}'
     )
 
     with pytest.raises(ProgrammingError) as excinfo:
-        get_metadata({}, {}, "unsupported://")
-    assert str(excinfo.value) == "Unsupported table: unsupported://"
+        get_metadata({}, {}, [], "dummy://")
+    assert str(excinfo.value) == "Unsupported table: dummy://"
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        get_metadata({}, {}, [FakeAdapter], "invalid://")
+    assert str(excinfo.value) == "Unsupported table: invalid://"
 
 
 def test_get_metadata_from_sql(mocker):

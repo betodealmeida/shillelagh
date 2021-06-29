@@ -2,8 +2,11 @@ import json
 import time
 from typing import Any
 from typing import Dict
+from typing import List
+from typing import Tuple
+from typing import Type
 
-from pkg_resources import iter_entry_points
+from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 
 
@@ -15,13 +18,11 @@ def sleep(n: int) -> None:
 
 
 def get_metadata(
-    adapter_args: Dict[str, Any],
-    adapter_kwargs: Dict[str, Any],
+    adapter_args: Dict[str, Tuple[Any, ...]],
+    adapter_kwargs: Dict[str, Dict[str, Any]],
+    adapters: List[Type[Adapter]],
     uri: str,
 ) -> str:
-    adapters = [
-        entry_point.load() for entry_point in iter_entry_points("shillelagh.adapter")
-    ]
     for adapter in adapters:
         if adapter.supports(uri):
             break

@@ -24,6 +24,9 @@ class Adapter:
     # disable "unsafe" adapters that write to disk
     safe = False
 
+    def __init__(self, *args: Any, **kwargs: Any):
+        pass  # pragma: no cover
+
     @staticmethod
     def supports(uri: str) -> bool:
         raise NotImplementedError("Subclasses must implement `supports`")
