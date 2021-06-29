@@ -44,6 +44,11 @@ def test_adapter_get_columns():
     adapter.close()
 
 
+def test_adapter_get_metadata():
+    adapter = FakeAdapter()
+    assert adapter.get_metadata() == {}
+
+
 def test_adapter_get_data():
     adapter = FakeAdapter()
 

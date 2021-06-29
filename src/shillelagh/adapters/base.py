@@ -24,6 +24,9 @@ class Adapter:
     # disable "unsafe" adapters that write to disk
     safe = False
 
+    def __init__(self, *args: Any, **kwargs: Any):
+        pass  # pragma: no cover
+
     @staticmethod
     def supports(uri: str) -> bool:
         raise NotImplementedError("Subclasses must implement `supports`")
@@ -36,6 +39,9 @@ class Adapter:
     @staticmethod
     def parse_uri(uri: str) -> Tuple[Any, ...]:
         raise NotImplementedError("Subclasses must implement `parse_uri`")
+
+    def get_metadata(self) -> Dict[str, Any]:
+        return {}
 
     def get_columns(self) -> Dict[str, Field]:
         """This method is called for every query, so make sure it's cheap."""

@@ -23,3 +23,7 @@ repos:
     rev: v2.5.0
     hooks:
     - id: reorder-python-imports
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+    - id: debug-statements

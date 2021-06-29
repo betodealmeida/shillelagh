@@ -424,6 +424,30 @@ class GSheetsAPI(Adapter):
             AuthorizedSession(self.credentials) if self.credentials else Session(),
         )
 
+    def get_metadata(self) -> Dict[str, Any]:
+        session = self._get_session()
+        response = session.get(
+            f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
+            "?includeGridData=false",
+        )
+        payload = response.json()
+        if "error" in payload:
+            return {}
+
+        sheets = [
+            sheet
+            for sheet in payload["sheets"]
+            if sheet["properties"]["sheetId"] == self._sheet_id
+        ]
+        if len(sheets) != 1:
+            return {}
+        sheet = sheets[0]
+
+        return {
+            "Spreadsheet title": payload["properties"]["title"],
+            "Sheet title": sheet["properties"]["title"],
+        }
+
     def _run_query(self, sql: str) -> QueryResults:
         quoted_sql = urllib.parse.quote(sql, safe="/()")
         url = f"{self.url}&tq={quoted_sql}"
