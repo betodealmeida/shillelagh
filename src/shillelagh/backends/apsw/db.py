@@ -326,6 +326,7 @@ class Connection(object):
         # register functions
         available_functions = {
             "sleep": functions.sleep,
+            "version": functions.version,
             "get_metadata": partial(
                 functions.get_metadata,
                 self._adapter_args,

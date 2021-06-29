@@ -1,5 +1,6 @@
 import json
 
+import pkg_resources
 import pytest
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
@@ -57,3 +58,11 @@ def test_get_metadata_from_sql(mocker):
     cursor = connection.cursor()
     cursor.execute('SELECT get_metadata("dummy://")')
     assert cursor.fetchall() == [('{"hello": "world"}',)]
+
+
+def test_version_from_sql(mocker):
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+    cursor.execute("SELECT version()")
+    version = pkg_resources.get_distribution("shillelagh").version
+    assert cursor.fetchall() == [(version,)]
