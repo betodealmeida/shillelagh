@@ -512,10 +512,7 @@ class GSheetsAPI(Adapter):
             SyncMode.UNIDIRECTIONAL,
             SyncMode.BATCH,
         }:
-            data = (
-                {column_name: value for column_name, value in zip(self.columns, row)}
-                for row in self._get_values()[1:]
-            )
+            data = (dict(zip(self.columns, row)) for row in self._get_values()[1:])
             for i, row in enumerate(filter_data(data, bounds, order)):
                 self._row_ids[i] = row
                 row["rowid"] = i

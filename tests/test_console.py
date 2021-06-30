@@ -41,7 +41,7 @@ def test_ctrl_c(mocker, fs):
 
 
 def test_configuration(mocker, fs):
-    config = os.path.expanduser("~/.shillelaghrc")
+    config = os.path.expanduser("~/.shillelagh.yaml")
     fs.create_file(config)
     with open(config, "w") as fp:
         yaml.dump({"foo": {"bar": "baz"}}, fp)
@@ -57,7 +57,7 @@ def test_configuration(mocker, fs):
 
 
 def test_configuration_invalid(mocker, fs):
-    config = os.path.expanduser("~/.shillelaghrc")
+    config = os.path.expanduser("~/.shillelagh.yaml")
     fs.create_file(config)
     with open(config, "w") as fp:
         fp.write("foo: *")

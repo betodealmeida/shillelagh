@@ -154,7 +154,7 @@ style = style_from_pygments_cls(get_style_by_name("friendly"))
 
 def main():
     # read args from config file
-    config = os.path.expanduser("~/.shillelaghrc")
+    config = os.path.expanduser("~/.shillelagh.yaml")
     adapter_kwargs = {}
     if os.path.exists(config):
         try:
@@ -170,7 +170,7 @@ def main():
         lexer=PygmentsLexer(SqlLexer),
         completer=sql_completer,
         style=style,
-        history=FileHistory(os.path.expanduser("~/.shillelagh")),
+        history=FileHistory(os.path.expanduser("~/.shillelagh.history")),
     )
 
     while True:
