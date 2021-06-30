@@ -14,7 +14,13 @@ repos:
     rev: 'v0.902'  # Use the sha / tag you want to point at
     hooks:
     - id: mypy
-      additional_dependencies: [types-requests, types-freezegun, types-python-dateutil, types-pkg_resources]
+      additional_dependencies:
+        - types-requests
+        - types-freezegun
+        - types-python-dateutil
+        - types-pkg_resources
+        - types-PyYAML
+        - types-tabulate
 -   repo: https://github.com/asottile/add-trailing-comma
     rev: v2.1.0
     hooks:
