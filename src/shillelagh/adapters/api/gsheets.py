@@ -466,11 +466,11 @@ class GSheetsAPI(Adapter):
         else:
             try:
                 result = response.json()
-            except json.decoder.JSONDecodeError:
+            except Exception as ex:
                 raise ProgrammingError(
                     "Response from Google is not valid JSON. Please verify that you "
                     "have the proper credentials to access the spreadsheet.",
-                )
+                ) from ex
 
         if result["status"] == "error":
             raise ProgrammingError(format_error_message(result["errors"]))

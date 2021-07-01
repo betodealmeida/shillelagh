@@ -73,6 +73,29 @@ def test_connect(mocker):
     assert cursor.rowcount == 2
 
 
+def test_connect_adapter_kwargs(mocker):
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+    connection = mocker.patch("shillelagh.backends.apsw.db.Connection")
+
+    connect(
+        ":memory:",
+        ["dummy"],
+        isolation_level="IMMEDIATE",
+        adapter_kwargs={"dummy": {"foo": "bar"}},
+    )
+    connection.assert_called_with(
+        ":memory:",
+        [FakeAdapter],
+        {},
+        {"fakeadapter": {"foo": "bar"}},
+        "IMMEDIATE",
+    )
+
+
 def test_conect_safe(mocker):
     class FakeAdapter1(FakeAdapter):
         safe = True
