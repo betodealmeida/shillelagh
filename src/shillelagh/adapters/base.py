@@ -31,11 +31,6 @@ class Adapter:
     def supports(uri: str) -> bool:
         raise NotImplementedError("Subclasses must implement `supports`")
 
-    @classmethod
-    def from_uri(cls: Type[T], uri: str) -> T:
-        args = cls.parse_uri(uri)
-        return cls(*args)
-
     @staticmethod
     def parse_uri(uri: str) -> Tuple[Any, ...]:
         raise NotImplementedError("Subclasses must implement `parse_uri`")

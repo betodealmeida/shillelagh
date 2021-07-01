@@ -411,6 +411,9 @@ def connect(
         >>> curs.execute("SELECT * FROM 'csv:///path/to/file.csv'")
 
     """
+    adapter_args = adapter_args or {}
+    adapter_kwargs = adapter_kwargs or {}
+
     all_adapters = [
         (entry_point.name, entry_point.load())
         for entry_point in iter_entry_points("shillelagh.adapter")
@@ -431,6 +434,15 @@ def connect(
         for (name, adapter) in all_adapters
         if name in adapters and (adapter.safe or not safe)
     ]
+
+    # replace entry point names with class names
+    mapping = {
+        name: adapter.__name__.lower()
+        for name, adapter in all_adapters
+        if adapter in enabled_adapters
+    }
+    adapter_args = {mapping[k]: v for k, v in adapter_args.items()}
+    adapter_kwargs = {mapping[k]: v for k, v in adapter_kwargs.items()}
 
     return Connection(
         path,
