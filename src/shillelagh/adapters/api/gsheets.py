@@ -345,6 +345,7 @@ class GSheetsAPI(Adapter):
         service_account_info: Optional[Dict[str, Any]] = None,
         subject: Optional[str] = None,
     ):
+        print(uri, access_token, service_account_file, service_account_info, subject)
         self.modified = False
 
         # commit changes in batch when the connection is closed or when the
@@ -466,11 +467,11 @@ class GSheetsAPI(Adapter):
         else:
             try:
                 result = response.json()
-            except json.decoder.JSONDecodeError:
+            except json.decoder.JSONDecodeError as ex:
                 raise ProgrammingError(
                     "Response from Google is not valid JSON. Please verify that you "
                     "have the proper credentials to access the spreadsheet.",
-                )
+                ) from ex
 
         if result["status"] == "error":
             raise ProgrammingError(format_error_message(result["errors"]))
@@ -744,3 +745,33 @@ class GSheetsAPI(Adapter):
 
         self.modified = False
         _logger.info("Success!")
+
+
+class GSheetsAPICatalog(GSheetsAPI):
+    @staticmethod
+    def supports(uri: str) -> bool:
+        return True and False
+
+    def __init__(
+        self,
+        uri: str,
+        access_token: Optional[str] = None,
+        service_account_file: Optional[str] = None,
+        service_account_info: Optional[Dict[str, Any]] = None,
+        subject: Optional[str] = None,
+        catalog: Optional[Dict[str, str]] = None,
+    ):
+        catalog = catalog or {}
+
+        if uri in catalog:
+            uri = catalog[uri]
+        elif not super().supports(uri):
+            raise ProgrammingError(f"Invalid table: {uri}")
+
+        super().__init__(
+            uri,
+            access_token,
+            service_account_file,
+            service_account_info,
+            subject,
+        )

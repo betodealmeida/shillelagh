@@ -16,8 +16,8 @@ def test_gsheets_dialect():
     assert dialect.create_connect_args(make_url("gsheets://")) == (
         (
             ":memory:",
-            ["gsheetsapi"],
-            {"gsheetsapi": (None, None, None, None)},
+            ["gsheetsapi.catalog"],
+            {"gsheetsapi.catalog": (None, None, None, None, {})},
             {},
             True,
             None,
@@ -32,8 +32,16 @@ def test_gsheets_dialect():
     assert dialect.create_connect_args(make_url("gsheets://")) == (
         (
             ":memory:",
-            ["gsheetsapi"],
-            {"gsheetsapi": (None, None, {"secret": "XXX"}, "user@example.com")},
+            ["gsheetsapi.catalog"],
+            {
+                "gsheetsapi.catalog": (
+                    None,
+                    None,
+                    {"secret": "XXX"},
+                    "user@example.com",
+                    {},
+                ),
+            },
             {},
             True,
             None,
@@ -48,8 +56,16 @@ def test_gsheets_dialect():
     assert dialect.create_connect_args(make_url("gsheets://")) == (
         (
             ":memory:",
-            ["gsheetsapi"],
-            {"gsheetsapi": (None, "credentials.json", None, "user@example.com")},
+            ["gsheetsapi.catalog"],
+            {
+                "gsheetsapi.catalog": (
+                    None,
+                    "credentials.json",
+                    None,
+                    "user@example.com",
+                    {},
+                ),
+            },
             {},
             True,
             None,
@@ -126,7 +142,7 @@ def test_get_table_names(mocker):
     )
     _logger = mocker.patch("shillelagh.backends.apsw.dialects.gsheets._logger")
 
-    engine = create_engine("gsheets://")
+    engine = create_engine("gsheets://", list_all_sheets=True)
 
     get_credentials.return_value = None
     tables = engine.table_names()
@@ -177,7 +193,7 @@ def test_drive_api_disabled(mocker):
         },
     )
 
-    engine = create_engine("gsheets://")
+    engine = create_engine("gsheets://", list_all_sheets=True)
 
     get_credentials.return_value = "SECRET"
     with pytest.raises(ProgrammingError) as excinfo:

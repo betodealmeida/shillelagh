@@ -131,21 +131,6 @@ def test_adapter_manipulate_rows():
     ]
 
 
-def test_from_uri():
-    class FakeAdapter(Adapter):
-        @staticmethod
-        def parse_uri(uri: str) -> Tuple[str, ...]:
-            return tuple(uri.split(":", 1))
-
-        def __init__(self, a: str, b: str):
-            self.a = a
-            self.b = b
-
-    adapter = FakeAdapter.from_uri("foo:bar")
-    assert adapter.a == "foo"
-    assert adapter.b == "bar"
-
-
 def test_type_conversion(mocker):
 
     entry_points = [FakeEntryPoint("dummy", FakeAdapterWithDateTime)]

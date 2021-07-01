@@ -52,6 +52,8 @@ class APSWGSheetsDialect(APSWDialect):
         service_account_file: Optional[str] = None,
         service_account_info: Optional[Dict[str, Any]] = None,
         subject: Optional[str] = None,
+        catalog: Optional[Dict[str, str]] = None,
+        list_all_sheets: bool = False,
         *args: Any,
         **kwargs: Any,
     ):
@@ -61,6 +63,8 @@ class APSWGSheetsDialect(APSWDialect):
         self.service_account_file = service_account_file
         self.service_account_info = service_account_info
         self.subject = subject
+        self.catalog = catalog or {}
+        self.list_all_sheets = list_all_sheets
 
     def create_connect_args(
         self,
@@ -78,17 +82,18 @@ class APSWGSheetsDialect(APSWDialect):
     ]:
         query = extract_query(url)
         adapter_args: Dict[str, Any] = {
-            "gsheetsapi": (
+            "gsheetsapi.catalog": (
                 query.get("access_token", self.access_token),
                 query.get("service_account_file", self.service_account_file),
                 query.get("service_account_info", self.service_account_info),
                 query.get("subject", self.subject),
+                query.get("catalog", self.catalog),
             ),
         }
 
         return (
             ":memory:",
-            ["gsheetsapi"],
+            ["gsheetsapi.catalog"],
             adapter_args,
             {},
             True,
@@ -98,6 +103,8 @@ class APSWGSheetsDialect(APSWDialect):
     def get_table_names(
         self, connection: _ConnectionFairy, schema: str = None, **kwargs: Any
     ) -> List[str]:
+        table_names = list(self.catalog)
+
         query = extract_query(connection.url) if hasattr(connection, "url") else {}
         credentials = get_credentials(
             query.get("access_token", self.access_token),
@@ -105,12 +112,11 @@ class APSWGSheetsDialect(APSWDialect):
             self.service_account_info,
             query.get("subject", self.subject),
         )
-        if not credentials:
-            return []
+        if not (credentials and self.list_all_sheets):
+            return table_names
 
         session = AuthorizedSession(credentials)
 
-        tables = []
         response = session.get(
             "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'",
         )
@@ -135,8 +141,8 @@ class APSWGSheetsDialect(APSWDialect):
             sheets = payload["sheets"]
             for sheet in sheets:
                 sheet_id = sheet["properties"]["sheetId"]
-                tables.append(
+                table_names.append(
                     f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit#gid={sheet_id}",
                 )
 
-        return tables
+        return table_names
