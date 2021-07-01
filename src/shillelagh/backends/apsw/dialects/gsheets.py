@@ -69,28 +69,25 @@ class APSWGSheetsDialect(APSWDialect):
         Tuple[
             str,
             Optional[List[str]],
-            Optional[Dict[str, Tuple[Any, ...]]],
             Optional[Dict[str, Dict[str, Any]]],
             bool,
             Optional[str],
         ],
         Dict[str, Any],
     ]:
-        query = extract_query(url)
-        adapter_args: Dict[str, Any] = {
-            "gsheetsapi": (
-                query.get("access_token", self.access_token),
-                query.get("service_account_file", self.service_account_file),
-                query.get("service_account_info", self.service_account_info),
-                query.get("subject", self.subject),
-            ),
+        adapter_kwargs: Dict[str, Any] = {
+            "access_token": self.access_token,
+            "service_account_file": self.service_account_file,
+            "service_account_info": self.service_account_info,
+            "subject": self.subject,
         }
+        # overtwrite parameters via query
+        adapter_kwargs.update(extract_query(url))
 
         return (
             ":memory:",
             ["gsheetsapi"],
-            adapter_args,
-            {},
+            {"gsheetsapi": adapter_kwargs},
             True,
             self.isolation_level,
         ), {}
