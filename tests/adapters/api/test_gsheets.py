@@ -132,8 +132,7 @@ def simple_sheet_adapter():
                 ["BR", 3],
                 ["IN", 5],
                 ["ZA", 6],
-                ["UK", 10],
-                ["PY", 11],
+                ["CR", 10],
             ],
         },
     )
@@ -1252,14 +1251,14 @@ def test_delete_data(mocker, simple_sheet_adapter):
 
     gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit", "XXX")
     gsheets_adapter._row_ids = {
-        0: {"cnt": 10.0, "country": "UK"},
-        3: {"cnt": 11.0, "country": "PY"},
+        0: {"cnt": 10.0, "country": "CR"},
+        3: {"cnt": 1.0, "country": "BR"},
         4: {"cnt": 12.0, "country": "PL"},
     }
 
     gsheets_adapter.delete_row(0)
     assert gsheets_adapter._row_ids == {
-        3: {"cnt": 11.0, "country": "PY"},
+        3: {"cnt": 1.0, "country": "BR"},
         4: {"cnt": 12.0, "country": "PL"},
     }
     assert simple_sheet_adapter.last_request.json() == {
@@ -1346,21 +1345,21 @@ def test_update_data(mocker, simple_sheet_adapter):
 
     gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit", "XXX")
     gsheets_adapter._row_ids = {
-        0: {"cnt": 10.0, "country": "UK"},
+        0: {"cnt": 10.0, "country": "CR"},
         3: {"cnt": 11.0, "country": "PY"},
         4: {"cnt": 12.0, "country": "PL"},
     }
 
-    gsheets_adapter.update_row(0, {"cnt": 12.0, "country": "UK", "rowid": 0})
+    gsheets_adapter.update_row(0, {"cnt": 12.0, "country": "CR", "rowid": 0})
     assert gsheets_adapter._row_ids == {
-        0: {"cnt": 12.0, "country": "UK"},
+        0: {"cnt": 12.0, "country": "CR"},
         3: {"cnt": 11.0, "country": "PY"},
         4: {"cnt": 12.0, "country": "PL"},
     }
     assert simple_sheet_adapter.last_request.json() == {
         "majorDimension": "ROWS",
         "range": "Sheet1!A6",
-        "values": [["UK", 12.0]],
+        "values": [["CR", 12.0]],
     }
 
     simple_sheet_adapter.register_uri(
@@ -1375,7 +1374,7 @@ def test_update_data(mocker, simple_sheet_adapter):
                 ["BR", 3],
                 ["IN", 5],
                 ["ZA", 6],
-                ["UK", 12],
+                ["CR", 12],
                 ["PY", 11],
             ],
         },
@@ -1523,12 +1522,25 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
         ["UK", 10.0],
     ]
 
+    # check that columns have no filters/order
+    for column in {"country", "cnt"}:
+        assert gsheets_adapter.columns[column].filters == []
+        assert gsheets_adapter.columns[column].order == Order.NONE
+        assert not gsheets_adapter.columns[column].exact
+
+    # get_data should now return all data, since filtering is done by SQLite
     data = list(gsheets_adapter.get_data({"country": Equal("UK")}, []))
     assert data == [
-        {"rowid": 0, "country": "UK", "cnt": 10},
-        {"rowid": 1, "country": "UK", "cnt": 10},
+        {"country": "BR", "cnt": 1, "rowid": 0},
+        {"country": "BR", "cnt": 3, "rowid": 1},
+        {"country": "IN", "cnt": 5, "rowid": 2},
+        {"country": "ZA", "cnt": 6, "rowid": 3},
+        {"country": "UK", "cnt": 10, "rowid": 4},
+        {"country": "PY", "cnt": 11, "rowid": 5},
+        {"country": "UK", "cnt": 10.0, "rowid": 6},
     ]
 
+    row_id = 6
     gsheets_adapter.update_row(row_id, {"country": "UK", "cnt": 11, "rowid": row_id})
     assert gsheets_adapter._values == [
         ["country", "cnt"],
@@ -1683,6 +1695,94 @@ def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
             ["", ""],
         ],
     }
+
+
+def test_execute_batch(mocker, simple_sheet_adapter):
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    session = requests.Session()
+    session.mount("https://", simple_sheet_adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.get_credentials",
+        return_value="SECRET",
+    )
+    simple_sheet_adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20WHERE%20B%20%3C%205.0",
+        json={
+            "version": "0.6",
+            "reqId": "0",
+            "status": "ok",
+            "sig": "1642441872",
+            "table": {
+                "cols": [
+                    {"id": "A", "label": "country", "type": "string"},
+                    {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
+                ],
+                "rows": [
+                    {"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]},
+                    {"c": [{"v": "BR"}, {"v": 3.0, "f": "3"}]},
+                ],
+                "parsedNumHeaders": 1,
+            },
+        },
+    )
+    simple_sheet_adapter.register_uri(
+        "PUT",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueInputOption=USER_ENTERED",
+        json={
+            "spreadsheetId": "1",
+            "tableRange": "'Sheet1'!A1:F10",
+            "updates": {
+                "spreadsheetId": "1",
+                "updatedRange": "'Sheet1!A11",
+                "updatedRows": 1,
+                "updatedColumns": 1,
+                "updatedCells": 1,
+            },
+        },
+    )
+
+    connection = connect(
+        ":memory:",
+        ["gsheetsapi"],
+        adapter_kwargs={
+            "gsheetsapi": {
+                "service_account_info": {"secret": "XXX"},
+                "subject": "user@example.com",
+            },
+        },
+        isolation_level="IMMEDIATE",
+    )
+    cursor = connection.cursor()
+
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=BATCH#gid=0"'''
+    data = list(cursor.execute(sql))
+    assert data == [
+        ("BR", 1),
+        ("BR", 3),
+        ("IN", 5),
+        ("ZA", 6),
+        ("CR", 10),
+    ]
+
+    sql = """
+        DELETE FROM "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=BATCH#gid=0"
+        WHERE cnt < 5;
+    """
+    cursor.execute(sql)
+
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=BATCH#gid=0"'''
+    data = list(cursor.execute(sql))
+    assert data == [("IN", 5.0), ("ZA", 6.0), ("CR", 10.0)]
 
 
 def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):

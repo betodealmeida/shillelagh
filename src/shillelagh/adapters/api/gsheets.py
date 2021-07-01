@@ -35,7 +35,6 @@ from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.lib import build_sql
-from shillelagh.lib import filter_data
 from shillelagh.types import RequestedOrder
 from shillelagh.types import Row
 from typing_extensions import Literal
@@ -503,6 +502,13 @@ class GSheetsAPI(Adapter):
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
 
+    def _clear_columns(self) -> None:
+        # clear columns so that all the filtering happens in SQLite
+        for field in self.columns.values():
+            field.filters = []
+            field.order = Order.NONE
+            field.exact = False
+
     def get_data(
         self,
         bounds: Dict[str, Filter],
@@ -513,7 +519,7 @@ class GSheetsAPI(Adapter):
             SyncMode.BATCH,
         }:
             data = (dict(zip(self.columns, row)) for row in self._get_values()[1:])
-            for i, row in enumerate(filter_data(data, bounds, order)):
+            for i, row in enumerate(data):
                 self._row_ids[i] = row
                 row["rowid"] = i
                 yield row
@@ -571,6 +577,7 @@ class GSheetsAPI(Adapter):
             if "error" in payload:
                 raise ProgrammingError(payload["error"]["message"])
 
+        self._clear_columns()
         self.modified = True
 
         return row_id
@@ -652,6 +659,7 @@ class GSheetsAPI(Adapter):
 
         # only delete row_id on a successful request
         del self._row_ids[row_id]
+        self._clear_columns()
         self.modified = True
 
     def update_data(self, row_id: int, row: Row) -> None:
@@ -694,6 +702,7 @@ class GSheetsAPI(Adapter):
         if new_row_id != row_id:
             del self._row_ids[row_id]
         self._row_ids[new_row_id] = row
+        self._clear_columns()
         self.modified = True
 
     def close(self) -> None:
