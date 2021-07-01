@@ -328,6 +328,10 @@ class GSheetsAPI(Adapter):
 
     @staticmethod
     def supports(uri: str, **kwargs: Any) -> bool:
+        catalog = kwargs.get("catalog", {})
+        if uri in catalog:
+            uri = catalog[uri]
+
         parsed = urllib.parse.urlparse(uri)
         return parsed.netloc == "docs.google.com" and parsed.path.startswith(
             "/spreadsheets/",
@@ -344,7 +348,11 @@ class GSheetsAPI(Adapter):
         service_account_file: Optional[str] = None,
         service_account_info: Optional[Dict[str, Any]] = None,
         subject: Optional[str] = None,
+        catalog: Optional[Dict[str, str]] = None,
     ):
+        if catalog and uri in catalog:
+            uri = catalog[uri]
+
         self.modified = False
 
         # commit changes in batch when the connection is closed or when the

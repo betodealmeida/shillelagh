@@ -14,21 +14,22 @@ from sqlalchemy.engine.url import make_url
 def test_gsheets_dialect():
     dialect = APSWGSheetsDialect()
     assert dialect.create_connect_args(make_url("gsheets://")) == (
-        (
-            ":memory:",
-            ["gsheetsapi"],
-            {
+        (),
+        {
+            "path": ":memory:",
+            "adapters": ["gsheetsapi"],
+            "adapter_kwargs": {
                 "gsheetsapi": {
                     "access_token": None,
                     "service_account_file": None,
                     "service_account_info": None,
                     "subject": None,
+                    "catalog": {},
                 },
             },
-            True,
-            None,
-        ),
-        {},
+            "safe": True,
+            "isolation_level": None,
+        },
     )
 
     dialect = APSWGSheetsDialect(
@@ -36,43 +37,46 @@ def test_gsheets_dialect():
         subject="user@example.com",
     )
     assert dialect.create_connect_args(make_url("gsheets://")) == (
-        (
-            ":memory:",
-            ["gsheetsapi"],
-            {
+        (),
+        {
+            "path": ":memory:",
+            "adapters": ["gsheetsapi"],
+            "adapter_kwargs": {
                 "gsheetsapi": {
                     "access_token": None,
                     "service_account_file": None,
                     "service_account_info": {"secret": "XXX"},
                     "subject": "user@example.com",
+                    "catalog": {},
                 },
             },
-            True,
-            None,
-        ),
-        {},
+            "safe": True,
+            "isolation_level": None,
+        },
     )
 
     dialect = APSWGSheetsDialect(
         service_account_file="credentials.json",
         subject="user@example.com",
+        catalog={"public_sheet": "https://example.com/"},
     )
     assert dialect.create_connect_args(make_url("gsheets://")) == (
-        (
-            ":memory:",
-            ["gsheetsapi"],
-            {
+        (),
+        {
+            "path": ":memory:",
+            "adapters": ["gsheetsapi"],
+            "adapter_kwargs": {
                 "gsheetsapi": {
                     "access_token": None,
                     "service_account_file": "credentials.json",
                     "service_account_info": None,
                     "subject": "user@example.com",
+                    "catalog": {"public_sheet": "https://example.com/"},
                 },
             },
-            True,
-            None,
-        ),
-        {},
+            "safe": True,
+            "isolation_level": None,
+        },
     )
 
     mock_dbapi_connection = mock.MagicMock()
@@ -144,7 +148,7 @@ def test_get_table_names(mocker):
     )
     _logger = mocker.patch("shillelagh.backends.apsw.dialects.gsheets._logger")
 
-    engine = create_engine("gsheets://")
+    engine = create_engine("gsheets://", list_all_sheets=True)
 
     get_credentials.return_value = None
     tables = engine.table_names()
@@ -195,7 +199,7 @@ def test_drive_api_disabled(mocker):
         },
     )
 
-    engine = create_engine("gsheets://")
+    engine = create_engine("gsheets://", list_all_sheets=True)
 
     get_credentials.return_value = "SECRET"
     with pytest.raises(ProgrammingError) as excinfo:

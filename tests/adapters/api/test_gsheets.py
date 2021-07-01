@@ -174,7 +174,7 @@ def test_credentials(mocker):
             mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
             mock.call(
-                """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" USING GSheetsAPI('"https://docs.google.com/spreadsheets/d/1"', 'null', 'null', '{"secret": "XXX"}', '"user@example.com"')""",
+                """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" USING GSheetsAPI('"https://docs.google.com/spreadsheets/d/1"', 'null', 'null', '{"secret": "XXX"}', '"user@example.com"', 'null')""",
             ),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
         ],
@@ -246,6 +246,44 @@ def test_execute(mocker, simple_sheet_adapter):
     cursor = connection.cursor()
 
     sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/1/edit#gid=0"'''
+    data = list(cursor.execute(sql))
+    assert data == [
+        ("BR", 1),
+        ("BR", 3),
+        ("IN", 5),
+        ("ZA", 6),
+        ("CR", 10),
+    ]
+
+
+def test_execute_with_catalog(mocker, simple_sheet_adapter):
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    session = requests.Session()
+    session.mount("https://", simple_sheet_adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+
+    connection = connect(
+        ":memory:",
+        ["gsheetsapi"],
+        adapter_kwargs={
+            "gsheetsapi": {
+                "catalog": {
+                    "sheet": "https://docs.google.com/spreadsheets/d/1/edit#gid=0",
+                },
+            },
+        },
+    )
+    cursor = connection.cursor()
+
+    sql = "SELECT * FROM sheet"
     data = list(cursor.execute(sql))
     assert data == [
         ("BR", 1),
@@ -1985,3 +2023,18 @@ def test_get_metadata(mocker, simple_sheet_adapter):
     )
 
     assert gsheets_adapter.get_metadata() == {}
+
+
+def test_supports():
+    assert GSheetsAPI.supports("https://docs.google.com/spreadsheets/d/1/edit")
+    assert not GSheetsAPI.supports("https://github.com/betodealmeida/shillelagh/")
+
+    assert not GSheetsAPI.supports("some_table")
+    assert GSheetsAPI.supports(
+        "some_table",
+        catalog={"some_table": "https://docs.google.com/spreadsheets/d/1/edit"},
+    )
+    assert not GSheetsAPI.supports(
+        "some_table",
+        catalog={"some_table": "https://github.com/betodealmeida/shillelagh/"},
+    )

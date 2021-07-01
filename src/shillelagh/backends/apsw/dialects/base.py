@@ -50,27 +50,15 @@ class APSWDialect(SQLiteDialect):
     def create_connect_args(
         self,
         url: URL,
-    ) -> Tuple[
-        Tuple[
-            str,
-            Optional[List[str]],
-            Optional[Dict[str, Dict[str, Any]]],
-            bool,
-            Optional[str],
-        ],
-        Dict[str, Any],
-    ]:
+    ) -> Tuple[Tuple[()], Dict[str, Any]]:
         path = str(url.database) if url.database else ":memory:"
-        return (
-            (
-                path,
-                self._adapters,
-                self._adapter_kwargs,
-                self._safe,
-                self.isolation_level,
-            ),
-            {},
-        )
+        return (), {
+            "path": path,
+            "adapters": self._adapters,
+            "adapter_kwargs": self._adapter_kwargs,
+            "safe": self._safe,
+            "isolation_level": self.isolation_level,
+        }
 
     def do_ping(self, dbapi_connection: _ConnectionFairy) -> bool:
         return True
@@ -116,7 +104,7 @@ class APSWDialect(SQLiteDialect):
         raw_connection = cast(db.Connection, connection.engine.raw_connection())
         for adapter in raw_connection._adapters:
             key = adapter.__name__.lower()
-            kwargs = self._adapter_kwargs.get(key, {})
+            kwargs = raw_connection._adapter_kwargs.get(key, {})
             if adapter.supports(table_name, **kwargs):
                 break
         else:
