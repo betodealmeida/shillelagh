@@ -95,11 +95,6 @@ class APSWGSheetsDialect(APSWDialect):
             self.isolation_level,
         ), {}
 
-    def get_schema_names(
-        self, connection: _ConnectionFairy, **kwargs: Any
-    ) -> List[str]:
-        return []
-
     def get_table_names(
         self, connection: _ConnectionFairy, schema: str = None, **kwargs: Any
     ) -> List[str]:

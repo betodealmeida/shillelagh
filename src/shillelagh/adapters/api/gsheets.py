@@ -345,9 +345,10 @@ class GSheetsAPI(Adapter):
         service_account_info: Optional[Dict[str, Any]] = None,
         subject: Optional[str] = None,
     ):
+        self.modified = False
+
         # commit changes in batch when the connection is closed or when the
         # program terminates
-        self.modified = False
         atexit.register(self.close)
 
         self.url = get_url(uri)
@@ -659,6 +660,7 @@ class GSheetsAPI(Adapter):
 
         # only delete row_id on a successful request
         del self._row_ids[row_id]
+
         self._clear_columns()
         self.modified = True
 
@@ -702,6 +704,7 @@ class GSheetsAPI(Adapter):
         if new_row_id != row_id:
             del self._row_ids[row_id]
         self._row_ids[new_row_id] = row
+
         self._clear_columns()
         self.modified = True
 
