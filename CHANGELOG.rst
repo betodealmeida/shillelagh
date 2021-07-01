@@ -5,7 +5,8 @@ Changelog
 Version 0.7.0 - 2021-MM-DD
 ==========================
 
-- Add support for DML to the Google Sheets adapter
+- Add support for DML to the GSheets adapter
+- GSheets dialect now return "main" as its schema
 - Improved many small bugs in the type conversion system
 - Add ``sleep``, ``version``, and ``get_metadata`` functions
 - Add REPL command-line utility (``shillelagh``)
@@ -36,7 +37,7 @@ Version 0.5.1 - 2021-05-24
 Version 0.5.0 - 2021-05-22
 ==========================
 
-- Use new Google Sheets API v4
+- Use new GSheets API v4
 - Implement ``get_table_names`` for GSheets dialect
 - Allow passing parameters to GSheets dialect via URL query
 
@@ -83,7 +84,7 @@ Version 0.2 - 2021-02-17
 
 - Added DB API 2.0 layer
 - Added SQLAlchemy dialect
-- Added Google Spreadsheets adapter
+- Added GSheets adapter
 - Added drop-in replacement for ``gsheets://`` dialect
 
 Version 0.1 - 2020-10-26
