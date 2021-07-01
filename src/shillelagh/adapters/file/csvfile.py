@@ -3,6 +3,7 @@ import csv
 import os
 import urllib.parse
 from pathlib import Path
+from typing import Any
 from typing import cast
 from typing import Dict
 from typing import Iterator
@@ -41,7 +42,7 @@ class CSVFile(Adapter):
     safe = False
 
     @staticmethod
-    def supports(uri: str) -> bool:
+    def supports(uri: str, **kwargs: Any) -> bool:
         parsed = urllib.parse.urlparse(uri)
         return parsed.scheme == "csv"
 

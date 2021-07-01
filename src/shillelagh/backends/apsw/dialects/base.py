@@ -44,7 +44,7 @@ class APSWDialect(SQLiteDialect):
     ):
         super().__init__(*args, **kwargs)
         self._adapters = adapters
-        self._adapter_kwargs = adapter_kwargs
+        self._adapter_kwargs = adapter_kwargs or {}
         self._safe = safe
 
     def create_connect_args(
@@ -115,7 +115,9 @@ class APSWDialect(SQLiteDialect):
     ) -> Adapter:
         raw_connection = cast(db.Connection, connection.engine.raw_connection())
         for adapter in raw_connection._adapters:
-            if adapter.supports(table_name):
+            key = adapter.__name__.lower()
+            kwargs = self._adapter_kwargs.get(key, {})
+            if adapter.supports(table_name, **kwargs):
                 break
         else:
             raise ProgrammingError(f"Unsupported table: {table_name}")

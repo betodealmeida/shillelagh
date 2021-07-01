@@ -327,7 +327,7 @@ class GSheetsAPI(Adapter):
     safe = True
 
     @staticmethod
-    def supports(uri: str) -> bool:
+    def supports(uri: str, **kwargs: Any) -> bool:
         parsed = urllib.parse.urlparse(uri)
         return parsed.netloc == "docs.google.com" and parsed.path.startswith(
             "/spreadsheets/",

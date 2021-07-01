@@ -24,7 +24,9 @@ def get_metadata(
     uri: str,
 ) -> str:
     for adapter in adapters:
-        if adapter.supports(uri):
+        key = adapter.__name__.lower()
+        kwargs = adapter_kwargs.get(key, {})
+        if adapter.supports(uri, **kwargs):
             break
     else:
         raise ProgrammingError(f"Unsupported table: {uri}")

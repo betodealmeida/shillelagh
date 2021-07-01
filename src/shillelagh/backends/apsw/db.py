@@ -190,7 +190,9 @@ class Cursor(object):
 
     def _create_table(self, uri: str) -> None:
         for adapter in self._adapters:
-            if adapter.supports(uri):
+            key = adapter.__name__.lower()
+            kwargs = self._adapter_kwargs.get(key, {})
+            if adapter.supports(uri, **kwargs):
                 break
         else:
             raise ProgrammingError(f"Unsupported table: {uri}")
