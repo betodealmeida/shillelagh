@@ -7,6 +7,7 @@ Version 0.7.0 - 2021-MM-DD
 
 - Add support for DML to the GSheets adapter
 - GSheets dialect now return "main" as its schema
+- GSheets now supports defining a catalog of spreadsheets
 - Improved many small bugs in the type conversion system
 - Add ``sleep``, ``version``, and ``get_metadata`` functions
 - Add REPL command-line utility (``shillelagh``)

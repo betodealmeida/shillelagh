@@ -24,23 +24,11 @@ class APSWSafeDialect(APSWDialect):
     def create_connect_args(
         self,
         url: URL,
-    ) -> Tuple[
-        Tuple[
-            str,
-            Optional[List[str]],
-            Optional[Dict[str, Dict[str, Any]]],
-            bool,
-            Optional[str],
-        ],
-        Dict[str, Any],
-    ]:
-        return (
-            (
-                ":memory:",
-                self._adapters,
-                self._adapter_kwargs,
-                True,
-                self.isolation_level,
-            ),
-            {},
-        )
+    ) -> Tuple[Tuple[()], Dict[str, Any]]:
+        return (), {
+            "path": ":memory:",
+            "adapters": self._adapters,
+            "adapter_kwargs": self._adapter_kwargs,
+            "safe": True,
+            "isolation_level": self.isolation_level,
+        }

@@ -9,8 +9,11 @@ from typing import Tuple
 from google.auth.credentials import Credentials
 from google.auth.transport.requests import AuthorizedSession
 from shillelagh.adapters.api.gsheets import get_credentials
+from shillelagh.adapters.api.gsheets import GSheetsAPI
+from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.dialects.base import APSWDialect
 from shillelagh.exceptions import ProgrammingError
+from sqlalchemy.engine.url import make_url
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
 
@@ -52,6 +55,8 @@ class APSWGSheetsDialect(APSWDialect):
         service_account_file: Optional[str] = None,
         service_account_info: Optional[Dict[str, Any]] = None,
         subject: Optional[str] = None,
+        catalog: Optional[Dict[str, str]] = None,
+        list_all_sheets: bool = False,
         *args: Any,
         **kwargs: Any,
     ):
@@ -61,40 +66,36 @@ class APSWGSheetsDialect(APSWDialect):
         self.service_account_file = service_account_file
         self.service_account_info = service_account_info
         self.subject = subject
+        self.catalog = catalog or {}
+        self.list_all_sheets = list_all_sheets
 
     def create_connect_args(
         self,
         url: URL,
-    ) -> Tuple[
-        Tuple[
-            str,
-            Optional[List[str]],
-            Optional[Dict[str, Dict[str, Any]]],
-            bool,
-            Optional[str],
-        ],
-        Dict[str, Any],
-    ]:
+    ) -> Tuple[Tuple[()], Dict[str, Any]]:
         adapter_kwargs: Dict[str, Any] = {
             "access_token": self.access_token,
             "service_account_file": self.service_account_file,
             "service_account_info": self.service_account_info,
             "subject": self.subject,
+            "catalog": self.catalog,
         }
         # overtwrite parameters via query
         adapter_kwargs.update(extract_query(url))
 
-        return (
-            ":memory:",
-            ["gsheetsapi"],
-            {"gsheetsapi": adapter_kwargs},
-            True,
-            self.isolation_level,
-        ), {}
+        return (), {
+            "path": ":memory:",
+            "adapters": ["gsheetsapi"],
+            "adapter_kwargs": {"gsheetsapi": adapter_kwargs},
+            "safe": True,
+            "isolation_level": self.isolation_level,
+        }
 
     def get_table_names(
         self, connection: _ConnectionFairy, schema: str = None, **kwargs: Any
     ) -> List[str]:
+        table_names = list(self.catalog.keys())
+
         query = extract_query(connection.url) if hasattr(connection, "url") else {}
         credentials = get_credentials(
             query.get("access_token", self.access_token),
@@ -102,12 +103,11 @@ class APSWGSheetsDialect(APSWDialect):
             self.service_account_info,
             query.get("subject", self.subject),
         )
-        if not credentials:
-            return []
+        if not (credentials and self.list_all_sheets):
+            return table_names
 
         session = AuthorizedSession(credentials)
 
-        tables = []
         response = session.get(
             "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'",
         )
@@ -132,8 +132,8 @@ class APSWGSheetsDialect(APSWDialect):
             sheets = payload["sheets"]
             for sheet in sheets:
                 sheet_id = sheet["properties"]["sheetId"]
-                tables.append(
+                table_names.append(
                     f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit#gid={sheet_id}",
                 )
 
-        return tables
+        return table_names
