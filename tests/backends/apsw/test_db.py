@@ -73,6 +73,23 @@ def test_connect(mocker):
     assert cursor.rowcount == 2
 
 
+def test_connect_schema_prefix(mocker):
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM main."dummy://"')
+    assert cursor.fetchmany() == [(20.0, "Alice", 0)]
+    assert cursor.fetchmany(1000) == [(23.0, "Bob", 3)]
+    assert cursor.fetchall() == []
+    assert cursor.rowcount == 2
+
+
 def test_connect_adapter_kwargs(mocker):
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(

@@ -42,6 +42,7 @@ sqlite_version_info = tuple(
 )
 
 NO_SUCH_TABLE = "SQLError: no such table: "
+SCHEMA = "main"
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -189,6 +190,10 @@ class Cursor(object):
             )
 
     def _create_table(self, uri: str) -> None:
+        prefix = f"{SCHEMA}."
+        if uri.startswith(prefix):
+            uri = uri[len(prefix) :]
+
         for adapter in self._adapters:
             key = adapter.__name__.lower()
             kwargs = self._adapter_kwargs.get(key, {})
