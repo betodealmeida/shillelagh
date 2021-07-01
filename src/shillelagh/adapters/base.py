@@ -28,7 +28,7 @@ class Adapter:
         pass  # pragma: no cover
 
     @staticmethod
-    def supports(uri: str) -> bool:
+    def supports(uri: str, **kwargs: Any) -> bool:
         raise NotImplementedError("Subclasses must implement `supports`")
 
     @staticmethod

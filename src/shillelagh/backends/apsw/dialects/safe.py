@@ -18,7 +18,7 @@ class APSWSafeDialect(APSWDialect):
     ):
         super().__init__(*args, **kwargs)
         self._adapters = adapters
-        self._adapter_kwargs = adapter_kwargs
+        self._adapter_kwargs = adapter_kwargs or {}
         self._safe = True
 
     def create_connect_args(

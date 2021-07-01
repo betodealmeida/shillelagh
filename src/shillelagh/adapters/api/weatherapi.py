@@ -2,6 +2,7 @@ import urllib.parse
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
+from typing import Any
 from typing import Dict
 from typing import Iterator
 from typing import List
@@ -69,7 +70,7 @@ class WeatherAPI(Adapter):
     gust_kph = Float()
 
     @staticmethod
-    def supports(uri: str) -> bool:
+    def supports(uri: str, **kwargs: Any) -> bool:
         """https://api.weatherapi.com/v1/history.json?key=XXX&q=94158"""
         parsed = urllib.parse.urlparse(uri)
         query_string = urllib.parse.parse_qs(parsed.query)
