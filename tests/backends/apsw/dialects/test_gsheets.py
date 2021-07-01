@@ -17,8 +17,14 @@ def test_gsheets_dialect():
         (
             ":memory:",
             ["gsheetsapi"],
-            {"gsheetsapi": (None, None, None, None)},
-            {},
+            {
+                "gsheetsapi": {
+                    "access_token": None,
+                    "service_account_file": None,
+                    "service_account_info": None,
+                    "subject": None,
+                },
+            },
             True,
             None,
         ),
@@ -33,8 +39,14 @@ def test_gsheets_dialect():
         (
             ":memory:",
             ["gsheetsapi"],
-            {"gsheetsapi": (None, None, {"secret": "XXX"}, "user@example.com")},
-            {},
+            {
+                "gsheetsapi": {
+                    "access_token": None,
+                    "service_account_file": None,
+                    "service_account_info": {"secret": "XXX"},
+                    "subject": "user@example.com",
+                },
+            },
             True,
             None,
         ),
@@ -49,8 +61,14 @@ def test_gsheets_dialect():
         (
             ":memory:",
             ["gsheetsapi"],
-            {"gsheetsapi": (None, "credentials.json", None, "user@example.com")},
-            {},
+            {
+                "gsheetsapi": {
+                    "access_token": None,
+                    "service_account_file": "credentials.json",
+                    "service_account_info": None,
+                    "subject": "user@example.com",
+                },
+            },
             True,
             None,
         ),

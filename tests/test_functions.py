@@ -27,7 +27,6 @@ def test_sleep_from_sql(mocker):
 def test_get_metadata(mocker):
     assert (
         get_metadata(
-            {"dummy": ("foo",), "other": ("bar",)},
             {"dummy": {"key": "value"}, "other": {"one": "two"}},
             [FakeAdapter],
             "dummy://",
@@ -36,11 +35,11 @@ def test_get_metadata(mocker):
     )
 
     with pytest.raises(ProgrammingError) as excinfo:
-        get_metadata({}, {}, [], "dummy://")
+        get_metadata({}, [], "dummy://")
     assert str(excinfo.value) == "Unsupported table: dummy://"
 
     with pytest.raises(ProgrammingError) as excinfo:
-        get_metadata({}, {}, [FakeAdapter], "invalid://")
+        get_metadata({}, [FakeAdapter], "invalid://")
     assert str(excinfo.value) == "Unsupported table: invalid://"
 
 

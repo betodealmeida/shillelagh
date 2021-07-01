@@ -90,7 +90,6 @@ def test_connect_adapter_kwargs(mocker):
     connection.assert_called_with(
         ":memory:",
         [FakeAdapter],
-        {},
         {"fakeadapter": {"foo": "bar"}},
         "IMMEDIATE",
     )
@@ -123,7 +122,6 @@ def test_conect_safe(mocker):
         ":memory:",
         [FakeAdapter1, FakeAdapter2, FakeAdapter3],
         {},
-        {},
         None,
     )
 
@@ -131,7 +129,6 @@ def test_conect_safe(mocker):
     db_Connection.assert_called_with(
         ":memory:",
         [FakeAdapter2],
-        {},
         {},
         None,
     )
@@ -142,7 +139,6 @@ def test_conect_safe(mocker):
         ":memory:",
         [],
         {},
-        {},
         None,
     )
 
@@ -151,7 +147,6 @@ def test_conect_safe(mocker):
     db_Connection.assert_called_with(
         ":memory:",
         [FakeAdapter1],
-        {},
         {},
         None,
     )

@@ -98,13 +98,11 @@ class Cursor(object):
         self,
         cursor: "apsw.Cursor",
         adapters: List[Type[Adapter]],
-        adapter_args: Dict[str, Tuple[Any, ...]],
         adapter_kwargs: Dict[str, Dict[str, Any]],
         isolation_level: Optional[str] = None,
     ):
         self._cursor = cursor
         self._adapters = adapters
-        self._adapter_args = adapter_args
         self._adapter_kwargs = adapter_kwargs
 
         self.in_transaction = False
@@ -199,7 +197,7 @@ class Cursor(object):
 
         # collect arguments from URI and connection and serialize them
         key = adapter.__name__.lower()
-        args = adapter.parse_uri(uri) + self._adapter_args.get(key, ())
+        args = adapter.parse_uri(uri)
         kwargs = self._adapter_kwargs.get(key, {})
         formatted_args = ", ".join(
             serialize(arg) for arg in combine_args_kwargs(adapter, *args, **kwargs)
@@ -308,7 +306,6 @@ class Connection(object):
         self,
         path: str,
         adapters: List[Type[Adapter]],
-        adapter_args: Dict[str, Tuple[Any, ...]],
         adapter_kwargs: Dict[str, Dict[str, Any]],
         isolation_level: Optional[str] = None,
     ):
@@ -320,7 +317,6 @@ class Connection(object):
         for adapter in adapters:
             self._connection.createmodule(adapter.__name__, VTModule(adapter))
         self._adapters = adapters
-        self._adapter_args = adapter_args
         self._adapter_kwargs = adapter_kwargs
 
         # register functions
@@ -329,7 +325,6 @@ class Connection(object):
             "version": functions.version,
             "get_metadata": partial(
                 functions.get_metadata,
-                self._adapter_args,
                 self._adapter_kwargs,
                 adapters,
             ),
@@ -370,7 +365,6 @@ class Connection(object):
         cursor = Cursor(
             self._connection.cursor(),
             self._adapters,
-            self._adapter_args,
             self._adapter_kwargs,
             self.isolation_level,
         )
@@ -398,7 +392,6 @@ class Connection(object):
 def connect(
     path: str,
     adapters: Optional[List[str]] = None,
-    adapter_args: Optional[Dict[str, Tuple[Any, ...]]] = None,
     adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     safe: bool = False,
     isolation_level: Optional[str] = None,
@@ -411,7 +404,6 @@ def connect(
         >>> curs.execute("SELECT * FROM 'csv:///path/to/file.csv'")
 
     """
-    adapter_args = adapter_args or {}
     adapter_kwargs = adapter_kwargs or {}
 
     all_adapters = [
@@ -441,13 +433,11 @@ def connect(
         for name, adapter in all_adapters
         if adapter in enabled_adapters
     }
-    adapter_args = {mapping[k]: v for k, v in adapter_args.items()}
     adapter_kwargs = {mapping[k]: v for k, v in adapter_kwargs.items()}
 
     return Connection(
         path,
         enabled_adapters,
-        adapter_args or {},
-        adapter_kwargs or {},
+        adapter_kwargs,
         isolation_level,
     )

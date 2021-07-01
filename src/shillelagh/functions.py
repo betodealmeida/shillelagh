@@ -19,7 +19,6 @@ def sleep(n: int) -> None:
 
 
 def get_metadata(
-    adapter_args: Dict[str, Tuple[Any, ...]],
     adapter_kwargs: Dict[str, Dict[str, Any]],
     adapters: List[Type[Adapter]],
     uri: str,
@@ -31,7 +30,7 @@ def get_metadata(
         raise ProgrammingError(f"Unsupported table: {uri}")
 
     key = adapter.__name__.lower()
-    args = adapter.parse_uri(uri) + adapter_args.get(key, ())
+    args = adapter.parse_uri(uri)
     kwargs = adapter_kwargs.get(key, {})
     instance = adapter(*args, **kwargs)
 
