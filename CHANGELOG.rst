@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.7.2 - 2021-07-01
+==========================
+
+- Fix bug in GSheets with a middle nameless column
+
 Version 0.7.1 - 2021-07-01
 ==========================
 

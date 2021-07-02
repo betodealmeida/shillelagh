@@ -2038,3 +2038,118 @@ def test_supports():
         "some_table",
         catalog={"some_table": "https://github.com/betodealmeida/shillelagh/"},
     )
+
+
+def test_empty_middle_column(mocker):
+    adapter = requests_mock.Adapter()
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
+        json={
+            "version": "0.6",
+            "reqId": "0",
+            "status": "ok",
+            "sig": "1134071240",
+            "table": {
+                "cols": [
+                    {"id": "A", "label": "one", "type": "string"},
+                    {"id": "B", "label": "", "type": "string"},
+                    {"id": "C", "label": "two", "type": "string"},
+                    {
+                        "id": "D",
+                        "label": "three",
+                        "type": "number",
+                        "pattern": "General",
+                    },
+                    {
+                        "id": "E",
+                        "label": "four",
+                        "type": "number",
+                        "pattern": "General",
+                    },
+                ],
+                "rows": [
+                    {
+                        "c": [
+                            {"v": "test"},
+                            None,
+                            {"v": "test"},
+                            {"v": 1.5, "f": "1.5"},
+                            {"v": 10.1, "f": "10.1"},
+                        ],
+                    },
+                ],
+                "parsedNumHeaders": 0,
+            },
+        },
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A",
+        json={
+            "version": "0.6",
+            "reqId": "0",
+            "status": "ok",
+            "sig": "1058539448",
+            "table": {
+                "cols": [
+                    {"id": "A", "label": "one", "type": "string"},
+                    {"id": "B", "label": "", "type": "string"},
+                    {"id": "C", "label": "two", "type": "string"},
+                    {
+                        "id": "D",
+                        "label": "three",
+                        "type": "number",
+                        "pattern": "General",
+                    },
+                    {
+                        "id": "E",
+                        "label": "four",
+                        "type": "number",
+                        "pattern": "General",
+                    },
+                ],
+                "rows": [
+                    {
+                        "c": [
+                            {"v": "test"},
+                            None,
+                            {"v": "test"},
+                            {"v": 1.5, "f": "1.5"},
+                            {"v": 10.1, "f": "10.1"},
+                        ],
+                    },
+                    {
+                        "c": [
+                            {"v": "test2"},
+                            None,
+                            {"v": "test3"},
+                            {"v": 0.1, "f": "0.1"},
+                            {"v": 10.2, "f": "10.2"},
+                        ],
+                    },
+                ],
+                "parsedNumHeaders": 1,
+            },
+        },
+    )
+
+    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    session = requests.Session()
+    session.mount("https://", adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        return_value=session,
+    )
+
+    connection = connect(":memory:", ["gsheetsapi"])
+    cursor = connection.cursor()
+
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/1/edit#gid=0"'''
+    data = list(cursor.execute(sql))
+    assert data == [("test", "test", 1.5, 10.1), ("test2", "test3", 0.1, 10.2)]
