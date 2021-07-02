@@ -501,7 +501,9 @@ class GSheetsAPI(Adapter):
                 for col in cols:
                     col["label"] = col["id"]
 
-        self._column_map = {col["label"].strip(): col["id"] for col in cols}
+        self._column_map = {
+            col["label"].strip(): col["id"] for col in cols if col["label"].strip()
+        }
         self.columns = {
             col["label"].strip(): get_field(col, self._timezone)
             for col in cols
@@ -540,13 +542,16 @@ class GSheetsAPI(Adapter):
             return
 
         payload = self._run_query(sql)
-        rows = [
+        cols = payload["table"]["cols"]
+        reverse_map = {v: k for k, v in self._column_map.items()}
+        rows = (
             {
-                column_name: cell["v"] if cell else None
-                for column_name, cell in zip(self.columns, row["c"])
+                reverse_map[col["id"]]: cell["v"] if cell else None
+                for col, cell in zip(cols, row["c"])
+                if col["id"] in reverse_map
             }
             for row in payload["table"]["rows"]
-        ]
+        )
         for i, row in enumerate(rows):
             self._row_ids[i] = row
             row["rowid"] = i
