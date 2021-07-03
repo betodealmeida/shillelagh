@@ -61,7 +61,7 @@ def test_csvfile_unordered(mocker):
     adapter = CSVFile("test.csv")
 
     assert adapter.get_columns() == {
-        "a": String(filters=[Range], order=Order.NONE, exact=True),
+        "a": Float(filters=[Range], order=Order.NONE, exact=True),
     }
 
 

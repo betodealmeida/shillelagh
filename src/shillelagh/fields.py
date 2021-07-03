@@ -53,13 +53,13 @@ class Field:
         self.exact = exact
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, Field):
+        if other.__class__ != self.__class__:
             return NotImplemented
 
-        return (
+        return bool(
             self.filters == other.filters
             and self.order == other.order
-            and self.exact == other.exact
+            and self.exact == other.exact,
         )
 
     def parse(self, value: Any) -> Any:
