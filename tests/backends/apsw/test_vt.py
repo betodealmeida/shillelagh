@@ -21,7 +21,7 @@ from shillelagh.fields import type_map
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
-from shillelagh.types import Row
+from shillelagh.typing import Row
 
 from ...fakes import FakeAdapter
 

@@ -22,11 +22,11 @@ from shillelagh.fields import type_map
 from shillelagh.filters import Filter
 from shillelagh.filters import Operator
 from shillelagh.lib import deserialize
-from shillelagh.types import Constraint
-from shillelagh.types import Index
-from shillelagh.types import RequestedOrder
-from shillelagh.types import Row
-from shillelagh.types import SQLiteValidType
+from shillelagh.typing import Constraint
+from shillelagh.typing import Index
+from shillelagh.typing import RequestedOrder
+from shillelagh.typing import Row
+from shillelagh.typing import SQLiteValidType
 
 
 operator_map = {

@@ -23,8 +23,8 @@ from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Impossible
 from shillelagh.filters import Range
-from shillelagh.types import RequestedOrder
-from shillelagh.types import Row
+from shillelagh.typing import RequestedOrder
+from shillelagh.typing import Row
 
 DELETED = range(-1, 0)
 

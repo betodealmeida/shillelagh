@@ -31,8 +31,8 @@ from shillelagh.fields import type_map
 from shillelagh.lib import combine_args_kwargs
 from shillelagh.lib import quote
 from shillelagh.lib import serialize
-from shillelagh.types import Description
-from shillelagh.types import SQLiteValidType
+from shillelagh.typing import Description
+from shillelagh.typing import SQLiteValidType
 
 apilevel = "2.0"
 threadsafety = 2
