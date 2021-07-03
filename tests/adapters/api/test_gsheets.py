@@ -1640,6 +1640,8 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
     with pytest.raises(InternalError) as excinfo:
         gsheets_adapter.close()
     assert str(excinfo.value) == "An unexpected error happened"
+    # prevent atexit from running
+    gsheets_adapter.modified = False
 
     simple_sheet_adapter.register_uri(
         "PUT",
