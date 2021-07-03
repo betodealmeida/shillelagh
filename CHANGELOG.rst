@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.7.4 - 2021-07-03
+==========================
+
+- Fix ``DML`` bug in GSheets with a middle nameless column
+
 Version 0.7.3 - 2021-07-01
 ==========================
 
@@ -10,7 +15,7 @@ Version 0.7.3 - 2021-07-01
 Version 0.7.2 - 2021-07-01
 ==========================
 
-- Fix bug in GSheets with a middle nameless column
+- Fix ``SELECT`` bug in GSheets with a middle nameless column
 
 Version 0.7.1 - 2021-07-01
 ==========================
