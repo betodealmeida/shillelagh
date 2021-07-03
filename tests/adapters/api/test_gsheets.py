@@ -1,4 +1,5 @@
 import datetime
+import itertools
 import json
 from unittest import mock
 
@@ -9,6 +10,7 @@ import requests
 import requests_mock
 from freezegun import freeze_time
 from shillelagh.adapters.api.gsheets import format_error_message
+from shillelagh.adapters.api.gsheets import gen_letters
 from shillelagh.adapters.api.gsheets import get_credentials
 from shillelagh.adapters.api.gsheets import get_sync_mode
 from shillelagh.adapters.api.gsheets import get_url
@@ -20,7 +22,9 @@ from shillelagh.adapters.api.gsheets import GSheetsTime
 from shillelagh.adapters.api.gsheets import SyncMode
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
+from shillelagh.exceptions import InternalError
 from shillelagh.exceptions import ProgrammingError
+from shillelagh.fields import Float
 from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
@@ -1627,6 +1631,16 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
         ],
     }
 
+    gsheets_adapter = GSheetsAPI(
+        "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=BATCH",
+        "XXX",
+    )
+    gsheets_adapter._values = []
+    gsheets_adapter.modified = True
+    with pytest.raises(InternalError) as excinfo:
+        gsheets_adapter.close()
+    assert str(excinfo.value) == "An unexpected error happened"
+
     simple_sheet_adapter.register_uri(
         "PUT",
         "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueInputOption=USER_ENTERED",
@@ -1643,7 +1657,7 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
         "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=BATCH",
         "XXX",
     )
-    gsheets_adapter._values = []
+    gsheets_adapter._values = [["foo", "bar"]]
     gsheets_adapter.modified = True
     with pytest.raises(ProgrammingError) as excinfo:
         gsheets_adapter.close()
@@ -2153,3 +2167,100 @@ def test_empty_middle_column(mocker):
     sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/1/edit#gid=0"'''
     data = list(cursor.execute(sql))
     assert data == [("test", "test", 1.5, 10.1), ("test2", "test3", 0.1, 10.2)]
+
+
+def test_gen_letters():
+    letters = list(itertools.islice(gen_letters(), 60))
+    assert letters == [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "AA",
+        "AB",
+        "AC",
+        "AD",
+        "AE",
+        "AF",
+        "AG",
+        "AH",
+        "AI",
+        "AJ",
+        "AK",
+        "AL",
+        "AM",
+        "AN",
+        "AO",
+        "AP",
+        "AQ",
+        "AR",
+        "AS",
+        "AT",
+        "AU",
+        "AV",
+        "AW",
+        "AX",
+        "AY",
+        "AZ",
+        "AAA",
+        "AAB",
+        "AAC",
+        "AAD",
+        "AAE",
+        "AAF",
+        "AAG",
+        "AAH",
+    ]
+
+
+def test_header_rows(mocker):
+    # prevent network calls
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_columns",
+        mock.MagicMock(),
+    )
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_metadata",
+        mock.MagicMock(),
+    )
+
+    gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit")
+    gsheets_adapter.columns = {"this is a string": String(), "this is a float": Float()}
+    gsheets_adapter._column_map = {"this is a string": "B", "this is a float": "D"}
+
+    values = [
+        [None, "this is", None, "this is"],
+        [None, "a string", None, "a float"],
+        [None, "test", None, 1.1],
+    ]
+    assert gsheets_adapter._get_header_rows(values) == 2
+
+    values = [
+        [None, "this is", None, "this is"],
+        [None, "test", None, 1.1],
+    ]
+    with pytest.raises(InternalError) as excinfo:
+        gsheets_adapter._get_header_rows(values)
+    assert str(excinfo.value) == "Could not determine number of header rows"

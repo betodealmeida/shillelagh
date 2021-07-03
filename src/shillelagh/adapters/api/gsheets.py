@@ -1,7 +1,9 @@
 import atexit
 import datetime
+import itertools
 import json
 import logging
+import string
 import urllib.parse
 from enum import Enum
 from functools import partial
@@ -22,6 +24,7 @@ from google.auth.transport.requests import AuthorizedSession
 from requests import Session
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError
+from shillelagh.exceptions import InternalError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Boolean
 from shillelagh.fields import Date
@@ -296,6 +299,44 @@ def get_sync_mode(uri: str) -> Optional[SyncMode]:
     return sync_mode
 
 
+def gen_letters() -> Iterator[str]:
+    letters = ["A"]
+    index = 0
+    while True:
+        yield "".join(letters)
+
+        index += 1
+        if index == len(string.ascii_uppercase):
+            letters[-1] = "A"
+            letters.append("A")
+            index = 0
+        else:
+            letters[-1] = string.ascii_uppercase[index]
+
+
+def get_index_from_letters(letters: str) -> int:
+    base26 = [string.ascii_uppercase.index(letter) for letter in letters]
+    return sum(
+        value * (len(string.ascii_uppercase) ** i) for i, value in enumerate(base26)
+    )
+
+
+def get_values_from_row(row: Row, column_map: Dict[str, str]) -> List[Any]:
+    """
+    Convert a `Row` into a list of values.
+
+    This takes into consideration empty columns. For example:
+
+        >>> column_map = {"country": "A", "cnt": "C"}  # empty column B
+        >>> row = {"country": "BR", "cnt": 10}
+        >>> get_values_from_row(row, column_map)
+        ["BR", None, 10]
+    """
+    n_cols = get_index_from_letters(max(column_map.values())) + 1
+    row = {column_map[k]: v for k, v in row.items() if k in column_map}
+    return [row.get(column) for column in itertools.islice(gen_letters(), n_cols)]
+
+
 def get_credentials(
     access_token: Optional[str],
     service_account_file: Optional[str],
@@ -520,38 +561,87 @@ class GSheetsAPI(Adapter):
             field.order = Order.NONE
             field.exact = False
 
+    def _get_header_rows(self, values: List[List[Any]]) -> int:
+        """
+        Return the number of header rows.
+
+        We can have column names in more than one row:
+
+            ----------------------
+            | this is  | this is |
+            |----------|---------|
+            | a string | a float |
+            |----------|---------|
+            | test     | 1.1     |
+            ----------------------
+
+        The Chart API returns the columns labels correctly, "this is a
+        string" and "this is a float", but the Sheets API returns them
+        as separate rows.
+
+        In order to determine the number of header rows we pick the first
+        column, and test how many rows are needed to make the column label
+        returned by the Chart API (2, in this case).
+        """
+        first_column_name = list(self.columns)[0]
+        letters = self._column_map[first_column_name]
+        index = get_index_from_letters(letters)
+
+        cells = []
+        for i, row in enumerate(values):
+            cells.append(str(row[index]))
+            if " ".join(cells) == first_column_name:
+                break
+        else:
+            raise InternalError("Could not determine number of header rows")
+
+        return i + 1
+
     def get_data(
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
     ) -> Iterator[Row]:
+        reverse_map = {v: k for k, v in self._column_map.items()}
+
         if self.modified and self._sync_mode in {
             SyncMode.UNIDIRECTIONAL,
             SyncMode.BATCH,
         }:
-            data = (dict(zip(self.columns, row)) for row in self._get_values()[1:])
-            for i, row in enumerate(data):
-                self._row_ids[i] = row
-                row["rowid"] = i
-                yield row
-            return
+            values = self._get_values()
+            headers = self._get_header_rows(values)
+            rows = (
+                {
+                    reverse_map[letter]: cell
+                    for letter, cell in zip(gen_letters(), row)
+                    if letter in reverse_map
+                }
+                for row in values[headers:]
+            )
 
-        try:
-            sql = build_sql(self.columns, bounds, order, self._column_map, self._offset)
-        except ImpossibleFilterError:
-            return
+        else:
+            try:
+                sql = build_sql(
+                    self.columns,
+                    bounds,
+                    order,
+                    self._column_map,
+                    self._offset,
+                )
+            except ImpossibleFilterError:
+                return
 
-        payload = self._run_query(sql)
-        cols = payload["table"]["cols"]
-        reverse_map = {v: k for k, v in self._column_map.items()}
-        rows = (
-            {
-                reverse_map[col["id"]]: cell["v"] if cell else None
-                for col, cell in zip(cols, row["c"])
-                if col["id"] in reverse_map
-            }
-            for row in payload["table"]["rows"]
-        )
+            payload = self._run_query(sql)
+            cols = payload["table"]["cols"]
+            rows = (
+                {
+                    reverse_map[col["id"]]: cell["v"] if cell else None
+                    for col, cell in zip(cols, row["c"])
+                    if col["id"] in reverse_map
+                }
+                for row in payload["table"]["rows"]
+            )
+
         for i, row in enumerate(rows):
             self._row_ids[i] = row
             row["rowid"] = i
@@ -563,7 +653,7 @@ class GSheetsAPI(Adapter):
             row_id = max(self._row_ids.keys()) + 1 if self._row_ids else 0
         self._row_ids[row_id] = row
 
-        row_values = [row[column] for column in self.columns]
+        row_values = get_values_from_row(row, self._column_map)
 
         if self._sync_mode in {SyncMode.UNIDIRECTIONAL, SyncMode.BATCH}:
             values = self._get_values()
@@ -625,8 +715,7 @@ class GSheetsAPI(Adapter):
         """
         Return the 0-indexed number of a given row, defined by its values.
         """
-        target_row_values = [row[column] for column in self.columns]
-
+        target_row_values = get_values_from_row(row, self._column_map)
         for i, row_values in enumerate(self._get_values()):
             if row_values == target_row_values:
                 return i
@@ -684,7 +773,7 @@ class GSheetsAPI(Adapter):
         current_row = self._row_ids[row_id]
         row_number = self._find_row_number(current_row)
 
-        row_values = [row[column] for column in self.columns]
+        row_values = get_values_from_row(row, self._column_map)
 
         if self._sync_mode in {SyncMode.UNIDIRECTIONAL, SyncMode.BATCH}:
             values = self._get_values()
@@ -726,9 +815,11 @@ class GSheetsAPI(Adapter):
             return
 
         values = self._get_values()
+        if not values:
+            raise InternalError("An unexpected error happened")
 
         # pad values with empty rows if needed
-        dummy_row = [""] * len(self.columns)
+        dummy_row = [""] * len(values[0])
         values.extend([dummy_row] * (self._original_rows - len(values)))
 
         _logger.info("Pushing pending changes to the spreadsheet")
