@@ -9,10 +9,10 @@ from shillelagh.adapters.file.csvfile import RowTracker
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.fields import Float
-from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Impossible
 from shillelagh.filters import Range
+from shillelagh.types import Order
 
 from ...fakes import FakeEntryPoint
 

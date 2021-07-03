@@ -16,12 +16,12 @@ from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Date
 from shillelagh.fields import Field
 from shillelagh.fields import Float
-from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.lib import build_sql
+from shillelagh.types import Order
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 from typing_extensions import TypedDict

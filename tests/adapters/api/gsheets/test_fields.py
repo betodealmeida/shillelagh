@@ -6,7 +6,7 @@ from shillelagh.adapters.api.gsheets.fields import GSheetsDate
 from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime
 from shillelagh.adapters.api.gsheets.fields import GSheetsTime
 from shillelagh.fields import DateTime
-from shillelagh.fields import Order
+from shillelagh.types import Order
 
 
 def test_fields():

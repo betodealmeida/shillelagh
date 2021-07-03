@@ -29,9 +29,9 @@ from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import InternalError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
-from shillelagh.fields import Order
 from shillelagh.filters import Filter
 from shillelagh.lib import build_sql
+from shillelagh.types import Order
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 

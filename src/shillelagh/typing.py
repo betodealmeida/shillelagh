@@ -7,7 +7,7 @@ from typing import Type
 from typing import Union
 
 from shillelagh.fields import Field
-from shillelagh.fields import Order
+from shillelagh.types import Order
 from typing_extensions import Literal
 
 # A value corresponding to a constraint is one of:

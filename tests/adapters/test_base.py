@@ -13,11 +13,11 @@ from shillelagh.backends.apsw.db import connect
 from shillelagh.fields import DateTime
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
-from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
+from shillelagh.types import Order
 from shillelagh.typing import Row
 
 from ..fakes import FakeAdapter
