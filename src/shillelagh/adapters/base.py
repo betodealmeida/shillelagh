@@ -12,8 +12,8 @@ from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.fields import Integer
 from shillelagh.filters import Filter
-from shillelagh.types import RequestedOrder
-from shillelagh.types import Row
+from shillelagh.typing import RequestedOrder
+from shillelagh.typing import Row
 
 
 T = TypeVar("T", bound="Adapter")

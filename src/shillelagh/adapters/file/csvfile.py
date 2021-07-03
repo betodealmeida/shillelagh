@@ -19,8 +19,8 @@ from shillelagh.lib import analyse
 from shillelagh.lib import filter_data
 from shillelagh.lib import RowIDManager
 from shillelagh.lib import update_order
-from shillelagh.types import RequestedOrder
-from shillelagh.types import Row
+from shillelagh.typing import RequestedOrder
+from shillelagh.typing import Row
 
 
 class RowTracker:
