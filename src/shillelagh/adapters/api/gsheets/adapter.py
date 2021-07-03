@@ -1,12 +1,8 @@
 import atexit
 import datetime
-import itertools
 import json
 import logging
-import string
 import urllib.parse
-from enum import Enum
-from functools import partial
 from typing import Any
 from typing import cast
 from typing import Dict
@@ -14,353 +10,34 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
-from typing import Type
 
 import dateutil.tz
-import google.oauth2.credentials
-import google.oauth2.service_account
-from google.auth.credentials import Credentials
 from google.auth.transport.requests import AuthorizedSession
 from requests import Session
+from shillelagh.adapters.api.gsheets.lib import format_error_message
+from shillelagh.adapters.api.gsheets.lib import gen_letters
+from shillelagh.adapters.api.gsheets.lib import get_credentials
+from shillelagh.adapters.api.gsheets.lib import get_field
+from shillelagh.adapters.api.gsheets.lib import get_index_from_letters
+from shillelagh.adapters.api.gsheets.lib import get_sync_mode
+from shillelagh.adapters.api.gsheets.lib import get_url
+from shillelagh.adapters.api.gsheets.lib import get_values_from_row
+from shillelagh.adapters.api.gsheets.types import SyncMode
+from shillelagh.adapters.api.gsheets.typing import QueryResults
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import InternalError
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Boolean
-from shillelagh.fields import Date
-from shillelagh.fields import DateTime
 from shillelagh.fields import Field
-from shillelagh.fields import Float
 from shillelagh.fields import Order
-from shillelagh.fields import String
-from shillelagh.fields import Time
-from shillelagh.filters import Equal
 from shillelagh.filters import Filter
-from shillelagh.filters import Range
 from shillelagh.lib import build_sql
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
-from typing_extensions import Literal
-from typing_extensions import TypedDict
 
 _logger = logging.getLogger(__name__)
 
-# Google API scopes for authentication
-SCOPES = [
-    "https://www.googleapis.com/auth/drive.readonly",
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://spreadsheets.google.com/feeds",
-]
-
 JSON_PAYLOAD_PREFIX = ")]}'\n"
-
-
-class SyncMode(Enum):
-    # all changes are pushed immediately, and the spreadsheet is downloaded
-    # before every UPDATE/DELETE
-    BIDIRECTIONAL = 1
-
-    # all changes are pushed imediately, but the spreadsheet is
-    # downloaded only once before the first UPDATE/DELETE
-    UNIDIRECTIONAL = 2
-
-    # all changes are pushed at once when the connection closes, and the
-    # spreadsheet is downloaded before the first UPDATE/DELETE
-    BATCH = 3
-
-
-class UrlArgs(TypedDict, total=False):
-    headers: int
-    gid: int
-    sheet: str
-
-
-class QueryResultsColumn(TypedDict, total=False):
-    id: str
-    label: str
-    type: str
-    pattern: str  # optional
-
-
-class QueryResultsCell(TypedDict, total=False):
-    v: Any
-    f: str  # optional
-
-
-class QueryResultsRow(TypedDict):
-    c: List[QueryResultsCell]
-
-
-class QueryResultsTable(TypedDict):
-    cols: List[QueryResultsColumn]
-    rows: List[QueryResultsRow]
-    parsedNumHeaders: int
-
-
-class QueryResultsError(TypedDict):
-    reason: str
-    message: str
-    detailed_message: str
-
-
-class QueryResults(TypedDict, total=False):
-    """
-    Query results from the Google API.
-
-    Successful query:
-
-    {
-        "version": "0.6",
-        "reqId": "0",
-        "status": "ok",
-        "sig": "1453301915",
-        "table": {
-            "cols": [
-                {"id": "A", "label": "country", "type": "string"},
-                {"id": "B", "label": "cnt", "type": "number", "pattern": "General"},
-            ],
-            "rows": [{"c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]}],
-            "parsedNumHeaders": 0,
-        },
-    }
-
-    Failed:
-
-    {
-        "version": "0.6",
-        "reqId": "0",
-        "status": "error",
-        "errors": [
-            {
-                "reason": "invalid_query",
-                "message": "INVALID_QUERY",
-                "detailed_message": "Invalid query: NO_COLUMN: C",
-            }
-        ],
-    }
-    """
-
-    version: str
-    reqId: str
-    status: Literal["ok", "error"]
-    sig: str
-    table: QueryResultsTable
-    errors: List[QueryResultsError]
-
-
-class GSheetsDateTime(DateTime):
-    def __init__(
-        self,
-        filters: Optional[List[Type[Filter]]] = None,
-        order: Order = Order.NONE,
-        exact: bool = False,
-        timezone: Optional[datetime.tzinfo] = None,
-    ):
-        super().__init__(filters, order, exact)
-        self.timezone = timezone
-
-    def parse(self, value: Optional[str]) -> Optional[datetime.datetime]:
-        if value is None:
-            return None
-
-        args = [int(number) for number in value[len("Date(") : -1].split(",")]
-        args[1] += 1  # month is zero indexed in the response
-        return datetime.datetime(*args, tzinfo=self.timezone)  # type: ignore
-
-    def format(self, value: Optional[datetime.datetime]) -> Optional[str]:
-        if value is None:
-            return None
-        # Google Sheets does not support timezones in datetime values, so we
-        # convert all timestamps to the sheet timezone
-        if self.timezone:
-            value = value.astimezone(self.timezone)
-        return value.strftime("%m/%d/%Y %H:%M:%S") if value else None
-
-    @staticmethod
-    def quote(value: Any) -> str:
-        return f"datetime '{value}'"
-
-
-class GSheetsDate(Date):
-    @staticmethod
-    def parse(value: Optional[str]) -> Optional[datetime.date]:
-        """Parse a string like 'Date(2018,0,1)'."""
-        if value is None:
-            return None
-
-        args = [int(number) for number in value[len("Date(") : -1].split(",")]
-        args[1] += 1  # month is zero indexed in the response (WTF, Google!?)
-        return datetime.date(*args)
-
-    @staticmethod
-    def quote(value: Any) -> str:
-        return f"date '{value}'"
-
-
-class GSheetsTime(Time):
-    @staticmethod
-    def parse(values: Optional[List[int]]) -> Optional[datetime.time]:
-        """Parse time of day as returned from the API."""
-        if values is None:
-            return None
-
-        return datetime.time(*values)  # type: ignore
-
-    @staticmethod
-    def quote(value: Any) -> str:
-        return f"timeofday '{value}'"
-
-
-class GSheetsBoolean(Boolean):
-    @staticmethod
-    def quote(value: bool) -> str:
-        return "true" if value else "false"
-
-
-def get_field(
-    col: QueryResultsColumn,
-    timezone: Optional[datetime.tzinfo],
-) -> Field:
-    type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
-        "string": (String, [Equal]),
-        "number": (Float, [Range]),
-        "boolean": (GSheetsBoolean, [Equal]),
-        "date": (GSheetsDate, [Range]),
-        "datetime": (partial(GSheetsDateTime, timezone=timezone), [Range]),  # type: ignore
-        "timeofday": (GSheetsTime, [Range]),
-    }
-    class_, filters = type_map.get(col["type"], (String, [Equal]))
-    return class_(
-        filters=filters,
-        order=Order.ANY,
-        exact=True,
-    )
-
-
-def format_error_message(errors: List[QueryResultsError]) -> str:
-    return "\n\n".join(error["detailed_message"] for error in errors)
-
-
-def get_url(
-    uri: str,
-    headers: int = 0,
-    gid: int = 0,
-    sheet: Optional[str] = None,
-) -> str:
-    """Return API URL given the spreadsheet URL."""
-    parts = urllib.parse.urlparse(uri)
-
-    # strip /edit
-    path = parts.path[: -len("/edit")] if parts.path.endswith("/edit") else parts.path
-
-    # add the gviz endpoint
-    path = "/".join((path.rstrip("/"), "gviz/tq"))
-
-    qs = urllib.parse.parse_qs(parts.query)
-    if "headers" in qs:
-        headers = int(qs["headers"][-1])
-    if "gid" in qs:
-        gid = int(qs["gid"][-1])
-    if "sheet" in qs:
-        sheet = qs["sheet"][-1]
-
-    if parts.fragment.startswith("gid="):
-        gid = int(parts.fragment[len("gid=") :])
-
-    args: UrlArgs = {}
-    if headers > 0:
-        args["headers"] = headers
-    if sheet is not None:
-        args["sheet"] = sheet
-    else:
-        args["gid"] = gid
-    params = urllib.parse.urlencode(args)
-
-    return urllib.parse.urlunparse(
-        (parts.scheme, parts.netloc, path, None, params, None),
-    )
-
-
-def get_sync_mode(uri: str) -> Optional[SyncMode]:
-    parts = urllib.parse.urlparse(uri)
-    qs = urllib.parse.parse_qs(parts.query)
-    if "sync_mode" not in qs:
-        return None
-
-    parameter = qs["sync_mode"][-1].upper()
-    try:
-        sync_mode = SyncMode[parameter]
-    except KeyError:
-        try:
-            sync_mode = SyncMode(int(parameter))
-        except ValueError as ex:
-            raise ProgrammingError(f"Invalid sync mode: {parameter}") from ex
-
-    return sync_mode
-
-
-def gen_letters() -> Iterator[str]:
-    letters = ["A"]
-    index = 0
-    while True:
-        yield "".join(letters)
-
-        index += 1
-        if index == len(string.ascii_uppercase):
-            letters[-1] = "A"
-            letters.append("A")
-            index = 0
-        else:
-            letters[-1] = string.ascii_uppercase[index]
-
-
-def get_index_from_letters(letters: str) -> int:
-    base26 = [string.ascii_uppercase.index(letter) for letter in letters]
-    return sum(
-        value * (len(string.ascii_uppercase) ** i) for i, value in enumerate(base26)
-    )
-
-
-def get_values_from_row(row: Row, column_map: Dict[str, str]) -> List[Any]:
-    """
-    Convert a `Row` into a list of values.
-
-    This takes into consideration empty columns. For example:
-
-        >>> column_map = {"country": "A", "cnt": "C"}  # empty column B
-        >>> row = {"country": "BR", "cnt": 10}
-        >>> get_values_from_row(row, column_map)
-        ["BR", None, 10]
-    """
-    n_cols = get_index_from_letters(max(column_map.values())) + 1
-    row = {column_map[k]: v for k, v in row.items() if k in column_map}
-    return [row.get(column) for column in itertools.islice(gen_letters(), n_cols)]
-
-
-def get_credentials(
-    access_token: Optional[str],
-    service_account_file: Optional[str],
-    service_account_info: Optional[Dict[str, Any]],
-    subject: Optional[str],
-) -> Optional[Credentials]:
-    if access_token:
-        return google.oauth2.credentials.Credentials(access_token)
-
-    if service_account_file:
-        return google.oauth2.service_account.Credentials.from_service_account_file(
-            service_account_file,
-            scopes=SCOPES,
-            subject=subject,
-        )
-
-    if service_account_info:
-        return google.oauth2.service_account.Credentials.from_service_account_info(
-            service_account_info,
-            scopes=SCOPES,
-            subject=subject,
-        )
-
-    return None
 
 
 class GSheetsAPI(Adapter):

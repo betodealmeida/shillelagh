@@ -27,6 +27,12 @@ def test_comparison():
     assert field1 != field3
     assert field1 != 42
 
+    assert String(filters=[Equal], order=Order.ANY, exact=True) != Integer(
+        filters=[Equal],
+        order=Order.ANY,
+        exact=True,
+    )
+
 
 def test_integer():
     assert Integer().parse(1) == 1

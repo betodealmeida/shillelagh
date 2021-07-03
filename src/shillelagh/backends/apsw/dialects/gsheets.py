@@ -8,9 +8,7 @@ from typing import Tuple
 
 from google.auth.credentials import Credentials
 from google.auth.transport.requests import AuthorizedSession
-from shillelagh.adapters.api.gsheets import get_credentials
-from shillelagh.adapters.api.gsheets import GSheetsAPI
-from shillelagh.adapters.base import Adapter
+from shillelagh.adapters.api.gsheets.lib import get_credentials
 from shillelagh.backends.apsw.dialects.base import APSWDialect
 from shillelagh.exceptions import ProgrammingError
 from sqlalchemy.engine.url import make_url

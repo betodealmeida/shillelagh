@@ -9,18 +9,7 @@ import pytest
 import requests
 import requests_mock
 from freezegun import freeze_time
-from shillelagh.adapters.api.gsheets import format_error_message
-from shillelagh.adapters.api.gsheets import gen_letters
-from shillelagh.adapters.api.gsheets import get_credentials
-from shillelagh.adapters.api.gsheets import get_sync_mode
-from shillelagh.adapters.api.gsheets import get_url
-from shillelagh.adapters.api.gsheets import GSheetsAPI
-from shillelagh.adapters.api.gsheets import GSheetsBoolean
-from shillelagh.adapters.api.gsheets import GSheetsDate
-from shillelagh.adapters.api.gsheets import GSheetsDateTime
-from shillelagh.adapters.api.gsheets import GSheetsTime
-from shillelagh.adapters.api.gsheets import SyncMode
-from shillelagh.adapters.base import Adapter
+from shillelagh.adapters.api.gsheets.adapter import GSheetsAPI
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import InternalError
 from shillelagh.exceptions import ProgrammingError
@@ -28,11 +17,9 @@ from shillelagh.fields import Float
 from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
-from shillelagh.filters import Impossible
-from shillelagh.filters import Range
 
-from ...fakes import FakeAdapter
-from ...fakes import FakeEntryPoint
+from ....fakes import FakeAdapter
+from ....fakes import FakeEntryPoint
 
 
 @pytest.fixture
@@ -185,53 +172,6 @@ def test_credentials(mocker):
     )
 
 
-def test_get_credentials(mocker):
-    service_account = mocker.patch(
-        "shillelagh.adapters.api.gsheets.google.oauth2.service_account.Credentials",
-    )
-    credentials = mocker.patch(
-        "shillelagh.adapters.api.gsheets.google.oauth2.credentials.Credentials",
-    )
-
-    # no credentials
-    get_credentials(None, None, None, None)
-    credentials.assert_not_called()
-    service_account.assert_not_called()
-
-    # access_token
-    get_credentials("token", None, None, None)
-    credentials.assert_called_with("token")
-    credentials.reset_mock()
-    service_account.assert_not_called()
-
-    # service_account_file
-    get_credentials(None, "credentials.json", None, None)
-    credentials.assert_not_called()
-    service_account.from_service_account_file.assert_called_with(
-        "credentials.json",
-        scopes=[
-            "https://www.googleapis.com/auth/drive.readonly",
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://spreadsheets.google.com/feeds",
-        ],
-        subject=None,
-    )
-    service_account.reset_mock()
-
-    # service_account_info
-    get_credentials(None, None, {"secret": "XXX"}, "user@example.com")
-    credentials.assert_not_called()
-    service_account.from_service_account_info.assert_called_with(
-        {"secret": "XXX"},
-        scopes=[
-            "https://www.googleapis.com/auth/drive.readonly",
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://spreadsheets.google.com/feeds",
-        ],
-        subject="user@example.com",
-    )
-
-
 def test_execute(mocker, simple_sheet_adapter):
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
@@ -242,7 +182,7 @@ def test_execute(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
 
@@ -270,7 +210,7 @@ def test_execute_with_catalog(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
 
@@ -308,7 +248,7 @@ def test_execute_filter(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     simple_sheet_adapter.register_uri(
@@ -357,7 +297,7 @@ def test_execute_impossible(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
 
@@ -372,52 +312,6 @@ def test_execute_impossible(mocker, simple_sheet_adapter):
     assert data == []
 
 
-def test_get_url():
-    assert (
-        get_url(
-            "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=0",
-        )
-        == "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/gviz/tq?gid=0"
-    )
-    assert (
-        get_url(
-            "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=0",
-            headers=2,
-            gid=3,
-            sheet="some-sheet",
-        )
-        == "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/gviz/tq?headers=2&sheet=some-sheet"
-    )
-    assert (
-        get_url(
-            "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit?headers=2&gid=1",
-        )
-        == "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/gviz/tq?headers=2&gid=1"
-    )
-    assert (
-        get_url(
-            "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit?headers=2&sheet=some-sheet",
-        )
-        == "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/gviz/tq?headers=2&sheet=some-sheet"
-    )
-
-
-def test_format_error_message():
-    response = {
-        "version": "0.6",
-        "reqId": "0",
-        "status": "error",
-        "errors": [
-            {
-                "reason": "invalid_query",
-                "message": "INVALID_QUERY",
-                "detailed_message": "Invalid query: NO_COLUMN: C",
-            },
-        ],
-    }
-    assert format_error_message(response["errors"]) == "Invalid query: NO_COLUMN: C"
-
-
 def test_convert_rows(mocker):
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
@@ -429,7 +323,7 @@ def test_convert_rows(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     adapter.register_uri(
@@ -693,23 +587,23 @@ def test_convert_rows(mocker):
 def test_get_session(mocker):
     mock_authorized_session = mock.MagicMock()
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.AuthorizedSession",
+        "shillelagh.adapters.api.gsheets.adapter.AuthorizedSession",
         mock_authorized_session,
     )
     mock_session = mock.MagicMock()
-    mocker.patch("shillelagh.adapters.api.gsheets.Session", mock_session)
+    mocker.patch("shillelagh.adapters.api.gsheets.adapter.Session", mock_session)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.get_credentials",
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value=None,
     )
 
     # prevent network calls
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_columns",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._set_columns",
         mock.MagicMock(),
     )
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_metadata",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._set_metadata",
         mock.MagicMock(),
     )
 
@@ -722,7 +616,7 @@ def test_get_session(mocker):
     mock_session.reset_mock()
 
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.get_credentials",
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
     )
     gsheets_adapter = GSheetsAPI(
@@ -747,7 +641,7 @@ def test_api_bugs(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     # use content= so that the response has no encoding
@@ -822,7 +716,7 @@ def test_execute_json_prefix(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     simple_sheet_adapter.register_uri(
@@ -883,7 +777,7 @@ def test_execute_invalid_json(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     adapter.register_uri(
@@ -915,7 +809,7 @@ def test_execute_error_response(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     adapter.register_uri(
@@ -955,7 +849,7 @@ def test_headers_not_detected(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     adapter.register_uri(
@@ -1026,7 +920,7 @@ def test_headers_not_detected_no_rows(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     adapter.register_uri(
@@ -1079,71 +973,19 @@ def test_headers_not_detected_no_rows(mocker):
     assert list(gsheets_adapter.columns) == ["A", "B", "C"]
 
 
-def test_fields():
-    assert GSheetsDateTime().parse(None) is None
-    assert GSheetsDateTime().parse("Date(2018,8,9,0,0,0)") == datetime.datetime(
-        2018,
-        9,
-        9,
-        0,
-        0,
-    )
-    assert (
-        GSheetsDateTime().quote(
-            datetime.datetime(2018, 9, 9, 0, 0, tzinfo=datetime.timezone.utc),
-        )
-        == "datetime '2018-09-09 00:00:00+00:00'"
-    )
-
-    assert GSheetsDate().parse(None) is None
-    assert GSheetsDate().parse("Date(2018,0,1)") == datetime.date(2018, 1, 1)
-    assert GSheetsDate().quote(datetime.date(2018, 1, 1)) == "date '2018-01-01'"
-
-    assert GSheetsTime().parse(None) is None
-    assert GSheetsTime().parse([17, 0, 0, 0]) == datetime.time(
-        17,
-        0,
-    )
-    assert (
-        GSheetsTime().quote(datetime.time(17, 0, tzinfo=datetime.timezone.utc))
-        == "timeofday '17:00:00+00:00'"
-    )
-
-    assert GSheetsBoolean().parse(None) is None
-    assert GSheetsBoolean().parse("TRUE")
-    assert not GSheetsBoolean().parse("FALSE")
-    assert GSheetsBoolean().quote(True) == "true"
-    assert GSheetsBoolean().quote(False) == "false"
-
-    assert GSheetsDateTime().format(None) is None
-    assert (
-        GSheetsDateTime().format(
-            datetime.datetime(2018, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
-        )
-        == "01/01/2018 00:00:00"
-    )
-    tz = dateutil.tz.gettz("America/Los_Angeles")
-    assert (
-        GSheetsDateTime(timezone=tz).format(
-            datetime.datetime(2018, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
-        )
-        == "12/31/2017 16:00:00"
-    )
-
-
 def test_set_metadata(mocker, simple_sheet_adapter):
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_columns",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._set_columns",
     )
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.get_credentials",
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
     )
 
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
 
@@ -1163,7 +1005,7 @@ def test_set_metadata(mocker, simple_sheet_adapter):
     assert gsheets_adapter._sheet_id == 0
     assert gsheets_adapter._sheet_name == "Sheet1"
 
-    _logger = mocker.patch("shillelagh.adapters.api.gsheets._logger")
+    _logger = mocker.patch("shillelagh.adapters.api.gsheets.adapter._logger")
     gsheets_adapter = GSheetsAPI(
         "https://docs.google.com/spreadsheets/d/1/edit#gid=43",
         "XXX",
@@ -1174,10 +1016,10 @@ def test_set_metadata(mocker, simple_sheet_adapter):
 
 def test_set_metadata_error(mocker):
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_columns",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._set_columns",
     )
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.get_credentials",
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
     )
 
@@ -1185,7 +1027,7 @@ def test_set_metadata_error(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     adapter.register_uri(
@@ -1210,14 +1052,14 @@ def test_set_metadata_error(mocker):
 
 def test_insert_data(mocker, simple_sheet_adapter):
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.get_credentials",
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
     )
 
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     simple_sheet_adapter.register_uri(
@@ -1275,14 +1117,14 @@ def test_insert_data(mocker, simple_sheet_adapter):
 
 def test_delete_data(mocker, simple_sheet_adapter):
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.get_credentials",
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
     )
 
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     simple_sheet_adapter.register_uri(
@@ -1359,14 +1201,14 @@ def test_delete_data(mocker, simple_sheet_adapter):
 
 def test_update_data(mocker, simple_sheet_adapter):
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.get_credentials",
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
     )
 
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     simple_sheet_adapter.register_uri(
@@ -1467,49 +1309,17 @@ def test_update_data(mocker, simple_sheet_adapter):
     assert str(excinfo.value) == "Requested entity was not found."
 
 
-def test_get_sync_mode():
-    assert get_sync_mode("https://docs.google.com/spreadsheets/d/1/edit#gid=42") is None
-    assert (
-        get_sync_mode(
-            "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=BATCH#gid=42",
-        )
-        == SyncMode.BATCH
-    )
-    assert (
-        get_sync_mode(
-            "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=batch#gid=42",
-        )
-        == SyncMode.BATCH
-    )
-    assert (
-        get_sync_mode(
-            "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=1#gid=42",
-        )
-        == SyncMode.BIDIRECTIONAL
-    )
-    with pytest.raises(ProgrammingError) as excinfo:
-        get_sync_mode(
-            "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=0#gid=42",
-        )
-    assert str(excinfo.value) == "Invalid sync mode: 0"
-    with pytest.raises(ProgrammingError) as excinfo:
-        get_sync_mode(
-            "https://docs.google.com/spreadsheets/d/1/edit?sync_mode=INVALID#gid=42",
-        )
-    assert str(excinfo.value) == "Invalid sync mode: INVALID"
-
-
 def test_batch_sync_mode(mocker, simple_sheet_adapter):
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.get_credentials",
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
     )
-    _logger = mocker.patch("shillelagh.adapters.api.gsheets._logger")
+    _logger = mocker.patch("shillelagh.adapters.api.gsheets.adapter._logger")
 
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     update = simple_sheet_adapter.register_uri(
@@ -1674,14 +1484,14 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
 
 def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.get_credentials",
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
     )
 
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     update = simple_sheet_adapter.register_uri(
@@ -1761,11 +1571,11 @@ def test_execute_batch(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.get_credentials",
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
     )
     simple_sheet_adapter.register_uri(
@@ -1841,14 +1651,14 @@ def test_execute_batch(mocker, simple_sheet_adapter):
 
 def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.get_credentials",
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
     )
 
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
     insert = simple_sheet_adapter.register_uri(
@@ -1959,14 +1769,14 @@ def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
 
 def test_get_metadata(mocker, simple_sheet_adapter):
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.get_credentials",
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
     )
 
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
 
@@ -2159,7 +1969,7 @@ def test_empty_middle_column(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._get_session",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
         return_value=session,
     )
 
@@ -2171,80 +1981,14 @@ def test_empty_middle_column(mocker):
     assert data == [("test", "test", 1.5, 10.1), ("test2", "test3", 0.1, 10.2)]
 
 
-def test_gen_letters():
-    letters = list(itertools.islice(gen_letters(), 60))
-    assert letters == [
-        "A",
-        "B",
-        "C",
-        "D",
-        "E",
-        "F",
-        "G",
-        "H",
-        "I",
-        "J",
-        "K",
-        "L",
-        "M",
-        "N",
-        "O",
-        "P",
-        "Q",
-        "R",
-        "S",
-        "T",
-        "U",
-        "V",
-        "W",
-        "X",
-        "Y",
-        "Z",
-        "AA",
-        "AB",
-        "AC",
-        "AD",
-        "AE",
-        "AF",
-        "AG",
-        "AH",
-        "AI",
-        "AJ",
-        "AK",
-        "AL",
-        "AM",
-        "AN",
-        "AO",
-        "AP",
-        "AQ",
-        "AR",
-        "AS",
-        "AT",
-        "AU",
-        "AV",
-        "AW",
-        "AX",
-        "AY",
-        "AZ",
-        "AAA",
-        "AAB",
-        "AAC",
-        "AAD",
-        "AAE",
-        "AAF",
-        "AAG",
-        "AAH",
-    ]
-
-
 def test_header_rows(mocker):
     # prevent network calls
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_columns",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._set_columns",
         mock.MagicMock(),
     )
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.GSheetsAPI._set_metadata",
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._set_metadata",
         mock.MagicMock(),
     )
 
