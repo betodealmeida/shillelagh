@@ -8,13 +8,13 @@ from shillelagh.fields import DateTime
 from shillelagh.fields import Field
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
-from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.fields import Time
 from shillelagh.filters import Equal
 from shillelagh.types import BINARY
 from shillelagh.types import DATETIME
 from shillelagh.types import NUMBER
+from shillelagh.types import Order
 from shillelagh.types import STRING
 
 

@@ -7,9 +7,9 @@ from typing import Type
 from shillelagh.fields import Boolean
 from shillelagh.fields import Date
 from shillelagh.fields import DateTime
-from shillelagh.fields import Order
 from shillelagh.fields import Time
 from shillelagh.filters import Filter
+from shillelagh.types import Order
 
 
 class GSheetsDateTime(DateTime):

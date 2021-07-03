@@ -17,11 +17,11 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.fields import Integer
-from shillelagh.fields import Order
 from shillelagh.fields import type_map
 from shillelagh.filters import Filter
 from shillelagh.filters import Operator
 from shillelagh.lib import deserialize
+from shillelagh.types import Order
 from shillelagh.typing import Constraint
 from shillelagh.typing import Index
 from shillelagh.typing import RequestedOrder
