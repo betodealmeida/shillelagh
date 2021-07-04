@@ -7,12 +7,13 @@ from typing import Optional
 from typing import Tuple
 
 from google.auth.transport.requests import AuthorizedSession
-from shillelagh.adapters.api.gsheets.lib import get_credentials
-from shillelagh.backends.apsw.dialects.base import APSWDialect
-from shillelagh.exceptions import ProgrammingError
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
+
+from shillelagh.adapters.api.gsheets.lib import get_credentials
+from shillelagh.backends.apsw.dialects.base import APSWDialect
+from shillelagh.exceptions import ProgrammingError
 
 _logger = logging.getLogger(__name__)
 

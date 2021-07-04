@@ -1,5 +1,6 @@
-from shillelagh.backends.apsw.dialects.safe import APSWSafeDialect
 from sqlalchemy.engine.url import make_url
+
+from shillelagh.backends.apsw.dialects.safe import APSWSafeDialect
 
 
 def test_safe_dialect(fs):

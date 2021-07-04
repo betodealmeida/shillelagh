@@ -6,6 +6,7 @@ from typing import List
 from typing import Type
 
 import pkg_resources
+
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 

@@ -12,6 +12,7 @@ from typing import Tuple
 from typing import Type
 
 import apsw
+
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Blob

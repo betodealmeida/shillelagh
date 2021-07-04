@@ -17,6 +17,7 @@ from typing import TypeVar
 
 import apsw
 from pkg_resources import iter_entry_points
+
 from shillelagh import functions
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.vt import type_map

@@ -1,4 +1,5 @@
 import pytest
+
 from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float

@@ -4,8 +4,9 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-from shillelagh.backends.apsw.dialects.base import APSWDialect
 from sqlalchemy.engine.url import URL
+
+from shillelagh.backends.apsw.dialects.base import APSWDialect
 
 
 class APSWSafeDialect(APSWDialect):

@@ -1,12 +1,12 @@
 from datetime import date
 
 import pytest
-from shillelagh.adapters.api.socrata import Number
-from shillelagh.backends.apsw.db import connect
-from shillelagh.exceptions import ProgrammingError
 
 from ...fakes import cdc_data_response
 from ...fakes import cdc_metadata_response
+from shillelagh.adapters.api.socrata import Number
+from shillelagh.backends.apsw.db import connect
+from shillelagh.exceptions import ProgrammingError
 
 
 def test_socrata(requests_mock):

@@ -10,8 +10,9 @@ from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles.pygments import style_from_pygments_cls
 from pygments.lexers.sql import SqlLexer
 from pygments.styles import get_style_by_name
-from shillelagh.backends.apsw.db import connect
 from tabulate import tabulate
+
+from shillelagh.backends.apsw.db import connect
 
 _logger = logging.getLogger(__name__)
 

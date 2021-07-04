@@ -2,6 +2,7 @@ import itertools
 
 import dateutil.tz
 import pytest
+
 from shillelagh.adapters.api.gsheets.fields import GSheetsBoolean
 from shillelagh.adapters.api.gsheets.fields import GSheetsDate
 from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime

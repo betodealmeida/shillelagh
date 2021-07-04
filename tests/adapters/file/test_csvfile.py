@@ -2,6 +2,8 @@ from unittest.mock import mock_open
 
 import apsw
 import pytest
+
+from ...fakes import FakeEntryPoint
 from shillelagh.adapters.base import Adapter
 from shillelagh.adapters.file.csvfile import CSVFile
 from shillelagh.adapters.file.csvfile import RowTracker
@@ -12,8 +14,6 @@ from shillelagh.fields import String
 from shillelagh.filters import Impossible
 from shillelagh.filters import Range
 from shillelagh.types import Order
-
-from ...fakes import FakeEntryPoint
 
 
 contents = """"index","temperature","site"

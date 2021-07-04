@@ -10,6 +10,8 @@ from typing import Tuple
 from typing import Type
 
 import requests_cache
+from typing_extensions import TypedDict
+
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import ProgrammingError
@@ -23,7 +25,6 @@ from shillelagh.lib import build_sql
 from shillelagh.types import Order
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
-from typing_extensions import TypedDict
 
 
 path_regex = re.compile(r"/resource/\w{4}-\w{4}.json")

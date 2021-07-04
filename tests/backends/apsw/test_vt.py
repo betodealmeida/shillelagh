@@ -3,6 +3,8 @@ from typing import Dict
 
 import apsw
 import pytest
+
+from ...fakes import FakeAdapter
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.vt import convert_rows_from_sqlite
 from shillelagh.backends.apsw.vt import convert_rows_to_sqlite
@@ -19,8 +21,6 @@ from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.types import Order
 from shillelagh.typing import Row
-
-from ...fakes import FakeAdapter
 
 
 class FakeAdapterNoFilters(FakeAdapter):

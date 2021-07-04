@@ -1,4 +1,5 @@
 import pytest
+
 from shillelagh.filters import Equal
 from shillelagh.filters import Impossible
 from shillelagh.filters import Operator

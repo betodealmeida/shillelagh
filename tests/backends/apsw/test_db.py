@@ -4,6 +4,9 @@ from unittest import mock
 
 import apsw
 import pytest
+
+from ...fakes import FakeAdapter
+from ...fakes import FakeEntryPoint
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.db import Connection
@@ -20,9 +23,6 @@ from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.types import Order
 from shillelagh.typing import Row
-
-from ...fakes import FakeAdapter
-from ...fakes import FakeEntryPoint
 
 
 def test_connect(mocker):

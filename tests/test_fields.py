@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+
 from shillelagh.fields import Blob
 from shillelagh.fields import Boolean
 from shillelagh.fields import Date

@@ -4,13 +4,13 @@ from datetime import timezone
 
 import apsw
 import pytest
+
+from ...fakes import FakeEntryPoint
+from ...fakes import weatherapi_response
 from shillelagh.adapters.api.weatherapi import WeatherAPI
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
-
-from ...fakes import FakeEntryPoint
-from ...fakes import weatherapi_response
 
 
 def test_weatherapi(requests_mock):

@@ -14,6 +14,7 @@ from typing import Tuple
 import dateutil.tz
 from google.auth.transport.requests import AuthorizedSession
 from requests import Session
+
 from shillelagh.adapters.api.gsheets.lib import format_error_message
 from shillelagh.adapters.api.gsheets.lib import gen_letters
 from shillelagh.adapters.api.gsheets.lib import get_credentials
