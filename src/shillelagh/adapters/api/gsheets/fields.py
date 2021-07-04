@@ -4,15 +4,20 @@ from typing import List
 from typing import Optional
 from typing import Type
 
-from shillelagh.fields import Boolean
-from shillelagh.fields import Date
-from shillelagh.fields import DateTime
-from shillelagh.fields import Time
+from shillelagh.fields import Field
+from shillelagh.fields import StringBoolean
 from shillelagh.filters import Filter
 from shillelagh.types import Order
 
 
-class GSheetsDateTime(DateTime):
+FORMAT = "%m/%d/%Y %H:%M:%S"
+QUOTE = "%Y-%m-%d %H:%M:%S"
+
+
+class GSheetsDateTime(Field[str, datetime.datetime]):
+    type = "TIMESTAMP"
+    db_api_type = "DATETIME"
+
     def __init__(
         self,
         filters: Optional[List[Type[Filter]]] = None,
@@ -49,16 +54,20 @@ class GSheetsDateTime(DateTime):
         # convert all timestamps to the sheet timezone
         if self.timezone:
             value = value.astimezone(self.timezone)
-        return value.strftime("%m/%d/%Y %H:%M:%S") if value else None
+        return value.strftime(FORMAT) if value else None
 
-    @staticmethod
-    def quote(value: Any) -> str:
+    def quote(self, value: Optional[str]) -> str:
+        if value is None:
+            return "NULL"
+        value = datetime.datetime.strptime(value, FORMAT).strftime(QUOTE)
         return f"datetime '{value}'"
 
 
-class GSheetsDate(Date):
-    @staticmethod
-    def parse(value: Optional[str]) -> Optional[datetime.date]:
+class GSheetsDate(Field[str, datetime.date]):
+    type = "DATE"
+    db_api_type = "DATETIME"
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.date]:
         """Parse a string like 'Date(2018,0,1)'."""
         if value is None:
             return None
@@ -67,26 +76,41 @@ class GSheetsDate(Date):
         args[1] += 1  # month is zero indexed in the response (WTF, Google!?)
         return datetime.date(*args)
 
-    @staticmethod
-    def quote(value: Any) -> str:
+    def format(self, value: Optional[datetime.date]) -> Optional[str]:
+        if value is None:
+            return None
+        return value.isoformat()
+
+    def quote(self, value: Optional[str]) -> str:
+        if value is None:
+            return "NULL"
         return f"date '{value}'"
 
 
-class GSheetsTime(Time):
-    @staticmethod
-    def parse(values: Optional[List[int]]) -> Optional[datetime.time]:
+class GSheetsTime(Field[List[int], datetime.time]):
+    type = "TIME"
+    db_api_type = "DATETIME"
+
+    def parse(self, values: Optional[List[int]]) -> Optional[datetime.time]:
         """Parse time of day as returned from the API."""
         if values is None:
             return None
 
         return datetime.time(*values)  # type: ignore
 
-    @staticmethod
-    def quote(value: Any) -> str:
+    def format(self, value: Optional[datetime.time]) -> Optional[str]:  # type: ignore
+        if value is None:
+            return value
+        return value.isoformat()
+
+    def quote(self, value: Optional[str]) -> str:  # type: ignore
+        if value is None:
+            return "NULL"
         return f"timeofday '{value}'"
 
 
-class GSheetsBoolean(Boolean):
-    @staticmethod
-    def quote(value: bool) -> str:
-        return "true" if value else "false"
+class GSheetsBoolean(StringBoolean):
+    def quote(self, value: Optional[str]) -> str:
+        if value is None:
+            return "NULL"
+        return value.lower()

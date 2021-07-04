@@ -1,11 +1,9 @@
 from datetime import date
 
 import pytest
+from shillelagh.adapters.api.socrata import Number
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import DateTime
-from shillelagh.fields import String
-from shillelagh.filters import Range
 
 from ...fakes import cdc_data_response
 from ...fakes import cdc_metadata_response
@@ -111,3 +109,12 @@ def test_socrata_invalid_query(requests_mock):
     with pytest.raises(ProgrammingError) as excinfo:
         cursor.execute(sql)
     assert str(excinfo.value) == "Invalid SoQL query"
+
+
+def test_number():
+    assert Number().parse("1.0") == 1.0
+    assert Number().parse(None) is None
+    assert Number().format(1.0) == "1.0"
+    assert Number().format(None) is None
+    assert Number().quote("1.0") == "1.0"
+    assert Number().quote(None) == "NULL"

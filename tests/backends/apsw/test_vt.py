@@ -9,6 +9,7 @@ import pytest
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.vt import convert_rows_from_sqlite
 from shillelagh.backends.apsw.vt import convert_rows_to_sqlite
+from shillelagh.backends.apsw.vt import type_map
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.backends.apsw.vt import VTTable
 from shillelagh.exceptions import ProgrammingError
@@ -16,7 +17,6 @@ from shillelagh.fields import Field
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
 from shillelagh.fields import String
-from shillelagh.fields import type_map
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
@@ -286,7 +286,7 @@ def test_convert_rows_to_sqlite():
             ),
             "DATE": datetime.date(2021, 1, 1),
             "TIME": datetime.time(0, 0, tzinfo=datetime.timezone.utc),
-            "BOOLEAN": True,
+            "BOOLEAN": False,
             "BLOB": b"test",
         },
         {
@@ -308,8 +308,8 @@ def test_convert_rows_to_sqlite():
             "TIMESTAMP": "2021-01-01T00:00:00+00:00",
             "DATE": "2021-01-01",
             "TIME": "00:00:00+00:00",
-            "BOOLEAN": "TRUE",
-            "BLOB": "74657374",
+            "BOOLEAN": 0,
+            "BLOB": b"test",
         },
         {
             "INTEGER": None,
@@ -333,8 +333,8 @@ def test_convert_rows_from_sqlite():
             "TIMESTAMP": "2021-01-01T00:00:00+00:00",
             "DATE": "2021-01-01",
             "TIME": "00:00:00+00:00",
-            "BOOLEAN": "TRUE",
-            "BLOB": "74657374",
+            "BOOLEAN": 0,
+            "BLOB": b"test",
         },
         {
             "INTEGER": None,
@@ -362,7 +362,7 @@ def test_convert_rows_from_sqlite():
             ),
             "DATE": datetime.date(2021, 1, 1),
             "TIME": datetime.time(0, 0, tzinfo=datetime.timezone.utc),
-            "BOOLEAN": True,
+            "BOOLEAN": False,
             "BLOB": b"test",
         },
         {

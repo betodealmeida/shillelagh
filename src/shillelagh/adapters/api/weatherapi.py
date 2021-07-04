@@ -13,9 +13,9 @@ import dateutil.parser
 import dateutil.tz
 import requests_cache
 from shillelagh.adapters.base import Adapter
-from shillelagh.fields import Boolean
 from shillelagh.fields import DateTime
 from shillelagh.fields import Float
+from shillelagh.fields import IntBoolean
 from shillelagh.fields import Integer
 from shillelagh.fields import String
 from shillelagh.filters import Filter
@@ -25,23 +25,15 @@ from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 
 
-class NativeDateTime(DateTime):
-    @staticmethod
-    def parse(value: Optional[datetime]) -> Optional[datetime]:
-        return value
-
-    format = parse  # type: ignore
-
-
 class WeatherAPI(Adapter):
 
     safe = True
 
-    time = NativeDateTime(filters=[Range], order=Order.ASCENDING, exact=False)
+    time = DateTime(filters=[Range], order=Order.ASCENDING, exact=False)
     time_epoch = Float(filters=[Range], order=Order.ASCENDING, exact=False)
     temp_c = Float()
     temp_f = Float()
-    is_day = Boolean()
+    is_day = IntBoolean()
     wind_mph = Float()
     wind_kph = Float()
     wind_degree = Integer()
@@ -60,9 +52,9 @@ class WeatherAPI(Adapter):
     heatindex_f = Float()
     dewpoint_c = Float()
     dewpoint_f = Float()
-    will_it_rain = Boolean()
+    will_it_rain = IntBoolean()
     chance_of_rain = String()
-    will_it_snow = Boolean()
+    will_it_snow = IntBoolean()
     chance_of_snow = String()
     vis_km = Float()
     vis_miles = Float()

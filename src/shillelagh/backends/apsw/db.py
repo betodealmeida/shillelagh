@@ -20,6 +20,7 @@ import apsw
 from pkg_resources import iter_entry_points
 from shillelagh import functions
 from shillelagh.adapters.base import Adapter
+from shillelagh.backends.apsw.vt import type_map
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import Error
 from shillelagh.exceptions import InterfaceError
@@ -27,7 +28,6 @@ from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Blob
 from shillelagh.fields import Field
-from shillelagh.fields import type_map
 from shillelagh.lib import combine_args_kwargs
 from shillelagh.lib import quote
 from shillelagh.lib import serialize
@@ -72,7 +72,7 @@ def check_result(method: F) -> F:
 
 
 def get_type_code(type_name: str) -> Type[Field]:
-    return type_map.get(type_name, Blob)
+    return cast(Type[Field], type_map.get(type_name, Blob))
 
 
 def convert_binding(binding: Any) -> SQLiteValidType:

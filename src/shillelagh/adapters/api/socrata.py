@@ -13,9 +13,8 @@ import requests_cache
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Date
 from shillelagh.fields import Field
-from shillelagh.fields import Float
+from shillelagh.fields import ISODate
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
@@ -43,9 +42,24 @@ class MetadataColumn(TypedDict):
     format: Dict[str, Any]
 
 
+class Number(Field[str, float]):
+    type = "REAL"
+    db_api_type = "NUMBER"
+
+    def parse(self, value: Optional[str]) -> Optional[float]:
+        if value is None:
+            return None
+        return float(value)
+
+    def format(self, value: Optional[float]) -> Optional[str]:
+        if value is None:
+            return None
+        return str(value)
+
+
 type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
-    "calendar_date": (Date, [Range]),
-    "number": (Float, [Range]),
+    "calendar_date": (ISODate, [Range]),
+    "number": (Number, [Range]),
     "text": (String, [Equal]),
 }
 
