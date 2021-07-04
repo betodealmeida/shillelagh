@@ -10,7 +10,7 @@ from typing import TypeVar
 
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
-from shillelagh.fields import Integer
+from shillelagh.fields import RowID
 from shillelagh.filters import Filter
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
@@ -69,7 +69,7 @@ class Adapter:
         """
         columns = self.get_columns()
         parsers = {column_name: field.parse for column_name, field in columns.items()}
-        parsers["rowid"] = Integer().parse
+        parsers["rowid"] = RowID().parse
 
         for row in self.get_data(bounds, order):
             yield {
@@ -85,7 +85,7 @@ class Adapter:
         Convert native Python to DB-specific types.
         """
         columns = self.get_columns().copy()
-        columns["rowid"] = Integer()
+        columns["rowid"] = RowID()
         row = {
             column_name: columns[column_name].format(value)
             for column_name, value in row.items()
@@ -106,7 +106,7 @@ class Adapter:
     def update_row(self, row_id: int, row: Row) -> None:
         # Subclasses are free to implement inplace updates
         columns = self.get_columns().copy()
-        columns["rowid"] = Integer()
+        columns["rowid"] = RowID()
         row = {
             column_name: columns[column_name].format(value)
             for column_name, value in row.items()

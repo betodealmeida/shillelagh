@@ -23,6 +23,7 @@ from shillelagh.fields import Integer
 from shillelagh.fields import ISODate
 from shillelagh.fields import ISODateTime
 from shillelagh.fields import ISOTime
+from shillelagh.fields import RowID
 from shillelagh.fields import String
 from shillelagh.filters import Filter
 from shillelagh.filters import Operator
@@ -76,7 +77,7 @@ def convert_rows_to_sqlite(
         column_name: type_map[column_field.type]().format
         for column_name, column_field in columns.items()
     }
-    converters["rowid"] = Integer().format
+    converters["rowid"] = RowID().format
     for row in rows:
         yield {
             column_name: converters[column_name](value)
@@ -99,7 +100,7 @@ def convert_rows_from_sqlite(
         column_name: type_map[column_field.type]().parse
         for column_name, column_field in columns.items()
     }
-    converters["rowid"] = Integer().parse
+    converters["rowid"] = RowID().parse
     for row in rows:
         yield {
             column_name: converters[column_name](value)
