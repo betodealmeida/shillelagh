@@ -1,18 +1,48 @@
 import datetime
 from distutils.util import strtobool
 from typing import Any
-from typing import Callable
 from typing import cast
+from typing import Generic
 from typing import List
 from typing import Optional
 from typing import Type
+from typing import TypeVar
+from typing import Union
 
 import dateutil.parser
 from shillelagh.filters import Filter
 from shillelagh.types import Order
 
 
-class Field:
+Internal = TypeVar(
+    "Internal",
+    float,
+    int,
+    str,
+    bool,
+    datetime.date,
+    datetime.time,
+    datetime.datetime,
+    bytes,
+    # GSheets
+    List[int],
+    Union[str, List[int]],
+)
+
+External = TypeVar(
+    "External",
+    float,
+    int,
+    str,
+    bool,
+    datetime.date,
+    datetime.time,
+    datetime.datetime,
+    bytes,
+)
+
+
+class Field(Generic[Internal, External]):
 
     """
     Represents a column in a table.
@@ -47,7 +77,7 @@ class Field:
             and self.exact == other.exact,
         )
 
-    def parse(self, value: Any) -> Any:
+    def parse(self, value: Optional[Internal]) -> Optional[External]:
         """
         Convert from a DB type to a native Python type.
 
@@ -65,17 +95,17 @@ class Field:
         allows the adapter to simply return the original value, and have it
         being automatically converted to a `datetime.date` object.
         """
-        raise NotImplementedError("Subclasses must implement `parse`")
+        return cast(Optional[External], value)
 
-    def format(self, value: Any) -> Any:
+    def format(self, value: Optional[External]) -> Optional[Internal]:
         """
         Convert from a native Python type to a DB type.
 
         This should be the opposite of `parse`.
         """
-        raise NotImplementedError("Subclasses must implement `format`")
+        return cast(Optional[Internal], value)
 
-    def quote(self, value: Any) -> str:
+    def quote(self, value: Optional[Internal]) -> str:
         """
         Quote values.
 
@@ -88,63 +118,51 @@ class Field:
         In orded to handle that, the adapter defines its own time fields
         with custom `quote` methods.
         """
-        raise NotImplementedError("Subclasses must implement `quote`")
+        if value is None:
+            return "NULL"
+        return str(value)
 
 
-class Integer(Field):
+class Integer(Field[int, int]):
     type = "INTEGER"
     db_api_type = "NUMBER"
 
-    def parse(self, value: Any) -> Optional[int]:
-        if value is None:
-            return None
 
-        return int(value)
-
-    format = parse
-
-    def quote(self, value: Any) -> str:
-        return str(value)
+class RowID(Integer):
+    db_api_type = "ROWID"
 
 
-class Float(Field):
+class Float(Field[float, float]):
     type = "REAL"
     db_api_type = "NUMBER"
 
-    def parse(self, value: Any) -> Optional[float]:
-        if value is None:
-            return None
 
-        return float(value)
-
-    format = parse
-
-    def quote(self, value: Any) -> str:
-        return str(value)
-
-
-class String(Field):
+class String(Field[str, str]):
     type = "TEXT"
     db_api_type = "STRING"
 
-    def parse(self, value: Any) -> Optional[str]:
+    def quote(self, value: Optional[str]) -> str:
         if value is None:
-            return None
-
-        return str(value)
-
-    format = parse
-
-    def quote(self, value: Any) -> str:
+            return "NULL"
         escaped_value = value.replace("'", "''")
         return f"'{escaped_value}'"
 
 
-class Date(Field):
+class Date(Field[datetime.date, datetime.date]):
     type = "DATE"
     db_api_type = "DATETIME"
 
-    def parse(self, value: Any) -> Optional[datetime.date]:
+    def quote(self, value: Optional[datetime.date]) -> str:
+        if value is None:
+            return "NULL"
+        return f"'{value.isoformat()}'"
+
+
+class ISODate(Field[str, datetime.date]):
+    type = "DATE"
+    db_api_type = "DATETIME"
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.date]:
         if value is None:
             return None
 
@@ -161,18 +179,29 @@ class Date(Field):
     def format(self, value: Optional[datetime.date]) -> Optional[str]:
         if value is None:
             return None
-
         return value.isoformat()
 
-    def quote(self, value: Any) -> str:
-        return f"'{self.format(value)}'"
+    def quote(self, value: Optional[str]) -> str:
+        if value is None:
+            return "NULL"
+        return f"'{value}'"
 
 
-class Time(Field):
+class Time(Field[datetime.time, datetime.time]):
     type = "TIME"
     db_api_type = "DATETIME"
 
-    def parse(self, value: Any) -> Optional[datetime.time]:
+    def quote(self, value: Optional[datetime.time]) -> str:
+        if value is None:
+            return "NULL"
+        return f"'{value.isoformat()}'"
+
+
+class ISOTime(Field[str, datetime.time]):
+    type = "TIME"
+    db_api_type = "DATETIME"
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.time]:
         if value is None:
             return None
 
@@ -189,18 +218,29 @@ class Time(Field):
     def format(self, value: Optional[datetime.time]) -> Optional[str]:
         if value is None:
             return None
-
         return value.isoformat()
 
-    def quote(self, value: Any) -> str:
-        return f"'{self.format(value)}'"
+    def quote(self, value: Optional[str]) -> str:
+        if value is None:
+            return "NULL"
+        return f"'{value}'"
 
 
-class DateTime(Field):
+class DateTime(Field[datetime.datetime, datetime.datetime]):
     type = "TIMESTAMP"
     db_api_type = "DATETIME"
 
-    def parse(self, value: Any) -> Optional[datetime.datetime]:
+    def quote(self, value: Optional[datetime.datetime]) -> str:
+        if value is None:
+            return "NULL"
+        return f"'{value.isoformat()}'"
+
+
+class ISODateTime(Field[str, datetime.datetime]):
+    type = "TIMESTAMP"
+    db_api_type = "DATETIME"
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.datetime]:
         if value is None:
             return None
 
@@ -217,62 +257,89 @@ class DateTime(Field):
     def format(self, value: Optional[datetime.datetime]) -> Optional[str]:
         if value is None:
             return None
-
         return value.isoformat()
 
-    def quote(self, value: Any) -> str:
-        return f"'{self.format(value)}'"
+    def quote(self, value: Optional[str]) -> str:
+        if value is None:
+            return "NULL"
+        return f"'{value}'"
 
 
-class Blob(Field):
+class Blob(Field[bytes, bytes]):
     type = "BLOB"
     db_api_type = "BINARY"
 
-    def parse(self, value: Any) -> Any:
+    def quote(self, value: Optional[bytes]) -> str:
+        if value is None:
+            return "NULL"
+        return f"X'{value.hex()}'"
+
+
+class StringBlob(Field[str, bytes]):
+    type = "BLOB"
+    db_api_type = "BINARY"
+
+    def parse(self, value: Optional[str]) -> Optional[bytes]:
         if value is None:
             return None
+        return bytes.fromhex(value)
 
-        try:
-            return bytes.fromhex(value)
-        except Exception:
-            return value
-
-    def format(self, value: Any) -> Optional[str]:
+    def format(self, value: Optional[bytes]) -> Optional[str]:
         if value is None:
             return None
-
-        if not isinstance(value, bytes):
-            value = str(value).encode("utf-8")
-
         return cast(str, value.hex())
 
-    def quote(self, value: bytes) -> str:
-        return f"X'{self.format(value)}'"
+    def quote(self, value: Optional[str]) -> str:
+        if value is None:
+            return "NULL"
+        return f"X'{value}'"
 
 
-class Boolean(Field):
+class Boolean(Field[bool, bool]):
     type = "BOOLEAN"
     db_api_type = "NUMBER"
 
-    def parse(self, value: Any) -> Optional[bool]:
+    def quote(self, value: Optional[bool]) -> str:
+        if value is None:
+            return "NULL"
+        return "TRUE" if value else "FALSE"
+
+
+class StringBoolean(Field[str, bool]):
+    type = "BOOLEAN"
+    db_api_type = "NUMBER"
+
+    def parse(self, value: Optional[str]) -> Optional[bool]:
         if value is None:
             return None
-
-        if isinstance(value, bool):
-            return value
         return bool(strtobool(str(value)))
 
     def format(self, value: Optional[bool]) -> Optional[str]:
         if value is None:
             return None
-
         return "TRUE" if value else "FALSE"
 
-    def quote(self, value: Any) -> str:
-        return cast(str, self.format(value))
+    def quote(self, value: Optional[str]) -> str:
+        if value is None:
+            return "NULL"
+        return value
 
 
-type_map = {
-    field.type: field
-    for field in {Integer, Float, String, Date, Time, DateTime, Blob, Boolean}
-}
+class IntBoolean(Field[int, bool]):
+    type = "BOOLEAN"
+    db_api_type = "NUMBER"
+
+    def parse(self, value: Optional[int]) -> Optional[bool]:
+        if value is None:
+            return None
+        return bool(value)
+
+    def format(self, value: Optional[bool]) -> Optional[int]:
+        if value is None:
+            return None
+        return 1 if value else 0
+
+    def quote(self, value: Optional[int]) -> str:
+        if value is None:
+            return "NULL"
+        return str(value)

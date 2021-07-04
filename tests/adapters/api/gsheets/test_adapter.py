@@ -253,7 +253,7 @@ def test_execute_filter(mocker, simple_sheet_adapter):
     )
     simple_sheet_adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20WHERE%20B%20%3C%205.0",
+        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20WHERE%20B%20%3C%205",
         json={
             "version": "0.6",
             "reqId": "0",
@@ -1580,7 +1580,7 @@ def test_execute_batch(mocker, simple_sheet_adapter):
     )
     simple_sheet_adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20WHERE%20B%20%3C%205.0",
+        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20WHERE%20B%20%3C%205",
         json={
             "version": "0.6",
             "reqId": "0",

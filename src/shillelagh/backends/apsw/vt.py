@@ -15,9 +15,15 @@ from typing import Type
 import apsw
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
+from shillelagh.fields import Blob
 from shillelagh.fields import Field
+from shillelagh.fields import Float
+from shillelagh.fields import IntBoolean
 from shillelagh.fields import Integer
-from shillelagh.fields import type_map
+from shillelagh.fields import ISODate
+from shillelagh.fields import ISODateTime
+from shillelagh.fields import ISOTime
+from shillelagh.fields import String
 from shillelagh.filters import Filter
 from shillelagh.filters import Operator
 from shillelagh.lib import deserialize
@@ -35,6 +41,20 @@ operator_map = {
     apsw.SQLITE_INDEX_CONSTRAINT_GT: Operator.GT,
     apsw.SQLITE_INDEX_CONSTRAINT_LE: Operator.LE,
     apsw.SQLITE_INDEX_CONSTRAINT_LT: Operator.LT,
+}
+
+type_map: Dict[str, Type[Field]] = {
+    field.type: field  # type: ignore
+    for field in {
+        Blob,
+        Float,
+        IntBoolean,
+        Integer,
+        ISODate,
+        ISODateTime,
+        ISOTime,
+        String,
+    }
 }
 
 

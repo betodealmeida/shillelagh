@@ -7,15 +7,9 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-from shillelagh.adapters.api.weatherapi import NativeDateTime
-from shillelagh.adapters.base import Adapter
+from shillelagh.adapters.api.weatherapi import DateTime
 from shillelagh.backends.apsw.db import connect
-from shillelagh.fields import DateTime
-from shillelagh.fields import Float
-from shillelagh.fields import Integer
-from shillelagh.fields import String
 from shillelagh.filters import Equal
-from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.types import Order
 from shillelagh.typing import Row
@@ -26,7 +20,7 @@ from ..fakes import FakeEntryPoint
 
 class FakeAdapterWithDateTime(FakeAdapter):
 
-    birthday = NativeDateTime(filters=[Range], order=Order.ANY, exact=True)
+    birthday = DateTime(filters=[Range], order=Order.ANY, exact=True)
 
     data: List[Row] = []
 
@@ -78,7 +72,7 @@ def test_adapter_get_data():
 def test_adapter_get_rows():
     adapter = FakeAdapter()
 
-    adapter.insert_row({"rowid": None, "name": "Charlie", "age": 6, "pets": "1"})
+    adapter.insert_row({"rowid": None, "name": "Charlie", "age": 6, "pets": 1})
 
     data = adapter.get_data({}, [])
     assert list(data) == [
