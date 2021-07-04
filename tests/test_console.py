@@ -2,6 +2,7 @@ import os.path
 from io import StringIO
 
 import yaml
+
 from shillelagh import console
 
 

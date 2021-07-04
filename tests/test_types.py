@@ -4,6 +4,7 @@ from datetime import time
 from datetime import timezone
 
 import pytest
+
 from shillelagh.backends.apsw.db import connect
 from shillelagh.fields import String
 from shillelagh.types import Binary

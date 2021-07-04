@@ -11,6 +11,7 @@ from typing import Tuple
 import dateutil.parser
 import dateutil.tz
 import requests_cache
+
 from shillelagh.adapters.base import Adapter
 from shillelagh.fields import DateTime
 from shillelagh.fields import Float

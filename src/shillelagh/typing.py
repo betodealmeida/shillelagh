@@ -6,9 +6,10 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
+from typing_extensions import Literal
+
 from shillelagh.fields import Field
 from shillelagh.types import Order
-from typing_extensions import Literal
 
 # A value corresponding to a constraint is one of:
 #     None

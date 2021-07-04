@@ -9,6 +9,9 @@ import pytest
 import requests
 import requests_mock
 from freezegun import freeze_time
+
+from ....fakes import FakeAdapter
+from ....fakes import FakeEntryPoint
 from shillelagh.adapters.api.gsheets.adapter import GSheetsAPI
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import InternalError
@@ -17,9 +20,6 @@ from shillelagh.fields import Float
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.types import Order
-
-from ....fakes import FakeAdapter
-from ....fakes import FakeEntryPoint
 
 
 @pytest.fixture

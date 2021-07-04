@@ -6,15 +6,16 @@ from typing import Optional
 from typing import Tuple
 
 import sqlalchemy.types
-from shillelagh.adapters.base import Adapter
-from shillelagh.backends.apsw import db
-from shillelagh.backends.apsw.vt import VTTable
-from shillelagh.exceptions import ProgrammingError
 from sqlalchemy.dialects.sqlite.base import SQLiteDialect
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
 from sqlalchemy.sql.visitors import VisitableType
 from typing_extensions import TypedDict
+
+from shillelagh.adapters.base import Adapter
+from shillelagh.backends.apsw import db
+from shillelagh.backends.apsw.vt import VTTable
+from shillelagh.exceptions import ProgrammingError
 
 
 class SQLAlchemyColumn(TypedDict):

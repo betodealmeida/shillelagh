@@ -3,11 +3,12 @@ from unittest import mock
 import pytest
 import requests
 import requests_mock
+from sqlalchemy.engine import create_engine
+from sqlalchemy.engine.url import make_url
+
 from shillelagh.backends.apsw.dialects.gsheets import APSWGSheetsDialect
 from shillelagh.backends.apsw.dialects.gsheets import extract_query
 from shillelagh.exceptions import ProgrammingError
-from sqlalchemy.engine import create_engine
-from sqlalchemy.engine.url import make_url
 
 
 def test_gsheets_dialect():

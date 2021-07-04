@@ -2,12 +2,12 @@ import json
 
 import pkg_resources
 import pytest
-from shillelagh.backends.apsw.db import connect
-from shillelagh.exceptions import ProgrammingError
-from shillelagh.functions import get_metadata
 
 from .fakes import FakeAdapter
 from .fakes import FakeEntryPoint
+from shillelagh.backends.apsw.db import connect
+from shillelagh.exceptions import ProgrammingError
+from shillelagh.functions import get_metadata
 
 
 def test_sleep_from_sql(mocker):

@@ -2,15 +2,14 @@ from datetime import datetime
 from datetime import timezone
 from typing import List
 
+from ..fakes import FakeAdapter
+from ..fakes import FakeEntryPoint
 from shillelagh.adapters.api.weatherapi import DateTime
 from shillelagh.backends.apsw.db import connect
 from shillelagh.filters import Equal
 from shillelagh.filters import Range
 from shillelagh.types import Order
 from shillelagh.typing import Row
-
-from ..fakes import FakeAdapter
-from ..fakes import FakeEntryPoint
 
 
 class FakeAdapterWithDateTime(FakeAdapter):

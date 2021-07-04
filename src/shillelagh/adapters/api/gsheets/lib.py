@@ -14,6 +14,7 @@ from typing import Type
 import google.oauth2.credentials
 import google.oauth2.service_account
 from google.auth.credentials import Credentials
+
 from shillelagh.adapters.api.gsheets.fields import GSheetsBoolean
 from shillelagh.adapters.api.gsheets.fields import GSheetsDate
 from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime

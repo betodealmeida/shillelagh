@@ -1,8 +1,6 @@
 from unittest import mock
 
 import pytest
-from shillelagh.backends.apsw.dialects.base import APSWDialect
-from shillelagh.exceptions import ProgrammingError
 from sqlalchemy import create_engine
 from sqlalchemy import func
 from sqlalchemy import MetaData
@@ -11,6 +9,8 @@ from sqlalchemy import Table
 
 from ....fakes import FakeAdapter
 from ....fakes import FakeEntryPoint
+from shillelagh.backends.apsw.dialects.base import APSWDialect
+from shillelagh.exceptions import ProgrammingError
 
 
 def test_create_engine(mocker):

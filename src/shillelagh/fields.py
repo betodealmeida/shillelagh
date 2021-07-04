@@ -10,6 +10,7 @@ from typing import TypeVar
 from typing import Union
 
 import dateutil.parser
+
 from shillelagh.filters import Filter
 from shillelagh.types import Order
 
