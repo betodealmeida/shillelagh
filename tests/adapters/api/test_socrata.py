@@ -1,6 +1,7 @@
 from datetime import date
 
 import pytest
+from requests import Session
 
 from ...fakes import cdc_data_response
 from ...fakes import cdc_metadata_response
@@ -38,6 +39,64 @@ def test_socrata(requests_mock):
         (date(2021, 5, 29), 62.4),
         (date(2021, 5, 28), 62.2),
     ]
+
+
+def test_socrata_app_token_url(mocker, requests_mock):
+    mocker.patch(
+        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    metadata_url = "https://data.cdc.gov/api/views/unsk-b7fc"
+    requests_mock.get(metadata_url, json=cdc_metadata_response)
+
+    data_url = (
+        "https://data.cdc.gov/resource/unsk-b7fc.json?"
+        "%24query=SELECT+%2A+WHERE+location+%3D+%27OK%27+ORDER+BY+date+DESC"
+    )
+    data = requests_mock.get(data_url, json=cdc_data_response)
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+    sql = """
+        SELECT date, administered_dose1_recip_4
+        FROM "https://data.cdc.gov/resource/unsk-b7fc.json?$$app_token=XXX"
+        WHERE location = 'OK'
+        ORDER BY date DESC
+        LIMIT 7
+    """
+    cursor.execute(sql)
+    assert data.last_request.headers == {"X-App-Token": "XXX"}
+
+
+def test_socrata_app_token_connection(mocker, requests_mock):
+    mocker.patch(
+        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    metadata_url = "https://data.cdc.gov/api/views/unsk-b7fc"
+    requests_mock.get(metadata_url, json=cdc_metadata_response)
+
+    data_url = (
+        "https://data.cdc.gov/resource/unsk-b7fc.json?"
+        "%24query=SELECT+%2A+WHERE+location+%3D+%27NY%27+ORDER+BY+date+DESC"
+    )
+    data = requests_mock.get(data_url, json=cdc_data_response)
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={"socrataapi": {"app_token": "YYY"}},
+    )
+    cursor = connection.cursor()
+    sql = """
+        SELECT date, administered_dose1_recip_4
+        FROM "https://data.cdc.gov/resource/unsk-b7fc.json"
+        WHERE location = 'NY'
+        ORDER BY date DESC
+        LIMIT 7
+    """
+    cursor.execute(sql)
+    assert data.last_request.headers == {"X-App-Token": "YYY"}
 
 
 def test_socrata_no_data(requests_mock):

@@ -1,3 +1,6 @@
+"""
+Filters for representing SQL predicates.
+"""
 from enum import Enum
 from typing import Any
 from typing import Optional
@@ -6,6 +9,12 @@ from typing import Tuple
 
 
 class Operator(Enum):
+    """
+    Enum representing support comparisons.
+
+    Note that inequality is currently not supported.
+    """
+
     EQ = "=="
     GE = ">="
     GT = ">"
@@ -13,25 +22,160 @@ class Operator(Enum):
     LT = "<"
 
 
+class Side(Enum):
+    """Define the side of an interval endpoint."""
+
+    LEFT = "LEFT"
+    RIGHT = "RIGHT"
+
+
+class Endpoint:
+    """
+    One of the two endpoints of a `Range`.
+
+    Used to compare ranges. Eg, the range `>10` can be represented by:
+
+        >>> start = Endpoint(10, False, Side.LEFT)
+        >>> end = Endpoint(None, True, Side.RIGHT)
+        >>> print(f'{start},{end}')
+        (10,∞]
+
+    The first endpoint represents the value 10 at the left side, in an open
+    interval. The second endpoint represents infinity in this case.
+    """
+
+    def __init__(self, value: Any, include: bool, side: Side):
+        self.value = value
+        self.include = include
+        self.side = side
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Endpoint):
+            return NotImplemented
+
+        return self.value == other.value and self.include == other.include
+
+    def __gt__(self, other: Any) -> bool:  # pylint: disable=too-many-return-statements
+        if not isinstance(other, Endpoint):
+            return NotImplemented
+
+        if self.value is None:
+            return self.side == Side.RIGHT
+
+        if other.value is None:
+            return other.side == Side.LEFT
+
+        if self.value == other.value:
+            if self.side == Side.LEFT:
+                if other.side == Side.LEFT:
+                    return not self.include and other.include
+                return not self.include
+
+            # self.side = Side.RIGHT
+            if other.side == Side.RIGHT:
+                return not other.include and self.include
+            return False
+
+        return bool(self.value > other.value)
+
+    # needed for `max()`
+    def __lt__(self, other: Any) -> bool:
+        return not self > other
+
+    def __str__(self) -> str:
+        """
+        Representation of an endpoint.
+
+            >>> print(Endpoint(10, False, Side.LEFT))
+            (10
+
+        """
+        if self.side == Side.LEFT:
+            symbol = "[" if self.include else "("
+            value = "-∞" if self.value is None else self.value
+            return f"{symbol}{value}"
+
+        symbol = "]" if self.include else ")"
+        value = "∞" if self.value is None else self.value
+        return f"{value}{symbol}"
+
+
+def get_endpoints_from_operation(
+    operator: Operator,
+    value: Any,
+) -> Tuple[Endpoint, Endpoint]:
+    """
+    Returns endpoints from an operation.
+    """
+    if operator == Operator.EQ:
+        return Endpoint(value, True, Side.LEFT), Endpoint(value, True, Side.RIGHT)
+    if operator == Operator.GE:
+        return Endpoint(value, True, Side.LEFT), Endpoint(None, True, Side.RIGHT)
+    if operator == Operator.GT:
+        return Endpoint(value, False, Side.LEFT), Endpoint(None, True, Side.RIGHT)
+    if operator == Operator.LE:
+        return Endpoint(None, True, Side.LEFT), Endpoint(value, True, Side.RIGHT)
+    if operator == Operator.LT:
+        return Endpoint(None, True, Side.LEFT), Endpoint(value, False, Side.RIGHT)
+
+    raise Exception(f"Invalid operator: {operator}")
+
+
 class Filter:
+    """
+    A filter representing a SQL predicate.
+    """
 
     operators: Set[Operator] = set()
 
     @classmethod
     def build(cls, operations: Set[Tuple[Operator, Any]]) -> "Filter":
+        """
+        Given a set of operations, build a filter:
+
+            >>> operations = [(Operator.GT, 10), (Operator.GT, 20)]
+            >>> print(Range.build(operations))
+            >20
+
+        """
         raise NotImplementedError("Subclass must implement `build`")
 
     def check(self, value: Any) -> bool:
+        """
+        Test if a given filter matches a value:
+
+            >>> operations = [(Operator.GT, 10), (Operator.GT, 20)]
+            >>> filter_ = Range.build(operations)
+            >>> filter_.check(10)
+            False
+            >>> filter_.check(30)
+            True
+
+        """
         raise NotImplementedError("Subclass must implement `check`")
 
 
 class Impossible(Filter):
     """Custom Filter returned when impossible conditions are passed."""
 
-    pass
+    @classmethod
+    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+        return Impossible()
+
+    def check(self, value: Any) -> bool:
+        return False
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Impossible):
+            return NotImplemented
+
+        return True
 
 
 class Equal(Filter):
+    """
+    Equality comparison.
+    """
 
     operators: Set[Operator] = {
         Operator.EQ,
@@ -56,12 +200,30 @@ class Equal(Filter):
 
 
 class Range(Filter):
+    """
+    A range comparison.
+
+    This filter represents a range, with an optional start and an
+    optional end. Start and end can be inclusive or exclusive.
+
+    Ranges can be combined by adding them:
+
+        >>> range1 = Range(start=10)
+        >>> range2 = Range(start=20)
+        >>> print(range1 + range2)
+        >20
+        >>> range3 = Range(end=40)
+        >>> print(range2 + range3)
+        >20,<40
+
+    """
+
     def __init__(
         self,
-        start: Optional[Any],
-        end: Optional[Any],
-        include_start: bool,
-        include_end: bool,
+        start: Optional[Any] = None,
+        end: Optional[Any] = None,
+        include_start: bool = False,
+        include_end: bool = False,
     ):
         self.start = start
         self.end = end
@@ -87,110 +249,39 @@ class Range(Filter):
             and self.include_end == other.include_end
         )
 
-    def __add__(self, other: Any) -> "Range":
+    def __add__(self, other: Any) -> Filter:
         if not isinstance(other, Range):
             return NotImplemented
 
-        if self.start is None:
-            start = other.start
-            include_start = other.include_start
-        elif other.start is None:
-            start = self.start
-            include_start = self.include_start
-        elif self.start > other.start:
-            start = self.start
-            include_start = self.include_start
-        elif self.start < other.start:
-            start = other.start
-            include_start = other.include_start
-        else:
-            start = self.start
-            include_start = self.include_start and other.include_start
+        start = Endpoint(self.start, self.include_start, Side.LEFT)
+        end = Endpoint(self.end, self.include_end, Side.RIGHT)
 
-        if self.end is None:
-            end = other.end
-            include_end = other.include_end
-        elif other.end is None:
-            end = self.end
-            include_end = self.include_end
-        elif self.end < other.end:
-            end = self.end
-            include_end = self.include_end
-        elif self.end > other.end:
-            end = other.end
-            include_end = other.include_end
-        else:
-            end = self.end
-            include_end = self.include_end and other.include_end
+        new_start = Endpoint(other.start, other.include_start, Side.LEFT)
+        new_end = Endpoint(other.end, other.include_end, Side.RIGHT)
 
-        return Range(start, end, include_start, include_end)
+        start = max(start, new_start)
+        end = min(end, new_end)
+
+        if start > end:
+            return Impossible()
+
+        return Range(start.value, end.value, start.include, end.include)
 
     @classmethod
     def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
-        start = end = None
-        include_start = include_end = False
+        start = Endpoint(None, True, Side.LEFT)
+        end = Endpoint(None, True, Side.RIGHT)
 
         for operator, value in operations:
-            new_start = start
-            new_end = end
-            new_include_start = include_start
-            new_include_end = include_end
+            new_start, new_end = get_endpoints_from_operation(operator, value)
 
-            if operator == Operator.EQ:
-                new_start = new_end = value
-                new_include_start = new_include_end = True
-            elif operator == Operator.GE:
-                new_start = value
-                new_include_start = True
-            elif operator == Operator.GT:
-                new_start = value
-                new_include_start = False
-            elif operator == Operator.LE:
-                new_end = value
-                new_include_end = True
-            elif operator == Operator.LT:
-                new_end = value
-                new_include_end = False
-            else:
-                raise Exception(f"Invalid operator: {operator}")
+            start = max(start, new_start)
+            end = min(end, new_end)
 
-            if (
-                end is not None
-                and new_start is not None
-                and (
-                    new_start > end
-                    or (new_start >= end and (not new_include_start or not include_end))
-                )
-            ):
-                return Impossible()
-            if (
-                start is not None
-                and new_end is not None
-                and (
-                    new_end < start
-                    or (new_end <= start and (not include_start or not new_include_end))
-                )
-            ):
+            if start > end:
                 return Impossible()
 
-            # update start and end by tightening up range
-            if start is None or new_start >= start:
-                if new_start == start:
-                    if include_start and not new_include_start:
-                        include_start = False
-                else:
-                    include_start = new_include_start
-                start = new_start
-
-            if end is None or new_end <= end:
-                if new_end == end:
-                    if include_end and not new_include_end:
-                        include_end = False
-                else:
-                    include_end = new_include_end
-                end = new_end
-
-        return cls(start, end, include_start, include_end)
+        return cls(start.value, end.value, start.include, end.include)
 
     def check(self, value: Any) -> bool:
         if self.start is not None:
@@ -207,15 +298,15 @@ class Range(Filter):
 
         return True
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         if self.start == self.end and self.include_start and self.include_end:
             return f"== {self.start}"
 
         comparisons = []
         if self.start is not None:
-            op = ">=" if self.include_start else ">"
-            comparisons.append(f"{op}{self.start}")
+            operator = ">=" if self.include_start else ">"
+            comparisons.append(f"{operator}{self.start}")
         if self.end is not None:
-            op = "<=" if self.include_end else "<"
-            comparisons.append(f"{op}{self.end}")
+            operator = "<=" if self.include_end else "<"
+            comparisons.append(f"{operator}{self.end}")
         return ",".join(comparisons)

@@ -1,19 +1,27 @@
-import os
 from datetime import datetime
 from datetime import timezone
 
 import apsw
 import pytest
+from requests import Session
 
 from ...fakes import FakeEntryPoint
 from ...fakes import weatherapi_response
+from shillelagh.adapters.api.weatherapi import combine_time_filters
 from shillelagh.adapters.api.weatherapi import WeatherAPI
-from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
+from shillelagh.exceptions import ImpossibleFilterError
+from shillelagh.filters import Equal
+from shillelagh.filters import Range
 
 
-def test_weatherapi(requests_mock):
+def test_weatherapi(mocker, requests_mock):
+    mocker.patch(
+        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
     url = "https://api.weatherapi.com/v1/history.json?key=XXX&q=iceland&dt=2021-03-17"
     requests_mock.get(url, json=weatherapi_response)
 
@@ -62,11 +70,6 @@ def test_weatherapi(requests_mock):
         ),
     ]
 
-    try:
-        os.unlink("weatherapi_cache.sqlite")
-    except FileNotFoundError:
-        pass
-
 
 def test_weatherapi_impossible(requests_mock):
     url = "https://api.weatherapi.com/v1/history.json?key=XXX&q=iceland&dt=2021-03-17"
@@ -92,7 +95,12 @@ def test_weatherapi_impossible(requests_mock):
     assert str(excinfo.value) == "Invalid filter"
 
 
-def test_weatherapi_api_error(requests_mock):
+def test_weatherapi_api_error(mocker, requests_mock):
+    mocker.patch(
+        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
     url1 = "https://api.weatherapi.com/v1/history.json?key=XXX&q=iceland&dt=2021-03-17"
     requests_mock.get(url1, json=weatherapi_response)
 
@@ -507,13 +515,13 @@ def test_weatherapi_api_error(requests_mock):
         ),
     ]
 
-    try:
-        os.unlink("weatherapi_cache.sqlite")
-    except FileNotFoundError:
-        pass
-
 
 def test_dispatch(mocker, requests_mock):
+    mocker.patch(
+        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
     entry_points = [FakeEntryPoint("weatherapi", WeatherAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -568,7 +576,98 @@ def test_dispatch(mocker, requests_mock):
         ),
     ]
 
-    try:
-        os.unlink("weatherapi_cache.sqlite")
-    except FileNotFoundError:
-        pass
+
+def test_dispatch_api_key_connection(mocker, requests_mock):
+    mocker.patch(
+        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    entry_points = [FakeEntryPoint("weatherapi", WeatherAPI)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    url = "https://api.weatherapi.com/v1/history.json?key=YYY&q=iceland&dt=2021-03-17"
+    data = requests_mock.get(url, json=weatherapi_response)
+
+    connection = connect(
+        ":memory:",
+        ["weatherapi"],
+        adapter_kwargs={"weatherapi": {"api_key": "YYY"}},
+    )
+    cursor = connection.cursor()
+
+    sql = (
+        "SELECT * FROM "
+        '"https://api.weatherapi.com/v1/history.json?q=iceland" '
+        "WHERE time = '2021-03-17T12:00:00+00:00'"
+    )
+    cursor.execute(sql)
+
+    assert data.call_count == 1
+
+
+def test_dispatch_impossible(mocker, requests_mock):
+    mocker.patch(
+        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    entry_points = [FakeEntryPoint("weatherapi", WeatherAPI)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    connection = connect(
+        ":memory:",
+        ["weatherapi"],
+        adapter_kwargs={"weatherapi": {"api_key": "YYY"}},
+    )
+    cursor = connection.cursor()
+
+    sql = (
+        "SELECT * FROM "
+        '"https://api.weatherapi.com/v1/history.json?q=iceland" '
+        "WHERE time = '2021-03-17T12:00:00+00:00' "
+        "AND time_epoch < 0"
+    )
+    data = list(cursor.execute(sql))
+    assert data == []
+
+
+def test_combine_time_filters():
+    bounds = {
+        "time": Range(datetime(2021, 1, 1, tzinfo=timezone.utc)),
+        "time_epoch": Range(
+            None,
+            datetime(2022, 1, 1, tzinfo=timezone.utc).timestamp(),
+        ),
+    }
+    assert combine_time_filters(bounds) == Range(
+        datetime(2021, 1, 1, tzinfo=timezone.utc),
+        datetime(2022, 1, 1, tzinfo=timezone.utc),
+    )
+
+    bounds = {
+        "time": Range(datetime(2021, 1, 1, tzinfo=timezone.utc)),
+        "time_epoch": Range(
+            None,
+            datetime(2020, 1, 1, tzinfo=timezone.utc).timestamp(),
+        ),
+    }
+    with pytest.raises(ImpossibleFilterError):
+        combine_time_filters(bounds)
+
+    bounds = {
+        "time": Equal(datetime(2021, 1, 1, tzinfo=timezone.utc)),
+        "time_epoch": Range(
+            None,
+            datetime(2020, 1, 1, tzinfo=timezone.utc).timestamp(),
+        ),
+    }
+    with pytest.raises(Exception) as excinfo:
+        combine_time_filters(bounds)
+    assert str(excinfo.value) == "Invalid filter"

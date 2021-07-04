@@ -1,4 +1,22 @@
 #!/usr/bin/env python
+"""
+A simple REPL for Shillelagh.
+
+To run the REPL, since run `shillelagh`. Pressing return will execute the
+query immediately, and multi-line queries are currently not supported.
+
+Connection arguments can be passed via a `~/.shillelagh.yaml` file, eg:
+
+    gsheestapi:
+      service_account_file: /path/to/credentials.json
+      subject: user@example.com
+      catalog:
+        # allows writing `SELECT * FROM my_sheet`
+        my_sheet:  https://docs.google.com/spreadsheets/d/1/edit#gid=0
+    weatherapi:
+      api_key: XXX
+
+"""
 import logging
 import os.path
 
@@ -13,6 +31,7 @@ from pygments.styles import get_style_by_name
 from tabulate import tabulate
 
 from shillelagh.backends.apsw.db import connect
+from shillelagh.exceptions import Error
 
 _logger = logging.getLogger(__name__)
 
@@ -153,14 +172,17 @@ style = style_from_pygments_cls(get_style_by_name("friendly"))
 
 
 def main():
+    """
+    Run a REPL until the user presses Control-D.
+    """
     # read args from config file
     config = os.path.expanduser("~/.shillelagh.yaml")
     adapter_kwargs = {}
     if os.path.exists(config):
         try:
-            with open(config) as fp:
-                adapter_kwargs = yaml.load(fp, Loader=yaml.FullLoader)
-        except Exception:
+            with open(config) as stream:
+                adapter_kwargs = yaml.load(stream, Loader=yaml.FullLoader)
+        except (PermissionError, yaml.parser.ParserError, yaml.scanner.ScannerError):
             _logger.exception("Unable to load configuration file")
 
     connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
@@ -185,7 +207,7 @@ def main():
             try:
                 cursor.execute(sql)
                 results = cursor.fetchall()
-            except Exception as ex:
+            except Error as ex:
                 print(ex)
                 continue
 

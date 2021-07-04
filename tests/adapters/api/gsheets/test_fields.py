@@ -7,7 +7,7 @@ from shillelagh.adapters.api.gsheets.fields import GSheetsDate
 from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime
 from shillelagh.adapters.api.gsheets.fields import GSheetsTime
 from shillelagh.fields import ISODateTime
-from shillelagh.types import Order
+from shillelagh.fields import Order
 
 
 def test_GSheetsDateTime():
@@ -64,13 +64,10 @@ def test_GSheetsTime():
     assert GSheetsTime().parse(None) is None
     assert (
         GSheetsTime().format(datetime.time(17, 0, tzinfo=datetime.timezone.utc))
-        == "17:00:00+00:00"
+        == "5:00:00 PM"
     )
     assert GSheetsTime().format(None) is None
-    assert (
-        GSheetsTime().quote(datetime.time(17, 0, tzinfo=datetime.timezone.utc))
-        == "timeofday '17:00:00+00:00'"
-    )
+    assert GSheetsTime().quote("5:00:00 PM") == "timeofday '17:00:00'"
     assert GSheetsTime().quote(None) == "NULL"
 
 

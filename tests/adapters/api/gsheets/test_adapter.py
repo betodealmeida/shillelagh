@@ -17,9 +17,9 @@ from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import InternalError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
+from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
-from shillelagh.types import Order
 
 
 @pytest.fixture

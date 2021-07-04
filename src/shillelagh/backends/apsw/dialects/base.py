@@ -1,3 +1,5 @@
+# pylint: disable=protected-access, abstract-method
+"""A SQLALchemy dialect."""
 from typing import Any
 from typing import cast
 from typing import Dict
@@ -19,6 +21,10 @@ from shillelagh.exceptions import ProgrammingError
 
 
 class SQLAlchemyColumn(TypedDict):
+    """
+    A custom type for a SQLAlchemy column.
+    """
+
     name: str
     type: VisitableType
     nullable: bool
@@ -28,11 +34,21 @@ class SQLAlchemyColumn(TypedDict):
 
 
 class APSWDialect(SQLiteDialect):
+
+    """
+    A SQLAlchemy dialect for Shillelagh.
+
+    The dialect is based on the `SQLiteDialect`, since we're using APSW.
+    """
+
     name = "shillelagh"
     driver = "apsw"
 
     @classmethod
-    def dbapi(cls):
+    def dbapi(cls):  # pylint: disable=method-hidden
+        """
+        Return the DB API module.
+        """
         return db
 
     def __init__(
@@ -40,10 +56,9 @@ class APSWDialect(SQLiteDialect):
         adapters: Optional[List[str]] = None,
         adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
         safe: bool = False,
-        *args: Any,
         **kwargs: Any,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         self._adapters = adapters
         self._adapter_kwargs = adapter_kwargs or {}
         self._safe = safe
@@ -65,25 +80,25 @@ class APSWDialect(SQLiteDialect):
         return True
 
     # needed for SQLAlchemy
-    def _get_table_sql(
+    def _get_table_sql(  # pylint: disable=unused-argument
         self,
         connection: _ConnectionFairy,
         table_name: str,
         schema: Optional[str] = None,
         **kwargs: Any,
     ) -> str:
-        adapter = self._get_adapter_for_table_name(connection, table_name)
+        adapter = get_adapter_for_table_name(connection, table_name)
         table = VTTable(adapter)
         return table.get_create_table(table_name)
 
-    def get_columns(
+    def get_columns(  # pylint: disable=unused-argument
         self,
         connection: _ConnectionFairy,
         table_name: str,
         schema: Optional[str] = None,
         **kwargs: Any,
     ) -> List[SQLAlchemyColumn]:
-        adapter = self._get_adapter_for_table_name(connection, table_name)
+        adapter = get_adapter_for_table_name(connection, table_name)
         columns = adapter.get_columns()
         return [
             {
@@ -97,21 +112,25 @@ class APSWDialect(SQLiteDialect):
             for column_name, field in columns.items()
         ]
 
-    def _get_adapter_for_table_name(
-        self,
-        connection: _ConnectionFairy,
-        table_name: str,
-    ) -> Adapter:
-        raw_connection = cast(db.Connection, connection.engine.raw_connection())
-        for adapter in raw_connection._adapters:
-            key = adapter.__name__.lower()
-            kwargs = raw_connection._adapter_kwargs.get(key, {})
-            if adapter.supports(table_name, **kwargs):
-                break
-        else:
-            raise ProgrammingError(f"Unsupported table: {table_name}")
 
+def get_adapter_for_table_name(
+    connection: _ConnectionFairy,
+    table_name: str,
+) -> Adapter:
+    """
+    Return an adapter associated with a connection.
+
+    This function instantiates the adapter responsible for a given table name,
+    using the connection to properly pass any adapter kwargs.
+    """
+    raw_connection = cast(db.Connection, connection.engine.raw_connection())
+    for adapter in raw_connection._adapters:
         key = adapter.__name__.lower()
-        args = adapter.parse_uri(table_name)
         kwargs = raw_connection._adapter_kwargs.get(key, {})
-        return adapter(*args, **kwargs)  # type: ignore
+        if adapter.supports(table_name, **kwargs):
+            key = adapter.__name__.lower()
+            args = adapter.parse_uri(table_name)
+            kwargs = raw_connection._adapter_kwargs.get(key, {})
+            return adapter(*args, **kwargs)  # type: ignore
+
+    raise ProgrammingError(f"Unsupported table: {table_name}")

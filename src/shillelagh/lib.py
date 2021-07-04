@@ -1,3 +1,4 @@
+"""Helper functions for Shillelagh."""
 import inspect
 import itertools
 import json
@@ -16,12 +17,12 @@ from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
+from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Impossible
 from shillelagh.filters import Range
-from shillelagh.types import Order
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 
@@ -29,6 +30,49 @@ DELETED = range(-1, 0)
 
 
 class RowIDManager:
+    """
+    A row ID manager that tracks insert and deletes.
+
+    The `RowIDManager` should be used with an append-only table structure.
+    It assigns a row ID to each row. When a new row is appended it will
+    automatically receive a new ID. And when rows are deleted their ID
+    gets changed to -1 to indicate the deletion.
+
+    An example:
+
+        >>> data = ["zero", "one", "two"]
+        >>> manager = RowIDManager([range(len(data))])
+
+    To insert data:
+
+        >>> data.append("three")
+        >>> manager.insert()
+        >>> data.append("four")
+        >>> manager.insert(10)  # you can specify a row ID
+        >>> for row_id, value in zip(manager, data):
+        ...     if row_id != -1:
+        ...         print(row_id, value)
+        0 zero
+        1 one
+        2 two
+        3 three
+        10 four
+
+    To delete data:
+
+        >>> manager.delete(data.index("two"))
+        >>> print(data)
+        ['zero', 'one', 'two', 'three', 'four']
+        >>> for row_id, value in zip(manager, data):
+        ...     if row_id != -1:
+        ...         print(row_id, value)
+        0 zero
+        1 one
+        3 three
+        10 four
+
+    """
+
     def __init__(self, ranges: List[range]):
         if not ranges:
             raise Exception("Argument `ranges` cannot be empty")
@@ -39,14 +83,17 @@ class RowIDManager:
         yield from itertools.chain(*self.ranges)
 
     def get_max_row_id(self) -> int:
+        """Find the maximum row ID."""
         return max((r.stop - 1) for r in self.ranges)
 
     def check_row_id(self, row_id: int) -> None:
-        for r in self.ranges:
-            if r.start <= row_id < r.stop:
+        """Check if a provided row ID is not being used."""
+        for range_ in self.ranges:
+            if range_.start <= row_id < range_.stop:
                 raise Exception(f"Row ID {row_id} already present")
 
     def insert(self, row_id: Optional[int] = None) -> int:
+        """Insert a new row ID."""
         if row_id is None:
             max_row_id = self.get_max_row_id()
             row_id = max_row_id + 1
@@ -61,19 +108,20 @@ class RowIDManager:
         return row_id
 
     def delete(self, row_id: int) -> None:
-        for i, r in enumerate(self.ranges):
-            if r.start <= row_id < r.stop:
-                if r.start == r.stop - 1:
+        """Mark a given row ID as deleted."""
+        for i, range_ in enumerate(self.ranges):
+            if range_.start <= row_id < range_.stop:
+                if range_.start == range_.stop - 1:
                     self.ranges[i] = DELETED
-                elif row_id == r.start:
-                    self.ranges[i] = range(r.start + 1, r.stop)
+                elif row_id == range_.start:
+                    self.ranges[i] = range(range_.start + 1, range_.stop)
                     self.ranges.insert(i, DELETED)
-                elif row_id == r.stop - 1:
-                    self.ranges[i] = range(r.start, r.stop - 1)
+                elif row_id == range_.stop - 1:
+                    self.ranges[i] = range(range_.start, range_.stop - 1)
                     self.ranges.insert(i + 1, DELETED)
                 else:
-                    self.ranges[i] = range(r.start, row_id)
-                    self.ranges.insert(i + 1, range(row_id + 1, r.stop))
+                    self.ranges[i] = range(range_.start, row_id)
+                    self.ranges.insert(i + 1, range(row_id + 1, range_.stop))
                     self.ranges.insert(i + 1, DELETED)
 
                 return
@@ -81,19 +129,21 @@ class RowIDManager:
         raise Exception(f"Row ID {row_id} not found")
 
 
-def analyse(
+def analyze(
     data: Iterator[Row],
 ) -> Tuple[int, Dict[str, Order], Dict[str, Type[Field]]]:
-    """Compute number of rows, order and types."""
+    """
+    Compute number of rows, order, and types from a stream of rows.
+    """
     order: Dict[str, Order] = {}
     types: Dict[str, Type[Field]] = {}
 
-    previous_row: Optional[Row] = None
+    previous_row: Row = {}
     i = 0
     for i, row in enumerate(data):
         for column_name, value in row.items():
             # determine order
-            if previous_row is not None:
+            if i > 0:
                 previous = previous_row[column_name]
                 order[column_name] = update_order(
                     current_order=order.get(column_name, Order.NONE),
@@ -105,11 +155,11 @@ def analyse(
             # determine types
             if types.get(column_name) == String:
                 continue
-            elif type(value) == str:
+            if isinstance(value, str):
                 types[column_name] = String
             elif types.get(column_name) == Float:
                 continue
-            elif type(value) == float:
+            elif isinstance(value, float):
                 types[column_name] = Float
             elif types.get(column_name) == Integer:
                 continue
@@ -129,13 +179,19 @@ def update_order(
     current: Any,
     num_rows: int,
 ) -> Order:
+    """
+    Update the stored order of a given column.
+
+    This is used to analyze the order of columns, by traversing the
+    results and checking if their are sorted in any way.
+    """
     if num_rows < 2 or previous is None:
         return Order.NONE
 
     try:
         if num_rows == 2:
             return Order.ASCENDING if current >= previous else Order.DESCENDING
-        elif (
+        if (
             current_order == Order.NONE
             or (current_order == Order.ASCENDING and current < previous)
             or (current_order == Order.DESCENDING and current > previous)
@@ -147,20 +203,34 @@ def update_order(
     return current_order
 
 
-def quote(value: str) -> str:
+def escape(value: str) -> str:
+    """Escape single quotes."""
     return value.replace("'", "''")
 
 
-def unquote(value: str) -> str:
+def unescape(value: str) -> str:
+    """Unescape single quotes."""
     return value.replace("''", "'")
 
 
 def serialize(value: Any) -> str:
-    return f"'{quote(json.dumps(value))}'"
+    """
+    Serialize adapter arguments.
+
+    This function is used with the SQLite backend, in order to serialize
+    the arguments needed to instantiate an adapter via a virtual table.
+    """
+    return f"'{escape(json.dumps(value))}'"
 
 
 def deserialize(value: str) -> Any:
-    return json.loads(unquote(value[1:-1]))
+    """
+    Deserialize adapter arguments.
+
+    This function is used by the SQLite backend, in order to deserialize
+    the virtual table definition and instantiate an adapter.
+    """
+    return json.loads(unescape(value[1:-1]))
 
 
 def build_sql(
@@ -170,6 +240,13 @@ def build_sql(
     column_map: Optional[Dict[str, str]] = None,
     offset: int = 0,
 ) -> str:
+    """
+    Build a SQL query.
+
+    This is used by the GSheets and Socrata adapters, which use a simplified
+    SQL dialect to fetch data. For GSheets a column map is required, since the
+    SQL references columns by label ("A", "B", etc.) instead of name.
+    """
     sql = "SELECT *"
 
     conditions = []
@@ -182,11 +259,11 @@ def build_sql(
             conditions.append(f"{id_} = {field.quote(filter_.value)}")
         elif isinstance(filter_, Range):
             if filter_.start is not None:
-                op = ">=" if filter_.include_start else ">"
-                conditions.append(f"{id_} {op} {field.quote(filter_.start)}")
+                operator_ = ">=" if filter_.include_start else ">"
+                conditions.append(f"{id_} {operator_} {field.quote(filter_.start)}")
             if filter_.end is not None:
-                op = "<=" if filter_.include_end else "<"
-                conditions.append(f"{id_} {op} {field.quote(filter_.end)}")
+                operator_ = "<=" if filter_.include_end else "<"
+                conditions.append(f"{id_} {operator_} {field.quote(filter_.end)}")
         else:
             raise ProgrammingError(f"Invalid filter: {filter_}")
     if conditions:
@@ -225,15 +302,30 @@ def filter_data(
     bounds: Dict[str, Filter],
     order: List[Tuple[str, RequestedOrder]],
 ) -> Iterator[Row]:
+    """
+    Apply filtering and sorting to a stream of rows.
+
+    This is used mostly as an exercise. It's probably much more efficient to
+    simply declare fields without any filtering/sorting and let the backend
+    (SQLite, eg) handle it.
+    """
     for column_name, filter_ in bounds.items():
 
         def apply_filter(
             data: Iterator[Row],
-            op: Callable[[Any, Any], bool],
+            operator_: Callable[[Any, Any], bool],
             column_name: str,
             value: Any,
         ) -> Iterator[Row]:
-            return (row for row in data if op(row[column_name], value))
+            """
+            Apply a given filter to an iterator of rows.
+
+            This method is needed because Python uses lazy bindings in
+            generator expressions, so we need to create a new scope in
+            order to apply several filters that reuse the same variable
+            names.
+            """
+            return (row for row in data if operator_(row[column_name], value))
 
         if isinstance(filter_, Impossible):
             return
@@ -241,14 +333,16 @@ def filter_data(
             data = apply_filter(data, operator.eq, column_name, filter_.value)
         if isinstance(filter_, Range):
             if filter_.start is not None:
-                op = operator.ge if filter_.include_start else operator.gt
-                data = apply_filter(data, op, column_name, filter_.start)
+                operator_ = operator.ge if filter_.include_start else operator.gt
+                data = apply_filter(data, operator_, column_name, filter_.start)
             if filter_.end is not None:
-                op = operator.le if filter_.include_end else operator.lt
-                data = apply_filter(data, op, column_name, filter_.end)
+                operator_ = operator.le if filter_.include_end else operator.lt
+                data = apply_filter(data, operator_, column_name, filter_.end)
 
     if order:
-        rows = list(data)  # :(
+        # in order to sort we need to consume the iterator and load it into
+        # memory :(
+        rows = list(data)
         for column_name, requested_order in order:
             reverse = requested_order == Order.DESCENDING
             rows.sort(key=operator.itemgetter(column_name), reverse=reverse)

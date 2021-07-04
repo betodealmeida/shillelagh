@@ -1,8 +1,12 @@
+"""
+Custom functions available to the SQL backend.
+"""
 import json
 import time
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Type
 
 import pkg_resources
@@ -14,8 +18,16 @@ from shillelagh.exceptions import ProgrammingError
 __all__ = ["sleep", "get_metadata"]
 
 
-def sleep(n: int) -> None:
-    time.sleep(n)
+def sleep(seconds: int) -> None:
+    """
+    Sleep for `n` seconds.
+
+    This is useful for troubleshooting timeouts:
+
+        sql> SELECT sleep(60);
+
+    """
+    time.sleep(seconds)
 
 
 def get_metadata(
@@ -23,6 +35,25 @@ def get_metadata(
     adapters: List[Type[Adapter]],
     uri: str,
 ) -> str:
+    """
+    Return metadata about a given table.
+
+    Returns the name of the adapter that supports the table, as well
+    as any extra metadata provided by the adapter:
+
+        sql> SELECT GET_METADATA("https://docs.google.com/spreadsheets/d/1/edit#gid=0");
+        GET_METADATA("https://docs.google.com/spreadsheets/d/1/edit#gid=0")
+        -------------------------------------------------------------------
+        {
+            "extra": {
+                "Spreadsheet title": "A title",
+                "Sheet title": "Another title"
+            },
+            "adapter": "GSheetsAPI"
+        }
+
+    """
+    adapter: Optional[Type[Adapter]] = None
     for adapter in adapters:
         key = adapter.__name__.lower()
         kwargs = adapter_kwargs.get(key, {})
@@ -45,4 +76,13 @@ def get_metadata(
 
 
 def version() -> str:
+    """
+    Return the current version of Shillelagh.
+
+        sql> SELECT VERSION();
+        VERSION()
+        -----------
+        0.7.4
+
+    """
     return pkg_resources.get_distribution("shillelagh").version

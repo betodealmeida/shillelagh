@@ -1,3 +1,9 @@
+# pylint: disable=abstract-method
+"""
+A dialect that only connects to GSheets.
+
+This dialect was implemented to replace the `gsheetsdb` library.
+"""
 import logging
 import urllib.parse
 from typing import Any
@@ -7,7 +13,6 @@ from typing import Optional
 from typing import Tuple
 
 from google.auth.transport.requests import AuthorizedSession
-from sqlalchemy.engine.url import make_url
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
 
@@ -43,11 +48,19 @@ def extract_query(url: URL) -> Dict[str, str]:
 
 
 class APSWGSheetsDialect(APSWDialect):
-    """Drop-in replacement for gsheetsdb."""
+    """
+    Drop-in replacement for gsheetsdb.
+
+    This dialect loads only the "gsheetsapi" adapter. To use it:
+
+        >>> from sqlalchemy.engine import create_engine
+        >>> engine = create_engine("gsheets://")
+
+    """
 
     name = "gsheets"
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         access_token: Optional[str] = None,
         service_account_file: Optional[str] = None,
@@ -55,10 +68,9 @@ class APSWGSheetsDialect(APSWDialect):
         subject: Optional[str] = None,
         catalog: Optional[Dict[str, str]] = None,
         list_all_sheets: bool = False,
-        *args: Any,
         **kwargs: Any,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
         self.access_token = access_token
         self.service_account_file = service_account_file
@@ -78,7 +90,7 @@ class APSWGSheetsDialect(APSWDialect):
             "subject": self.subject,
             "catalog": self.catalog,
         }
-        # overtwrite parameters via query
+        # parameters can be overriden via the query in the URL
         adapter_kwargs.update(extract_query(url))
 
         return (), {
@@ -89,9 +101,17 @@ class APSWGSheetsDialect(APSWDialect):
             "isolation_level": self.isolation_level,
         }
 
-    def get_table_names(
+    def get_table_names(  # pylint: disable=unused-argument
         self, connection: _ConnectionFairy, schema: str = None, **kwargs: Any
     ) -> List[str]:
+        """
+        Return a list of table names.
+
+        This will query for the authenticated user's spreadsheets, and return
+        the URL of each sheet in all the spreadsheets. It's also possible to
+        specify a "catalog" of URLs, which are also returned using their short
+        names.
+        """
         table_names = list(self.catalog.keys())
 
         query = extract_query(connection.url) if hasattr(connection, "url") else {}
@@ -106,32 +126,54 @@ class APSWGSheetsDialect(APSWDialect):
 
         session = AuthorizedSession(credentials)
 
-        response = session.get(
-            "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'",
-        )
-        payload = response.json()
-        if "error" in payload:
-            raise ProgrammingError(payload["error"]["message"])
-
-        files = payload["files"]
-        for file in files:
-            spreadsheet_id = file["id"]
-            response = session.get(
-                f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}?includeGridData=false",
-            )
-            payload = response.json()
-            if "error" in payload:
-                _logger.warning(
-                    "Error loading sheets from file: %s",
-                    payload["error"]["message"],
-                )
-                continue
-
-            sheets = payload["sheets"]
-            for sheet in sheets:
-                sheet_id = sheet["properties"]["sheetId"]
-                table_names.append(
-                    f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit#gid={sheet_id}",
-                )
+        spreadsheet_ids = get_spreadsheet_ids(session)
+        for spreadsheet_id in spreadsheet_ids:
+            table_names.extend(get_sheet_urls(spreadsheet_id, session))
 
         return table_names
+
+
+def get_spreadsheet_ids(session: AuthorizedSession) -> List[str]:
+    """
+    Return the ID of all spreadsheets that the user has access to.
+    """
+    url = (
+        "https://www.googleapis.com/drive/v3/files?"
+        "q=mimeType='application/vnd.google-apps.spreadsheet'"
+    )
+    _logger.info("GET %s", url)
+    response = session.get(url)
+    payload = response.json()
+    _logger.debug(payload)
+    if "error" in payload:
+        raise ProgrammingError(payload["error"]["message"])
+
+    return [file["id"] for file in payload["files"]]
+
+
+def get_sheet_urls(spreadsheet_id: str, session: AuthorizedSession) -> List[str]:
+    """
+    Return the URL for all sheets in a given spreadsheet.
+    """
+    response = session.get(
+        "https://sheets.googleapis.com/v4/spreadsheets/"
+        f"{spreadsheet_id}?includeGridData=false",
+    )
+    payload = response.json()
+    if "error" in payload:
+        _logger.warning(
+            "Error loading sheets from file: %s",
+            payload["error"]["message"],
+        )
+        return []
+
+    sheet_urls: List[str] = []
+    sheets = payload["sheets"]
+    for sheet in sheets:
+        sheet_id = sheet["properties"]["sheetId"]
+        sheet_urls.append(
+            "https://docs.google.com/spreadsheets/d/"
+            f"{spreadsheet_id}/edit#gid={sheet_id}",
+        )
+
+    return sheet_urls

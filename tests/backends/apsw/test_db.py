@@ -17,11 +17,11 @@ from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
+from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
-from shillelagh.types import Order
 from shillelagh.typing import Row
 
 
@@ -226,7 +226,7 @@ def test_check_result(mocker):
 
 def test_check_invalid_syntax(mocker):
     connection = connect(":memory:", isolation_level="IMMEDIATE")
-    with pytest.raises(apsw.SQLError) as excinfo:
+    with pytest.raises(ProgrammingError) as excinfo:
         connection.execute("SELLLLECT 1")
     assert str(excinfo.value) == 'SQLError: near "SELLLLECT": syntax error'
 
