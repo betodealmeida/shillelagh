@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import logging
 import os.path
-import sys
 
 import yaml
 from prompt_toolkit import PromptSession

@@ -1,11 +1,5 @@
 import datetime
-import re
 import urllib.parse
-from typing import Any
-from typing import Dict
-from typing import Iterator
-from typing import Optional
-from typing import Tuple
 from unittest import mock
 
 import apsw
