@@ -1,8 +1,5 @@
 import datetime
-from typing import Any
 from typing import Dict
-from typing import Iterator
-from typing import Optional
 
 import apsw
 import pytest

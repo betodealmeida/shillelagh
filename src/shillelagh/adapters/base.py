@@ -3,9 +3,7 @@ from typing import Any
 from typing import Dict
 from typing import Iterator
 from typing import List
-from typing import Optional
 from typing import Tuple
-from typing import Type
 from typing import TypeVar
 
 from shillelagh.exceptions import ProgrammingError

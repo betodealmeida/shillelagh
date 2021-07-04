@@ -3,7 +3,6 @@ import time
 from typing import Any
 from typing import Dict
 from typing import List
-from typing import Tuple
 from typing import Type
 
 import pkg_resources

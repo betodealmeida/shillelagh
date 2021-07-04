@@ -1,11 +1,6 @@
 from datetime import datetime
 from datetime import timezone
-from typing import Any
-from typing import Dict
-from typing import Iterator
 from typing import List
-from typing import Optional
-from typing import Tuple
 
 from shillelagh.adapters.api.weatherapi import DateTime
 from shillelagh.backends.apsw.db import connect

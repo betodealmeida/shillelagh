@@ -1,5 +1,4 @@
 import os.path
-import textwrap
 from io import StringIO
 
 import yaml

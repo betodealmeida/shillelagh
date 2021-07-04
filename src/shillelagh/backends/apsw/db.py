@@ -1,6 +1,5 @@
 import datetime
 import itertools
-import json
 import urllib.parse
 from collections import Counter
 from functools import partial

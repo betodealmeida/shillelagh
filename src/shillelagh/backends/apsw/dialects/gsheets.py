@@ -6,7 +6,6 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-from google.auth.credentials import Credentials
 from google.auth.transport.requests import AuthorizedSession
 from shillelagh.adapters.api.gsheets.lib import get_credentials
 from shillelagh.backends.apsw.dialects.base import APSWDialect
@@ -22,7 +21,7 @@ def extract_query(url: URL) -> Dict[str, str]:
     """
     Extract the query from the SQLAlchemy URL.
 
-    There's a bug in how SQLAlchemy handles URLs without hosts:
+    There's a bug in how SQLAlchemy <1.4 handles URLs without hosts:
 
         >>> from sqlalchemy.engine.url import make_url
         >>> url = make_url("gsheets://")
@@ -38,7 +37,7 @@ def extract_query(url: URL) -> Dict[str, str]:
     if url.query:
         return dict(url.query)
     if url.host and url.host.startswith("?"):
-        return dict(urllib.parse.parse_qsl(url.host[1:]))
+        return dict(urllib.parse.parse_qsl(url.host[1:]))  # pragma: no cover
     return {}
 
 
