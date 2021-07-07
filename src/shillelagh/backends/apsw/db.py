@@ -453,12 +453,19 @@ def connect(
     safe: bool = False,
     isolation_level: Optional[str] = None,
 ) -> Connection:
-    """
+    r"""
     Constructor for creating a connection to the database.
 
-        >>> conn = connect("database.sqlite", ["csv", "weatherapi"])
+        >>> conn = connect("database.sqlite", ["csvfile", "weatherapi"])
         >>> curs = conn.cursor()
-        >>> curs.execute("SELECT * FROM 'csv:///path/to/file.csv'")
+
+    Let's create a fake CSV file and access it:
+
+        >>> from pyfakefs.fake_filesystem_unittest import Patcher
+        >>> with Patcher() as patcher:
+        ...     fake_file = patcher.fs.create_file('/foo/bar.csv', contents='"a","b"\n1,2\n3,4')
+        ...     list(curs.execute("SELECT * FROM 'csv:///foo/bar.csv'"))
+        [(1.0, 2.0), (3.0, 4.0)]
 
     """
     adapter_kwargs = adapter_kwargs or {}

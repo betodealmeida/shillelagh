@@ -26,24 +26,15 @@ _logger = logging.getLogger(__name__)
 def extract_query(url: URL) -> Dict[str, str]:
     """
     Extract the query from the SQLAlchemy URL.
-
-    There's a bug in how SQLAlchemy <1.4 handles URLs without hosts:
-
-        >>> from sqlalchemy.engine.url import make_url
-        >>> url = make_url("gsheets://")
-        >>> url.query["subject"] = "user@example.com"
-        >>> url
-        gsheets://?subject=user%40example.com
-        >>> make_url(str(url)).query
-        {}
-        >>> make_url(str(url)).host
-        '?subject=user%40example.com'
-
     """
     if url.query:
         return dict(url.query)
+
+    # there's a bug in how SQLAlchemy <1.4 handles URLs without hosts,
+    # putting the query string as the host; handle that case here
     if url.host and url.host.startswith("?"):
         return dict(urllib.parse.parse_qsl(url.host[1:]))  # pragma: no cover
+
     return {}
 
 

@@ -58,16 +58,20 @@ class Adapter:
         The method receives the table URI, as well as the adapter connection
         arguments:
 
+            >>> from shillelagh.backends.apsw.db import connect
             >>> connection = connect(
             ...     ':memory:',
-            ...     adapter_kwargs={"gsheetsapi": {"hello": "world"},
+            ...     adapter_kwargs={"gsheetsapi": {"catalog":
+            ...         {"table": "https://docs.google.com/spreadsheets/d/1/"}}},
             ... )
-            >>> connection.execute("SELECT * FROM table")
 
         This would call all adapters in order to find which one should handle
         the table `table`. The Gsheets adapter would be called with:
 
-            >>> GSheetsAPI.support("table", hello="world")
+            >>> from shillelagh.adapters.api.gsheets.adapter import GSheetsAPI
+            >>> GSheetsAPI.supports("table",
+            ...     catalog={"table": "https://docs.google.com/spreadsheets/d/1"})
+            True
 
         """
         raise NotImplementedError("Subclasses must implement `supports`")
