@@ -4,22 +4,22 @@ from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
+from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Impossible
 from shillelagh.filters import Range
-from shillelagh.lib import analyse
+from shillelagh.lib import analyze
 from shillelagh.lib import build_sql
 from shillelagh.lib import combine_args_kwargs
 from shillelagh.lib import DELETED
 from shillelagh.lib import deserialize
+from shillelagh.lib import escape
 from shillelagh.lib import filter_data
-from shillelagh.lib import quote
 from shillelagh.lib import RowIDManager
 from shillelagh.lib import serialize
-from shillelagh.lib import unquote
+from shillelagh.lib import unescape
 from shillelagh.lib import update_order
-from shillelagh.types import Order
 
 
 def test_row_id_manager_empty_range():
@@ -82,13 +82,13 @@ def test_row_id_manager():
     ]
 
 
-def test_analyse():
+def test_analyze():
     data = [
         {"int": 1, "float": 10.0, "str": "Alice"},
         {"int": 3, "float": 9.5, "str": "Bob"},
         {"int": 2, "float": 8.0, "str": "Charlie"},
     ]
-    num_rows, order, types = analyse(data)
+    num_rows, order, types = analyze(data)
     assert num_rows == 3
     assert order == {
         "int": Order.NONE,
@@ -165,14 +165,14 @@ def test_build_sql_impossible():
         build_sql(columns, {"a": Impossible()}, [])
 
 
-def test_quote():
-    assert quote("1") == "1"
-    assert quote("O'Malley's") == "O''Malley''s"
+def test_escape():
+    assert escape("1") == "1"
+    assert escape("O'Malley's") == "O''Malley''s"
 
 
-def test_unquote():
-    assert unquote("1") == "1"
-    assert unquote("O''Malley''s") == "O'Malley's"
+def test_unescape():
+    assert unescape("1") == "1"
+    assert unescape("O''Malley''s") == "O'Malley's"
 
 
 def test_serialize():

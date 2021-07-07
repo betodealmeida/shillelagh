@@ -1,4 +1,7 @@
-import atexit
+# pylint: disable=fixme
+"""
+Google Sheets adapter.
+"""
 import datetime
 import json
 import logging
@@ -13,6 +16,7 @@ from typing import Tuple
 
 import dateutil.tz
 from google.auth.transport.requests import AuthorizedSession
+from requests import Request
 from requests import Session
 
 from shillelagh.adapters.api.gsheets.lib import format_error_message
@@ -30,9 +34,9 @@ from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import InternalError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
+from shillelagh.fields import Order
 from shillelagh.filters import Filter
 from shillelagh.lib import build_sql
-from shillelagh.types import Order
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 
@@ -41,7 +45,37 @@ _logger = logging.getLogger(__name__)
 JSON_PAYLOAD_PREFIX = ")]}'\n"
 
 
-class GSheetsAPI(Adapter):
+class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
+
+    """
+    A Google Sheets adapter.
+
+    The adapter uses two different APIs. When only `SELECT`s are used the
+    adapter uses the Google Charts API, which queries in a dialect of SQL.
+    The Charts API is efficient because the data can be filterd and sorted
+    on the backend before being retrieved.
+
+    To handle DML -- `INSERT`, `UPDATE`, and `DELETE` -- the adapter will
+    switch to the Google Sheets API. The Sheets API allows the spreadsheet
+    to be modified, but requires the user to be authenticated, even when
+    connecting to a public sheet.
+
+    DML supports 3 different modes of synchronization. In `BIDIRECTIONAL`
+    mode the sheet is downloaded before every DML query, and changes are
+    pushed immediately. This is very inneficient, since it requires
+    downloading all the values before every modification, and should be
+    used for small updates or when interactivity is required.
+
+    In `UNIDIRECTIONAL` mode changes are still pushed immediately, but the
+    sheet is downloaded only once. This mode is a good compromise, since
+    the uploads are frequent but small, and the download that can be big
+    (depending on the size of the sheet) happens only once.
+
+    Finally, there's a `BATCH` mode, where the sheet is downloaded once,
+    before the first DML operation, and all changes are uploaded at once
+    when the adapter is closed. In this mode and in `UNIDIRECTIONAL` the
+    data is stored locally, and filtered/sorted by the Shillelagh backend.
+    """
 
     safe = True
 
@@ -60,7 +94,7 @@ class GSheetsAPI(Adapter):
     def parse_uri(uri: str) -> Tuple[str]:
         return (uri,)
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         uri: str,
         access_token: Optional[str] = None,
@@ -69,14 +103,9 @@ class GSheetsAPI(Adapter):
         subject: Optional[str] = None,
         catalog: Optional[Dict[str, str]] = None,
     ):
+        super().__init__()
         if catalog and uri in catalog:
             uri = catalog[uri]
-
-        self.modified = False
-
-        # commit changes in batch when the connection is closed or when the
-        # program terminates
-        atexit.register(self.close)
 
         self.url = get_url(uri)
         self.credentials = get_credentials(
@@ -86,37 +115,54 @@ class GSheetsAPI(Adapter):
             subject,
         )
 
+        # Local data. When using DML we switch to the Google Sheets API,
+        # keeping a local copy of the spreadsheets data so that we can
+        # (1) find rows being updated/delete and (2) work on a local
+        # dataset when using a mode other than `BIDIRECTIONAL`.
         self._sync_mode = get_sync_mode(uri) or SyncMode.BIDIRECTIONAL
         self._values: Optional[List[List[Any]]] = None
         self._original_rows = 0
+        self.modified = False
 
+        # When the Chart API fails to recognize the headers we need to
+        # keep track of the offset, so we can request data correctly.
         self._offset = 0
 
-        # extra metadata
+        # Extra metadata. Some of this metadata (sheet name and timezone)
+        # can only be fetched if the user is authenticated -- that's OK,
+        # since they're only used for DML, which requires authentication.
         self._spreadsheet_id: Optional[str] = None
         self._sheet_id: Optional[int] = None
         self._sheet_name: Optional[str] = None
         self._timezone: Optional[datetime.tzinfo] = None
         self._set_metadata(uri)
 
-        # determine columns
+        # Determine columns in the sheet.
         self.columns: Dict[str, Field] = {}
         self._set_columns()
 
-        # store row ids for DML
+        # Store row ids for DML. When the first DML command is issued
+        # we switch from the Charts API (read-only) to the Sheets API
+        # (read-write). The problem is that a `SELECT` is almost always
+        # issued before a `DELETE` or `UPDATE`, to get the IDs of the
+        # rows. Because row IDs are generated on the fly, we need to
+        # store the association between row ID and the values in the row
+        # so we can `DELETE` or `UPDATE` them later.
         self._row_ids: Dict[int, Row] = {}
 
     def _set_metadata(self, uri: str) -> None:
         """
-        Get spreadsheet ID, sheet ID, and sheet name.
+        Get spreadsheet ID, sheet ID, sheet name, and timezone.
+
+        Sheet name and timezone can only be retrieved if the user is authenticated.
         """
         parts = urllib.parse.urlparse(uri)
 
         self._spreadsheet_id = parts.path.split("/")[3]
 
-        qs = urllib.parse.parse_qs(parts.query)
-        if "gid" in qs:
-            sheet_id = int(qs["gid"][-1])
+        query_string = urllib.parse.parse_qs(parts.query)
+        if "gid" in query_string:
+            sheet_id = int(query_string["gid"][-1])
         elif parts.fragment.startswith("gid="):
             sheet_id = int(parts.fragment[len("gid=") :])
         else:
@@ -127,11 +173,14 @@ class GSheetsAPI(Adapter):
             return
 
         session = self._get_session()
-        response = session.get(
+        url = (
             f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
-            "?includeGridData=false",
+            "?includeGridData=false"
         )
+        _logger.info("GET %s", url)
+        response = session.get(url)
         payload = response.json()
+        _logger.debug(payload)
         if "error" in payload:
             raise ProgrammingError(payload["error"]["message"])
 
@@ -152,12 +201,22 @@ class GSheetsAPI(Adapter):
         )
 
     def get_metadata(self) -> Dict[str, Any]:
+        """
+        Get metadata of a sheet.
+
+        This currently returns the spreadsheet and sheet titles. We could also
+        return number of rows and columns, since they're available in the response
+        payload.
+        """
         session = self._get_session()
-        response = session.get(
+        url = (
             f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
-            "?includeGridData=false",
+            "?includeGridData=false"
         )
+        _logger.info("GET %s", url)
+        response = session.get(url)
         payload = response.json()
+        _logger.debug(payload)
         if "error" in payload:
             return {}
 
@@ -176,11 +235,15 @@ class GSheetsAPI(Adapter):
         }
 
     def _run_query(self, sql: str) -> QueryResults:
+        """
+        Execute a query using the Google Chart API.
+        """
         quoted_sql = urllib.parse.quote(sql, safe="/()")
         url = f"{self.url}&tq={quoted_sql}"
         headers = {"X-DataSource-Auth": "true"}
 
         session = self._get_session()
+        _logger.info("GET %s", url)
         response = session.get(url, headers=headers)
         if response.encoding is None:
             response.encoding = "utf-8"
@@ -199,12 +262,19 @@ class GSheetsAPI(Adapter):
                     "have the proper credentials to access the spreadsheet.",
                 ) from ex
 
+        _logger.debug("Received payload: %s", result)
         if result["status"] == "error":
             raise ProgrammingError(format_error_message(result["errors"]))
 
         return cast(QueryResults, result)
 
     def _set_columns(self) -> None:
+        """
+        Download data and extract columns.
+
+        We run a simple `SELECT * LIMIT 1` statement to get a small response
+        so we can extract the column names and types.
+        """
         results = self._run_query("SELECT * LIMIT 1")
         cols = results["table"]["cols"]
         rows = results["table"]["rows"]
@@ -212,6 +282,7 @@ class GSheetsAPI(Adapter):
         # if the columns have no labels, use the first row as the labels if
         # it exists; otherwise use just the column letters
         if all(col["label"] == "" for col in cols):
+            _logger.warning("Couldn't extract column labels from sheet")
             if rows:
                 self._offset = 1
                 for col, cell in zip(cols, rows[0]["c"]):
@@ -233,7 +304,14 @@ class GSheetsAPI(Adapter):
         return self.columns
 
     def _clear_columns(self) -> None:
-        # clear columns so that all the filtering happens in SQLite
+        """
+        Clear filters and order from columns.
+
+        This is called when we switch from the Chart API to the Sheets API. When
+        that happens we use a local copy of the spreadsheet values. Clearing the
+        columns ensure that filtering and sorting are performed by the backend,
+        which is probably more efficient.
+        """
         for field in self.columns.values():
             field.filters = []
             field.order = Order.NONE
@@ -266,6 +344,7 @@ class GSheetsAPI(Adapter):
         index = get_index_from_letters(letters)
 
         cells = []
+        i = 0
         for i, row in enumerate(values):
             cells.append(str(row[index]))
             if " ".join(cells) == first_column_name:
@@ -280,8 +359,20 @@ class GSheetsAPI(Adapter):
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
     ) -> Iterator[Row]:
+        """
+        Fetch data.
+
+        In `BIDIRECTIONAL` mode, or if we haven't done any DML, we use the Chart
+        API to retrieve data, since it allows filtering/sorting the data. For
+        other modes, once the sheet has been modified we read from a local copy
+        of the data.
+        """
+        # build a reverse map so we know which columns are defined
         reverse_map = {v: k for k, v in self._column_map.items()}
 
+        # For `UNIDIRECTIONAL` or `BATCH` mode we download the data once
+        # by calling `_get_values()`, and we use the local copy for
+        # all further operations.
         if self.modified and self._sync_mode in {
             SyncMode.UNIDIRECTIONAL,
             SyncMode.BATCH,
@@ -297,6 +388,8 @@ class GSheetsAPI(Adapter):
                 for row in values[headers:]
             )
 
+        # For `BIDIRECTIONAL` mode we continue using the Chart API to
+        # retrieve data. This will happen before every DML query.
         else:
             try:
                 sql = build_sql(
@@ -323,20 +416,30 @@ class GSheetsAPI(Adapter):
         for i, row in enumerate(rows):
             self._row_ids[i] = row
             row["rowid"] = i
+            _logger.debug(row)
             yield row
 
     def insert_data(self, row: Row) -> int:
+        """
+        Insert a row into a sheet.
+        """
         row_id: Optional[int] = row.pop("rowid")
         if row_id is None:
             row_id = max(self._row_ids.keys()) + 1 if self._row_ids else 0
         self._row_ids[row_id] = row
 
+        # TODO (betodealmeida): this function is incorrect, and doesn't handle
+        # type conversion properly
         row_values = get_values_from_row(row, self._column_map)
 
+        # In these modes we keep a local copy of the data, so we only have to
+        # download the full sheet once.
         if self._sync_mode in {SyncMode.UNIDIRECTIONAL, SyncMode.BATCH}:
             values = self._get_values()
             values.append(row_values)
+            self._clear_columns()
 
+        # In these modes we push all changes immediately to the sheet.
         if self._sync_mode in {SyncMode.BIDIRECTIONAL, SyncMode.UNIDIRECTIONAL}:
             session = self._get_session()
             body = {
@@ -344,11 +447,14 @@ class GSheetsAPI(Adapter):
                 "majorDimension": "ROWS",
                 "values": [row_values],
             }
+            url = (
+                "https://sheets.googleapis.com/v4/spreadsheets/"
+                f"{self._spreadsheet_id}/values/{self._sheet_name}:append"
+            )
+            _logger.info("POST %s", url)
+            _logger.debug(body)
             response = session.post(
-                (
-                    "https://sheets.googleapis.com/v4/spreadsheets/"
-                    f"{self._spreadsheet_id}/values/{self._sheet_name}:append"
-                ),
+                url,
                 json=body,
                 params={
                     # https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append
@@ -356,10 +462,10 @@ class GSheetsAPI(Adapter):
                 },
             )
             payload = response.json()
+            _logger.debug(payload)
             if "error" in payload:
                 raise ProgrammingError(payload["error"]["message"])
 
-        self._clear_columns()
         self.modified = True
 
         return row_id
@@ -375,16 +481,27 @@ class GSheetsAPI(Adapter):
             return self._values
 
         session = self._get_session()
-        response = session.get(
+        url = (
             f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
-            f"/values/{self._sheet_name}",
-            params={"valueRenderOption": "UNFORMATTED_VALUE"},
+            f"/values/{self._sheet_name}"
         )
+        prepared = Request(
+            "GET",
+            url,
+            params={"valueRenderOption": "UNFORMATTED_VALUE"},
+        ).prepare()
+        _logger.info("GET %s", prepared.url)
+        response = session.send(prepared)
         payload = response.json()
+        _logger.debug(payload)
         if "error" in payload:
             raise ProgrammingError(payload["error"]["message"])
 
         self._values = cast(List[List[Any]], payload["values"])
+
+        # We store the number of original rows, so that when we replace the sheet
+        # values later we can clear the bottom rows in case the number of rows is
+        # reduced.
         self._original_rows = len(self._values)
 
         return self._values
@@ -401,16 +518,23 @@ class GSheetsAPI(Adapter):
         raise ProgrammingError(f"Could not find row: {row}")
 
     def delete_data(self, row_id: int) -> None:
+        """
+        Delete a row from the sheet.
+        """
         if row_id not in self._row_ids:
             raise ProgrammingError(f"Invalid row to delete: {row_id}")
 
         row = self._row_ids[row_id]
         row_number = self._find_row_number(row)
 
+        # In these modes we keep a local copy of the data, so we only have to
+        # download the full sheet once.
         if self._sync_mode in {SyncMode.UNIDIRECTIONAL, SyncMode.BATCH}:
             values = self._get_values()
             values.pop(row_number)
+            self._clear_columns()
 
+        # In these modes we push all changes immediately to the sheet.
         if self._sync_mode in {SyncMode.BIDIRECTIONAL, SyncMode.UNIDIRECTIONAL}:
             session = self._get_session()
             body = {
@@ -427,24 +551,30 @@ class GSheetsAPI(Adapter):
                     },
                 ],
             }
+            url = (
+                "https://sheets.googleapis.com/v4/spreadsheets/"
+                f"{self._spreadsheet_id}:batchUpdate"
+            )
+            _logger.info("POST %s", url)
+            _logger.debug(body)
             response = session.post(
-                (
-                    "https://sheets.googleapis.com/v4/spreadsheets/"
-                    f"{self._spreadsheet_id}:batchUpdate"
-                ),
+                url,
                 json=body,
             )
             payload = response.json()
+            _logger.debug(payload)
             if "error" in payload:
                 raise ProgrammingError(payload["error"]["message"])
 
         # only delete row_id on a successful request
         del self._row_ids[row_id]
 
-        self._clear_columns()
         self.modified = True
 
     def update_data(self, row_id: int, row: Row) -> None:
+        """
+        Update a row in the sheet.
+        """
         if row_id not in self._row_ids:
             raise ProgrammingError(f"Invalid row to update: {row_id}")
 
@@ -453,10 +583,14 @@ class GSheetsAPI(Adapter):
 
         row_values = get_values_from_row(row, self._column_map)
 
+        # In these modes we keep a local copy of the data, so we only have to
+        # download the full sheet once.
         if self._sync_mode in {SyncMode.UNIDIRECTIONAL, SyncMode.BATCH}:
             values = self._get_values()
             values[row_number] = row_values
+            self._clear_columns()
 
+        # In these modes we push all changes immediately to the sheet.
         if self._sync_mode in {SyncMode.BIDIRECTIONAL, SyncMode.UNIDIRECTIONAL}:
             session = self._get_session()
             range_ = f"{self._sheet_name}!A{row_number + 1}"
@@ -465,17 +599,21 @@ class GSheetsAPI(Adapter):
                 "majorDimension": "ROWS",
                 "values": [row_values],
             }
-            response = session.put(
-                (
-                    "https://sheets.googleapis.com/v4/spreadsheets/"
-                    f"{self._spreadsheet_id}/values/{range_}"
-                ),
-                json=body,
-                params={
-                    "valueInputOption": "USER_ENTERED",
-                },
+            url = (
+                "https://sheets.googleapis.com/v4/spreadsheets/"
+                f"{self._spreadsheet_id}/values/{range_}"
             )
+            prepared = Request(
+                "PUT",
+                url,
+                json=body,
+                params={"valueInputOption": "USER_ENTERED"},
+            ).prepare()
+            _logger.info("PUT %s", prepared.url)
+            _logger.debug(body)
+            response = session.send(prepared)
             payload = response.json()
+            _logger.debug(payload)
             if "error" in payload:
                 raise ProgrammingError(payload["error"]["message"])
 
@@ -485,10 +623,15 @@ class GSheetsAPI(Adapter):
             del self._row_ids[row_id]
         self._row_ids[new_row_id] = row
 
-        self._clear_columns()
         self.modified = True
 
     def close(self) -> None:
+        """
+        Push pending changes.
+
+        This method is used only in `BATCH` mode to push pending modifications
+        to the sheet.
+        """
         if not self.modified or self._sync_mode != SyncMode.BATCH:
             return
 
@@ -496,8 +639,14 @@ class GSheetsAPI(Adapter):
         if not values:
             raise InternalError("An unexpected error happened")
 
-        # pad values with empty rows if needed
-        dummy_row = [""] * len(values[0])
+        # Pad values. This ensures that rows are padded to the right with
+        # empty strings, so they override any underlying cells when the
+        # updated sheet is pushed. Similarly, append dummy rows so that if
+        # the number of rows is smaller than the original the old data gets
+        # erased by the new one.
+        number_of_columns = max(len(row) for row in values)
+        dummy_row = [""] * number_of_columns
+        values = [[*row, *([""] * (number_of_columns - len(row)))] for row in values]
         values.extend([dummy_row] * (self._original_rows - len(values)))
 
         _logger.info("Pushing pending changes to the spreadsheet")
@@ -508,17 +657,23 @@ class GSheetsAPI(Adapter):
             "majorDimension": "ROWS",
             "values": values,
         }
-        response = session.put(
-            (
-                "https://sheets.googleapis.com/v4/spreadsheets/"
-                f"{self._spreadsheet_id}/values/{range_}"
-            ),
+        url = (
+            "https://sheets.googleapis.com/v4/spreadsheets/"
+            f"{self._spreadsheet_id}/values/{range_}"
+        )
+        prepared = Request(
+            "PUT",
+            url,
             json=body,
             params={
                 "valueInputOption": "USER_ENTERED",
             },
-        )
+        ).prepare()
+        _logger.info("PUT %s", prepared.url)
+        _logger.debug(body)
+        response = session.send(prepared)
         payload = response.json()
+        _logger.debug(payload)
         if "error" in payload:
             message = payload["error"]["message"]
             _logger.warning("Unable to commit batch changes: %s", message)

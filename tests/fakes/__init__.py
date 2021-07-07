@@ -11,12 +11,12 @@ from typing import Tuple
 from shillelagh.adapters.base import Adapter
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
+from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.lib import filter_data
-from shillelagh.types import Order
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 

@@ -9,11 +9,12 @@ from shillelagh.adapters.file.csvfile import CSVFile
 from shillelagh.adapters.file.csvfile import RowTracker
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
+from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Impossible
 from shillelagh.filters import Range
-from shillelagh.types import Order
 
 
 contents = """"index","temperature","site"
@@ -48,6 +49,38 @@ def test_csvfile_different_types(mocker):
     assert adapter.get_columns() == {
         "a": String(filters=[Range], order=Order.NONE, exact=True),
     }
+
+
+def test_csvfile_empty(mocker):
+    """
+    Test empty file on instantiation.
+    """
+    mocker.patch("builtins.open", mock_open(read_data=""))
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        CSVFile("test.csv")
+    assert str(excinfo.value) == "The file has no rows"
+
+
+def test_csvfile_empty_get_data(mocker):
+    """
+    Test empty file on `get_data`.
+
+    This is unlikely to happen, requiring the file to be modified
+    externally during the connection.
+    """
+    mock_files = [
+        mock_open(read_data=contents).return_value,
+        mock_open(read_data="").return_value,
+    ]
+    mock_opener = mock_open()
+    mock_opener.side_effect = mock_files
+    mocker.patch("builtins.open", mock_opener)
+
+    adapter = CSVFile("test.csv")
+    with pytest.raises(ProgrammingError) as excinfo:
+        list(adapter.get_data({}, []))
+    assert str(excinfo.value) == "The file has no rows"
 
 
 def test_csvfile_unordered(mocker):

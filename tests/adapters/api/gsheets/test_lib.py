@@ -18,10 +18,10 @@ from shillelagh.adapters.api.gsheets.lib import get_values_from_row
 from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
+from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Range
-from shillelagh.types import Order
 
 
 def test_get_field():

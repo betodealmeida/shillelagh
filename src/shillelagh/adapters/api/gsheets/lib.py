@@ -1,3 +1,4 @@
+"""Helper functions for the GSheets adapter."""
 import datetime
 import itertools
 import string
@@ -20,21 +21,17 @@ from shillelagh.adapters.api.gsheets.fields import GSheetsDate
 from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime
 from shillelagh.adapters.api.gsheets.fields import GSheetsTime
 from shillelagh.adapters.api.gsheets.types import SyncMode
-from shillelagh.adapters.api.gsheets.typing import QueryResults
-from shillelagh.adapters.api.gsheets.typing import QueryResultsCell
 from shillelagh.adapters.api.gsheets.typing import QueryResultsColumn
 from shillelagh.adapters.api.gsheets.typing import QueryResultsError
-from shillelagh.adapters.api.gsheets.typing import QueryResultsRow
-from shillelagh.adapters.api.gsheets.typing import QueryResultsTable
 from shillelagh.adapters.api.gsheets.typing import UrlArgs
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.fields import Float
+from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
-from shillelagh.types import Order
 from shillelagh.typing import Row
 
 
@@ -50,6 +47,9 @@ def get_field(
     col: QueryResultsColumn,
     timezone: Optional[datetime.tzinfo],
 ) -> Field:
+    """
+    Return a Shillelagh `Field` from a Google Chart API results column.
+    """
     type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
         "string": (String, [Equal]),
         "number": (Float, [Range]),
@@ -67,6 +67,9 @@ def get_field(
 
 
 def format_error_message(errors: List[QueryResultsError]) -> str:
+    """
+    Return an error message from a Google Chart API error response.
+    """
     return "\n\n".join(error["detailed_message"] for error in errors)
 
 
@@ -76,7 +79,9 @@ def get_url(
     gid: int = 0,
     sheet: Optional[str] = None,
 ) -> str:
-    """Return API URL given the spreadsheet URL."""
+    """
+    Return the Google Chart API URL given the spreadsheet URL.
+    """
     parts = urllib.parse.urlparse(uri)
 
     # strip /edit
@@ -85,13 +90,13 @@ def get_url(
     # add the gviz endpoint
     path = "/".join((path.rstrip("/"), "gviz/tq"))
 
-    qs = urllib.parse.parse_qs(parts.query)
-    if "headers" in qs:
-        headers = int(qs["headers"][-1])
-    if "gid" in qs:
-        gid = int(qs["gid"][-1])
-    if "sheet" in qs:
-        sheet = qs["sheet"][-1]
+    query_string = urllib.parse.parse_qs(parts.query)
+    if "headers" in query_string:
+        headers = int(query_string["headers"][-1])
+    if "gid" in query_string:
+        gid = int(query_string["gid"][-1])
+    if "sheet" in query_string:
+        sheet = query_string["sheet"][-1]
 
     if parts.fragment.startswith("gid="):
         gid = int(parts.fragment[len("gid=") :])
@@ -111,12 +116,25 @@ def get_url(
 
 
 def get_sync_mode(uri: str) -> Optional[SyncMode]:
+    """
+    Extract the synchronization mode from the sheet URI.
+
+    User can specify a custom synchronization mode by manually adding the
+    `sync_mode` query argument. The mode can be specified using the
+    enum names (lower or uppercase) or their corresponding numbers. These
+    are all equivalent:
+
+        ?sync_mode=BATCH
+        ?sync_mode=batch
+        ?sync_mode=3
+
+    """
     parts = urllib.parse.urlparse(uri)
-    qs = urllib.parse.parse_qs(parts.query)
-    if "sync_mode" not in qs:
+    query_string = urllib.parse.parse_qs(parts.query)
+    if "sync_mode" not in query_string:
         return None
 
-    parameter = qs["sync_mode"][-1].upper()
+    parameter = query_string["sync_mode"][-1].upper()
     try:
         sync_mode = SyncMode[parameter]
     except KeyError:
@@ -129,6 +147,12 @@ def get_sync_mode(uri: str) -> Optional[SyncMode]:
 
 
 def gen_letters() -> Iterator[str]:
+    """
+    Generate column labels.
+
+    This generator produces column labels for sheets: "A", "B", ..., "Z", "AA",
+    "AB", etc.
+    """
     letters = ["A"]
     index = 0
     while True:
@@ -144,6 +168,15 @@ def gen_letters() -> Iterator[str]:
 
 
 def get_index_from_letters(letters: str) -> int:
+    """
+    Return the index of a given column label.
+
+        >>> get_index_from_letters("A")
+        0
+        >>> get_index_from_letters("AA")
+        26
+
+    """
     base26 = reversed([string.ascii_uppercase.index(letter) + 1 for letter in letters])
     return (
         sum(
@@ -175,6 +208,14 @@ def get_credentials(
     service_account_info: Optional[Dict[str, Any]],
     subject: Optional[str],
 ) -> Optional[Credentials]:
+    """
+    Return a set of credentials.
+
+    The user can provide either an OAuth token directly, the location of a service
+    account file, or the contents of the service account directly. When passing
+    credentials from a service account the user can also specify a "subject", used
+    to impersonate a given user.
+    """
     if access_token:
         return google.oauth2.credentials.Credentials(access_token)
 

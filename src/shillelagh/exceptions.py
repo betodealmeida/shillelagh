@@ -1,7 +1,9 @@
-"""Exceptions for DB API 2.0"""
+"""
+Exceptions defined in the DB API 2.0 spec.
+"""
 
 
-class Warning(Exception):
+class Warning(Exception):  # pylint: disable=redefined-builtin
     """
     Important warnings like data truncations while inserting.
 

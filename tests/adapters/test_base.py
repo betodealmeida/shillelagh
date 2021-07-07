@@ -2,13 +2,17 @@ from datetime import datetime
 from datetime import timezone
 from typing import List
 
+import pytest
+
 from ..fakes import FakeAdapter
 from ..fakes import FakeEntryPoint
-from shillelagh.adapters.api.weatherapi import DateTime
+from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
+from shillelagh.exceptions import NotSupportedError
+from shillelagh.fields import DateTime
+from shillelagh.fields import Order
 from shillelagh.filters import Equal
 from shillelagh.filters import Range
-from shillelagh.types import Order
 from shillelagh.typing import Row
 
 
@@ -20,6 +24,12 @@ class FakeAdapterWithDateTime(FakeAdapter):
 
     def __init__(self):
         pass
+
+
+class ReadOnlyAdapter(Adapter):
+    """
+    A read-only adapter.
+    """
 
 
 def test_adapter_get_columns():
@@ -35,6 +45,22 @@ def test_adapter_get_columns():
 def test_adapter_get_metadata():
     adapter = FakeAdapter()
     assert adapter.get_metadata() == {}
+
+
+def test_adapter_read_only():
+    adapter = ReadOnlyAdapter()
+
+    with pytest.raises(NotSupportedError) as excinfo:
+        adapter.insert_data({"hello": "world"})
+    assert str(excinfo.value) == "Adapter does not support `INSERT` statements"
+
+    with pytest.raises(NotSupportedError) as excinfo:
+        adapter.delete_data(1)
+    assert str(excinfo.value) == "Adapter does not support `DELETE` statements"
+
+    with pytest.raises(NotSupportedError) as excinfo:
+        adapter.update_data(1, {"hello": "universe"})
+    assert str(excinfo.value) == "Adapter does not support `DELETE` statements"
 
 
 def test_adapter_get_data():

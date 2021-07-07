@@ -13,6 +13,7 @@ from shillelagh.fields import Integer
 from shillelagh.fields import ISODate
 from shillelagh.fields import ISODateTime
 from shillelagh.fields import ISOTime
+from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.fields import StringBlob
 from shillelagh.fields import StringBoolean
@@ -21,7 +22,6 @@ from shillelagh.filters import Equal
 from shillelagh.types import BINARY
 from shillelagh.types import DATETIME
 from shillelagh.types import NUMBER
-from shillelagh.types import Order
 from shillelagh.types import STRING
 
 

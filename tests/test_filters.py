@@ -1,9 +1,11 @@
 import pytest
 
+from shillelagh.filters import Endpoint
 from shillelagh.filters import Equal
 from shillelagh.filters import Impossible
 from shillelagh.filters import Operator
 from shillelagh.filters import Range
+from shillelagh.filters import Side
 
 
 def test_equal():
@@ -149,3 +151,60 @@ def test_combine_ranges():
     range4 = Range(2, None, True, True)
     assert range1 + range4 == Range(2, 10, True, False)
     assert range4 + range1 == Range(2, 10, True, False)
+
+    range5 = Range(None, -10, True, True)
+    range6 = Range(10, None, True, True)
+    assert range5 + range6 == Impossible()
+
+
+def test_impossible():
+    assert Impossible.build([]) == Impossible()
+    assert Impossible().check(10) is False
+    assert Impossible() != 0
+
+
+def build_endpoint(representation: str) -> Endpoint:
+    if representation[0] in {"(", "["}:
+        return Endpoint(
+            value=int(representation[1:]),
+            include=representation[0] == "[",
+            side=Side.LEFT,
+        )
+    return Endpoint(
+        value=int(representation[:-1]),
+        include=representation[-1] == "]",
+        side=Side.RIGHT,
+    )
+
+
+def test_endpoints():
+    start = build_endpoint("(0")
+    assert start == Endpoint(0, False, Side.LEFT)
+    assert str(start) == "(0"
+
+    assert build_endpoint("(-10") < start
+    assert build_endpoint("(0") == start
+    assert build_endpoint("[0") < start
+    assert build_endpoint("0]") < start
+    assert build_endpoint("0)") < start
+
+    end = build_endpoint("0]")
+    assert end == Endpoint(0, True, Side.RIGHT)
+    assert str(end) == "0]"
+
+    assert build_endpoint("10)") > end
+    assert build_endpoint("0)") < end
+    assert build_endpoint("0]") == end
+    assert build_endpoint("(0") > end
+    assert build_endpoint("[0") == end
+
+    # 0] < (0
+    assert not Endpoint(0, True, Side.RIGHT) > Endpoint(0, False, Side.LEFT)
+
+    assert end != 1
+    with pytest.raises(TypeError) as excinfo:
+        end > 1
+    assert (
+        str(excinfo.value)
+        == "'>' not supported between instances of 'Endpoint' and 'int'"
+    )

@@ -1,12 +1,13 @@
+"""Base class for adapters."""
+import atexit
 import inspect
 from typing import Any
 from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import Tuple
-from typing import TypeVar
 
-from shillelagh.exceptions import ProgrammingError
+from shillelagh.exceptions import NotSupportedError
 from shillelagh.fields import Field
 from shillelagh.fields import RowID
 from shillelagh.filters import Filter
@@ -14,30 +15,80 @@ from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 
 
-T = TypeVar("T", bound="Adapter")
-
-
 class Adapter:
 
-    # disable "unsafe" adapters that write to disk
+    """
+    An adapter to a table.
+
+    Adapters provide an interface to resources, so they can be queried via
+    SQL. An adapter instance represents a virtual table, and the adapter is
+    responsible for fetching data and metadata from the resource, and
+    possibly insert, delete, or update rows.
+
+    In order to find an adapter responsible for a given table name, adapters
+    need to be registered under the "shillelagh.adapter" entry point, eg:
+
+        # setup.cfg
+        [options.entry_points]
+        shillelagh.adapter =
+            custom_adapter = shillelagh.adapters.api.custom:CustomAdapter
+
+    Adapters also need to implement the `supports` method. Given a table
+    name, the method should return true if the table is supported by the
+    adapter.
+    """
+
+    # An adapter is considered "safe" when it has no explicit access to the
+    # local filesystem. Users can then use the `shillelagh+safe://`` URI
+    # in SQLAlchemy to load only safe adapters, as well as only adapters
+    # explicitly listed:
+    #
+    #     >>> engine = create_engine("shillelagh+safe://", adapters=["gsheetsapi"])
     safe = False
 
-    def __init__(self, *args: Any, **kwargs: Any):
-        pass  # pragma: no cover
+    def __init__(self, *args: Any, **kwargs: Any):  # pylint: disable=unused-argument
+        # ensure `self.close` gets called before GC
+        atexit.register(self.close)
 
     @staticmethod
     def supports(uri: str, **kwargs: Any) -> bool:
+        """
+        Return if a given table is supported by the adapter.
+
+        The method receives the table URI, as well as the adapter connection
+        arguments:
+
+            >>> connection = connect(
+            ...     ':memory:',
+            ...     adapter_kwargs={"gsheetsapi": {"hello": "world"},
+            ... )
+            >>> connection.execute("SELECT * FROM table")
+
+        This would call all adapters in order to find which one should handle
+        the table `table`. The Gsheets adapter would be called with:
+
+            >>> GSheetsAPI.support("table", hello="world")
+
+        """
         raise NotImplementedError("Subclasses must implement `supports`")
 
     @staticmethod
     def parse_uri(uri: str) -> Tuple[Any, ...]:
+        """Parse table name, and return arguments to instantiate adapter."""
         raise NotImplementedError("Subclasses must implement `parse_uri`")
 
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self) -> Dict[str, Any]:  # pylint: disable=no-self-use
+        """Return any extra metadata about the table."""
         return {}
 
     def get_columns(self) -> Dict[str, Field]:
-        """This method is called for every query, so make sure it's cheap."""
+        """
+        Return the columns available in the table.
+
+        This method is called for every query, so make sure it's cheap. For most
+        (all?) tables this won't change, so you can store it in an instance
+        attribute.
+        """
         return dict(
             inspect.getmembers(self, lambda attribute: isinstance(attribute, Field)),
         )
@@ -48,7 +99,7 @@ class Adapter:
         order: List[Tuple[str, RequestedOrder]],
     ) -> Iterator[Row]:
         """
-        Yield rows as DB-specific types.
+        Yield rows as adapter-specific types.
 
         This method expects rows to be in the storage format. Eg, for the CSV adapter
         datetime columns would be stored (and yielded) as strings. The `get_rows`
@@ -75,12 +126,21 @@ class Adapter:
                 for column_name, value in row.items()
             }
 
-    def insert_data(self, row: Row) -> int:
-        raise NotImplementedError("Subclasses must implement `insert_row`")
+    def insert_data(self, row: Row) -> int:  # pylint: disable=no-self-use
+        """
+        Insert a single row with adapter-specific types.
+
+        The rows will be formatted according to the adapter fields. Eg, if an adapter
+        represents timestamps as ISO strings, and timestamp values will be ISO strings.
+        """
+        raise NotSupportedError("Adapter does not support `INSERT` statements")
 
     def insert_row(self, row: Row) -> int:
         """
-        Convert native Python to DB-specific types.
+        Insert a single row with native Python types.
+
+        The row types will be converted to the native adapter types, and passed to
+        `insert_data`.
         """
         columns = self.get_columns().copy()
         columns["rowid"] = RowID()
@@ -90,19 +150,32 @@ class Adapter:
         }
         return self.insert_data(row)
 
-    def delete_data(self, row_id: int) -> None:
-        raise NotImplementedError("Subclasses must implement `delete_row`")
+    def delete_data(self, row_id: int) -> None:  # pylint: disable=no-self-use
+        """Delete a row from the table."""
+        raise NotSupportedError("Adapter does not support `DELETE` statements")
 
     def delete_row(self, row_id: int) -> None:
+        """
+        Delete a row from the table.
+
+        This method is identical to `delete_data`, only here for symmetry.
+        """
         return self.delete_data(row_id)
 
     def update_data(self, row_id: int, row: Row) -> None:
-        # Subclasses are free to implement inplace updates
+        """
+        Update a single row with adapter-specific types.
+
+        This method by default will call a delete followed by an insert.
+        Adapters can implement their own more efficient methods.
+        """
         self.delete_data(row_id)
         self.insert_data(row)
 
     def update_row(self, row_id: int, row: Row) -> None:
-        # Subclasses are free to implement inplace updates
+        """
+        Update a single row with native Python types.
+        """
         columns = self.get_columns().copy()
         columns["rowid"] = RowID()
         row = {
@@ -112,4 +185,9 @@ class Adapter:
         self.update_data(row_id, row)
 
     def close(self) -> None:
-        pass
+        """
+        Close the adapter.
+
+        Adapters should use this method to perform any pending changes when the
+        connection is closed.
+        """

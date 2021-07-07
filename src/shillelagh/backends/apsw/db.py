@@ -1,6 +1,9 @@
+# pylint: disable=invalid-name, c-extension-no-member, no-self-use
+"""
+A DB API 2.0 wrapper for APSW.
+"""
 import datetime
 import itertools
-import urllib.parse
 from collections import Counter
 from functools import partial
 from functools import wraps
@@ -22,14 +25,13 @@ from shillelagh import functions
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.vt import type_map
 from shillelagh.backends.apsw.vt import VTModule
-from shillelagh.exceptions import Error
 from shillelagh.exceptions import InterfaceError
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Blob
 from shillelagh.fields import Field
 from shillelagh.lib import combine_args_kwargs
-from shillelagh.lib import quote
+from shillelagh.lib import escape
 from shillelagh.lib import serialize
 from shillelagh.typing import Description
 from shillelagh.typing import SQLiteValidType
@@ -44,10 +46,10 @@ sqlite_version_info = tuple(
 NO_SUCH_TABLE = "SQLError: no such table: "
 SCHEMA = "main"
 
-F = TypeVar("F", bound=Callable[..., Any])
+CURSOR_METHOD = TypeVar("CURSOR_METHOD", bound=Callable[..., Any])
 
 
-def check_closed(method: F) -> F:
+def check_closed(method: CURSOR_METHOD) -> CURSOR_METHOD:
     """Decorator that checks if a connection or cursor is closed."""
 
     @wraps(method)
@@ -56,22 +58,28 @@ def check_closed(method: F) -> F:
             raise ProgrammingError(f"{self.__class__.__name__} already closed")
         return method(self, *args, **kwargs)
 
-    return cast(F, wrapper)
+    return cast(CURSOR_METHOD, wrapper)
 
 
-def check_result(method: F) -> F:
+def check_result(method: CURSOR_METHOD) -> CURSOR_METHOD:
     """Decorator that checks if the cursor has results from `execute`."""
 
     @wraps(method)
     def wrapper(self: "Cursor", *args: Any, **kwargs: Any) -> Any:
-        if self._results is None:
+        if self._results is None:  # pylint: disable=protected-access
             raise ProgrammingError("Called before `execute`")
         return method(self, *args, **kwargs)
 
-    return cast(F, wrapper)
+    return cast(CURSOR_METHOD, wrapper)
 
 
 def get_type_code(type_name: str) -> Type[Field]:
+    """
+    Return a `Field` that corresponds to a type name.
+
+    This is used to build the description of the cursor after a successful
+    query.
+    """
     return cast(Type[Field], type_map.get(type_name, Blob))
 
 
@@ -91,9 +99,11 @@ def convert_binding(binding: Any) -> SQLiteValidType:
     return str(binding)
 
 
-class Cursor(object):
+class Cursor:  # pylint: disable=too-many-instance-attributes
 
-    """Connection cursor."""
+    """
+    Connection cursor.
+    """
 
     def __init__(
         self,
@@ -126,6 +136,9 @@ class Cursor(object):
     @property  # type: ignore
     @check_closed
     def rowcount(self) -> int:
+        """
+        Return the number of rows after a query.
+        """
         try:
             results = list(self._results)  # type: ignore
         except TypeError:
@@ -137,7 +150,9 @@ class Cursor(object):
 
     @check_closed
     def close(self) -> None:
-        """Close the cursor."""
+        """
+        Close the cursor.
+        """
         self._cursor.close()
         self.closed = True
 
@@ -147,6 +162,9 @@ class Cursor(object):
         operation: str,
         parameters: Optional[Tuple[Any, ...]] = None,
     ) -> "Cursor":
+        """
+        Execute a query using the cursor.
+        """
         if not self.in_transaction and self.isolation_level:
             self._cursor.execute(f"BEGIN {self.isolation_level}")
             self.in_transaction = True
@@ -167,10 +185,10 @@ class Cursor(object):
                 self.description = self._get_description()
                 self._results = self._convert(self._cursor)
                 break
-            except apsw.SQLError as exc:
-                message = exc.args[0]
+            except apsw.SQLError as ex:
+                message = ex.args[0]
                 if not message.startswith(NO_SUCH_TABLE):
-                    raise exc
+                    raise ProgrammingError(message) from ex
 
                 # create the virtual table
                 uri = message[len(NO_SUCH_TABLE) :]
@@ -179,6 +197,12 @@ class Cursor(object):
         return self
 
     def _convert(self, cursor: "apsw.Cursor") -> Iterator[Tuple[Any, ...]]:
+        """
+        Convert row from SQLite types to native Python types.
+
+        SQLite only supports 5 types. For booleans and time-related types
+        we need to do the conversion here.
+        """
         if not self.description:
             return
 
@@ -190,10 +214,17 @@ class Cursor(object):
             )
 
     def _create_table(self, uri: str) -> None:
+        """
+        Create a virtual table.
+
+        This method is called the first time a virtual table is accessed.
+        """
         prefix = f"{SCHEMA}."
         if uri.startswith(prefix):
             uri = uri[len(prefix) :]
 
+        # https://github.com/PyCQA/pylint/issues/1175
+        adapter: Optional[Type[Adapter]] = None
         for adapter in self._adapters:
             key = adapter.__name__.lower()
             kwargs = self._adapter_kwargs.get(key, {})
@@ -209,12 +240,17 @@ class Cursor(object):
         formatted_args = ", ".join(
             serialize(arg) for arg in combine_args_kwargs(adapter, *args, **kwargs)
         )
-        table_name = quote(uri)
+        table_name = escape(uri)
         self._cursor.execute(
             f'CREATE VIRTUAL TABLE "{table_name}" USING {adapter.__name__}({formatted_args})',
         )
 
     def _get_description(self) -> Description:
+        """
+        Return the cursor description.
+
+        We only return name and type, since that's what we get from APSW.
+        """
         try:
             description = self._cursor.getdescription()
         except apsw.ExecutionCompleteError:
@@ -239,6 +275,11 @@ class Cursor(object):
         operation: str,
         seq_of_parameters: Optional[Tuple[Any, ...]] = None,
     ) -> "Cursor":
+        """
+        Execute multiple statements.
+
+        Currently not supported.
+        """
         raise NotSupportedError("`executemany` is not supported, use `execute` instead")
 
     @check_result
@@ -282,13 +323,19 @@ class Cursor(object):
 
     @check_closed
     def setinputsizes(self, sizes: int) -> None:
-        # not supported
-        pass
+        """
+        Used before `execute` to predefine memory areas for parameters.
+
+        Currently not supported.
+        """
 
     @check_closed
     def setoutputsizes(self, sizes: int) -> None:
-        # not supported
-        pass
+        """
+        Set a column buffer size for fetches of large columns.
+
+        Currently not supported.
+        """
 
     @check_result
     @check_closed
@@ -305,7 +352,7 @@ class Cursor(object):
     next = __next__
 
 
-class Connection(object):
+class Connection:
 
     """Connection."""
 
@@ -355,7 +402,7 @@ class Connection(object):
         """Commit any pending transaction to the database."""
         for cursor in self.cursors:
             if cursor.in_transaction:
-                cursor._cursor.execute("COMMIT")
+                cursor._cursor.execute("COMMIT")  # pylint: disable=protected-access
                 cursor.in_transaction = False
 
     @check_closed
@@ -363,7 +410,7 @@ class Connection(object):
         """Rollback any transactions."""
         for cursor in self.cursors:
             if cursor.in_transaction:
-                cursor._cursor.execute("ROLLBACK")
+                cursor._cursor.execute("ROLLBACK")  # pylint: disable=protected-access
                 cursor.in_transaction = False
 
     @check_closed
@@ -385,6 +432,9 @@ class Connection(object):
         operation: str,
         parameters: Optional[Tuple[Any, ...]] = None,
     ) -> Cursor:
+        """
+        Execute a query on a cursor.
+        """
         cursor = self.cursor()
         return cursor.execute(operation, parameters)
 
