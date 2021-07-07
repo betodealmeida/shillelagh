@@ -47,6 +47,51 @@ def test_GSheetsDateTime_timezone():
     )
 
 
+def test_GSheetsDateTime_to_unformatted():
+    assert (
+        GSheetsDateTime(timezone=datetime.timezone.utc).to_unformatted(
+            datetime.datetime(2018, 9, 1, tzinfo=datetime.timezone.utc),
+        )
+        == 43344
+    )
+    assert (
+        GSheetsDateTime(timezone=datetime.timezone.utc).to_unformatted(
+            datetime.datetime(2018, 1, 1, tzinfo=datetime.timezone.utc),
+        )
+        == 43101
+    )
+    assert GSheetsDateTime().to_unformatted(None) == ""
+
+
+def test_GSheetsDateTime_from_unformatted():
+    assert (
+        GSheetsDateTime(timezone=datetime.timezone.utc).from_unformatted(
+            43344,
+        )
+        == datetime.datetime(2018, 9, 1, tzinfo=datetime.timezone.utc)
+    )
+
+    assert (
+        GSheetsDateTime(timezone=datetime.timezone.utc).from_unformatted(
+            43101,
+        )
+        == datetime.datetime(2018, 1, 1, tzinfo=datetime.timezone.utc)
+    )
+    assert GSheetsDateTime().from_unformatted("") is None
+
+
+def test_GSheetsDate_to_unformatted():
+    assert GSheetsDate().to_unformatted(datetime.date(2018, 9, 1)) == 43344
+    assert GSheetsDate().to_unformatted(datetime.date(2018, 1, 1)) == 43101
+    assert GSheetsDate().to_unformatted(None) == ""
+
+
+def test_GSheetsDate_from_unformatted():
+    assert GSheetsDate().from_unformatted(43344) == datetime.date(2018, 9, 1)
+    assert GSheetsDate().from_unformatted(43101) == datetime.date(2018, 1, 1)
+    assert GSheetsDate().from_unformatted("") is None
+
+
 def test_GSheetsDate():
     assert GSheetsDate().parse("Date(2018,0,1)") == datetime.date(2018, 1, 1)
     assert GSheetsDate().parse(None) is None
@@ -72,14 +117,14 @@ def test_GSheetsTime():
 
 
 def test_GSheetsBoolean():
-    assert GSheetsBoolean().parse("TRUE") is True
-    assert GSheetsBoolean().parse("FALSE") is False
+    assert GSheetsBoolean().parse(True) is True
+    assert GSheetsBoolean().parse(False) is False
     assert GSheetsBoolean().parse(None) is None
-    assert GSheetsBoolean().format(True) == "TRUE"
-    assert GSheetsBoolean().format(False) == "FALSE"
+    assert GSheetsBoolean().format(True) is True
+    assert GSheetsBoolean().format(False) is False
     assert GSheetsBoolean().format(None) is None
-    assert GSheetsBoolean().quote("TRUE") == "true"
-    assert GSheetsBoolean().quote("FALSE") == "false"
+    assert GSheetsBoolean().quote(True) == "true"
+    assert GSheetsBoolean().quote(False) == "false"
     assert GSheetsBoolean().quote(None) == "NULL"
 
 

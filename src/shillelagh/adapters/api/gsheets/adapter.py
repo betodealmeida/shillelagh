@@ -16,7 +16,6 @@ from typing import Tuple
 
 import dateutil.tz
 from google.auth.transport.requests import AuthorizedSession
-from requests import Request
 from requests import Session
 
 from shillelagh.adapters.api.gsheets.lib import format_error_message
@@ -354,7 +353,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         return i + 1
 
-    def get_data(
+    def get_rows(
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
@@ -388,6 +387,15 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                 for row in values[headers:]
             )
 
+            # convert rows to native Python types
+            rows = (
+                {
+                    column_name: field.from_unformatted(row.get(column_name, ""))
+                    for column_name, field in self.columns.items()
+                }
+                for row in rows
+            )
+
         # For `BIDIRECTIONAL` mode we continue using the Chart API to
         # retrieve data. This will happen before every DML query.
         else:
@@ -413,13 +421,22 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                 for row in payload["table"]["rows"]
             )
 
+            # convert rows to native Python types
+            rows = (
+                {
+                    column_name: field.parse(row[column_name])
+                    for column_name, field in self.columns.items()
+                }
+                for row in rows
+            )
+
         for i, row in enumerate(rows):
             self._row_ids[i] = row
             row["rowid"] = i
             _logger.debug(row)
             yield row
 
-    def insert_data(self, row: Row) -> int:
+    def insert_row(self, row: Row) -> int:
         """
         Insert a row into a sheet.
         """
@@ -428,9 +445,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             row_id = max(self._row_ids.keys()) + 1 if self._row_ids else 0
         self._row_ids[row_id] = row
 
-        # TODO (betodealmeida): this function is incorrect, and doesn't handle
-        # type conversion properly
-        row_values = get_values_from_row(row, self._column_map)
+        row_values = get_values_from_row(row, self.columns, self._column_map)
 
         # In these modes we keep a local copy of the data, so we only have to
         # download the full sheet once.
@@ -485,13 +500,11 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
             f"/values/{self._sheet_name}"
         )
-        prepared = Request(
-            "GET",
+        _logger.info("GET %s", url)
+        response = session.get(
             url,
             params={"valueRenderOption": "UNFORMATTED_VALUE"},
-        ).prepare()
-        _logger.info("GET %s", prepared.url)
-        response = session.send(prepared)
+        )
         payload = response.json()
         _logger.debug(payload)
         if "error" in payload:
@@ -510,14 +523,18 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         """
         Return the 0-indexed number of a given row, defined by its values.
         """
-        target_row_values = get_values_from_row(row, self._column_map)
+        target_row_values = get_values_from_row(row, self.columns, self._column_map)
         for i, row_values in enumerate(self._get_values()):
             if row_values == target_row_values:
                 return i
 
+        from pprint import pprint
+
+        pprint(target_row_values)
+        pprint(self._values)
         raise ProgrammingError(f"Could not find row: {row}")
 
-    def delete_data(self, row_id: int) -> None:
+    def delete_row(self, row_id: int) -> None:
         """
         Delete a row from the sheet.
         """
@@ -571,7 +588,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         self.modified = True
 
-    def update_data(self, row_id: int, row: Row) -> None:
+    def update_row(self, row_id: int, row: Row) -> None:
         """
         Update a row in the sheet.
         """
@@ -581,7 +598,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         current_row = self._row_ids[row_id]
         row_number = self._find_row_number(current_row)
 
-        row_values = get_values_from_row(row, self._column_map)
+        row_values = get_values_from_row(row, self.columns, self._column_map)
 
         # In these modes we keep a local copy of the data, so we only have to
         # download the full sheet once.
@@ -603,15 +620,13 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                 "https://sheets.googleapis.com/v4/spreadsheets/"
                 f"{self._spreadsheet_id}/values/{range_}"
             )
-            prepared = Request(
-                "PUT",
+            _logger.info("PUT %s", url)
+            _logger.debug(body)
+            response = session.put(
                 url,
                 json=body,
                 params={"valueInputOption": "USER_ENTERED"},
-            ).prepare()
-            _logger.info("PUT %s", prepared.url)
-            _logger.debug(body)
-            response = session.send(prepared)
+            )
             payload = response.json()
             _logger.debug(payload)
             if "error" in payload:
@@ -661,17 +676,15 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             "https://sheets.googleapis.com/v4/spreadsheets/"
             f"{self._spreadsheet_id}/values/{range_}"
         )
-        prepared = Request(
-            "PUT",
+        _logger.info("PUT %s", url)
+        _logger.debug(body)
+        response = session.put(
             url,
             json=body,
             params={
                 "valueInputOption": "USER_ENTERED",
             },
-        ).prepare()
-        _logger.info("PUT %s", prepared.url)
-        _logger.debug(body)
-        response = session.send(prepared)
+        )
         payload = response.json()
         _logger.debug(payload)
         if "error" in payload:

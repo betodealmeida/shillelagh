@@ -1,3 +1,4 @@
+# pylint: disable=no-self-use
 """
 Custom fields for the GSheets adapter.
 """
@@ -6,10 +7,14 @@ from typing import Any
 from typing import List
 from typing import Optional
 from typing import Type
+from typing import Union
 
+from shillelagh.exceptions import ProgrammingError
+from shillelagh.fields import Boolean
 from shillelagh.fields import Field
+from shillelagh.fields import Float
 from shillelagh.fields import Order
-from shillelagh.fields import StringBoolean
+from shillelagh.fields import String
 from shillelagh.filters import Filter
 
 
@@ -24,6 +29,11 @@ FROM_TIME_CELL_FORMAT = "%I:%M:%S %p"
 # timestamp format used in SQL queries
 DATETIME_SQL_QUOTE = "%Y-%m-%d %H:%M:%S"
 TIME_SQL_QUOTE = "%H:%M:%S"
+
+# GSheets uses this as the epoch for unformatted values
+# https://developers.google.com/sheets/api/guides/formats?hl=en
+LOTUS123_EPOCH = datetime.datetime(1899, 12, 30, tzinfo=datetime.timezone.utc)
+SECONDS_1_DAY = datetime.timedelta(days=1).total_seconds()
 
 
 class GSheetsDateTime(Field[str, datetime.datetime]):
@@ -107,6 +117,31 @@ class GSheetsDateTime(Field[str, datetime.datetime]):
         )
         return f"datetime '{value}'"
 
+    def to_unformatted(self, value: Optional[datetime.datetime]) -> Union[float, str]:
+        """
+        Return the number of days since 1899-12-30.
+        """
+        if value is None:
+            return ""
+
+        return (
+            value.astimezone(self.timezone) - LOTUS123_EPOCH
+        ).total_seconds() / SECONDS_1_DAY
+
+    def from_unformatted(self, value: Union[float, str]) -> Optional[datetime.datetime]:
+        """
+        Convert to a native Python type.
+        """
+        if value == "":
+            return None
+
+        if isinstance(value, str):
+            raise ProgrammingError("Invalid value found")
+
+        return (LOTUS123_EPOCH + datetime.timedelta(days=value)).astimezone(
+            self.timezone,
+        )
+
 
 class GSheetsDate(Field[str, datetime.date]):
     """
@@ -151,6 +186,27 @@ class GSheetsDate(Field[str, datetime.date]):
         # On SQL queries the timestamp should be prefix by "date"
         return f"date '{value}'"
 
+    def to_unformatted(self, value: Optional[datetime.date]) -> Union[float, str]:
+        """
+        Return the number of days since 1899-12-30.
+        """
+        if value is None:
+            return ""
+
+        return (value - LOTUS123_EPOCH.date()).days
+
+    def from_unformatted(self, value: Union[float, str]) -> Optional[datetime.date]:
+        """
+        Convert to a native Python type.
+        """
+        if value == "":
+            return None
+
+        if isinstance(value, str):
+            raise ProgrammingError("Invalid value found")
+
+        return (LOTUS123_EPOCH + datetime.timedelta(days=value)).date()
+
 
 class GSheetsTime(Field[List[int], datetime.time]):
     """
@@ -187,15 +243,101 @@ class GSheetsTime(Field[List[int], datetime.time]):
         )
         return f"timeofday '{value}'"
 
+    def to_unformatted(self, value: Optional[datetime.time]) -> Union[float, str]:
+        """
+        Return the fraction of the day.
+        """
+        if value is None:
+            return ""
 
-class GSheetsBoolean(StringBoolean):
+        return (
+            value.hour * 60 * 60
+            + value.minute * 60
+            + value.second
+            + value.microsecond / 1000
+        ) / SECONDS_1_DAY
+
+    def from_unformatted(self, value: Union[float, str]) -> Optional[datetime.time]:
+        """
+        Convert to a native Python type.
+        """
+        if value == "":
+            return None
+
+        if isinstance(value, str):
+            raise ProgrammingError("Invalid value found")
+
+        return (
+            LOTUS123_EPOCH + datetime.timedelta(seconds=value * SECONDS_1_DAY)
+        ).time()
+
+
+class GSheetsBoolean(Boolean):
     """
     A GSheets boolean.
-
-    Booleans in the Google Chart API are represented as lowercase strings.
     """
 
-    def quote(self, value: Optional[str]) -> str:
+    def quote(self, value: Optional[bool]) -> str:
         if value is None:
             return "NULL"
-        return value.lower()
+        return "true" if value else "false"
+
+    def to_unformatted(self, value: Optional[bool]) -> Union[bool, str]:
+        """
+        Return an empty string if missing, else a boolean.
+        """
+        return "" if value is None else value
+
+    def from_unformatted(self, value: Union[bool, str]) -> Optional[bool]:
+        """
+        Convert to a native Python type.
+        """
+        if value == "":
+            return None
+
+        if isinstance(value, str):
+            raise ProgrammingError("Invalid value found")
+
+        return value
+
+
+class GSheetsFloat(Float):
+    """
+    A GSheets float.
+    """
+
+    def to_unformatted(self, value: Optional[bool]) -> Union[float, str]:
+        """
+        Return an empty string if missing, else a float.
+        """
+        return "" if value is None else value
+
+    def from_unformatted(self, value: Union[float, str]) -> Optional[float]:
+        """
+        Convert to a native Python type.
+        """
+        if value == "":
+            return None
+
+        if isinstance(value, str):
+            raise ProgrammingError("Invalid value found")
+
+        return value
+
+
+class GSheetsString(String):
+    """
+    A GSheets string.
+    """
+
+    def to_unformatted(self, value: Optional[str]) -> str:
+        """
+        Return an empty string if missing, else the original string.
+        """
+        return "" if value is None else value
+
+    def from_unformatted(self, value: str) -> Optional[str]:
+        """
+        Convert to a native Python type.
+        """
+        return None if value == "" else value

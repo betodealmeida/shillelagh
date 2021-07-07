@@ -19,6 +19,8 @@ from google.auth.credentials import Credentials
 from shillelagh.adapters.api.gsheets.fields import GSheetsBoolean
 from shillelagh.adapters.api.gsheets.fields import GSheetsDate
 from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime
+from shillelagh.adapters.api.gsheets.fields import GSheetsFloat
+from shillelagh.adapters.api.gsheets.fields import GSheetsString
 from shillelagh.adapters.api.gsheets.fields import GSheetsTime
 from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.adapters.api.gsheets.typing import QueryResultsColumn
@@ -26,9 +28,7 @@ from shillelagh.adapters.api.gsheets.typing import QueryResultsError
 from shillelagh.adapters.api.gsheets.typing import UrlArgs
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
-from shillelagh.fields import Float
 from shillelagh.fields import Order
-from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
@@ -51,14 +51,14 @@ def get_field(
     Return a Shillelagh `Field` from a Google Chart API results column.
     """
     type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
-        "string": (String, [Equal]),
-        "number": (Float, [Range]),
+        "string": (GSheetsString, [Equal]),
+        "number": (GSheetsFloat, [Range]),
         "boolean": (GSheetsBoolean, [Equal]),
         "date": (GSheetsDate, [Range]),
         "datetime": (partial(GSheetsDateTime, timezone=timezone), [Range]),  # type: ignore
         "timeofday": (GSheetsTime, [Range]),
     }
-    class_, filters = type_map.get(col["type"], (String, [Equal]))
+    class_, filters = type_map.get(col["type"], (GSheetsString, [Equal]))
     return class_(
         filters=filters,
         order=Order.ANY,
@@ -186,7 +186,11 @@ def get_index_from_letters(letters: str) -> int:
     )
 
 
-def get_values_from_row(row: Row, column_map: Dict[str, str]) -> List[Any]:
+def get_values_from_row(
+    row: Row,
+    columns: Dict[str, Field],
+    column_map: Dict[str, str],
+) -> List[Any]:
     """
     Convert a `Row` into a list of values.
 
@@ -197,8 +201,14 @@ def get_values_from_row(row: Row, column_map: Dict[str, str]) -> List[Any]:
         >>> get_values_from_row(row, column_map)
         ['BR', None, 10]
     """
-    n_cols = get_index_from_letters(max(column_map.values())) + 1
+    # convert row to unformatteed
+    row = {k: columns[k].to_unformatted(v) for k, v in row.items() if k in columns}
+
+    # convert column names to column labels
     row = {column_map[k]: v for k, v in row.items() if k in column_map}
+
+    # complete row with missing columns
+    n_cols = get_index_from_letters(max(column_map.values())) + 1
     return [row.get(column) for column in itertools.islice(gen_letters(), n_cols)]
 
 
