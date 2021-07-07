@@ -47,8 +47,10 @@ class RowIDManager:
 
         >>> data.append("three")
         >>> manager.insert()
+        3
         >>> data.append("four")
         >>> manager.insert(10)  # you can specify a row ID
+        10
         >>> for row_id, value in zip(manager, data):
         ...     if row_id != -1:
         ...         print(row_id, value)
@@ -83,17 +85,23 @@ class RowIDManager:
         yield from itertools.chain(*self.ranges)
 
     def get_max_row_id(self) -> int:
-        """Find the maximum row ID."""
+        """
+        Find the maximum row ID.
+        """
         return max((r.stop - 1) for r in self.ranges)
 
     def check_row_id(self, row_id: int) -> None:
-        """Check if a provided row ID is not being used."""
+        """
+        Check if a provided row ID is not being used.
+        """
         for range_ in self.ranges:
             if range_.start <= row_id < range_.stop:
                 raise Exception(f"Row ID {row_id} already present")
 
     def insert(self, row_id: Optional[int] = None) -> int:
-        """Insert a new row ID."""
+        """
+        Insert a new row ID.
+        """
         if row_id is None:
             max_row_id = self.get_max_row_id()
             row_id = max_row_id + 1
