@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name, c-extension-no-member, no-self-use
+# pylint: disable=invalid-name, c-extension-no-member, no-self-use, unused-import
 """
 A DB API 2.0 wrapper for APSW.
 """
@@ -25,9 +25,16 @@ from shillelagh import functions
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.vt import type_map
 from shillelagh.backends.apsw.vt import VTModule
+from shillelagh.exceptions import DatabaseError
+from shillelagh.exceptions import DataError
+from shillelagh.exceptions import Error
+from shillelagh.exceptions import IntegrityError
 from shillelagh.exceptions import InterfaceError
+from shillelagh.exceptions import InternalError
 from shillelagh.exceptions import NotSupportedError
+from shillelagh.exceptions import OperationalError
 from shillelagh.exceptions import ProgrammingError
+from shillelagh.exceptions import Warning  # pylint: disable=redefined-builtin
 from shillelagh.fields import Blob
 from shillelagh.fields import Field
 from shillelagh.lib import combine_args_kwargs

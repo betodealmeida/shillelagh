@@ -2,6 +2,19 @@
 Exceptions defined in the DB API 2.0 spec.
 """
 
+__all__ = [
+    "Warning",
+    "Error",
+    "InterfaceError",
+    "DatabaseError",
+    "DataError",
+    "OperationalError",
+    "IntegrityError",
+    "InternalError",
+    "ProgrammingError",
+    "NotSupportedError",
+]
+
 
 class Warning(Exception):  # pylint: disable=redefined-builtin
     """
