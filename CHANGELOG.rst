@@ -6,6 +6,8 @@ Version 0.8.0 - 2021-MM-DD
 ==========================
 
 - Refactor fields
+- Change GSheets to use formatted values
+- Fix bug in GSheets DML with datime/date/time
 
 Version 0.7.4 - 2021-07-03
 ==========================
