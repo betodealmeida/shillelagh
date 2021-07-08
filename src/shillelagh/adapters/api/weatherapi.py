@@ -189,13 +189,13 @@ class WeatherAPI(Adapter):
             response = self._session.get(url)
             if response.ok:
                 payload = response.json()
-                timezone = dateutil.tz.gettz(payload["location"]["tz_id"])
+                local_timezone = dateutil.tz.gettz(payload["location"]["tz_id"])
                 hourly_data = payload["forecast"]["forecastday"][0]["hour"]
                 columns = self.get_columns()
                 for record in hourly_data:
                     row = {column: record[column] for column in columns}
                     row["time"] = dateutil.parser.parse(record["time"]).replace(
-                        tzinfo=timezone,
+                        tzinfo=local_timezone,
                     )
                     row["rowid"] = int(row["time_epoch"])
                     yield row

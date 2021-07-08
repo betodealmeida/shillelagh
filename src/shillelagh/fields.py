@@ -535,7 +535,7 @@ class StringBoolean(Field[str, bool]):
     def parse(self, value: Optional[str]) -> Optional[bool]:
         if value is None:
             return None
-        return bool(strtobool(str(value)))
+        return bool(strtobool(value))
 
     def format(self, value: Optional[bool]) -> Optional[str]:
         if value is None:

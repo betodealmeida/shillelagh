@@ -3,7 +3,6 @@ import datetime
 import itertools
 import string
 import urllib.parse
-from functools import partial
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -19,16 +18,18 @@ from google.auth.credentials import Credentials
 from shillelagh.adapters.api.gsheets.fields import GSheetsBoolean
 from shillelagh.adapters.api.gsheets.fields import GSheetsDate
 from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime
+from shillelagh.adapters.api.gsheets.fields import GSheetsField
+from shillelagh.adapters.api.gsheets.fields import GSheetsFloat
+from shillelagh.adapters.api.gsheets.fields import GSheetsString
 from shillelagh.adapters.api.gsheets.fields import GSheetsTime
 from shillelagh.adapters.api.gsheets.types import SyncMode
+from shillelagh.adapters.api.gsheets.typing import QueryResultsCell
 from shillelagh.adapters.api.gsheets.typing import QueryResultsColumn
 from shillelagh.adapters.api.gsheets.typing import QueryResultsError
 from shillelagh.adapters.api.gsheets.typing import UrlArgs
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
-from shillelagh.fields import Float
 from shillelagh.fields import Order
-from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
@@ -45,24 +46,26 @@ SCOPES = [
 
 def get_field(
     col: QueryResultsColumn,
-    timezone: Optional[datetime.tzinfo],
+    timezone: Optional[datetime.tzinfo] = None,
 ) -> Field:
     """
     Return a Shillelagh `Field` from a Google Chart API results column.
     """
-    type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
-        "string": (String, [Equal]),
-        "number": (Float, [Range]),
+    type_map: Dict[str, Tuple[Type[GSheetsField], List[Type[Filter]]]] = {
+        "string": (GSheetsString, [Equal]),
+        "number": (GSheetsFloat, [Range]),
         "boolean": (GSheetsBoolean, [Equal]),
         "date": (GSheetsDate, [Range]),
-        "datetime": (partial(GSheetsDateTime, timezone=timezone), [Range]),  # type: ignore
+        "datetime": (GSheetsDateTime, [Range]),
         "timeofday": (GSheetsTime, [Range]),
     }
-    class_, filters = type_map.get(col["type"], (String, [Equal]))
+    class_, filters = type_map.get(col["type"], (GSheetsString, [Equal]))
     return class_(
         filters=filters,
         order=Order.ANY,
         exact=True,
+        pattern=col.get("pattern"),
+        timezone=timezone,
     )
 
 
@@ -234,3 +237,26 @@ def get_credentials(
         )
 
     return None
+
+
+def get_value_from_cell(cell: Optional[QueryResultsCell]) -> Any:
+    """
+    Return the value from cell.
+
+    The Google Chart API returns many different values for cells, eg:
+
+        {"v": "Date(2018,8,1,0,0,0)", "f": "9/1/2018 0:00:00"}
+        {"v": "test"}
+        {"v": 1.0, "f": "1"}
+        {"v": True, "f": "TRUE"}
+        None
+        {"v": None}
+
+    """
+    if cell is None or cell.get("v") is None:
+        return ""
+
+    if "f" in cell:
+        return cell["f"]
+
+    return "" if cell.get("v") is None else cell["v"]
