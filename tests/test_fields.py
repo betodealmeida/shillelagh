@@ -124,7 +124,6 @@ def test_iso_time():
     assert ISOTime().parse("12:00") == datetime.time(
         12,
         0,
-        tzinfo=datetime.timezone.utc,
     )
     assert ISOTime().parse(None) is None
     assert ISOTime().parse("invalid") is None
@@ -178,7 +177,6 @@ def test_iso_datetime():
         12,
         0,
         0,
-        tzinfo=datetime.timezone.utc,
     )
     assert ISODateTime().parse(None) is None
     assert ISODateTime().parse("invalid") is None

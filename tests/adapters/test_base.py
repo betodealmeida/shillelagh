@@ -1,5 +1,4 @@
 from datetime import datetime
-from datetime import timezone
 from typing import List
 
 import pytest
@@ -167,7 +166,7 @@ def test_type_conversion(mocker):
     assert cursor.fetchall() == [
         (
             None,
-            datetime(2021, 1, 1, 0, 0, tzinfo=timezone.utc),
+            datetime(2021, 1, 1, 0, 0),
             None,
             None,
         ),
@@ -177,7 +176,7 @@ def test_type_conversion(mocker):
     assert FakeAdapterWithDateTime.data == [
         {
             "age": None,
-            "birthday": datetime(2021, 1, 1, 0, 0, tzinfo=timezone.utc),
+            "birthday": datetime(2021, 1, 1, 0, 0),
             "name": None,
             "pets": None,
             "rowid": 1,
@@ -190,5 +189,5 @@ def test_type_conversion(mocker):
         (datetime(2020, 12, 31, 0, 0),),
     )
     assert cursor.fetchall() == [
-        (None, datetime(2021, 1, 1, 0, 0, tzinfo=timezone.utc), None, None),
+        (None, datetime(2021, 1, 1, 0, 0), None, None),
     ]

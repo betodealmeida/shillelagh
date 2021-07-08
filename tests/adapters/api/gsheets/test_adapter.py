@@ -558,15 +558,15 @@ def test_convert_rows(mocker):
     data = list(cursor.execute(sql))
     assert data == [
         (
-            datetime.datetime(2018, 9, 1, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2018, 9, 1, 0, 0),
             1.0,
             True,
             datetime.date(2018, 1, 1),
-            datetime.time(17, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime.time(17, 0, 0),
             "test",
         ),
         (
-            datetime.datetime(2018, 9, 2, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2018, 9, 2, 0, 0),
             1.0,
             False,
             None,
@@ -574,7 +574,7 @@ def test_convert_rows(mocker):
             "test",
         ),
         (
-            datetime.datetime(2018, 9, 3, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2018, 9, 3, 0, 0),
             2.0,
             False,
             None,
@@ -582,7 +582,7 @@ def test_convert_rows(mocker):
             "test",
         ),
         (
-            datetime.datetime(2018, 9, 4, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2018, 9, 4, 0, 0),
             3.0,
             False,
             None,
@@ -590,7 +590,7 @@ def test_convert_rows(mocker):
             "test",
         ),
         (
-            datetime.datetime(2018, 9, 5, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2018, 9, 5, 0, 0),
             5.0,
             False,
             None,
@@ -598,7 +598,7 @@ def test_convert_rows(mocker):
             "test",
         ),
         (
-            datetime.datetime(2018, 9, 6, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2018, 9, 6, 0, 0),
             8.0,
             False,
             None,
@@ -606,7 +606,7 @@ def test_convert_rows(mocker):
             "test",
         ),
         (
-            datetime.datetime(2018, 9, 7, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2018, 9, 7, 0, 0),
             13.0,
             False,
             None,
@@ -614,7 +614,7 @@ def test_convert_rows(mocker):
             None,
         ),
         (
-            datetime.datetime(2018, 9, 8, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2018, 9, 8, 0, 0),
             None,
             False,
             None,
@@ -622,7 +622,7 @@ def test_convert_rows(mocker):
             "test",
         ),
         (
-            datetime.datetime(2018, 9, 9, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2018, 9, 9, 0, 0),
             34.0,
             None,
             None,
