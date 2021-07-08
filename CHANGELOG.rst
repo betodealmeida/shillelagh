@@ -8,6 +8,7 @@ Version 0.8.0 - 2021-MM-DD
 - Refactor fields
 - Change GSheets to use formatted values
 - Fix bug in GSheets DML with datime/date/time
+- Return naive objects when no timezone specified
 
 Version 0.7.4 - 2021-07-03
 ==========================
