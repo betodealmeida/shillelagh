@@ -339,10 +339,7 @@ class ISODate(Field[str, datetime.date]):
         except dateutil.parser.ParserError:
             return None
 
-        if date.tzinfo is None:
-            date = date.replace(tzinfo=datetime.timezone.utc)
-
-        return date.astimezone(datetime.timezone.utc).date()
+        return date.date()
 
     def format(self, value: Optional[datetime.date]) -> Optional[str]:
         if value is None:
@@ -390,14 +387,14 @@ class ISOTime(Field[str, datetime.time]):
             return None
 
         try:
-            time = dateutil.parser.parse(value)
+            timestamp = dateutil.parser.parse(value)
         except dateutil.parser.ParserError:
             return None
 
-        if time.tzinfo is None:
-            time = time.replace(tzinfo=datetime.timezone.utc)
+        time = timestamp.time()
 
-        return time.astimezone(datetime.timezone.utc).timetz()
+        # timezone is not preserved
+        return time.replace(tzinfo=timestamp.tzinfo)
 
     def format(self, value: Optional[datetime.time]) -> Optional[str]:
         if value is None:
@@ -450,10 +447,7 @@ class ISODateTime(Field[str, datetime.datetime]):
         except dateutil.parser.ParserError:
             return None
 
-        if timestamp.tzinfo is None:
-            timestamp = timestamp.replace(tzinfo=datetime.timezone.utc)
-
-        return timestamp.astimezone(datetime.timezone.utc)
+        return timestamp
 
     def format(self, value: Optional[datetime.datetime]) -> Optional[str]:
         if value is None:
