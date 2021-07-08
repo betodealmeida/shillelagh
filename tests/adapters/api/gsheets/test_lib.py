@@ -1,3 +1,6 @@
+"""
+Tests for shilellagh.adapters.api.gsheets.lib.
+"""
 import itertools
 
 import dateutil.tz
@@ -6,6 +9,8 @@ import pytest
 from shillelagh.adapters.api.gsheets.fields import GSheetsBoolean
 from shillelagh.adapters.api.gsheets.fields import GSheetsDate
 from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime
+from shillelagh.adapters.api.gsheets.fields import GSheetsNumber
+from shillelagh.adapters.api.gsheets.fields import GSheetsString
 from shillelagh.adapters.api.gsheets.fields import GSheetsTime
 from shillelagh.adapters.api.gsheets.lib import format_error_message
 from shillelagh.adapters.api.gsheets.lib import gen_letters
@@ -14,19 +19,29 @@ from shillelagh.adapters.api.gsheets.lib import get_field
 from shillelagh.adapters.api.gsheets.lib import get_index_from_letters
 from shillelagh.adapters.api.gsheets.lib import get_sync_mode
 from shillelagh.adapters.api.gsheets.lib import get_url
+from shillelagh.adapters.api.gsheets.lib import get_value_from_cell
 from shillelagh.adapters.api.gsheets.lib import get_values_from_row
 from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Float
 from shillelagh.fields import Order
-from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Range
 
 
 def test_get_field():
-    assert get_field({"type": "string"}, None) == String([Equal], Order.ANY, True)
-    assert get_field({"type": "number"}, None) == Float([Range], Order.ANY, True)
+    """
+    Test get_field.
+    """
+    assert get_field({"type": "string"}, None) == GSheetsString(
+        [Equal],
+        Order.ANY,
+        True,
+    )
+    assert get_field({"type": "number"}, None) == GSheetsNumber(
+        [Range],
+        Order.ANY,
+        True,
+    )
     assert get_field({"type": "boolean"}, None) == GSheetsBoolean(
         [Equal],
         Order.ANY,
@@ -38,22 +53,33 @@ def test_get_field():
         Order.ANY,
         True,
     )
-    tz = dateutil.tz.gettz("America/Los_Angeles")
-    assert get_field({"type": "datetime"}, tz) == GSheetsDateTime(
+    timezone = dateutil.tz.gettz("America/Los_Angeles")
+    assert get_field(
+        {"type": "datetime", "pattern": "M/d/yyyy H:mm:ss"},
+        timezone,
+    ) == GSheetsDateTime(
         [Range],
         Order.ANY,
         True,
-        tz,
+        "M/d/yyyy H:mm:ss",
+        timezone,
     )
     assert get_field({"type": "timeofday"}, None) == GSheetsTime(
         [Range],
         Order.ANY,
         True,
     )
-    assert get_field({"type": "invalid"}, None) == String([Equal], Order.ANY, True)
+    assert get_field({"type": "invalid"}, None) == GSheetsString(
+        [Equal],
+        Order.ANY,
+        True,
+    )
 
 
 def test_format_error_message():
+    """
+    Test format_error_message.
+    """
     assert format_error_message([]) == ""
     response = {
         "version": "0.6",
@@ -71,36 +97,42 @@ def test_format_error_message():
 
 
 def test_get_url():
+    """
+    Test get_url.
+    """
     assert (
         get_url(
-            "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=0",
+            "https://docs.google.com/spreadsheets/d/1/edit#gid=0",
         )
-        == "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/gviz/tq?gid=0"
+        == "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0"
     )
     assert (
         get_url(
-            "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=0",
+            "https://docs.google.com/spreadsheets/d/1/edit#gid=0",
             headers=2,
             gid=3,
             sheet="some-sheet",
         )
-        == "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/gviz/tq?headers=2&sheet=some-sheet"
+        == "https://docs.google.com/spreadsheets/d/1/gviz/tq?headers=2&sheet=some-sheet"
     )
     assert (
         get_url(
-            "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit?headers=2&gid=1",
+            "https://docs.google.com/spreadsheets/d/1/edit?headers=2&gid=1",
         )
-        == "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/gviz/tq?headers=2&gid=1"
+        == "https://docs.google.com/spreadsheets/d/1/gviz/tq?headers=2&gid=1"
     )
     assert (
         get_url(
-            "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit?headers=2&sheet=some-sheet",
+            "https://docs.google.com/spreadsheets/d/1/edit?headers=2&sheet=some-sheet",
         )
-        == "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/gviz/tq?headers=2&sheet=some-sheet"
+        == "https://docs.google.com/spreadsheets/d/1/gviz/tq?headers=2&sheet=some-sheet"
     )
 
 
 def test_get_sync_mode():
+    """
+    Test get_sync_mode.
+    """
     assert get_sync_mode("https://docs.google.com/spreadsheets/d/1/edit#gid=42") is None
     assert (
         get_sync_mode(
@@ -133,6 +165,9 @@ def test_get_sync_mode():
 
 
 def test_gen_letters():
+    """
+    Test gen_letters.
+    """
     letters = list(itertools.islice(gen_letters(), 60))
     assert letters == [
         "A",
@@ -199,6 +234,9 @@ def test_gen_letters():
 
 
 def test_get_index_from_letters():
+    """
+    Test get_index_from_letters.
+    """
     assert get_index_from_letters("A") == 0
     assert get_index_from_letters("Z") == 25
     assert get_index_from_letters("AA") == 26
@@ -207,12 +245,18 @@ def test_get_index_from_letters():
 
 
 def test_get_values_from_row():
+    """
+    Test get_values_from_row.
+    """
     column_map = {"country": "A", "cnt": "C"}
     row = {"country": "BR", "cnt": 10}
     assert get_values_from_row(row, column_map) == ["BR", None, 10]
 
 
 def test_get_credentials(mocker):
+    """
+    Test get_credentials.
+    """
     service_account = mocker.patch(
         "shillelagh.adapters.api.gsheets.lib.google.oauth2.service_account.Credentials",
     )
@@ -257,3 +301,18 @@ def test_get_credentials(mocker):
         ],
         subject="user@example.com",
     )
+
+
+def test_get_value_from_cell():
+    """
+    Test get_value_from_cell.
+    """
+    assert (
+        get_value_from_cell({"v": "Date(2018,8,1,0,0,0)", "f": "9/1/2018 0:00:00"})
+        == "9/1/2018 0:00:00"
+    )
+    assert get_value_from_cell({"v": "test"}) == "test"
+    assert get_value_from_cell({"v": 1.0, "f": "1"}) == "1"
+    assert get_value_from_cell({"v": True, "f": "TRUE"}) == "TRUE"
+    assert get_value_from_cell(None) == ""
+    assert get_value_from_cell({"v": None}) == ""

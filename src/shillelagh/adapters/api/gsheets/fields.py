@@ -20,10 +20,11 @@ from shillelagh.filters import Filter
 # sheet.
 DATETIME_CELL_FORMAT = "%m/%d/%Y %H:%M:%S"
 DATE_CELL_FORMAT = "%m/%d/%Y"
-TIME_CELL_FORMAT = "%H:%M:%S %p"
+TIME_CELL_FORMAT = "%I:%M:%S %p"
 
 # timestamp format used in SQL queries
 DATETIME_SQL_QUOTE = "%Y-%m-%d %H:%M:%S"
+DATE_SQL_QUOTE = "%Y-%m-%d"
 TIME_SQL_QUOTE = "%H:%M:%S"
 
 
@@ -179,6 +180,8 @@ class GSheetsDate(GSheetsField[str, datetime.date]):
             return "null"
 
         # On SQL queries the timestamp should be prefix by "date"
+        format_ = convert_pattern_to_format(self.pattern)
+        value = datetime.datetime.strptime(value, format_).strftime(DATE_SQL_QUOTE)
         return f"date '{value}'"
 
 
@@ -259,9 +262,9 @@ class GSheetsBoolean(GSheetsField[str, bool]):
         return value.lower()
 
 
-class GSheetsFloat(GSheetsField[str, float]):
+class GSheetsNumber(GSheetsField[str, float]):
     """
-    A GSheets float.
+    A GSheets number.
 
     The Google Chart/Sheets APIs return "numbers" only, encoded as strings.
     """
@@ -272,6 +275,11 @@ class GSheetsFloat(GSheetsField[str, float]):
     def parse(self, value: Optional[str]) -> Optional[float]:
         if value is None or value == "":
             return None
+
+        try:
+            return int(value)
+        except ValueError:
+            pass
 
         return float(value)
 

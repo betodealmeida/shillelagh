@@ -19,7 +19,7 @@ from shillelagh.adapters.api.gsheets.fields import GSheetsBoolean
 from shillelagh.adapters.api.gsheets.fields import GSheetsDate
 from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime
 from shillelagh.adapters.api.gsheets.fields import GSheetsField
-from shillelagh.adapters.api.gsheets.fields import GSheetsFloat
+from shillelagh.adapters.api.gsheets.fields import GSheetsNumber
 from shillelagh.adapters.api.gsheets.fields import GSheetsString
 from shillelagh.adapters.api.gsheets.fields import GSheetsTime
 from shillelagh.adapters.api.gsheets.types import SyncMode
@@ -53,7 +53,7 @@ def get_field(
     """
     type_map: Dict[str, Tuple[Type[GSheetsField], List[Type[Filter]]]] = {
         "string": (GSheetsString, [Equal]),
-        "number": (GSheetsFloat, [Range]),
+        "number": (GSheetsNumber, [Range]),
         "boolean": (GSheetsBoolean, [Equal]),
         "date": (GSheetsDate, [Range]),
         "datetime": (GSheetsDateTime, [Range]),
@@ -206,10 +206,10 @@ def get_values_from_row(row: Row, column_map: Dict[str, str]) -> List[Any]:
 
 
 def get_credentials(
-    access_token: Optional[str],
-    service_account_file: Optional[str],
-    service_account_info: Optional[Dict[str, Any]],
-    subject: Optional[str],
+    access_token: Optional[str] = None,
+    service_account_file: Optional[str] = None,
+    service_account_info: Optional[Dict[str, Any]] = None,
+    subject: Optional[str] = None,
 ) -> Optional[Credentials]:
     """
     Return a set of credentials.

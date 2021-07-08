@@ -483,12 +483,14 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
             f"/values/{self._sheet_name}"
         )
-        # XXX
-        _logger.info("GET %s", url)
-        response = session.get(
-            url,
-            params={"valueRenderOption": "FORMATTED_VALUE"},
-        )
+        params = {"valueRenderOption": "FORMATTED_VALUE"}
+
+        # Log the URL. We can't use a prepared request here to extract the URL because
+        # it doesn't work with `AuthorizedSession`.
+        query_string = urllib.parse.urlencode(params)
+        _logger.info("GET %s?%s", url, query_string)
+
+        response = session.get(url, params=params)
         payload = response.json()
         _logger.debug(payload)
         if "error" in payload:
@@ -568,7 +570,11 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         self.modified = True
 
-    def update_data(self, row_id: int, row: Row) -> None:
+    def update_data(  # pylint: disable=too-many-locals
+        self,
+        row_id: int,
+        row: Row,
+    ) -> None:
         """
         Update a row in the sheet.
         """
@@ -600,14 +606,15 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                 "https://sheets.googleapis.com/v4/spreadsheets/"
                 f"{self._spreadsheet_id}/values/{range_}"
             )
-            # XXX
-            _logger.info("PUT %s", url)
+            params = {"valueInputOption": "USER_ENTERED"}
+
+            # Log the URL. We can't use a prepared request here to extract the URL because
+            # it doesn't work with `AuthorizedSession`.
+            query_string = urllib.parse.urlencode(params)
+            _logger.info("PUT %s?%s", url, query_string)
             _logger.debug(body)
-            response = session.put(
-                url,
-                json=body,
-                params={"valueInputOption": "USER_ENTERED"},
-            )
+
+            response = session.put(url, json=body, params=params)
             payload = response.json()
             _logger.debug(payload)
             if "error" in payload:
@@ -657,16 +664,15 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             "https://sheets.googleapis.com/v4/spreadsheets/"
             f"{self._spreadsheet_id}/values/{range_}"
         )
-        # XXX
-        _logger.info("PUT %s", url)
+        params = {"valueInputOption": "USER_ENTERED"}
+
+        # Log the URL. We can't use a prepared request here to extract the URL because
+        # it doesn't work with `AuthorizedSession`.
+        query_string = urllib.parse.urlencode(params)
+        _logger.info("PUT %s?%s", url, query_string)
         _logger.debug(body)
-        response = session.put(
-            url,
-            json=body,
-            params={
-                "valueInputOption": "USER_ENTERED",
-            },
-        )
+
+        response = session.put(url, json=body, params=params)
         payload = response.json()
         _logger.debug(payload)
         if "error" in payload:

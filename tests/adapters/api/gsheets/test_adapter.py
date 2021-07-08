@@ -1,5 +1,8 @@
+# pylint: disable=too-many-lines, protected-access, c-extension-no-member, redefined-outer-name
+"""
+Tests for shilellagh.adapters.api.gsheets.adapter.
+"""
 import datetime
-import itertools
 import json
 from unittest import mock
 
@@ -8,9 +11,7 @@ import dateutil.tz
 import pytest
 import requests
 import requests_mock
-from freezegun import freeze_time
 
-from ....fakes import FakeAdapter
 from ....fakes import FakeEntryPoint
 from shillelagh.adapters.api.gsheets.adapter import GSheetsAPI
 from shillelagh.backends.apsw.db import connect
@@ -24,6 +25,22 @@ from shillelagh.filters import Equal
 
 @pytest.fixture
 def simple_sheet_adapter():
+    """
+    A fixture mocking network requests to a simple sheet.
+
+    The sheets looks like this:
+
+        |---------|-----|
+        | country | cnt |
+        |---------|-----|
+        | BR      |   1 |
+        | BR      |   3 |
+        | IN      |   5 |
+        | ZA      |   6 |
+        | CR      |  10 |
+        |---------|-----|
+
+    """
     adapter = requests_mock.Adapter()
     adapter.register_uri(
         "GET",
@@ -108,22 +125,28 @@ def simple_sheet_adapter():
                     },
                 },
             ],
-            "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1/edit?ouid=111430789371895352716&urlBuilderDomain=dealmeida.net",
+            "spreadsheetUrl": (
+                "https://docs.google.com/spreadsheets/d/1/edit"
+                "?ouid=111430789371895352716&urlBuilderDomain=dealmeida.net"
+            ),
         },
     )
     adapter.register_uri(
         "GET",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1?valueRenderOption=FORMATTED_VALUE"
+        ),
         json={
-            "range": "'Sheet1'!A1:Z983",
+            "range": "'Sheet1'!A1:Z1001",
             "majorDimension": "ROWS",
             "values": [
                 ["country", "cnt"],
-                ["BR", 1],
-                ["BR", 3],
-                ["IN", 5],
-                ["ZA", 6],
-                ["CR", 10],
+                ["BR", "1"],
+                ["BR", "3"],
+                ["IN", "5"],
+                ["ZA", "6"],
+                ["CR", "10"],
             ],
         },
     )
@@ -131,6 +154,9 @@ def simple_sheet_adapter():
 
 
 def test_credentials(mocker):
+    """
+    Test credentials.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -165,7 +191,9 @@ def test_credentials(mocker):
             mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
             mock.call(
-                """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" USING GSheetsAPI('"https://docs.google.com/spreadsheets/d/1"', 'null', 'null', '{"secret": "XXX"}', '"user@example.com"', 'null')""",
+                """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" """
+                """USING GSheetsAPI('"https://docs.google.com/spreadsheets/d/1"'"""
+                """, 'null', 'null', '{"secret": "XXX"}', '"user@example.com"', 'null')""",
             ),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
         ],
@@ -173,6 +201,9 @@ def test_credentials(mocker):
 
 
 def test_execute(mocker, simple_sheet_adapter):
+    """
+    Test execute.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -201,6 +232,9 @@ def test_execute(mocker, simple_sheet_adapter):
 
 
 def test_execute_with_catalog(mocker, simple_sheet_adapter):
+    """
+    Test execute when using a catalog.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -239,6 +273,9 @@ def test_execute_with_catalog(mocker, simple_sheet_adapter):
 
 
 def test_execute_filter(mocker, simple_sheet_adapter):
+    """
+    Test execute when filtering the data.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -253,7 +290,10 @@ def test_execute_filter(mocker, simple_sheet_adapter):
     )
     simple_sheet_adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20WHERE%20B%20%3C%205",
+        (
+            "https://docs.google.com/spreadsheets/d/1/gviz/"
+            "tq?gid=0&tq=SELECT%20%2A%20WHERE%20B%20%3C%205"
+        ),
         json={
             "version": "0.6",
             "reqId": "0",
@@ -288,6 +328,11 @@ def test_execute_filter(mocker, simple_sheet_adapter):
 
 
 def test_execute_impossible(mocker, simple_sheet_adapter):
+    """
+    Test executing a query with an impossible predicate.
+
+    This should return no data without network calls.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -313,6 +358,9 @@ def test_execute_impossible(mocker, simple_sheet_adapter):
 
 
 def test_convert_rows(mocker):
+    """
+    Test that rows are converted correctly.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -585,6 +633,9 @@ def test_convert_rows(mocker):
 
 
 def test_get_session(mocker):
+    """
+    Test _get_session.
+    """
     mock_authorized_session = mock.MagicMock()
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.AuthorizedSession",
@@ -631,6 +682,9 @@ def test_get_session(mocker):
 
 
 def test_api_bugs(mocker):
+    """
+    Regression test covering API bugs.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -700,13 +754,26 @@ def test_api_bugs(mocker):
     with pytest.raises(ProgrammingError) as excinfo:
         cursor.execute(sql)
 
-    assert (
-        str(excinfo.value)
-        == '{"version": "0.6", "reqId": "0", "status": "error", "errors": [{"reason": "invalid_query", "message": "INVALID_QUERY", "detailed_message": "Invalid query: NO_COLUMN: C"}]}'
+    assert str(excinfo.value) == json.dumps(
+        {
+            "version": "0.6",
+            "reqId": "0",
+            "status": "error",
+            "errors": [
+                {
+                    "reason": "invalid_query",
+                    "message": "INVALID_QUERY",
+                    "detailed_message": "Invalid query: NO_COLUMN: C",
+                },
+            ],
+        },
     )
 
 
 def test_execute_json_prefix(mocker, simple_sheet_adapter):
+    """
+    Test removing the JSON prefix.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -767,6 +834,11 @@ def test_execute_json_prefix(mocker, simple_sheet_adapter):
 
 
 def test_execute_invalid_json(mocker):
+    """
+    Test non-JSON response.
+
+    The Google Chart API returns HTML when the user is not authenticated.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -799,6 +871,9 @@ def test_execute_invalid_json(mocker):
 
 
 def test_execute_error_response(mocker):
+    """
+    Test error response handling on execute.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -839,6 +914,9 @@ def test_execute_error_response(mocker):
 
 
 def test_headers_not_detected(mocker):
+    """
+    Regression test for when headers are not identified correctly.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -910,6 +988,9 @@ def test_headers_not_detected(mocker):
 
 
 def test_headers_not_detected_no_rows(mocker):
+    """
+    Regression test for when headers are not identified correctly.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -974,6 +1055,9 @@ def test_headers_not_detected_no_rows(mocker):
 
 
 def test_set_metadata(mocker, simple_sheet_adapter):
+    """
+    Test _set_metadata.
+    """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._set_columns",
     )
@@ -1015,6 +1099,9 @@ def test_set_metadata(mocker, simple_sheet_adapter):
 
 
 def test_set_metadata_error(mocker):
+    """
+    Test errors in _set_metadata.
+    """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._set_columns",
     )
@@ -1051,6 +1138,9 @@ def test_set_metadata_error(mocker):
 
 
 def test_insert_data(mocker, simple_sheet_adapter):
+    """
+    Test insert_data.
+    """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
@@ -1064,7 +1154,10 @@ def test_insert_data(mocker, simple_sheet_adapter):
     )
     simple_sheet_adapter.register_uri(
         "POST",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1:append?valueInputOption=USER_ENTERED",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1:append?valueInputOption=USER_ENTERED"
+        ),
         json={
             "spreadsheetId": "1",
             "tableRange": "'Sheet1'!A1:F10",
@@ -1080,25 +1173,28 @@ def test_insert_data(mocker, simple_sheet_adapter):
 
     gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit", "XXX")
 
-    row_id = gsheets_adapter.insert_row({"country": "UK", "cnt": 10, "rowid": None})
+    row_id = gsheets_adapter.insert_row({"country": "UK", "cnt": "10", "rowid": None})
     assert row_id == 0
-    assert gsheets_adapter._row_ids == {0: {"cnt": 10.0, "country": "UK"}}
+    assert gsheets_adapter._row_ids == {0: {"cnt": "10", "country": "UK"}}
     assert simple_sheet_adapter.last_request.json() == {
         "range": "Sheet1",
         "majorDimension": "ROWS",
-        "values": [["UK", 10.0]],
+        "values": [["UK", "10"]],
     }
 
     row_id = gsheets_adapter.insert_row({"country": "PY", "cnt": 11, "rowid": 3})
     assert row_id == 3
     assert gsheets_adapter._row_ids == {
-        0: {"cnt": 10.0, "country": "UK"},
-        3: {"cnt": 11.0, "country": "PY"},
+        0: {"cnt": "10", "country": "UK"},
+        3: {"cnt": "11", "country": "PY"},
     }
 
     simple_sheet_adapter.register_uri(
         "POST",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1:append?valueInputOption=USER_ENTERED",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1:append?valueInputOption=USER_ENTERED"
+        ),
         json={
             "error": {
                 "code": 400,
@@ -1108,7 +1204,7 @@ def test_insert_data(mocker, simple_sheet_adapter):
         },
     )
     with pytest.raises(ProgrammingError) as excinfo:
-        gsheets_adapter.insert_row({"country": "PY", "cnt": 11, "rowid": 3})
+        gsheets_adapter.insert_row({"country": "PY", "cnt": "11", "rowid": 3})
     assert (
         str(excinfo.value)
         == "Request range[WRONG] does not match value's range[Sheet1]"
@@ -1116,10 +1212,14 @@ def test_insert_data(mocker, simple_sheet_adapter):
 
 
 def test_delete_data(mocker, simple_sheet_adapter):
+    """
+    Test delete_data.
+    """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
     )
+    _logger = mocker.patch("shillelagh.adapters.api.gsheets.adapter._logger")
 
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
@@ -1135,15 +1235,15 @@ def test_delete_data(mocker, simple_sheet_adapter):
 
     gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit", "XXX")
     gsheets_adapter._row_ids = {
-        0: {"cnt": 10.0, "country": "CR"},
-        3: {"cnt": 1.0, "country": "BR"},
-        4: {"cnt": 12.0, "country": "PL"},
+        0: {"cnt": "10", "country": "CR"},
+        3: {"cnt": "1", "country": "BR"},
+        4: {"cnt": "12", "country": "PL"},
     }
 
     gsheets_adapter.delete_row(0)
     assert gsheets_adapter._row_ids == {
-        3: {"cnt": 1.0, "country": "BR"},
-        4: {"cnt": 12.0, "country": "PL"},
+        3: {"cnt": "1", "country": "BR"},
+        4: {"cnt": "12", "country": "PL"},
     }
     assert simple_sheet_adapter.last_request.json() == {
         "requests": [
@@ -1159,10 +1259,14 @@ def test_delete_data(mocker, simple_sheet_adapter):
             },
         ],
     }
+    _logger.info.assert_called_with(
+        "POST %s",
+        "https://sheets.googleapis.com/v4/spreadsheets/1:batchUpdate",
+    )
 
     with pytest.raises(ProgrammingError) as excinfo:
         gsheets_adapter.delete_row(4)
-    assert str(excinfo.value) == "Could not find row: {'cnt': 12.0, 'country': 'PL'}"
+    assert str(excinfo.value) == "Could not find row: {'cnt': '12', 'country': 'PL'}"
 
     with pytest.raises(ProgrammingError) as excinfo:
         gsheets_adapter.delete_row(5)
@@ -1185,7 +1289,10 @@ def test_delete_data(mocker, simple_sheet_adapter):
 
     simple_sheet_adapter.register_uri(
         "GET",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1?valueRenderOption=FORMATTED_VALUE"
+        ),
         json={
             "error": {
                 "code": 404,
@@ -1200,6 +1307,9 @@ def test_delete_data(mocker, simple_sheet_adapter):
 
 
 def test_update_data(mocker, simple_sheet_adapter):
+    """
+    Test update_data.
+    """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
@@ -1213,7 +1323,10 @@ def test_update_data(mocker, simple_sheet_adapter):
     )
     simple_sheet_adapter.register_uri(
         "PUT",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1!A6?valueInputOption=USER_ENTERED",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1!A6?valueInputOption=USER_ENTERED"
+        ),
         json={
             "spreadsheetId": "1",
             "tableRange": "'Sheet1'!A6:B6",
@@ -1229,58 +1342,64 @@ def test_update_data(mocker, simple_sheet_adapter):
 
     gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit", "XXX")
     gsheets_adapter._row_ids = {
-        0: {"cnt": 10.0, "country": "CR"},
-        3: {"cnt": 11.0, "country": "PY"},
-        4: {"cnt": 12.0, "country": "PL"},
+        0: {"cnt": "10", "country": "CR"},
+        3: {"cnt": "11", "country": "PY"},
+        4: {"cnt": "12", "country": "PL"},
     }
 
-    gsheets_adapter.update_row(0, {"cnt": 12.0, "country": "CR", "rowid": 0})
+    gsheets_adapter.update_row(0, {"cnt": "12", "country": "CR", "rowid": 0})
     assert gsheets_adapter._row_ids == {
-        0: {"cnt": 12.0, "country": "CR"},
-        3: {"cnt": 11.0, "country": "PY"},
-        4: {"cnt": 12.0, "country": "PL"},
+        0: {"cnt": "12", "country": "CR"},
+        3: {"cnt": "11", "country": "PY"},
+        4: {"cnt": "12", "country": "PL"},
     }
     assert simple_sheet_adapter.last_request.json() == {
         "majorDimension": "ROWS",
         "range": "Sheet1!A6",
-        "values": [["CR", 12.0]],
+        "values": [["CR", "12"]],
     }
 
     simple_sheet_adapter.register_uri(
         "GET",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1?valueRenderOption=FORMATTED_VALUE"
+        ),
         json={
             "range": "'Sheet1'!A1:Z983",
             "majorDimension": "ROWS",
             "values": [
                 ["country", "cnt"],
-                ["BR", 1],
-                ["BR", 3],
-                ["IN", 5],
-                ["ZA", 6],
-                ["CR", 12],
-                ["PY", 11],
+                ["BR", "1"],
+                ["BR", "3"],
+                ["IN", "5"],
+                ["ZA", "6"],
+                ["CR", "12"],
+                ["PY", "11"],
             ],
         },
     )
-    gsheets_adapter.update_row(0, {"cnt": 12.0, "country": "UK", "rowid": 6})
+    gsheets_adapter.update_row(0, {"cnt": "12", "country": "UK", "rowid": 6})
     assert gsheets_adapter._row_ids == {
-        6: {"cnt": 12.0, "country": "UK"},
-        3: {"cnt": 11.0, "country": "PY"},
-        4: {"cnt": 12.0, "country": "PL"},
+        6: {"cnt": "12", "country": "UK"},
+        3: {"cnt": "11", "country": "PY"},
+        4: {"cnt": "12", "country": "PL"},
     }
 
     with pytest.raises(ProgrammingError) as excinfo:
-        gsheets_adapter.update_row(4, {"cnt": 13.0, "country": "PL"})
-    assert str(excinfo.value) == "Could not find row: {'cnt': 12.0, 'country': 'PL'}"
+        gsheets_adapter.update_row(4, {"cnt": "13", "country": "PL"})
+    assert str(excinfo.value) == "Could not find row: {'cnt': '12', 'country': 'PL'}"
 
     with pytest.raises(ProgrammingError) as excinfo:
-        gsheets_adapter.update_row(5, {"cnt": 13.0, "country": "PL"})
+        gsheets_adapter.update_row(5, {"cnt": "13", "country": "PL"})
     assert str(excinfo.value) == "Invalid row to update: 5"
 
     simple_sheet_adapter.register_uri(
         "PUT",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1!A7?valueInputOption=USER_ENTERED",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1!A7?valueInputOption=USER_ENTERED"
+        ),
         json={
             "error": {
                 "code": 404,
@@ -1290,12 +1409,15 @@ def test_update_data(mocker, simple_sheet_adapter):
         },
     )
     with pytest.raises(ProgrammingError) as excinfo:
-        gsheets_adapter.update_row(3, {"cnt": 13.0, "country": "PL"})
+        gsheets_adapter.update_row(3, {"cnt": "13", "country": "PL"})
     assert str(excinfo.value) == "Requested entity was not found."
 
     simple_sheet_adapter.register_uri(
         "GET",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1?valueRenderOption=FORMATTED_VALUE"
+        ),
         json={
             "error": {
                 "code": 404,
@@ -1305,11 +1427,14 @@ def test_update_data(mocker, simple_sheet_adapter):
         },
     )
     with pytest.raises(ProgrammingError) as excinfo:
-        gsheets_adapter.update_row(3, {"cnt": 13.0, "country": "PL"})
+        gsheets_adapter.update_row(3, {"cnt": "13", "country": "PL"})
     assert str(excinfo.value) == "Requested entity was not found."
 
 
 def test_batch_sync_mode(mocker, simple_sheet_adapter):
+    """
+    Test BATCH mode.
+    """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
@@ -1324,7 +1449,10 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
     )
     update = simple_sheet_adapter.register_uri(
         "PUT",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueInputOption=USER_ENTERED",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1?valueInputOption=USER_ENTERED"
+        ),
         json={
             "spreadsheetId": "1",
             "tableRange": "'Sheet1'!A1:F10",
@@ -1339,18 +1467,21 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
     )
     get_values = simple_sheet_adapter.register_uri(
         "GET",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1?valueRenderOption=FORMATTED_VALUE"
+        ),
         json={
             "range": "'Sheet1'!A1:Z983",
             "majorDimension": "ROWS",
             "values": [
                 ["country", "cnt"],
-                ["BR", 1],
-                ["BR", 3],
-                ["IN", 5],
-                ["ZA", 6],
-                ["UK", 10],
-                ["PY", 11],
+                ["BR", "1"],
+                ["BR", "3"],
+                ["IN", "5"],
+                ["ZA", "6"],
+                ["UK", "10"],
+                ["PY", "11"],
             ],
         },
     )
@@ -1365,13 +1496,13 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
     row_id = gsheets_adapter.insert_row({"country": "UK", "cnt": 10, "rowid": None})
     assert gsheets_adapter._values == [
         ["country", "cnt"],
-        ["BR", 1],
-        ["BR", 3],
-        ["IN", 5],
-        ["ZA", 6],
-        ["UK", 10],
-        ["PY", 11],
-        ["UK", 10.0],
+        ["BR", "1"],
+        ["BR", "3"],
+        ["IN", "5"],
+        ["ZA", "6"],
+        ["UK", "10"],
+        ["PY", "11"],
+        ["UK", "10"],
     ]
 
     # check that columns have no filters/order
@@ -1383,37 +1514,43 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
     # get_data should now return all data, since filtering is done by SQLite
     data = list(gsheets_adapter.get_data({"country": Equal("UK")}, []))
     assert data == [
-        {"country": "BR", "cnt": 1, "rowid": 0},
-        {"country": "BR", "cnt": 3, "rowid": 1},
-        {"country": "IN", "cnt": 5, "rowid": 2},
-        {"country": "ZA", "cnt": 6, "rowid": 3},
-        {"country": "UK", "cnt": 10, "rowid": 4},
-        {"country": "PY", "cnt": 11, "rowid": 5},
-        {"country": "UK", "cnt": 10.0, "rowid": 6},
+        {"country": "BR", "cnt": "1", "rowid": 0},
+        {"country": "BR", "cnt": "3", "rowid": 1},
+        {"country": "IN", "cnt": "5", "rowid": 2},
+        {"country": "ZA", "cnt": "6", "rowid": 3},
+        {"country": "UK", "cnt": "10", "rowid": 4},
+        {"country": "PY", "cnt": "11", "rowid": 5},
+        {"country": "UK", "cnt": "10", "rowid": 6},
     ]
 
     row_id = 6
     gsheets_adapter.update_row(row_id, {"country": "UK", "cnt": 11, "rowid": row_id})
     assert gsheets_adapter._values == [
         ["country", "cnt"],
-        ["BR", 1],
-        ["BR", 3],
-        ["IN", 5],
-        ["ZA", 6],
-        ["UK", 11.0],
-        ["PY", 11],
-        ["UK", 10.0],
+        ["BR", "1"],
+        ["BR", "3"],
+        ["IN", "5"],
+        ["ZA", "6"],
+        ["UK", "11"],
+        ["PY", "11"],
+        ["UK", "10"],
     ]
+
+    _logger.info.assert_called_with(
+        "GET %s?%s",
+        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1",
+        "valueRenderOption=FORMATTED_VALUE",
+    )
 
     gsheets_adapter.delete_row(row_id)
     assert gsheets_adapter._values == [
         ["country", "cnt"],
-        ["BR", 1],
-        ["BR", 3],
-        ["IN", 5],
-        ["ZA", 6],
-        ["PY", 11],
-        ["UK", 10.0],
+        ["BR", "1"],
+        ["BR", "3"],
+        ["IN", "5"],
+        ["ZA", "6"],
+        ["PY", "11"],
+        ["UK", "10"],
     ]
 
     # test that get_values was called only once
@@ -1432,12 +1569,12 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
         "majorDimension": "ROWS",
         "values": [
             ["country", "cnt"],
-            ["BR", 1],
-            ["BR", 3],
-            ["IN", 5],
-            ["ZA", 6],
-            ["PY", 11],
-            ["UK", 10.0],
+            ["BR", "1"],
+            ["BR", "3"],
+            ["IN", "5"],
+            ["ZA", "6"],
+            ["PY", "11"],
+            ["UK", "10"],
         ],
     }
 
@@ -1455,7 +1592,10 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
 
     simple_sheet_adapter.register_uri(
         "PUT",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueInputOption=USER_ENTERED",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1?valueInputOption=USER_ENTERED"
+        ),
         json={
             "error": {
                 "code": 404,
@@ -1483,6 +1623,12 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
 
 
 def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
+    """
+    Test payload padding in BATCH mode.
+
+    When posting the payload it should be padded horizontally and vertically
+    to delete any underlying cells.
+    """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
@@ -1496,7 +1642,10 @@ def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
     )
     update = simple_sheet_adapter.register_uri(
         "PUT",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueInputOption=USER_ENTERED",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1?valueInputOption=USER_ENTERED"
+        ),
         json={
             "spreadsheetId": "1",
             "tableRange": "'Sheet1'!A1:F10",
@@ -1511,18 +1660,21 @@ def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
     )
     simple_sheet_adapter.register_uri(
         "GET",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1?valueRenderOption=FORMATTED_VALUE"
+        ),
         json={
             "range": "'Sheet1'!A1:Z983",
             "majorDimension": "ROWS",
             "values": [
                 ["country", "cnt"],
-                ["BR", 1],
-                ["BR", 3],
-                ["IN", 5],
-                ["ZA", 6],
-                ["UK", 10],
-                ["PY", 11],
+                ["BR", "1"],
+                ["BR", "3"],
+                ["IN", "5"],
+                ["ZA", "6"],
+                ["UK", "10"],
+                ["PY", "11"],
             ],
         },
     )
@@ -1533,15 +1685,15 @@ def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
     )
 
     row_id = 0
-    gsheets_adapter._row_ids = {row_id: {"cnt": 10.0, "country": "UK"}}
+    gsheets_adapter._row_ids = {row_id: {"cnt": "10", "country": "UK"}}
     gsheets_adapter.delete_row(row_id)
     assert gsheets_adapter._values == [
         ["country", "cnt"],
-        ["BR", 1],
-        ["BR", 3],
-        ["IN", 5],
-        ["ZA", 6],
-        ["PY", 11],
+        ["BR", "1"],
+        ["BR", "3"],
+        ["IN", "5"],
+        ["ZA", "6"],
+        ["PY", "11"],
     ]
 
     gsheets_adapter.close()
@@ -1551,17 +1703,20 @@ def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
         "majorDimension": "ROWS",
         "values": [
             ["country", "cnt"],
-            ["BR", 1],
-            ["BR", 3],
-            ["IN", 5],
-            ["ZA", 6],
-            ["PY", 11],
+            ["BR", "1"],
+            ["BR", "3"],
+            ["IN", "5"],
+            ["ZA", "6"],
+            ["PY", "11"],
             ["", ""],
         ],
     }
 
 
 def test_execute_batch(mocker, simple_sheet_adapter):
+    """
+    Test executing queries in BATCH mode.
+    """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -1580,7 +1735,10 @@ def test_execute_batch(mocker, simple_sheet_adapter):
     )
     simple_sheet_adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A%20WHERE%20B%20%3C%205",
+        (
+            "https://docs.google.com/spreadsheets/d/1"
+            "/gviz/tq?gid=0&tq=SELECT%20%2A%20WHERE%20B%20%3C%205"
+        ),
         json={
             "version": "0.6",
             "reqId": "0",
@@ -1601,7 +1759,10 @@ def test_execute_batch(mocker, simple_sheet_adapter):
     )
     simple_sheet_adapter.register_uri(
         "PUT",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueInputOption=USER_ENTERED",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1?valueInputOption=USER_ENTERED"
+        ),
         json={
             "spreadsheetId": "1",
             "tableRange": "'Sheet1'!A1:F10",
@@ -1650,6 +1811,9 @@ def test_execute_batch(mocker, simple_sheet_adapter):
 
 
 def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
+    """
+    Test UNIDIRECTIONAL mode.
+    """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
@@ -1663,7 +1827,10 @@ def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
     )
     insert = simple_sheet_adapter.register_uri(
         "POST",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1:append?valueInputOption=USER_ENTERED",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1:append?valueInputOption=USER_ENTERED"
+        ),
         json={
             "spreadsheetId": "1",
             "tableRange": "'Sheet1'!A1:F10",
@@ -1678,7 +1845,10 @@ def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
     )
     update = simple_sheet_adapter.register_uri(
         "PUT",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1!A6?valueInputOption=USER_ENTERED",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1!A6?valueInputOption=USER_ENTERED"
+        ),
         json={
             "spreadsheetId": "1",
             "tableRange": "'Sheet1'!A1:F10",
@@ -1693,18 +1863,21 @@ def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
     )
     get_values = simple_sheet_adapter.register_uri(
         "GET",
-        "https://sheets.googleapis.com/v4/spreadsheets/1/values/Sheet1?valueRenderOption=UNFORMATTED_VALUE",
+        (
+            "https://sheets.googleapis.com/v4/spreadsheets/1"
+            "/values/Sheet1?valueRenderOption=FORMATTED_VALUE"
+        ),
         json={
             "range": "'Sheet1'!A1:Z983",
             "majorDimension": "ROWS",
             "values": [
                 ["country", "cnt"],
-                ["BR", 1],
-                ["BR", 3],
-                ["IN", 5],
-                ["ZA", 6],
-                ["UK", 10],
-                ["PY", 11],
+                ["BR", "1"],
+                ["BR", "3"],
+                ["IN", "5"],
+                ["ZA", "6"],
+                ["UK", "10"],
+                ["PY", "11"],
             ],
         },
     )
@@ -1724,36 +1897,36 @@ def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
     row_id = gsheets_adapter.insert_row({"country": "UK", "cnt": 10, "rowid": None})
     assert gsheets_adapter._values == [
         ["country", "cnt"],
-        ["BR", 1],
-        ["BR", 3],
-        ["IN", 5],
-        ["ZA", 6],
-        ["UK", 10],
-        ["PY", 11],
-        ["UK", 10.0],
+        ["BR", "1"],
+        ["BR", "3"],
+        ["IN", "5"],
+        ["ZA", "6"],
+        ["UK", "10"],
+        ["PY", "11"],
+        ["UK", "10"],
     ]
 
     gsheets_adapter.update_row(row_id, {"country": "UK", "cnt": 11, "rowid": row_id})
     assert gsheets_adapter._values == [
         ["country", "cnt"],
-        ["BR", 1],
-        ["BR", 3],
-        ["IN", 5],
-        ["ZA", 6],
-        ["UK", 11.0],
-        ["PY", 11],
-        ["UK", 10.0],
+        ["BR", "1"],
+        ["BR", "3"],
+        ["IN", "5"],
+        ["ZA", "6"],
+        ["UK", "11"],
+        ["PY", "11"],
+        ["UK", "10"],
     ]
 
     gsheets_adapter.delete_row(row_id)
     assert gsheets_adapter._values == [
         ["country", "cnt"],
-        ["BR", 1],
-        ["BR", 3],
-        ["IN", 5],
-        ["ZA", 6],
-        ["PY", 11],
-        ["UK", 10.0],
+        ["BR", "1"],
+        ["BR", "3"],
+        ["IN", "5"],
+        ["ZA", "6"],
+        ["PY", "11"],
+        ["UK", "10"],
     ]
 
     # test that get_values was called only once
@@ -1768,6 +1941,9 @@ def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
 
 
 def test_get_metadata(mocker, simple_sheet_adapter):
+    """
+    Test get_metadata.
+    """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
@@ -1844,7 +2020,10 @@ def test_get_metadata(mocker, simple_sheet_adapter):
                     },
                 },
             ],
-            "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1/edit?ouid=111430789371895352716&urlBuilderDomain=dealmeida.net",
+            "spreadsheetUrl": (
+                "https://docs.google.com/spreadsheets/d/1"
+                "/edit?ouid=111430789371895352716&urlBuilderDomain=dealmeida.net"
+            ),
         },
     )
 
@@ -1852,6 +2031,11 @@ def test_get_metadata(mocker, simple_sheet_adapter):
 
 
 def test_supports():
+    """
+    Test supports.
+
+    The method should use the catalog, in addition to validating the URLs.
+    """
     assert GSheetsAPI.supports("https://docs.google.com/spreadsheets/d/1/edit")
     assert not GSheetsAPI.supports("https://github.com/betodealmeida/shillelagh/")
 
@@ -1867,6 +2051,9 @@ def test_supports():
 
 
 def test_empty_middle_column(mocker):
+    """
+    Test spreadsheets with an empty column in the middle.
+    """
     adapter = requests_mock.Adapter()
     adapter.register_uri(
         "GET",
@@ -1982,6 +2169,12 @@ def test_empty_middle_column(mocker):
 
 
 def test_header_rows(mocker):
+    """
+    Test sheets with multiple header rows.
+
+    A sheet can have the header in more than one row. In that case we need to
+    ensure we can infer the number of rows before using the Sheets API.
+    """
     # prevent network calls
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._set_columns",
