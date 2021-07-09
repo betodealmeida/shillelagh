@@ -2,7 +2,7 @@
 Changelog
 =========
 
-Version 0.8.0 - 2021-MM-DD
+Version 0.8.0 - 2021-07-08
 ==========================
 
 - Refactor fields
