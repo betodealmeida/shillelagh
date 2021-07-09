@@ -13,7 +13,7 @@ Version 0.8.0 - 2021-07-08
 Version 0.7.4 - 2021-07-03
 ==========================
 
-- Fix ``DML`` bug in GSheets with a middle nameless column
+- Fix DML bug in GSheets with a middle nameless column
 
 Version 0.7.3 - 2021-07-01
 ==========================
