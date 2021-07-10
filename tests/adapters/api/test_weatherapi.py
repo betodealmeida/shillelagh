@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
 
 import apsw
@@ -671,3 +672,31 @@ def test_combine_time_filters():
     with pytest.raises(Exception) as excinfo:
         combine_time_filters(bounds)
     assert str(excinfo.value) == "Invalid filter"
+
+
+@pytest.mark.integration_test
+def test_integration(adapter_kwargs):
+    connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
+    cursor = connection.cursor()
+
+    sql = """
+        SELECT *
+        FROM "https://api.weatherapi.com/v1/history.json?q=London"
+        WHERE time = ?
+    """
+    cursor.execute(
+        sql,
+        (
+            datetime.now().replace(
+                hour=12,
+                minute=0,
+                second=0,
+                microsecond=0,
+                tzinfo=timezone.utc,
+            )
+            - timedelta(days=3),
+        ),
+    )
+    data = cursor.fetchall()
+    assert len(data) == 1
+    assert len(data[0]) == 31
