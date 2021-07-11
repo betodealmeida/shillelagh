@@ -16,6 +16,9 @@ env:
 
 # This template is used in most of the tasks
 .regular_task_template: &REGULAR_TASK_TEMPLATE
+  # The integration tests for GSheets modify a sheet, so we can't have
+  # multiple running in parallel
+  execution_lock: integration
   pip_cache: &pip-cache
     folder: $PIP_CACHE
   tox_install_script:
