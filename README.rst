@@ -170,7 +170,7 @@ The `WeatherAPI <https://www.weatherapi.com/>`_ adapter was the first one to be 
     FROM "https://api.weatherapi.com/v1/history.json?key={api_key}&q=94923" AS bodega_bay
     WHERE time >= ?
     """
-    for row in cursor.execute(sql, three_days_ago):
+    for row in cursor.execute(sql, (three_days_ago,)):
         print(row)
 
 Writing a new adapter
