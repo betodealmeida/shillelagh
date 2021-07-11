@@ -454,10 +454,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             response = session.post(
                 url,
                 json=body,
-                params={
-                    # https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append
-                    "valueInputOption": "USER_ENTERED",
-                },
+                params={"valueInputOption": "USER_ENTERED"},
             )
             payload = response.json()
             _logger.debug(payload)
@@ -511,7 +508,9 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         """
         target_row_values = get_values_from_row(row, self._column_map)
         for i, row_values in enumerate(self._get_values()):
-            if row_values == target_row_values:
+            # pad with empty strings to match size
+            padding = [""] * (len(target_row_values) - len(row_values))
+            if [*row_values, *padding] == target_row_values:
                 return i
 
         raise ProgrammingError(f"Could not find row: {row}")

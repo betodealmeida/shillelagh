@@ -31,7 +31,7 @@ env:
   build_script: &build
     - python -m tox -e build  # Ensure PEP517-style build works
   test_script: &test
-    - python -m tox -- -rfEx --durations 10 --color yes
+    - python -m tox -- -rfEx --durations 10 --color yes --without-integration --without-slow-integration
     # ^  tox is better if invoked as a module on Windows/OSX
 
 

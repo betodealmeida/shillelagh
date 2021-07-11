@@ -28,9 +28,9 @@ def simple_sheet_adapter():
     """
     A fixture mocking network requests to a simple sheet.
 
-    The sheets looks like this:
+    The sheet looks like this:
 
-        |---------|-----|
+        -----------------
         | country | cnt |
         |---------|-----|
         | BR      |   1 |
@@ -38,7 +38,7 @@ def simple_sheet_adapter():
         | IN      |   5 |
         | ZA      |   6 |
         | CR      |  10 |
-        |---------|-----|
+        -----------------
 
     """
     adapter = requests_mock.Adapter()

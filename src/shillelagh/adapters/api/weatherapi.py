@@ -181,12 +181,13 @@ class WeatherAPI(Adapter):
         _logger.debug("Range is %s to %s", start, end)
 
         while start <= end:
-            url = (
-                f"https://api.weatherapi.com/v1/history.json?key={self.api_key}"
-                f"&q={self.location}&dt={start}"
-            )
-            _logger.info("GET %s", url)
-            response = self._session.get(url)
+            url = "https://api.weatherapi.com/v1/history.json"
+            params = {"key": self.api_key, "q": self.location, "dt": start}
+
+            query_string = urllib.parse.urlencode(params)
+            _logger.info("GET %s?%s", url, query_string)
+
+            response = self._session.get(url, params=params)
             if response.ok:
                 payload = response.json()
                 local_timezone = dateutil.tz.gettz(payload["location"]["tz_id"])

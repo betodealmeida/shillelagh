@@ -109,6 +109,9 @@ class Adapter:
         datetime columns would be stored (and yielded) as strings. The `get_rows`
         method will use the adapter fields to convert these values into native Python
         types (in this case, a proper `datetime.datetime`).
+
+        Missing values (NULLs) may be omitted from the dictionary; they will be
+        replaced by `None` by the backend.
         """
         raise NotImplementedError("Subclasses must implement `get_data`")
 

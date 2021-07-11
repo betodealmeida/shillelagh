@@ -447,11 +447,22 @@ class ISODateTime(Field[str, datetime.datetime]):
         except dateutil.parser.ParserError:
             return None
 
+        # if the timestamp has a timezone change it to UTC, so that
+        # timestamps in different timezones can be compared as strings
+        if timestamp.tzinfo is not None:
+            timestamp = timestamp.astimezone(datetime.timezone.utc)
+
         return timestamp
 
     def format(self, value: Optional[datetime.datetime]) -> Optional[str]:
         if value is None:
             return None
+
+        # if the timestamp has a timezone change it to UTC, so that
+        # timestamps in different timezones can be compared as strings
+        if value.tzinfo is not None:
+            value = value.astimezone(datetime.timezone.utc)
+
         return value.isoformat()
 
     def quote(self, value: Optional[str]) -> str:

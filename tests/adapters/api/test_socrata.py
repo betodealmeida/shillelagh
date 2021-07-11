@@ -1,3 +1,6 @@
+"""
+Tests for the Socrata adapter.
+"""
 from datetime import date
 
 import pytest
@@ -11,6 +14,9 @@ from shillelagh.exceptions import ProgrammingError
 
 
 def test_socrata(requests_mock):
+    """
+    Test a simple query.
+    """
     metadata_url = "https://data.cdc.gov/api/views/unsk-b7fc"
     requests_mock.get(metadata_url, json=cdc_metadata_response)
 
@@ -42,6 +48,9 @@ def test_socrata(requests_mock):
 
 
 def test_socrata_app_token_url(mocker, requests_mock):
+    """
+    Test app token being passed via the URL.
+    """
     mocker.patch(
         "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
         return_value=Session(),
@@ -70,6 +79,9 @@ def test_socrata_app_token_url(mocker, requests_mock):
 
 
 def test_socrata_app_token_connection(mocker, requests_mock):
+    """
+    Test app token being passed via the connection instead of the URL.
+    """
     mocker.patch(
         "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
         return_value=Session(),
@@ -100,6 +112,9 @@ def test_socrata_app_token_connection(mocker, requests_mock):
 
 
 def test_socrata_no_data(requests_mock):
+    """
+    Test that some queries return no data.
+    """
     metadata_url = "https://data.cdc.gov/api/views/unsk-b7fc"
     requests_mock.get(metadata_url, json=cdc_metadata_response)
 
@@ -123,6 +138,9 @@ def test_socrata_no_data(requests_mock):
 
 
 def test_socrata_impossible(requests_mock):
+    """
+    Test that impossible queries return no data.
+    """
     metadata_url = "https://data.cdc.gov/api/views/unsk-b7fc"
     requests_mock.get(metadata_url, json=cdc_metadata_response)
 
@@ -140,6 +158,9 @@ def test_socrata_impossible(requests_mock):
 
 
 def test_socrata_invalid_query(requests_mock):
+    """
+    Test that invalid queries are handled correctly.
+    """
     metadata_url = "https://data.cdc.gov/api/views/unsk-b7fc"
     requests_mock.get(metadata_url, json=cdc_metadata_response)
 
@@ -171,9 +192,29 @@ def test_socrata_invalid_query(requests_mock):
 
 
 def test_number():
+    """
+    Test that numbers are converted correctly.
+    """
     assert Number().parse("1.0") == 1.0
     assert Number().parse(None) is None
     assert Number().format(1.0) == "1.0"
     assert Number().format(None) is None
     assert Number().quote("1.0") == "1.0"
     assert Number().quote(None) == "NULL"
+
+
+@pytest.mark.integration_test
+def test_integration(adapter_kwargs):
+    """
+    Test fetching data from the CDC.
+    """
+    connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
+    cursor = connection.cursor()
+
+    sql = """
+        SELECT administered_dose1_recip_4
+        FROM "https://data.cdc.gov/resource/unsk-b7fc.json"
+        WHERE location = ? AND date = ?
+    """
+    cursor.execute(sql, ("US", date(2021, 7, 4)))
+    assert cursor.fetchall() == [(67.1,)]
