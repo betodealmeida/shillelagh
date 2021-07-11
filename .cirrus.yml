@@ -83,20 +83,6 @@ linux_mac_task:
   <<: *REGULAR_TASK_TEMPLATE
 
 
-integration_task:
-  name: integration
-  clone_script: *clone
-  container: {image: "python:3.9-buster"}
-  env:
-    SHILLELAGH_ADAPTER_KWARGS: ENCRYPTED[fac9bc36b71415e33d5d9ee082745fa1fe16bb61873dab5d8af6a4e37818d7bc97b774d3c48bb7e321f9b6137c668dd0]
-  depends_on:
-    - test (Linux - 3.9)
-  install_script: *debian-install
-  <<: *REGULAR_TASK_TEMPLATE
-  test_script: &test
-    - python -m tox -- -rfEx --durations 10 --color yes --with-integration --with-slow-integration
-
-
 coverage_task:
   name: coverage (Linux)
   clone_script: *clone
