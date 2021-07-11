@@ -13,6 +13,7 @@ env:
   LC_ALL: C.UTF-8
   LANG: C.UTF-8
   COVERAGE: NO
+  SHILLELAGH_ADAPTER_KWARGS: ENCRYPTED[fac9bc36b71415e33d5d9ee082745fa1fe16bb61873dab5d8af6a4e37818d7bc97b774d3c48bb7e321f9b6137c668dd0]
 
 # This template is used in most of the tasks
 .regular_task_template: &REGULAR_TASK_TEMPLATE
