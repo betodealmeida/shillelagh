@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.8.1 - 2021-07-11
+==========================
+
+- Fixed couple bugs on GSheets while adding integration tests
+
 Version 0.8.0 - 2021-07-08
 ==========================
 
