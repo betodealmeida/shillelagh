@@ -93,7 +93,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "shillelagh"
+project = "Shillelagh"
 copyright = "2017, Beto Dealmeida"
 
 # The version info for the project you're documenting, acts as replacement for

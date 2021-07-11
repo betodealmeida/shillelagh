@@ -26,20 +26,20 @@ class Adapter:
     possibly insert, delete, or update rows.
 
     In order to find an adapter responsible for a given table name, adapters
-    need to be registered under the "shillelagh.adapter" entry point, eg:
+    need to be registered under the "shillelagh.adapter" entry point, eg::
 
         # setup.cfg
         [options.entry_points]
         shillelagh.adapter =
             custom_adapter = shillelagh.adapters.api.custom:CustomAdapter
 
-    Adapters also need to implement the `supports` method. Given a table
+    Adapters also need to implement the ``supports`` method. Given a table
     name, the method should return true if the table is supported by the
     adapter.
     """
 
     # An adapter is considered "safe" when it has no explicit access to the
-    # local filesystem. Users can then use the `shillelagh+safe://`` URI
+    # local filesystem. Users can then use the ``shillelagh+safe://`` URI
     # in SQLAlchemy to load only safe adapters, as well as only adapters
     # explicitly listed:
     #
@@ -47,7 +47,7 @@ class Adapter:
     safe = False
 
     def __init__(self, *args: Any, **kwargs: Any):  # pylint: disable=unused-argument
-        # ensure `self.close` gets called before GC
+        # ensure ``self.close`` gets called before GC
         atexit.register(self.close)
 
     @staticmethod
@@ -56,7 +56,7 @@ class Adapter:
         Return if a given table is supported by the adapter.
 
         The method receives the table URI, as well as the adapter connection
-        arguments:
+        arguments::
 
             >>> from shillelagh.backends.apsw.db import connect
             >>> connection = connect(
@@ -66,7 +66,7 @@ class Adapter:
             ... )
 
         This would call all adapters in order to find which one should handle
-        the table `table`. The Gsheets adapter would be called with:
+        the table ``table``. The Gsheets adapter would be called with::
 
             >>> from shillelagh.adapters.api.gsheets.adapter import GSheetsAPI
             >>> GSheetsAPI.supports("table",
@@ -74,12 +74,12 @@ class Adapter:
             True
 
         """
-        raise NotImplementedError("Subclasses must implement `supports`")
+        raise NotImplementedError("Subclasses must implement ``supports``")
 
     @staticmethod
     def parse_uri(uri: str) -> Tuple[Any, ...]:
         """Parse table name, and return arguments to instantiate adapter."""
-        raise NotImplementedError("Subclasses must implement `parse_uri`")
+        raise NotImplementedError("Subclasses must implement ``parse_uri``")
 
     def get_metadata(self) -> Dict[str, Any]:  # pylint: disable=no-self-use
         """Return any extra metadata about the table."""
@@ -106,14 +106,14 @@ class Adapter:
         Yield rows as adapter-specific types.
 
         This method expects rows to be in the storage format. Eg, for the CSV adapter
-        datetime columns would be stored (and yielded) as strings. The `get_rows`
+        datetime columns would be stored (and yielded) as strings. The ``get_rows``
         method will use the adapter fields to convert these values into native Python
-        types (in this case, a proper `datetime.datetime`).
+        types (in this case, a proper ``datetime.datetime``).
 
         Missing values (NULLs) may be omitted from the dictionary; they will be
-        replaced by `None` by the backend.
+        replaced by ``None`` by the backend.
         """
-        raise NotImplementedError("Subclasses must implement `get_data`")
+        raise NotImplementedError("Subclasses must implement ``get_data``")
 
     def get_rows(
         self,
@@ -140,14 +140,14 @@ class Adapter:
         The rows will be formatted according to the adapter fields. Eg, if an adapter
         represents timestamps as ISO strings, and timestamp values will be ISO strings.
         """
-        raise NotSupportedError("Adapter does not support `INSERT` statements")
+        raise NotSupportedError("Adapter does not support ``INSERT`` statements")
 
     def insert_row(self, row: Row) -> int:
         """
         Insert a single row with native Python types.
 
         The row types will be converted to the native adapter types, and passed to
-        `insert_data`.
+        ``insert_data``.
         """
         columns = self.get_columns().copy()
         columns["rowid"] = RowID()
@@ -159,13 +159,13 @@ class Adapter:
 
     def delete_data(self, row_id: int) -> None:  # pylint: disable=no-self-use
         """Delete a row from the table."""
-        raise NotSupportedError("Adapter does not support `DELETE` statements")
+        raise NotSupportedError("Adapter does not support ``DELETE`` statements")
 
     def delete_row(self, row_id: int) -> None:
         """
         Delete a row from the table.
 
-        This method is identical to `delete_data`, only here for symmetry.
+        This method is identical to ``delete_data``, only here for symmetry.
         """
         return self.delete_data(row_id)
 

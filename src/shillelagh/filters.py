@@ -31,9 +31,9 @@ class Side(Enum):
 
 class Endpoint:
     """
-    One of the two endpoints of a `Range`.
+    One of the two endpoints of a ``Range``.
 
-    Used to compare ranges. Eg, the range `>10` can be represented by:
+    Used to compare ranges. Eg, the range ``>10`` can be represented by:
 
         >>> start = Endpoint(10, False, Side.LEFT)
         >>> end = Endpoint(None, True, Side.RIGHT)
@@ -78,7 +78,7 @@ class Endpoint:
 
         return bool(self.value > other.value)
 
-    # needed for `max()`
+    # needed for ``max()``
     def __lt__(self, other: Any) -> bool:
         return not self > other
 
@@ -138,7 +138,7 @@ class Filter:
             >20
 
         """
-        raise NotImplementedError("Subclass must implement `build`")
+        raise NotImplementedError("Subclass must implement ``build``")
 
     def check(self, value: Any) -> bool:
         """
@@ -152,7 +152,7 @@ class Filter:
             True
 
         """
-        raise NotImplementedError("Subclass must implement `check`")
+        raise NotImplementedError("Subclass must implement ``check``")
 
 
 class Impossible(Filter):
@@ -196,7 +196,7 @@ class Equal(Filter):
         return bool(value == self.value)
 
     def __repr__(self) -> str:
-        return f"== {self.value}"
+        return f"=={self.value}"
 
 
 class Range(Filter):
@@ -300,7 +300,7 @@ class Range(Filter):
 
     def __str__(self) -> str:
         if self.start == self.end and self.include_start and self.include_end:
-            return f"== {self.start}"
+            return f"=={self.start}"
 
         comparisons = []
         if self.start is not None:

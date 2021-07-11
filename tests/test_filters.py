@@ -55,6 +55,7 @@ def test_range():
     assert filter_.end == 4
     assert not filter_.include_start
     assert filter_.include_end
+    assert str(filter_) == ">2,<=4"
 
 
 def test_range_equal():
@@ -71,6 +72,7 @@ def test_range_equal():
     assert filter_.end == 3
     assert filter_.include_start
     assert filter_.include_end
+    assert str(filter_) == "==3"
 
 
 def test_range_equal_impossible():
@@ -108,20 +110,25 @@ def test_range_check():
     assert not filter_.check(2)
     assert filter_.check(3)
     assert filter_.check(4)
+    assert str(filter_) == ">2,<=4"
 
     filter_ = Range(2, None, True, True)
     assert not filter_.check(1)
     assert filter_.check(2)
+    assert str(filter_) == ">=2"
 
     filter_ = Range(2, None, False, True)
     assert not filter_.check(2)
+    assert str(filter_) == ">2"
 
     filter_ = Range(None, 4, True, True)
     assert filter_.check(4)
     assert not filter_.check(5)
+    assert str(filter_) == "<=4"
 
     filter_ = Range(None, 4, True, False)
     assert not filter_.check(4)
+    assert str(filter_) == "<4"
 
 
 def test_range_invalid_operator():

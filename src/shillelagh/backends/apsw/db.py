@@ -69,12 +69,12 @@ def check_closed(method: CURSOR_METHOD) -> CURSOR_METHOD:
 
 
 def check_result(method: CURSOR_METHOD) -> CURSOR_METHOD:
-    """Decorator that checks if the cursor has results from `execute`."""
+    """Decorator that checks if the cursor has results from ``execute``."""
 
     @wraps(method)
     def wrapper(self: "Cursor", *args: Any, **kwargs: Any) -> Any:
         if self._results is None:  # pylint: disable=protected-access
-            raise ProgrammingError("Called before `execute`")
+            raise ProgrammingError("Called before ``execute``")
         return method(self, *args, **kwargs)
 
     return cast(CURSOR_METHOD, wrapper)
@@ -82,7 +82,7 @@ def check_result(method: CURSOR_METHOD) -> CURSOR_METHOD:
 
 def get_type_code(type_name: str) -> Type[Field]:
     """
-    Return a `Field` that corresponds to a type name.
+    Return a ``Field`` that corresponds to a type name.
 
     This is used to build the description of the cursor after a successful
     query.
@@ -95,7 +95,7 @@ def convert_binding(binding: Any) -> SQLiteValidType:
     Convert a binding to a SQLite type.
 
     Eg, if the user is filtering a timestamp column we need to convert the
-    `datetime.datetime` object in the binding to a string.
+    ``datetime.datetime`` object in the binding to a string.
     """
     if isinstance(binding, bool):
         return int(binding)
@@ -287,14 +287,16 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
         Currently not supported.
         """
-        raise NotSupportedError("`executemany` is not supported, use `execute` instead")
+        raise NotSupportedError(
+            "``executemany`` is not supported, use ``execute`` instead",
+        )
 
     @check_result
     @check_closed
     def fetchone(self) -> Optional[Tuple[Any, ...]]:
         """
         Fetch the next row of a query result set, returning a single sequence,
-        or `None` when no more data is available.
+        or ``None`` when no more data is available.
         """
         try:
             row = self.next()
@@ -331,7 +333,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
     @check_closed
     def setinputsizes(self, sizes: int) -> None:
         """
-        Used before `execute` to predefine memory areas for parameters.
+        Used before ``execute`` to predefine memory areas for parameters.
 
         Currently not supported.
         """

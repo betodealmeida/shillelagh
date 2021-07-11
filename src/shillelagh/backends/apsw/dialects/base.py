@@ -38,7 +38,7 @@ class APSWDialect(SQLiteDialect):
     """
     A SQLAlchemy dialect for Shillelagh.
 
-    The dialect is based on the `SQLiteDialect`, since we're using APSW.
+    The dialect is based on the ``SQLiteDialect``, since we're using APSW.
     """
 
     name = "shillelagh"

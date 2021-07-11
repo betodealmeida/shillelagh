@@ -51,15 +51,15 @@ def test_adapter_read_only():
 
     with pytest.raises(NotSupportedError) as excinfo:
         adapter.insert_data({"hello": "world"})
-    assert str(excinfo.value) == "Adapter does not support `INSERT` statements"
+    assert str(excinfo.value) == "Adapter does not support ``INSERT`` statements"
 
     with pytest.raises(NotSupportedError) as excinfo:
         adapter.delete_data(1)
-    assert str(excinfo.value) == "Adapter does not support `DELETE` statements"
+    assert str(excinfo.value) == "Adapter does not support ``DELETE`` statements"
 
     with pytest.raises(NotSupportedError) as excinfo:
         adapter.update_data(1, {"hello": "universe"})
-    assert str(excinfo.value) == "Adapter does not support `DELETE` statements"
+    assert str(excinfo.value) == "Adapter does not support ``DELETE`` statements"
 
 
 def test_adapter_get_data():

@@ -9,8 +9,11 @@ from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Type
+
+from pkg_resources import iter_entry_points
 
 from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import ProgrammingError
@@ -33,7 +36,7 @@ class RowIDManager:
     """
     A row ID manager that tracks insert and deletes.
 
-    The `RowIDManager` should be used with an append-only table structure.
+    The ``RowIDManager`` should be used with an append-only table structure.
     It assigns a row ID to each row. When a new row is appended it will
     automatically receive a new ID. And when rows are deleted their ID
     gets changed to -1 to indicate the deletion.
@@ -77,7 +80,7 @@ class RowIDManager:
 
     def __init__(self, ranges: List[range]):
         if not ranges:
-            raise Exception("Argument `ranges` cannot be empty")
+            raise Exception("Argument ``ranges`` cannot be empty")
 
         self.ranges = ranges
 
@@ -357,3 +360,10 @@ def filter_data(
         data = iter(rows)
 
     yield from data
+
+
+def get_available_adapters() -> Set[str]:
+    """
+    Return the name of the available adapters.
+    """
+    return {entry_point.name for entry_point in iter_entry_points("shillelagh.adapter")}

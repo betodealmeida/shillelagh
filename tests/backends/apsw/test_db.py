@@ -221,7 +221,7 @@ def test_check_result(mocker):
     with pytest.raises(ProgrammingError) as excinfo:
         cursor.fetchall()
 
-    assert str(excinfo.value) == "Called before `execute`"
+    assert str(excinfo.value) == "Called before ``execute``"
 
 
 def test_check_invalid_syntax(mocker):
@@ -280,7 +280,10 @@ def test_execute_many(mocker):
             """INSERT INTO "dummy://" (age, name, pets) VALUES (?, ?, ?)""",
             items,
         )
-    assert str(excinfo.value) == "`executemany` is not supported, use `execute` instead"
+    assert (
+        str(excinfo.value)
+        == "``executemany`` is not supported, use ``execute`` instead"
+    )
 
 
 def test_setsize():
@@ -394,7 +397,11 @@ def test_connection_context_manager():
 
 
 def test_connect_safe(mocker):
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
+    class UnsafeAdapter(FakeAdapter):
+
+        safe = False
+
+    entry_points = [FakeEntryPoint("dummy", UnsafeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,

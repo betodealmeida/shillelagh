@@ -47,7 +47,7 @@ from shillelagh.typing import SQLiteValidType
 _logger = logging.getLogger(__name__)
 
 
-# map between APSW operators and the `Operator` enum
+# map between APSW operators and the ``Operator`` enum
 operator_map = {
     apsw.SQLITE_INDEX_CONSTRAINT_EQ: Operator.EQ,
     apsw.SQLITE_INDEX_CONSTRAINT_GE: Operator.GE,
@@ -84,7 +84,7 @@ def convert_rows_to_sqlite(
     """
     Convert values from native Python types to SQLite types.
 
-    Native Python types like `datetime.datetime` are not supported by SQLite; instead
+    Native Python types like ``datetime.datetime`` are not supported by SQLite; instead
     we need to cast them to strings or numbers. We use the original fields to handle
     the conversion (not the adapter fields).
     """
@@ -107,7 +107,7 @@ def convert_rows_from_sqlite(
     """
     Convert values from SQLite types to native Python types.
 
-    Native Python types like `datetime.datetime` are not supported by SQLite; instead
+    Native Python types like ``datetime.datetime`` are not supported by SQLite; instead
     we need to cast them to strings or numbers. We use the original fields to handle
     the conversion (not the adapter fields).
     """
@@ -231,7 +231,7 @@ class VTTable:
 
     def get_create_table(self, tablename: str) -> str:
         """
-        Return the table's `CREATE TABLE` statement.
+        Return the table's ``CREATE TABLE`` statement.
         """
         columns = self.adapter.get_columns()
         if not columns:
@@ -254,7 +254,7 @@ class VTTable:
         column_types = list(self.adapter.get_columns().values())
 
         # currently the index number is not used for anything; instead, we encode the
-        # the index as JSON in `index_name`
+        # the index as JSON in ``index_name``
         index_number = 42
 
         # currently we have no cost estimation, and just return a constant value;
@@ -377,9 +377,9 @@ class VTCursor:
         """
         Filter and sort data according to constraints.
 
-        This method converts the `indexname` (containing which columns to filter
-        and the order to sort the results) and `constraintargs` into a pair of
-        `bounds` and `order`. These are then passed to the `get_rows` method of
+        This method converts the ``indexname`` (containing which columns to filter
+        and the order to sort the results) and ``constraintargs`` into a pair of
+        ``bounds`` and ``order``. These are then passed to the ``get_rows`` method of
         the adapter, to filter and sort the data.
         """
         columns: Dict[str, Field] = self.adapter.get_columns()
@@ -404,7 +404,7 @@ class VTCursor:
         rows = self.adapter.get_rows(bounds, order)
         rows = convert_rows_to_sqlite(columns, rows)
 
-        # if a given column is not present, replace it with `None`
+        # if a given column is not present, replace it with ``None``
         self.data = (
             tuple(row.get(name) for name in ["rowid", *column_names]) for row in rows
         )

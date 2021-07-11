@@ -42,7 +42,7 @@ def combine_time_filters(bounds: Dict[str, Filter]) -> Range:
 
     The adapter has two time columns that can be used to filter the data, "time" as
     a timestamp and "time_epoch" as a float. We conver the latter to a timestamp and
-    combine the two filters into a single `Range`.
+    combine the two filters into a single ``Range``.
     """
     time_range = bounds.get("time", Range())
     time_epoch_range = bounds.get("time_epoch", Range())
@@ -63,7 +63,6 @@ def combine_time_filters(bounds: Dict[str, Filter]) -> Range:
     )
 
     # combine time ranges together and check if the resul is a valid range
-    print(time_range, time_epoch_range)
     time_range += time_epoch_range
     if isinstance(time_range, Impossible):
         raise ImpossibleFilterError()
@@ -76,11 +75,11 @@ class WeatherAPI(Adapter):
     """
     An adapter for WeatherAPI (https://www.weatherapi.com/).
 
-    The adapter expects an URL like:
+    The adapter expects an URL like::
 
         https://api.weatherapi.com/v1/history.json?key=$key&q=$location
 
-    Where `$key` is an API key (available for free), and `$location` is a
+    Where ``$key`` is an API key (available for free), and ``$location`` is a
     freeform value that can be a US Zipcode, UK Postcode, Canada Postalcode,
     IP address, Latitude/Longitude (decimal degree) or city name.
     """
@@ -191,10 +190,8 @@ class WeatherAPI(Adapter):
             if response.ok:
                 payload = response.json()
                 local_timezone = dateutil.tz.gettz(payload["location"]["tz_id"])
-                hourly_data = payload["forecast"]["forecastday"][0]["hour"]
-                columns = self.get_columns()
-                for record in hourly_data:
-                    row = {column: record[column] for column in columns}
+                for record in payload["forecast"]["forecastday"][0]["hour"]:
+                    row = {column: record[column] for column in self.get_columns()}
                     row["time"] = dateutil.parser.parse(record["time"]).replace(
                         tzinfo=local_timezone,
                     )

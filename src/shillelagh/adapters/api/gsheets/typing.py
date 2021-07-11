@@ -27,6 +27,8 @@ class QueryResultsColumn(TypedDict, total=False):
     """
     Metadata describing a column from the Google Chart API.
 
+    An example::
+
         {"id": "A", "label": "country", "type": "string"}
         {"id": "B", "label": "cnt", "type": "number", "pattern": "General"}
 
@@ -42,6 +44,8 @@ class QueryResultsCell(TypedDict, total=False):
     """
     A single cell from the Google Chart API.
 
+    An example::
+
         {"v": 1.0, "f": 1 }
         {"v": "BR"}
 
@@ -55,6 +59,8 @@ class QueryResultsRow(TypedDict):
     """
     A row of results from the Google Chart API.
 
+    An example::
+
         {
             "c": [{"v": "BR"}, {"v": 1.0, "f": "1"}]
         }
@@ -67,6 +73,8 @@ class QueryResultsRow(TypedDict):
 class QueryResultsTable(TypedDict):
     """
     A table with results from the Google Chart API.
+
+    An example::
 
         {
             "cols": [
@@ -88,7 +96,7 @@ class QueryResultsError(TypedDict):
     """
     Query errors from the Google Chart API.
 
-    The API returns a list of errors like this:
+    The API returns a list of errors like this::
 
         {
             "reason": "invalid_query",
@@ -107,7 +115,7 @@ class QueryResults(TypedDict, total=False):
     """
     Query results from the Google Chart API.
 
-    Successful query:
+    Successful query::
 
         {
             "version": "0.6",
@@ -124,7 +132,7 @@ class QueryResults(TypedDict, total=False):
             },
         }
 
-    Failed:
+    Failed::
 
         {
             "version": "0.6",

@@ -2,16 +2,16 @@
 """
 A simple REPL for Shillelagh.
 
-To run the REPL, since run `shillelagh`. Pressing return will execute the
+To run the REPL, since run ``shillelagh``. Pressing return will execute the
 query immediately, and multi-line queries are currently not supported.
 
-Connection arguments can be passed via a `~/.shillelagh.yaml` file, eg:
+Connection arguments can be passed via a ``~/.shillelagh.yaml`` file, eg::
 
     gsheestapi:
       service_account_file: /path/to/credentials.json
       subject: user@example.com
       catalog:
-        # allows writing `SELECT * FROM my_sheet`
+        # allows writing ``SELECT * FROM my_sheet``
         my_sheet:  https://docs.google.com/spreadsheets/d/1/edit#gid=0
     weatherapi:
       api_key: XXX
@@ -176,7 +176,7 @@ def main():
     Run a REPL until the user presses Control-D.
     """
     # read args from config file
-    config = os.path.expanduser("~/.shillelagh.yaml")
+    config = os.path.expanduser("~/.config/shillelagh/shillelagh.yaml")
     adapter_kwargs = {}
     if os.path.exists(config):
         try:
@@ -192,7 +192,9 @@ def main():
         lexer=PygmentsLexer(SqlLexer),
         completer=sql_completer,
         style=style,
-        history=FileHistory(os.path.expanduser("~/.shillelagh.history")),
+        history=FileHistory(
+            os.path.expanduser("~/.config/shillelagh/shillelagh.history"),
+        ),
     )
 
     while True:
