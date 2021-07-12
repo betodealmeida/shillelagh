@@ -9,7 +9,7 @@ Creating a new adapter for Shilleagh is relatively easy, specially if the adapte
 A read-only adapter
 ===================
 
-Let's create an adapter for historical meteorologicla data from `WeatherAPI <https://www.weatherapi.com/>`_ step-by-step to understand the process. Their API is as simple as it gets. To get historial data for a given date (say, **2021-01-01**) and a given place (say, **London**) all we need to do is an HTTP request to::
+Let's create an adapter for historical meteorological data from `WeatherAPI <https://www.weatherapi.com/>`_ step-by-step to understand the process. Their API is as simple as it gets. To get historical data for a given date (say, **2021-01-01**) and a given place (say, **London**) all we need to do is an HTTP request to::
 
     https://api.weatherapi.com/v1/history.json?key=XXX&q=London&dt=2021-01-01
 
