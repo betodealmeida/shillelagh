@@ -62,7 +62,7 @@ def combine_time_filters(bounds: Dict[str, Filter]) -> Range:
         else None
     )
 
-    # combine time ranges together and check if the resul is a valid range
+    # combine time ranges together and check if the result is a valid range
     time_range += time_epoch_range
     if isinstance(time_range, Impossible):
         raise ImpossibleFilterError()
@@ -88,7 +88,7 @@ class WeatherAPI(Adapter):
 
     # These two columns can be used to filter the results from the API. We
     # define them as inexact since we will retrieve data for the whole day,
-    # even if specific hours are requests. The post-filtering will be done
+    # even if specific hours are requested. The post-filtering will be done
     # by the backend.
     time = DateTime(filters=[Range], order=Order.ASCENDING, exact=False)
     time_epoch = Float(filters=[Range], order=Order.ASCENDING, exact=False)
@@ -160,7 +160,7 @@ class WeatherAPI(Adapter):
             expire_after=180,
         )
 
-    def get_data(
+    def get_data(  # pylint: disable=too-many-locals
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
@@ -173,12 +173,12 @@ class WeatherAPI(Adapter):
 
         # the free version of the API offers only 7 days of data; default to that
         today = date.today()
-        start = (
-            time_range.start.date() if time_range.start else today - timedelta(days=7)
-        )
+        a_week_ago = today - timedelta(days=7)
+        start = time_range.start.date() if time_range.start else a_week_ago
         end = time_range.end.date() if time_range.end else today
         _logger.debug("Range is %s to %s", start, end)
 
+        # download data from every today from [start, end]
         while start <= end:
             url = "https://api.weatherapi.com/v1/history.json"
             params = {"key": self.api_key, "q": self.location, "dt": start}
