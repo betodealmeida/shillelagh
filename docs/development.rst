@@ -4,7 +4,7 @@
 Creating a new adapter
 ======================
 
-Creating a new adapter for Shilleagh is relatively easy, specially if the adapter is read-only.
+Creating a new adapter for Shillelagh is relatively easy, specially if the adapter is read-only.
 
 A read-only adapter
 ===================
