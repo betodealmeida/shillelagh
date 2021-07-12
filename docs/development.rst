@@ -179,7 +179,7 @@ The Weather API returns many variables, but for simplicity let's imagine we want
 
 Here we're using ``Field``\s to declare the columns available. The types of our ``time`` and ``temp_c`` columns are ``DateTime`` (a timestamp) and ``Float``, respectively.
 
-More important, we also declare that **we can filter data based on the ``time`` column**. When the query has a predicate on the ``time`` column we can use the predicate to request less data from the API. For example, if we have this query:
+More important, we also declare that **we can filter data** based on the ``time`` column. When the query has a predicate on the ``time`` column we can use it to request less data from the API. For example, if we have this query:
 
 .. code-block:: sql
 
@@ -387,7 +387,7 @@ When writing an adapter, you have then two options. You can produce and consume 
 - ``delete_row``
 - ``update_row``
 
-Or define custom fields for your columns, produce and consume the internal format, and defnie these methods:
+Or define custom fields for your columns, produce and consume the internal format, and define these methods:
 
 - ``get_data``
 - ``insert_data``
