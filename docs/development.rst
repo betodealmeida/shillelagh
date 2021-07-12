@@ -121,7 +121,7 @@ The next step is instructing Shillelagh how to instantiate our class from the UR
         parsed = urllib.parse.urlparse(uri)
         query_string = urllib.parse.parse_qs(parsed.query)
 
-        # store the Location, eg, "London"
+        # store the location, eg, "London"
         self.location = query_string["q"][0]
 
         # store the API key
@@ -192,7 +192,7 @@ It's actually easier than that! We can declare the results coming back from a fi
 
 Finally, we also know that the resulting payload from the API is sorted by time, so we add ``order=Order.ASCENDING``. This means that any query that has ``ORDER BY time`` won't need any additional post-processing. Other allowed values for order are ``Order.NONE`` (the default), when no order is guaranteed; ``Order.DESCENDING``, when the data is sorted in descending order; and ``Order.ANY``, when the adapter will handle any requested order.
 
-As for temperature, we can't filter any data based on a predicate that involves ``temp_c``, because that's not supported by the API. If a query has a predicate involving ``temp_c`` we need to download data from the API for all days, and filter those values ourselves.
+As for temperature, we can't filter any data based on a predicate that involves ``temp_c``, because that's not supported by the API. If a query has a predicate involving ``temp_c`` we need to download data from the API for all days, and pass that data to Shillelagh so it can do the filtering.
 
 Returning data
 ~~~~~~~~~~~~~~
@@ -254,13 +254,15 @@ The last step is defining a method called ``get_rows`` to return rows:
 
             start += timedelta(days=1)
 
-The ``get_rows`` method receives two arguments. The first one, ``bounds``, is a dictionary containing optional filters that should be applied to the data. Since our adapter defines only ``time`` as a filterable column, ``bounds`` will contain at most one value for the ``time`` column. For queries without time predicates the dictionary will be empty.
+The ``get_rows`` method receives two arguments. The first one, ``bounds``, is a dictionary containing optional filters that should be applied to the data. Since our adapter defines only ``time`` as a filterable column, ``bounds`` will contain at most one value, and it will be for the ``time`` column. For queries without time predicates the dictionary will be empty.
 
 There's one more detail. We declared that the ``time`` column supports only ``Range`` filters (``filters=[Range]``), so if ``bounds['time']`` is present it will contain a ``Range``. A ``Range`` has optional start and end values, as well as the boolean attributes ``include_start`` and ``include_end``.
 
 In the code above we use the range to determine the start and end **days** that we should query the API, defaulting to the last week. The code then fetches **all data** for those days, yielding dictionaries for each row. Because the ``time`` column was declared as inexact it's ok to return hourly data that doesn't match the range perfectly.
 
 Each row is represented as a dictionary with column names for keys. The rows have a special column called "rowid". This should be a unique number for each row, and they can vary from call to call. The row ID is only important for adapters that support ``DELETE`` and ``UPDATE``, since those commands reference the rows by their ID.
+
+Take a look at the `WeatherAPI adapter <https://github.com/betodealmeida/shillelagh/blob/main/src/shillelagh/adapters/api/weatherapi.py>`_ to see how everything looks like together.
 
 A read-write adapter
 ====================
@@ -348,14 +350,14 @@ Here's a simple example that supports these methods:
             old_row = [row for row in self.data if row["rowid"] == row_id][0]
             old_row.update(row)
 
-The CSV and the Google Sheets adapters are two examples of adapters that support DML (data modification language).
+The `CSV <https://github.com/betodealmeida/shillelagh/blob/main/src/shillelagh/adapters/file/csvfile.py>`_ and the `Google Sheets <https://github.com/betodealmeida/shillelagh/blob/main/src/shillelagh/adapters/api/gsheets/adapter.py>`_ adapters are two examples of adapters that support DML (data modification language).
 
 Custom fields
 =============
 
-In the examples above both adapters return data as native Python objects, ie, ``datetime.datetime`` object for timestamps. Some APIs might return timestamps as ISO strings, forcing the adapter to handle the conversion in the ``get_rows`` data before the rows are returned.
+In the examples above both adapters return data as native Python objects, eg, ``datetime.datetime`` object for timestamps. Some APIs might return timestamps as ISO strings, forcing the adapter to handle the conversion in the ``get_rows`` data before the rows are returned.
 
-There's a different way of handling data conversion. The adapter can specify a custom ``Field`` for a given column. ``Field`` objects have two methods called ``parse`` and ``format``, responsible for the conversion between the format used by the adapter and native Python types. When using a custom field the adapter can return the original format before conversion, but using the ``get_data`` method instead of ``get_rows``.
+There's a different way of handling data conversion. The adapter can specify a custom ``Field`` for a given column. ``Field`` objects have two methods called ``parse`` and ``format``, responsible for the conversion between the format used by the adapter and native Python types. When using a custom field **the adapter can return the original format before conversion**, but defining the ``get_data`` method instead of ``get_rows``.
 
 For example, if we have timestamps returned by an API as ISO strings we can define an adapter like this:
 
