@@ -7,10 +7,12 @@ Version 1.0.0 - 2021-MM-DD
 
 - Moved config to ``~/.config/shillelagh/``
 - Add function ``get_available_adapters`` to list installed adapters
+- Developer and user docs `added <https://shillelagh.readthedocs.io/>`_
 
 Version 0.8.1 - 2021-07-11
 ==========================
 
+- Added integration tests
 - Fixed couple bugs on GSheets while adding integration tests
 
 Version 0.8.0 - 2021-07-08
@@ -29,7 +31,7 @@ Version 0.7.4 - 2021-07-03
 Version 0.7.3 - 2021-07-01
 ==========================
 
-- Relax google-auth dependency
+- Relax ``google-auth`` dependency
 
 Version 0.7.2 - 2021-07-01
 ==========================
