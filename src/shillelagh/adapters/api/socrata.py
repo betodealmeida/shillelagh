@@ -87,7 +87,9 @@ type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
 
 
 def get_field(col: MetadataColumn) -> Field:
-    """Return a Shillelagh `Field` from a Socrata column."""
+    """
+    Return a Shillelagh ``Field`` from a Socrata column.
+    """
     class_, filters = type_map.get(col["dataTypeName"], (String, [Equal]))
     return class_(
         filters=filters,
@@ -169,7 +171,6 @@ class SocrataAPI(Adapter):
             headers=headers,
         ).prepare()
         _logger.info("GET %s", prepared.url)
-        print(prepared.url)
         response = self._session.send(prepared)
         payload = response.json()
 

@@ -49,7 +49,7 @@ def get_field(
     timezone: Optional[datetime.tzinfo] = None,
 ) -> Field:
     """
-    Return a Shillelagh `Field` from a Google Chart API results column.
+    Return a Shillelagh ``Field`` from a Google Chart API results column.
     """
     type_map: Dict[str, Tuple[Type[GSheetsField], List[Type[Filter]]]] = {
         "string": (GSheetsString, [Equal]),
@@ -123,7 +123,7 @@ def get_sync_mode(uri: str) -> Optional[SyncMode]:
     Extract the synchronization mode from the sheet URI.
 
     User can specify a custom synchronization mode by manually adding the
-    `sync_mode` query argument. The mode can be specified using the
+    ``sync_mode`` query argument. The mode can be specified using the
     enum names (lower or uppercase) or their corresponding numbers. These
     are all equivalent:
 
@@ -191,7 +191,7 @@ def get_index_from_letters(letters: str) -> int:
 
 def get_values_from_row(row: Row, column_map: Dict[str, str]) -> List[Any]:
     """
-    Convert a `Row` into a list of values.
+    Convert a ``Row`` into a list of values.
 
     This takes into consideration empty columns. For example:
 

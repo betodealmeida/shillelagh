@@ -3,7 +3,7 @@ An adapter for CSV files.
 
 This adapter treats a CSV file as a table, allowing rows to be inserted,
 deleted, and updated. It's not very practical since it requires the data
-to be written with the `QUOTE_NONNUMERIC` format option, with strings
+to be written with the ``QUOTE_NONNUMERIC`` format option, with strings
 explicitly quoted. It's also not very efficient, since it implements the
 filtering and sorting in Python, instead of relying on the backend.
 """
@@ -53,11 +53,11 @@ class RowTracker:
 
 class CSVFile(Adapter):
 
-    """
+    r"""
     An adapter to CSV files.
 
-    The files must be written with the `QUOTE_NONNUMERIC` format option, with
-    strings explicitly quoted:
+    The files must be written with the ``QUOTE_NONNUMERIC`` format option, with
+    strings explicitly quoted::
 
         "index","temperature","site"
         10.0,15.2,"Diamond_St"
@@ -68,7 +68,7 @@ class CSVFile(Adapter):
     The adapter will first scan the whole file to determine number of rows, as
     well as the type and order of each column.
 
-    The adapter has no index. When data is `SELECT`ed the adapter will stream
+    The adapter has no index. When data is ``SELECT``\ed the adapter will stream
     over all the rows in the file, filtering them on the fly. If a specific
     order is requests the resulting rows will be loaded into memory so they
     can be sorted.
@@ -112,7 +112,7 @@ class CSVFile(Adapter):
                 raise ProgrammingError("The file has no rows") from ex
             data = (dict(zip(column_names, row)) for row in reader)
 
-            # put data in a `RowTracker`, so we can monitor the last row
+            # put data in a ``RowTracker``, so we can monitor the last row
             # and keep track of the column order
             row_tracker = RowTracker(data)
 
@@ -192,8 +192,8 @@ class CSVFile(Adapter):
 
     def delete_data(self, row_id: int) -> None:
         _logger.info("Deleting row with ID %d from CSV file %s", row_id, self.path)
-        # on `Delete` we simply mark the row as deleted, so that it will be ignored
-        # on `SELECT`s
+        # on ``DELETE``\s we simply mark the row as deleted, so that it will be ignored
+        # on ``SELECT``\s
         self.row_id_manager.delete(row_id)
         self.num_rows -= 1
         self.modified = True

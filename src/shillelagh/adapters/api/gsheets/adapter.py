@@ -47,33 +47,33 @@ JSON_PAYLOAD_PREFIX = ")]}'\n"
 
 class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
-    """
+    r"""
     A Google Sheets adapter.
 
-    The adapter uses two different APIs. When only `SELECT`s are used the
-    adapter uses the Google Charts API, which queries in a dialect of SQL.
-    The Charts API is efficient because the data can be filterd and sorted
+    The adapter uses two different APIs. When only ``SELECT``\s are used the
+    adapter uses the Google Chart API, which queries in a dialect of SQL.
+    The Chart API is efficient because the data can be filterd and sorted
     on the backend before being retrieved.
 
-    To handle DML -- `INSERT`, `UPDATE`, and `DELETE` -- the adapter will
-    switch to the Google Sheets API. The Sheets API allows the spreadsheet
-    to be modified, but requires the user to be authenticated, even when
-    connecting to a public sheet.
+    To handle DML -- ``INSERT``, ``UPDATE``, and ``DELETE`` -- the adapter
+    will switch to the Google Sheets API. The Sheets API allows the
+    spreadsheet to be modified, but requires the user to be authenticated,
+    even when connecting to a public sheet.
 
-    DML supports 3 different modes of synchronization. In `BIDIRECTIONAL`
+    DML supports 3 different modes of synchronization. In ``BIDIRECTIONAL``
     mode the sheet is downloaded before every DML query, and changes are
     pushed immediately. This is very inneficient, since it requires
     downloading all the values before every modification, and should be
     used for small updates or when interactivity is required.
 
-    In `UNIDIRECTIONAL` mode changes are still pushed immediately, but the
+    In ``UNIDIRECTIONAL`` mode changes are still pushed immediately, but the
     sheet is downloaded only once. This mode is a good compromise, since
     the uploads are frequent but small, and the download that can be big
     (depending on the size of the sheet) happens only once.
 
-    Finally, there's a `BATCH` mode, where the sheet is downloaded once,
+    Finally, there's a ``BATCH`` mode, where the sheet is downloaded once,
     before the first DML operation, and all changes are uploaded at once
-    when the adapter is closed. In this mode and in `UNIDIRECTIONAL` the
+    when the adapter is closed. In this mode and in ``UNIDIRECTIONAL`` the
     data is stored locally, and filtered/sorted by the Shillelagh backend.
     """
 
@@ -118,7 +118,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         # Local data. When using DML we switch to the Google Sheets API,
         # keeping a local copy of the spreadsheets data so that we can
         # (1) find rows being updated/delete and (2) work on a local
-        # dataset when using a mode other than `BIDIRECTIONAL`.
+        # dataset when using a mode other than ``BIDIRECTIONAL``.
         self._sync_mode = get_sync_mode(uri) or SyncMode.BIDIRECTIONAL
         self._values: Optional[List[List[Any]]] = None
         self._original_rows = 0
@@ -142,12 +142,12 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         self._set_columns()
 
         # Store row ids for DML. When the first DML command is issued
-        # we switch from the Charts API (read-only) to the Sheets API
-        # (read-write). The problem is that a `SELECT` is almost always
-        # issued before a `DELETE` or `UPDATE`, to get the IDs of the
+        # we switch from the Chart API (read-only) to the Sheets API
+        # (read-write). The problem is that a ``SELECT`` is almost always
+        # issued before a ``DELETE`` or ``UPDATE``, to get the IDs of the
         # rows. Because row IDs are generated on the fly, we need to
         # store the association between row ID and the values in the row
-        # so we can `DELETE` or `UPDATE` them later.
+        # so we can ``DELETE`` or ``UPDATE`` them later.
         self._row_ids: Dict[int, Row] = {}
 
     def _set_metadata(self, uri: str) -> None:
@@ -272,7 +272,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         """
         Download data and extract columns.
 
-        We run a simple `SELECT * LIMIT 1` statement to get a small response
+        We run a simple ``SELECT * LIMIT 1`` statement to get a small response
         so we can extract the column names and types.
         """
         results = self._run_query("SELECT * LIMIT 1")
@@ -362,7 +362,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         """
         Fetch data.
 
-        In `BIDIRECTIONAL` mode, or if we haven't done any DML, we use the Chart
+        In ``BIDIRECTIONAL`` mode, or if we haven't done any DML, we use the Chart
         API to retrieve data, since it allows filtering/sorting the data. For
         other modes, once the sheet has been modified we read from a local copy
         of the data.
@@ -370,8 +370,8 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         # build a reverse map so we know which columns are defined
         reverse_map = {v: k for k, v in self._column_map.items()}
 
-        # For `UNIDIRECTIONAL` or `BATCH` mode we download the data once
-        # by calling `_get_values()`, and we use the local copy for
+        # For ``UNIDIRECTIONAL`` or ``BATCH`` mode we download the data once
+        # by calling ``_get_values()``, and we use the local copy for
         # all further operations.
         if self.modified and self._sync_mode in {
             SyncMode.UNIDIRECTIONAL,
@@ -388,7 +388,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                 for row in values[headers:]
             )
 
-        # For `BIDIRECTIONAL` mode we continue using the Chart API to
+        # For ``BIDIRECTIONAL`` mode we continue using the Chart API to
         # retrieve data. This will happen before every DML query.
         else:
             try:
@@ -483,7 +483,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         params = {"valueRenderOption": "FORMATTED_VALUE"}
 
         # Log the URL. We can't use a prepared request here to extract the URL because
-        # it doesn't work with `AuthorizedSession`.
+        # it doesn't work with ``AuthorizedSession``.
         query_string = urllib.parse.urlencode(params)
         _logger.info("GET %s?%s", url, query_string)
 
@@ -608,7 +608,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             params = {"valueInputOption": "USER_ENTERED"}
 
             # Log the URL. We can't use a prepared request here to extract the URL because
-            # it doesn't work with `AuthorizedSession`.
+            # it doesn't work with ``AuthorizedSession``.
             query_string = urllib.parse.urlencode(params)
             _logger.info("PUT %s?%s", url, query_string)
             _logger.debug(body)
@@ -631,7 +631,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         """
         Push pending changes.
 
-        This method is used only in `BATCH` mode to push pending modifications
+        This method is used only in ``BATCH`` mode to push pending modifications
         to the sheet.
         """
         if not self.modified or self._sync_mode != SyncMode.BATCH:
@@ -666,7 +666,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         params = {"valueInputOption": "USER_ENTERED"}
 
         # Log the URL. We can't use a prepared request here to extract the URL because
-        # it doesn't work with `AuthorizedSession`.
+        # it doesn't work with ``AuthorizedSession``.
         query_string = urllib.parse.urlencode(params)
         _logger.info("PUT %s?%s", url, query_string)
         _logger.debug(body)

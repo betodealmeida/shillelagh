@@ -32,7 +32,7 @@ class FakeEntryPoint:
 
 class FakeAdapter(Adapter):
 
-    safe = False
+    safe = True
 
     age = Float(filters=[Range], order=Order.ANY, exact=True)
     name = String(filters=[Equal], order=Order.ANY, exact=True)

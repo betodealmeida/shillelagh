@@ -105,7 +105,7 @@ class GSheetsDateTime(GSheetsField[str, datetime.datetime]):
     db_api_type = "DATETIME"
 
     def parse(self, value: Optional[str]) -> Optional[datetime.datetime]:
-        # Google Charts API returns `None` for a NULL cell, while the Google
+        # Google Chart API returns ``None`` for a NULL cell, while the Google
         # Sheets API returns an empty string
         if value is None or value == "":
             return None
@@ -160,7 +160,7 @@ class GSheetsDate(GSheetsField[str, datetime.date]):
     db_api_type = "DATETIME"
 
     def parse(self, value: Optional[str]) -> Optional[datetime.date]:
-        # Google Charts API returns `None` for a NULL cell, while the Google
+        # Google Chart API returns ``None`` for a NULL cell, while the Google
         # Sheets API returns an empty string
         if value is None or value == "":
             return None
@@ -204,7 +204,7 @@ class GSheetsTime(GSheetsField[str, datetime.time]):
         """
         Parse time of day as returned from the Google Chart API.
         """
-        # Google Charts API returns `None` for a NULL cell, while the Google
+        # Google Chart API returns ``None`` for a NULL cell, while the Google
         # Sheets API returns an empty string
         if value is None or value == "":
             return None
@@ -243,7 +243,7 @@ class GSheetsBoolean(GSheetsField[str, bool]):
     db_api_type = "NUMBER"
 
     def parse(self, value: Optional[str]) -> Optional[bool]:
-        # Google Charts API returns `None` for a NULL cell, while the Google
+        # Google Chart API returns ``None`` for a NULL cell, while the Google
         # Sheets API returns an empty string
         if value is None or value == "":
             return None

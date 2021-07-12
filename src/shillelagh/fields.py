@@ -76,7 +76,7 @@ class Field(Generic[Internal, External]):
 
     The most basic use of field is to indicate the types of columns in a
     given resource. For example, an adapter that connects to a database with
-    two columns, a string and an integer, could look like this:
+    two columns, a string and an integer, could look like this::
 
         class SimpleAdapter(Adapter):
 
@@ -84,7 +84,7 @@ class Field(Generic[Internal, External]):
             integer_col = Integer()
 
     For dynamic resources the columns might be generated dynamically, but
-    the idea is the same:
+    the idea is the same::
 
         class DynamicAdapter(Adapter):
 
@@ -105,7 +105,7 @@ class Field(Generic[Internal, External]):
 
     Most adapters can perform some kind of filtering/sorting on the data,
     return less data to the backend in order to optimize queries. Adapters
-    indicate this on the fields, eg:
+    indicate this on the fields, eg::
 
         class FilteringAdapter(Adapter):
 
@@ -116,16 +116,16 @@ class Field(Generic[Internal, External]):
             )
             values_col = Float()
 
-    The adapter above declares a column called `timestamp_col` that can
+    The adapter above declares a column called ``timestamp_col`` that can
     be filtered using either an equality (`== '2020-01-01T00:00:00'`) or a
     range (`>= '2020-01-01T00:00:00'`). Because of this declaration the
     backend will delegate the filtering to the adapter, which will be
     responsible for translating the filters into API/filesystem calls to
     fulfill them.
 
-    Additionally, the timestamp column also declares an order of `ANY`, which
+    Additionally, the timestamp column also declares an order of ``ANY``, which
     means that the adapter can sort the data in any order requested by the
-    backend. Fields can declare a static order (eg, `Order.ASCENDING`) or
+    backend. Fields can declare a static order (eg, ``Order.ASCENDING``) or
     no order at all.
 
     Finally, the field also indicates that the filtering is exact, and no
@@ -139,20 +139,20 @@ class Field(Generic[Internal, External]):
     Fields are also responsible for converting data between different
     formats, so it can flow through layers. For example, an adapter might
     return booleans as strings, and these need to be converted back and
-    forth to Python booleans. The `StringBoolean` field should be used in
+    forth to Python booleans. The ``StringBoolean`` field should be used in
     that case, and it will automatically convert the data to the format
     the adapter understands.
 
     Similarly, the APSW backend only accepts types understood by SQLite:
     ints, floats, strings, and bytes. This means that the backend needs to
     convert between, eg, native Python booleans and integers. This is also
-    done by using the `parse` and `format` methods from fields (`IntBoolean`
+    done by using the ``parse`` and ``format`` methods from fields (``IntBoolean``
     in this case).
 
     When creating new fields, the base class should declare the type of
     the "internal" representation (used by the adapter) and the "external"
     representation (native Python types). For example, if we have an
-    adapter that stores numbers as strings we could define a new type:
+    adapter that stores numbers as strings we could define a new type::
 
         class StringNumber(Field[str, float]):  # Field[internal, external]
             type = "REAL"
@@ -166,14 +166,14 @@ class Field(Generic[Internal, External]):
             def format(self, value: Optional[float]) -> Optional[str]:
                 return value if value is None else str(value)
 
-    Then the adapter can declare columns using that field:
+    Then the adapter can declare columns using that field::
 
         class SomeAdapter(Adapter):
 
             number_col = StringNumber()
 
     With this, it can simply return rows with the number as a string,
-    without having to explicitly do the conversion:
+    without having to explicitly do the conversion::
 
         {"rowid": 0, "number_col": "1.0"}
 
@@ -217,14 +217,14 @@ class Field(Generic[Internal, External]):
 
         Some databases might represent booleans as integers, or timestamps
         as strings. To convert those values to native Python types we call
-        the `parse` method in the field associated with the column. Custom
+        the ``parse`` method in the field associated with the column. Custom
         adapters can define their own derived fields to handle special
         formats.
 
         Eg, the Google Sheets API returns dates as strings in its response,
         using the format "Date(2018,0,1)" for "2018-01-01". A custom field
         allows the adapter to simply return the original value, and have it
-        being automatically converted to a `datetime.date` object.
+        being automatically converted to a ``datetime.date`` object.
 
         This is not a staticmethod because some types need extra information
         in order to parse a value. Eg, GSheets takes into consideration the
@@ -239,7 +239,7 @@ class Field(Generic[Internal, External]):
         """
         Convert from a native Python type to a DB type.
 
-        This should be the opposite of `parse`.
+        This should be the opposite of ``parse``.
         """
         return cast(Optional[Internal], value)
 
@@ -249,12 +249,12 @@ class Field(Generic[Internal, External]):
 
         This method is used by some adapters to build a SQL expression.
         Eg, GSheets represents dates (and other time related types) with
-        the prefix "date":
+        the prefix "date"::
 
             SELECT A, B WHERE C = date '2018-01-01'
 
         In orded to handle that, the adapter defines its own time fields
-        with custom `quote` methods.
+        with custom ``quote`` methods.
         """
         if value is None:
             return "NULL"
@@ -304,7 +304,7 @@ class Date(Field[datetime.date, datetime.date]):
     """
     A date.
 
-    This field is used in adapters that use `datetime.date` as the
+    This field is used in adapters that use ``datetime.date`` as the
     internal representation of dates.
     """
 
@@ -323,7 +323,7 @@ class ISODate(Field[str, datetime.date]):
 
     This field is used in adapters that use an ISO string as the
     internal representation of dates. SQLite, for example, has no
-    concept of `datetime.date` objects, so we need to convert between
+    concept of ``datetime.date`` objects, so we need to convert between
     the object and an ISO string when the data flows through SQLite.
     """
 
@@ -356,7 +356,7 @@ class Time(Field[datetime.time, datetime.time]):
     """
     A time of the day.
 
-    This field is used in adapters that use `datetime.time` as the
+    This field is used in adapters that use ``datetime.time`` as the
     internal representation of times of the day.
     """
 
@@ -375,7 +375,7 @@ class ISOTime(Field[str, datetime.time]):
 
     This field is used in adapters that use an ISO string as the
     internal representation of dates. SQLite, for example, has no
-    concept of `datetime.time` objects, so we need to convert between
+    concept of ``datetime.time`` objects, so we need to convert between
     the object and an ISO string when the data flows through SQLite.
     """
 
@@ -411,7 +411,7 @@ class DateTime(Field[datetime.datetime, datetime.datetime]):
     """
     A timestamp.
 
-    This field is used in adapters that use `datetime.datetime`
+    This field is used in adapters that use ``datetime.datetime``
     as the internal representation of timestamps.
     """
 
@@ -430,7 +430,7 @@ class ISODateTime(Field[str, datetime.datetime]):
 
     This field is used in adapters that use an ISO string as the
     internal representation of dates. SQLite, for example, has no
-    concept of `datetime.datetime` objects, so we need to convert
+    concept of ``datetime.datetime`` objects, so we need to convert
     between the object and an ISO string when the data flows
     through SQLite.
     """

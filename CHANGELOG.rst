@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 1.0.0 - 2021-MM-DD
+==========================
+
+- Moved config to ``~/.config/shillelagh/``
+- Add function ``get_available_adapters`` to list installed adapters
+
 Version 0.8.1 - 2021-07-11
 ==========================
 

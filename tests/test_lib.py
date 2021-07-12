@@ -1,5 +1,7 @@
 import pytest
 
+from .fakes import FakeAdapter
+from .fakes import FakeEntryPoint
 from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
@@ -16,6 +18,7 @@ from shillelagh.lib import DELETED
 from shillelagh.lib import deserialize
 from shillelagh.lib import escape
 from shillelagh.lib import filter_data
+from shillelagh.lib import get_available_adapters
 from shillelagh.lib import RowIDManager
 from shillelagh.lib import serialize
 from shillelagh.lib import unescape
@@ -26,7 +29,7 @@ def test_row_id_manager_empty_range():
     with pytest.raises(Exception) as excinfo:
         RowIDManager([])
 
-    assert str(excinfo.value) == "Argument `ranges` cannot be empty"
+    assert str(excinfo.value) == "Argument ``ranges`` cannot be empty"
 
 
 def test_row_id_manager():
@@ -234,3 +237,13 @@ def test_filter_data():
 
     bounds = {"index": Impossible()}
     assert list(filter_data(data, bounds, [])) == []
+
+
+def test_get_available_adapters(mocker):
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
+    mocker.patch(
+        "shillelagh.lib.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    assert get_available_adapters() == {"dummy"}

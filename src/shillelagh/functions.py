@@ -20,9 +20,9 @@ __all__ = ["sleep", "get_metadata"]
 
 def sleep(seconds: int) -> None:
     """
-    Sleep for `n` seconds.
+    Sleep for ``n`` seconds.
 
-    This is useful for troubleshooting timeouts:
+    This is useful for troubleshooting timeouts::
 
         sql> SELECT sleep(60);
 
@@ -39,7 +39,7 @@ def get_metadata(
     Return metadata about a given table.
 
     Returns the name of the adapter that supports the table, as well
-    as any extra metadata provided by the adapter:
+    as any extra metadata provided by the adapter::
 
         sql> SELECT GET_METADATA("https://docs.google.com/spreadsheets/d/1/edit#gid=0");
         GET_METADATA("https://docs.google.com/spreadsheets/d/1/edit#gid=0")
@@ -78,6 +78,8 @@ def get_metadata(
 def version() -> str:
     """
     Return the current version of Shillelagh.
+
+    As an example::
 
         sql> SELECT VERSION();
         VERSION()
