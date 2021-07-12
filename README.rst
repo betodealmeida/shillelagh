@@ -68,7 +68,7 @@ You can even run ``INSERT``/``DELETE``/``UPDATE`` queries against the spreadshee
     SET cnt = cnt + 1
     WHERE country != 'BR'
 
-Queries like this are supported by :ref:`adapters`. Currently Shillelagh has the following adapters:
+Queries like this are supported by `adapters <https://shillelagh.readthedocs.io/en/latest/adapters.html>`_. Currently Shillelagh has the following adapters:
 
 - Google Spreadsheets
 - `WeatherAPI <https://www.weatherapi.com/>`_
@@ -89,4 +89,4 @@ A query can combine data from multiple adapters:
 
 The query above reads timestamps from a Google Sheet, uses them to filter weather data from `WeatherAPI <https://www.weatherapi.com/>`_, and writes the chance of rain into a (pre-existing) CSV file.
 
-New adapters are relatively easy to implement. There's a `step-by-step tutorial <development>`_ that explains how to create a new adapter to an API or filetype.
+New adapters are relatively easy to implement. There's a `step-by-step tutorial <https://shillelagh.readthedocs.io/en/latest/development.html>`_ that explains how to create a new adapter to an API or filetype.
