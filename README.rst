@@ -7,10 +7,14 @@ shillelagh
 .. image:: https://img.shields.io/cirrus/github/betodealmeida/shillelagh
    :target: https://cirrus-ci.com/github/betodealmeida/shillelagh
    :alt: Cirrus CI - Base Branch Build Status
+.. image:: https://readthedocs.org/projects/shillelagh/badge/?version=latest
+   :target: https://shillelagh.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 .. image:: https://badge.fury.io/py/shillelagh.svg
    :target: https://badge.fury.io/py/shillelagh
 .. image:: https://img.shields.io/pypi/pyversions/shillelagh
    :alt: PyPI - Python Version
+
 
 Shillelagh is a `Python DB API <https://www.python.org/dev/peps/pep-0249/>`_ and `SQLAlchemy <https://www.sqlalchemy.org/>`_ dialect for querying non-SQL resources like APIs and files. You can use it to write queries like this:
 
