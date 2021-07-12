@@ -59,6 +59,9 @@ linux_mac_task:
     - name: test (Linux - 3.9)
       container: {image: "python:3.9-buster"}
       install_script: *debian-install
+    - name: test (Linux - 3.10)
+      container: {image: "python:3.10-buster"}
+      install_script: *debian-install
     - name: test (Linux - Anaconda)
       container: {image: "continuumio/anaconda3:2021.04"}
       install_script: *debian-install
@@ -86,12 +89,12 @@ linux_mac_task:
 coverage_task:
   name: coverage (Linux)
   clone_script: *clone
-  container: {image: "python:3.9-buster"}
+  container: {image: "python:3.10-buster"}
   env:
     COVERAGE: yes
     PRE_COMMIT_HOME: ${HOME}/.cache/pre-commit
   depends_on:
-    - test (Linux - 3.9)
+    - test (Linux - 3.10)
   install_script: *debian-install
   pip_install_script:
     pip install --user --upgrade coverage coveralls pre-commit
