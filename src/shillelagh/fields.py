@@ -11,7 +11,6 @@ from typing import List
 from typing import Optional
 from typing import Type
 from typing import TypeVar
-from typing import Union
 
 import dateutil.parser
 
@@ -28,9 +27,6 @@ Internal = TypeVar(
     datetime.time,
     datetime.datetime,
     bytes,
-    # GSheets
-    List[int],
-    Union[str, List[int]],
 )
 
 External = TypeVar(
