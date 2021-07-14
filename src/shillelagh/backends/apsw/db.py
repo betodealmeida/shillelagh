@@ -413,10 +413,14 @@ def connect(
     """
     adapter_kwargs = adapter_kwargs or {}
 
-    all_adapters = [
-        (entry_point.name, entry_point.load())
-        for entry_point in iter_entry_points("shillelagh.adapter")
-    ]
+    all_adapters = []
+    for entry_point in iter_entry_points("shillelagh.adapter"):
+        try:
+            adapter = entry_point.load()
+        except ModuleNotFoundError:
+            continue
+        all_adapters.append((entry_point.name, adapter))
+
     all_adapters_names = [name for name, adapter in all_adapters]
 
     # check if there are any repeated names, to prevent malicious adapters
