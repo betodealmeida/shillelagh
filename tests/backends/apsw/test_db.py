@@ -420,9 +420,14 @@ def test_connect_unmet_dependency(mocker):
         def load(self) -> NoReturn:
             raise ModuleNotFoundError("Couldn't find some dep")
 
+    class AnotherProblematicEntryPoint(FakeEntryPoint):
+        def load(self) -> NoReturn:
+            raise ImportError("Couldn't find some dep")
+
     entry_points = [
         FakeEntryPoint("dummy", FakeAdapter),
         ProblematicEntryPoint("trouble", FakeAdapter),
+        AnotherProblematicEntryPoint("more_trouble", FakeAdapter),
     ]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
