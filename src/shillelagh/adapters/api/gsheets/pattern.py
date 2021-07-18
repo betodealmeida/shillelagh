@@ -4,14 +4,27 @@ Parse and format Google Sheet date/time patterns.
 
 https://developers.google.com/sheets/api/guides/formats?hl=en#date_and_time_format_patterns
 """
+import calendar
 import re
-from datetime import date, datetime, time, timedelta
-from typing import Any, Dict, Iterator, List, Type, Tuple, Union
+from collections import defaultdict
+from datetime import date
+from datetime import datetime
+from datetime import time
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import Generic
+from typing import Iterator
+from typing import List
+from typing import Tuple
+from typing import Type
+from typing import TypeVar
+from typing import Union
 
-DateTime = Union[datetime, date, time, timedelta]
+DateTime = TypeVar("DateTime", datetime, date, time, timedelta)
 
 
-class Token:
+class Token(Generic[DateTime]):
     """
     A token.
     """
@@ -26,14 +39,17 @@ class Token:
         """
         Check if token handles the beginning of the pattern.
         """
-        return re.match(cls.regex, pattern)
+        return bool(re.match(cls.regex, pattern))
 
     @classmethod
     def consume(cls, pattern: str) -> Tuple["Token", str]:
         """
         Consume the pattern, returning the token and the remaining pattern.
         """
-        token = cls.match(pattern).group()
+        match = re.match(cls.regex, pattern)
+        if not match:
+            raise Exception("Token could not find match")
+        token = match.group()
         return cls(token), pattern[len(token) :]
 
     def format(self, value: DateTime, tokens: List["Token"]) -> str:
@@ -52,6 +68,12 @@ class Token:
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{self.token}')"
+
+    def __eq__(self, other) -> bool:
+        if other.__class__ != self.__class__:
+            return NotImplemented
+
+        return bool(self.token == other.token)
 
 
 class H(Token):
@@ -83,6 +105,8 @@ class H(Token):
 
     def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
+        if not match:
+            raise Exception(f"Cannot parse value: {value}")
         size = len(match.group()) if 0 <= int(match.group()) < 24 else 1
 
         return {"hour": int(value[:size])}, value[size:]
@@ -116,7 +140,12 @@ class M(Token):
         Return true if the token represents minutes, false if months.
         """
         is_minute = False
-        i = tokens.index(self)
+        i = -1
+        for i, token in enumerate(tokens):
+            if token is self:
+                break
+        else:
+            raise Exception("Token is not present in list of tokens")
 
         for token in reversed(tokens[:i]):
             if token.__class__.__name__ == "LITERAL":
@@ -135,14 +164,19 @@ class M(Token):
         return is_minute
 
     def format(self, value: Union[date, datetime, time], tokens: List[Token]) -> str:
-        if self._is_minute(tokens):
+        if self._is_minute(tokens) and isinstance(value, (datetime, time)):
             return str(value.minute)
 
-        return str(value.month)
+        if isinstance(value, (datetime, date)):
+            return str(value.month)
+
+        raise Exception(f"Cannot format value: {value}")
 
     def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
-        size = len(match.group()) if 1 <= int(match.group()) <= 12 else 1
+        if not match:
+            raise Exception(f"Cannot parse value: {value}")
+        size = len(match.group()) if 1 <= int(match.group()) <= 24 else 1
 
         if self._is_minute(tokens):
             return {"minute": int(value[:size])}, value[size:]
@@ -202,13 +236,23 @@ class MMMMM(MMM):
     First letter of the month (e.g., "J" for June).
     """
 
-    regex = "mmmmm(?!m)"
+    regex = "mmmmm"
 
     def format(self, value: Union[date, datetime, time], tokens: List[Token]) -> str:
         return value.strftime("%B")[0]
 
     def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
-        raise Exception("Unable to parse a single month letter")
+        letter = value[0]
+
+        mapping = defaultdict(list)
+        for i in range(1, 13):
+            mapping[calendar.month_name[i][0]].append(i)
+        if len(mapping[letter]) == 0:
+            raise Exception(f"Unable to find month letter: {letter}")
+        if len(mapping[letter]) > 1:
+            raise Exception(f"Unable to parse month letter unambiguously: {letter}")
+
+        return {"month": mapping[letter][0]}, value[1:]
 
 
 class S(Token):
@@ -223,7 +267,10 @@ class S(Token):
 
     def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
-        size = len(match.group()) if 0 <= int(match.group()) < 60 else 1
+        if not match:
+            raise Exception(f"Cannot parse value: {value}")
+        # leap seconds can be 60 or even 61
+        size = len(match.group()) if 0 <= int(match.group()) <= 61 else 1
 
         return {"second": int(value[:size])}, value[size:]
 
@@ -318,6 +365,8 @@ class D(Token):
 
     def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
+        if not match:
+            raise Exception(f"Cannot parse value: {value}")
         size = len(match.group()) if 1 <= int(match.group()) <= 31 else 1
         return {"day": int(value[:size])}, value[size:]
 
@@ -399,21 +448,23 @@ class YYYY(Token):
         return {"year": int(value[:4])}, value[4:]
 
 
-class Zero(Token):
+class ZERO(Token):
     """
     Tenths of seconds. You can increase the precision to 2 digits
     with 00 or 3 digits (milliseconds) with 000.
     """
 
-    regex = "0{1,3}"
+    regex = "0{1,3}(?!0)"
 
     def format(
-        self, value: Union[datetime, time, timedelta], tokens: List[Token]
+        self,
+        value: Union[datetime, time, timedelta],
+        tokens: List[Token],
     ) -> str:
         precision = len(self.token)
         us = value.microseconds if isinstance(value, timedelta) else value.microsecond
         rounded = round(us / 1e6, precision)
-        return str(int(rounded * 10 ** precision))
+        return str(int(rounded * 10 ** precision)).zfill(precision)
 
     def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
         size = len(self.token)
@@ -434,7 +485,7 @@ class AP(Token):
 
     regex = "(a/p)|(A/P)"
 
-    def format(self, value: Union[date, datetime, time], tokens: List[Token]) -> str:
+    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
         output = "a" if value.hour < 12 else "p"
         if self.token == "A/P":
             output = output.upper()
@@ -453,13 +504,13 @@ class AMPM(AP):
 
     regex = "am/pm"
 
-    def format(self, value: Union[date, datetime, time], tokens: List[Token]) -> str:
+    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
         return "AM" if value.hour < 12 else "PM"
 
     def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
-        letter = value[:1]
+        letter = value[:2]
         hour_offset = 12 if letter.upper() == "PM" else 0
-        return {"hour_offset": hour_offset}, value[1:]
+        return {"hour_offset": hour_offset}, value[2:]
 
 
 class LITERAL(Token):
@@ -477,7 +528,11 @@ class LITERAL(Token):
 
     regex = r'(\\.)|(".*?")|(.)'
 
-    def format(self, value: Union[date, datetime, time], tokens: List[Token]) -> str:
+    def format(
+        self,
+        value: Union[date, datetime, time, timedelta],
+        tokens: List[Token],
+    ) -> str:
         if self.token.startswith("\\"):
             return self.token[1:]
         if self.token.startswith('"'):
@@ -517,7 +572,7 @@ def tokenize(pattern: str) -> Iterator[Token]:
         YYYY,
         AP,
         AMPM,
-        Zero,
+        ZERO,
         LITERAL,
     ]
 
@@ -551,7 +606,9 @@ def is_unescaped_literal(token: Token) -> bool:
 
 
 def parse_date_time_pattern(
-    value: str, pattern: str, class_: Type[DateTime]
+    value: str,
+    pattern: str,
+    class_: Type[DateTime],
 ) -> DateTime:
     """
     Parse a value using a given pattern.
@@ -594,40 +651,3 @@ def format_date_time_pattern(value: DateTime, pattern: str) -> str:
         parts.append(token.format(value, tokens))
 
     return "".join(parts)
-
-
-if __name__ == "__main__":
-    dt = datetime(2016, 4, 5, 16, 8, 53, 528000)
-
-    assert format_date_time_pattern(dt, "h:mm:ss.00 a/p") == "4:08:53.53 p"
-    assert parse_date_time_pattern("4:08:53.53 p", "h:mm:ss.00 a/p", time) == time(
-        16, 8, 53, 530000
-    )
-
-    assert format_date_time_pattern(dt, 'hh:mm A/P".M."') == "04:08 P.M."
-    assert parse_date_time_pattern("04:08 P.M.", 'hh:mm A/P".M."', time) == time(16, 8)
-
-    assert format_date_time_pattern(dt, "yyyy-mm-dd") == "2016-04-05"
-    assert parse_date_time_pattern("2016-04-05", "yyyy-mm-dd", date) == date(2016, 4, 5)
-
-    # unsupported parse
-    assert format_date_time_pattern(dt, r"mmmm d \[dddd\]") == "April 5 [Tuesday]"
-    assert format_date_time_pattern(dt, "h PM, ddd mmm dd") == "4 PM, Tue Apr 05"
-
-    assert (
-        format_date_time_pattern(dt, "dddd, m/d/yy at h:mm")
-        == "Tuesday, 4/5/16 at 16:08"
-    )
-    assert parse_date_time_pattern(
-        "Tuesday, 4/5/16 at 16:08", "dddd, m/d/yy at h:mm", datetime
-    ) == datetime(2016, 4, 5, 16, 8)
-
-    td = timedelta(hours=3, minutes=13, seconds=41, microseconds=255000)
-
-    assert format_date_time_pattern(td, "[hh]:[mm]:[ss].000") == "03:13:41.255"
-    assert (
-        parse_date_time_pattern("03:13:41.255", "[hh]:[mm]:[ss].000", timedelta) == td
-    )
-
-    assert format_date_time_pattern(td, "[mmmm]:[ss].000") == "0193:41.255"
-    assert parse_date_time_pattern("0193:41.255", "[mmmm]:[ss].000", timedelta) == td

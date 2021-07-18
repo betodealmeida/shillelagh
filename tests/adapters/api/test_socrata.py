@@ -18,10 +18,15 @@ from shillelagh.filters import Impossible
 from shillelagh.filters import Operator
 
 
-def test_socrata(requests_mock):
+def test_socrata(mocker, requests_mock):
     """
     Test a simple query.
     """
+    mocker.patch(
+        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
     metadata_url = "https://data.cdc.gov/api/views/unsk-b7fc"
     requests_mock.get(metadata_url, json=cdc_metadata_response)
 
@@ -116,10 +121,15 @@ def test_socrata_app_token_connection(mocker, requests_mock):
     assert data.last_request.headers == {"X-App-Token": "YYY"}
 
 
-def test_socrata_no_data(requests_mock):
+def test_socrata_no_data(mocker, requests_mock):
     """
     Test that some queries return no data.
     """
+    mocker.patch(
+        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
     metadata_url = "https://data.cdc.gov/api/views/unsk-b7fc"
     requests_mock.get(metadata_url, json=cdc_metadata_response)
 
@@ -173,10 +183,15 @@ def test_socrata_impossible(mocker, requests_mock):
     assert data == []
 
 
-def test_socrata_invalid_query(requests_mock):
+def test_socrata_invalid_query(mocker, requests_mock):
     """
     Test that invalid queries are handled correctly.
     """
+    mocker.patch(
+        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
     metadata_url = "https://data.cdc.gov/api/views/unsk-b7fc"
     requests_mock.get(metadata_url, json=cdc_metadata_response)
 
