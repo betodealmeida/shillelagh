@@ -163,7 +163,7 @@ Next, we need to inform Shillelagh of the columns available in a given table. Th
 
 For this particular example the columns are always the same, since we will return the same weather variables regardless of the location. Because of that, we can simply define the columns as class attributes. The original ``get_columns`` method in the base class will then find these columns and return them.
 
-With more complex APIs the columns might change from instance to instance of the adapter — eg, for Google Sheets the number, names, and types of columns will vary from spreadsheet to spreadsheet. In that case we would need to implement a method that instrospects the spreadsheet in order to return the collumns.
+With more complex APIs the columns might change from instance to instance of the adapter — eg, for Google Sheets the number, names, and types of columns will vary from spreadsheet to spreadsheet. In that case we would need to implement a method that instrospects the spreadsheet in order to return the columns.
 
 The Weather API returns many variables, but for simplicity let's imagine we want to return only two variables from the API: time and temperature in Celsius. We add these class attributes to our adapter:
 
@@ -276,7 +276,7 @@ We also might want to implement a method for updating rows:
 
 - ``update_row(self, row_id: int, row: Dict[str, Any]) -> None``
 
-If ``update_row`` is not defined Shillelagh will udpate rows by calling ``delete_row`` followed by an ``insert_row`` with the updated values.
+If ``update_row`` is not defined Shillelagh will update rows by calling ``delete_row`` followed by an ``insert_row`` with the updated values.
 
 Note that ``DELETE`` and ``UPDATE`` operations use row IDs. When a user runs a query like this one:
 

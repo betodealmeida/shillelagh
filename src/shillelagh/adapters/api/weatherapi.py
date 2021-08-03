@@ -41,7 +41,7 @@ def combine_time_filters(bounds: Dict[str, Filter]) -> Range:
     Combine both time filters together.
 
     The adapter has two time columns that can be used to filter the data, "time" as
-    a timestamp and "time_epoch" as a float. We conver the latter to a timestamp and
+    a timestamp and "time_epoch" as a float. We convert the latter to a timestamp and
     combine the two filters into a single ``Range``.
     """
     time_range = bounds.get("time", Range())

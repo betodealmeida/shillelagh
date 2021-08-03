@@ -27,7 +27,7 @@ class SyncMode(Enum):
     # before every UPDATE/DELETE
     BIDIRECTIONAL = 1
 
-    # all changes are pushed imediately, but the spreadsheet is
+    # all changes are pushed immediately, but the spreadsheet is
     # downloaded only once before the first UPDATE/DELETE
     UNIDIRECTIONAL = 2
 

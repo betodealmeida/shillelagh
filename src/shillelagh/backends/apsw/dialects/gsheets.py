@@ -81,7 +81,7 @@ class APSWGSheetsDialect(APSWDialect):
             "subject": self.subject,
             "catalog": self.catalog,
         }
-        # parameters can be overriden via the query in the URL
+        # parameters can be overridden via the query in the URL
         adapter_kwargs.update(extract_query(url))
 
         return (), {

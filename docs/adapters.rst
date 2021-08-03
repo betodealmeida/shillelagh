@@ -42,7 +42,7 @@ Then, pass the token when creating a connection:
 
     connection = connect(":memory:", adapter_kwargs={"gsheetspi": {"access_token": "XXX"}})
 
-For domain wide access you need to create a service account. Make sure that the account has domain delegation enabled, and access to the 3 scopes above. Also make sure that "Google Sheets" and "Google Drive" are enabled in the project. You can then download teh credentials as JSON, and pass them either as a file location or as a Python dictionary:
+For domain wide access you need to create a service account. Make sure that the account has domain delegation enabled, and access to the 3 scopes above. Also make sure that "Google Sheets" and "Google Drive" are enabled in the project. You can then download the credentials as JSON, and pass them either as a file location or as a Python dictionary:
 
 .. code-block:: python
 
@@ -67,7 +67,7 @@ You also need to pass a "subject" if you want to impersonate users. If not prese
 Sync modes
 ~~~~~~~~~~
 
-By default, when interacting with a Google sheet every query will issue at least one network request. A ``SELECT`` will fetch data using the Chart API, which allows filtering on the server-side. Manipulating data with ``DELETE`` and ``UPDATE``, on ther other hand, is very expensive. On those operations the whole sheet is download for every row manipulated, and for each row a ``PUT`` request is made.
+By default, when interacting with a Google sheet every query will issue at least one network request. A ``SELECT`` will fetch data using the Chart API, which allows filtering on the server-side. Manipulating data with ``DELETE`` and ``UPDATE``, on the other hand, is very expensive. On those operations the whole sheet is download for every row manipulated, and for each row a ``PUT`` request is made.
 
 The standard mode of operation is called "bidirectional", since the sheet is download in every modification to ensure the adapter has the latest version, and changes are pushed immediately to the sheet. There are other, more efficient modes od synchronization between the adapter and the sheet:
 

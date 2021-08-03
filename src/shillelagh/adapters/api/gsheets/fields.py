@@ -15,7 +15,7 @@ from shillelagh.fields import Order
 from shillelagh.filters import Filter
 
 
-# Timestamp fprmat used to insert data into cells. Note that the timezone is not
+# Timestamp format used to insert data into cells. Note that the timezone is not
 # present, since GSheets assumes all timestamps are in the same timezone as the
 # sheet.
 DATETIME_CELL_FORMAT = "%m/%d/%Y %H:%M:%S"
@@ -97,7 +97,7 @@ class GSheetsDateTime(GSheetsField[str, datetime.datetime]):
     credentials, since the Google Sheets API used to read metadata about the
     sheet requires authentication.
 
-    When the timezone is present and read succesfully all timestamps are
+    When the timezone is present and read successfully all timestamps are
     converted to it, both when fetching data as well as when inserting rows.
     """
 

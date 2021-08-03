@@ -249,7 +249,7 @@ class Field(Generic[Internal, External]):
 
             SELECT A, B WHERE C = date '2018-01-01'
 
-        In orded to handle that, the adapter defines its own time fields
+        In order to handle that, the adapter defines its own time fields
         with custom ``quote`` methods.
         """
         if value is None:

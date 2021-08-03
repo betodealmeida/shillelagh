@@ -67,7 +67,7 @@ Some adapters allow optional configuration to be passed via keyword arguments. F
 
 You can find the accepted arguments in the documentation of each one the :ref:`adapters`.
 
-When loading adapters, you can also specify the ``safe`` keyword. When set to true, this will ensure that only "safe" adapters are loaded — ie, adapters that have no access to the filesytem. The keyword also ensures that an exception is raised whenever there are repeated adapters with the same name, to prevent a malicious party from introducing an adapter with the same name as an authorized one:
+When loading adapters, you can also specify the ``safe`` keyword. When set to true, this will ensure that only "safe" adapters are loaded — ie, adapters that have no access to the filesystem. The keyword also ensures that an exception is raised whenever there are repeated adapters with the same name, to prevent a malicious party from introducing an adapter with the same name as an authorized one:
 
 .. code-block:: python
 
@@ -101,7 +101,7 @@ Shillelagh implements a SQLAlchemy dialect called ``shillelagh``:
 Configuration
 ~~~~~~~~~~~~~
 
-The SQLAlchemy engine can be configured in the same way as the :ref:`dbapi2` ``connect`` function, defining the adapters to be loaded, passing custom keywork arguments to the adapters, or loading only safe adapters. For example, if you want to connect only to Google Spreadsheets, using credentials from a service account:
+The SQLAlchemy engine can be configured in the same way as the :ref:`dbapi2` ``connect`` function, defining the adapters to be loaded, passing custom keyword arguments to the adapters, or loading only safe adapters. For example, if you want to connect only to Google Spreadsheets, using credentials from a service account:
 
 .. code-block:: python
 

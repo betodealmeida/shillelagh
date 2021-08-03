@@ -14,3 +14,6 @@ integration: venv
 
 clean:
 	rm -rf venv
+
+spellcheck:
+	codespell src/shillelagh docs/*rst tests
