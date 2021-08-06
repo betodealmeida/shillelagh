@@ -176,3 +176,23 @@ The `WeatherAPI <https://www.weatherapi.com/>`_ adapter was the first one to be 
     """
     for row in cursor.execute(sql, (three_days_ago,)):
         print(row)
+
+Pandas
+======
+
+Shillelagh has support for Pandas dataframes, inspired by [DuckDB](https://duckdb.org/2021/05/14/sql-on-pandas.html):
+
+.. code-block:: python
+
+    import pandas as pd
+    from shillelagh.backends.apsw.db import connect
+    
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+    
+    mydf = pd.DataFrame({"a": [1, 2, 3]})
+    
+    sql = "SELECT SUM(a) FROM mydf"
+    for row in cursor.execute(sql):
+        print(row)
+    
