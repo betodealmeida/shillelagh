@@ -74,6 +74,7 @@ Queries like this are supported by `adapters <https://shillelagh.readthedocs.io/
 - `WeatherAPI <https://www.weatherapi.com/>`_
 - `Socrata Open Data API <https://dev.socrata.com/>`_
 - CSV files
+- Pandas dataframes
 
 A query can combine data from multiple adapters:
 
