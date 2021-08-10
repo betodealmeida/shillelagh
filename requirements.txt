@@ -12,7 +12,7 @@ python-dateutil==2.8.2
     # via shillelagh (setup.py)
 six==1.16.0
     # via python-dateutil
-sqlalchemy==1.4.21
+sqlalchemy==1.4.22
     # via shillelagh (setup.py)
 typing-extensions==3.10.0.0
     # via shillelagh (setup.py)
