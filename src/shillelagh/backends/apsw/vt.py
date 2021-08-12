@@ -401,6 +401,12 @@ class VTCursor:
             for column_index, descending in orderbys
         ]
 
+        self.data = self.adapter.get_memoryview(bounds, order)
+        if self.data.format == "O":
+            self.data = self.data.obj
+        self.i = 0
+        return
+
         rows = self.adapter.get_rows(bounds, order)
         rows = convert_rows_to_sqlite(columns, rows)
 
@@ -420,18 +426,23 @@ class VTCursor:
         """
         Return the current rowid.
         """
+        return self.data[self.i, 0]
         return cast(int, self.current_row[0])
 
     def Column(self, col) -> Any:
         """
         Requests the value of the specified column number of the current row.
         """
+        return self.data[self.i, 1 + col]
         return self.current_row[1 + col]
 
     def Next(self) -> None:
         """
         Move the cursor to the next row.
         """
+        self.i += 1
+        self.eof = self.i == len(self.data)
+        return
         try:
             self.current_row = next(self.data)
             self.eof = False

@@ -105,17 +105,20 @@ class PandasMemory(Adapter):
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
 
-    def get_data(
+    def _get_df(
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
-    ) -> Iterator[Row]:
+    ) -> pd.DataFrame:
+        """
+        Return a filtered/sorted dataframe.
+        """
         column_names = list(self.columns.keys())
         df = self.df[column_names]
 
         for column_name, filter_ in bounds.items():
             if isinstance(filter_, Impossible):
-                return
+                return pd.DataFrame()
             if isinstance(filter_, Equal):
                 df = df[df[column_name] == filter_.value]
             if isinstance(filter_, Range):
@@ -134,6 +137,23 @@ class PandasMemory(Adapter):
             ]
             df = df.sort_values(by=list(by), ascending=ascending)
 
+        return df
+
+    def get_memoryview(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> memoryview:
+        df = self._get_df(bounds, order)
+        return memoryview(df.values)
+
+    def get_data(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> Iterator[Row]:
+        column_names = list(self.columns.keys())
+        df = self._get_df(bounds, order)
         for row in df.itertuples(name=None):
             yield dict(zip(["rowid", *column_names], row))
 

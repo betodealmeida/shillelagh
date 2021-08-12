@@ -115,6 +115,18 @@ class Adapter:
         """
         raise NotImplementedError("Subclasses must implement ``get_data``")
 
+    def get_memoryview(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> memoryview:
+        """
+        Return a memoryview to the data.
+
+        Used by the Pandas adapter to optimize data transfer.
+        """
+        raise NotImplementedError("Subclasses must implement ``get_memoryview``")
+
     def get_rows(
         self,
         bounds: Dict[str, Filter],
