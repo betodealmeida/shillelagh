@@ -487,7 +487,7 @@ def connect(
         try:
             adapter = entry_point.load()
         except (ImportError, ModuleNotFoundError):
-            _logger.exception("Couldn't load adapter")
+            _logger.warning("Couldn't load adapter")
             continue
         all_adapters.append((entry_point.name, adapter))
 
