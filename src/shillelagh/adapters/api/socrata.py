@@ -31,6 +31,7 @@ from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Range
 from shillelagh.lib import build_sql
+from shillelagh.lib import SimpleCostModel
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 
@@ -38,6 +39,9 @@ _logger = logging.getLogger(__name__)
 
 # regex used to determien if the URI is supported by the adapter
 path_regex = re.compile(r"/resource/\w{4}-\w{4}.json")
+
+# this is just a wild guess; used to estimate query cost
+AVERAGE_NUMBER_OF_ROWS = 1000
 
 
 class MetadataColumn(TypedDict):
@@ -151,6 +155,8 @@ class SocrataAPI(Adapter):
 
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
+
+    get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
 
     def get_data(
         self,

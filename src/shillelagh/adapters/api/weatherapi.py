@@ -29,11 +29,15 @@ from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Filter
 from shillelagh.filters import Impossible
+from shillelagh.filters import Operator
 from shillelagh.filters import Range
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 
 _logger = logging.getLogger(__name__)
+
+INITIAL_COST = 0
+FETCHING_COST = 1000
 
 
 def combine_time_filters(bounds: Dict[str, Filter]) -> Range:
@@ -46,6 +50,10 @@ def combine_time_filters(bounds: Dict[str, Filter]) -> Range:
     """
     time_range = bounds.get("time", Range())
     time_epoch_range = bounds.get("time_epoch", Range())
+
+    if isinstance(time_range, Impossible) or isinstance(time_epoch_range, Impossible):
+        raise ImpossibleFilterError()
+
     if not isinstance(time_range, Range) or not isinstance(time_epoch_range, Range):
         raise Exception("Invalid filter")
 
@@ -146,11 +154,12 @@ class WeatherAPI(Adapter):
             return (location, query_string["key"][0])
         return (location,)
 
-    def __init__(self, location: str, api_key: str):
+    def __init__(self, location: str, api_key: str, window: int = 7):
         super().__init__()
 
         self.location = location
         self.api_key = api_key
+        self.window = window
 
         # use a cache, since the adapter does a lot of similar API requests,
         # and the data should rarely (never?) change
@@ -159,6 +168,21 @@ class WeatherAPI(Adapter):
             backend="sqlite",
             expire_after=180,
         )
+
+    def get_cost(
+        self,
+        filtered_columns: List[Tuple[str, Operator]],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> int:
+        cost = INITIAL_COST
+
+        # if the operator is ``Operator.EQ`` we  only need to fetch 1 day of data;
+        # otherwise we potentially need to fetch "window" days of data
+        for _, operator in filtered_columns:
+            weight = 1 if operator == Operator.EQ else self.window
+            cost += FETCHING_COST * weight
+
+        return cost
 
     def get_data(  # pylint: disable=too-many-locals
         self,
@@ -171,10 +195,9 @@ class WeatherAPI(Adapter):
         except ImpossibleFilterError:
             return
 
-        # the free version of the API offers only 7 days of data; default to that
         today = date.today()
-        a_week_ago = today - timedelta(days=7)
-        start = time_range.start.date() if time_range.start else a_week_ago
+        first = today - timedelta(days=self.window - 1)
+        start = time_range.start.date() if time_range.start else first
         end = time_range.end.date() if time_range.end else today
         _logger.debug("Range is %s to %s", start, end)
 

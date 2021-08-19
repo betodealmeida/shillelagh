@@ -2,6 +2,7 @@
 import inspect
 import itertools
 import json
+import math
 import operator
 from typing import Any
 from typing import Callable
@@ -25,6 +26,7 @@ from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Impossible
+from shillelagh.filters import Operator
 from shillelagh.filters import Range
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
@@ -367,3 +369,27 @@ def get_available_adapters() -> Set[str]:
     Return the name of the available adapters.
     """
     return {entry_point.name for entry_point in iter_entry_points("shillelagh.adapter")}
+
+
+def SimpleCostModel(rows: int, fixed_cost: int = 0):  # pylint: disable=invalid-name
+    """
+    A simple model for estimating query costs.
+
+    The model assumes that each filtering operation is O(n), and each sorting
+    operation is O(n log n), in addition to a fixed cost.
+    """
+
+    def method(
+        obj: Any,  # pylint: disable=unused-argument
+        filtered_columns: List[Tuple[str, Operator]],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> int:
+        return int(
+            fixed_cost
+            + rows * len(filtered_columns)
+            + rows
+            * math.log2(rows)  # pylint: disable=c-extension-no-member
+            * len(order),
+        )
+
+    return method

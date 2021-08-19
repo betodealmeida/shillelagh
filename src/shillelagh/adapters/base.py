@@ -11,8 +11,12 @@ from shillelagh.exceptions import NotSupportedError
 from shillelagh.fields import Field
 from shillelagh.fields import RowID
 from shillelagh.filters import Filter
+from shillelagh.filters import Operator
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
+
+
+FIXED_COST = 666
 
 
 class Adapter:
@@ -96,6 +100,19 @@ class Adapter:
         return dict(
             inspect.getmembers(self, lambda attribute: isinstance(attribute, Field)),
         )
+
+    def get_cost(  # pylint: disable=unused-argument, no-self-use
+        self,
+        filtered_columns: List[Tuple[str, Operator]],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> int:
+        """
+        Estimate the query cost.
+
+        The base adapter returns a fixed cost, and custom adapter can implement
+        their own cost estimation.
+        """
+        return FIXED_COST
 
     def get_data(
         self,

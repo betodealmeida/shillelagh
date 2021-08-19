@@ -1,3 +1,7 @@
+# pylint: disable=c-extension-no-member
+"""
+Tests for shillelagh.adapters.api.weatherapi.
+"""
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
@@ -13,11 +17,16 @@ from shillelagh.adapters.api.weatherapi import WeatherAPI
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import ImpossibleFilterError
+from shillelagh.fields import Order
 from shillelagh.filters import Equal
+from shillelagh.filters import Operator
 from shillelagh.filters import Range
 
 
 def test_weatherapi(mocker, requests_mock):
+    """
+    Test the adapter.
+    """
     mocker.patch(
         "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
         return_value=Session(),
@@ -73,6 +82,9 @@ def test_weatherapi(mocker, requests_mock):
 
 
 def test_weatherapi_impossible(requests_mock):
+    """
+    Test the adapter with impossible filters.
+    """
     url = "https://api.weatherapi.com/v1/history.json?key=XXX&q=iceland&dt=2021-03-17"
     requests_mock.get(url, json=weatherapi_response)
 
@@ -83,20 +95,22 @@ def test_weatherapi_impossible(requests_mock):
         """CREATE VIRTUAL TABLE iceland USING weatherapi('"iceland"', '"XXX"')""",
     )
 
-    sql = "SELECT * FROM iceland WHERE time = '2021-03-17T12:00:00+00:00' AND time = '2021-03-18T12:00:00+00:00'"
-    with pytest.raises(Exception) as excinfo:
-        cursor.execute(sql)
-
-    assert str(excinfo.value) == "Invalid filter"
+    sql = (
+        "SELECT * FROM iceland WHERE time = '2021-03-17T12:00:00+00:00' "
+        "AND time = '2021-03-18T12:00:00+00:00'"
+    )
+    data = list(cursor.execute(sql))
+    assert data == []
 
     sql = "SELECT * FROM iceland WHERE time_epoch = 0 AND time_epoch = 1"
-    with pytest.raises(Exception) as excinfo:
-        cursor.execute(sql)
-
-    assert str(excinfo.value) == "Invalid filter"
+    data = list(cursor.execute(sql))
+    assert data == []
 
 
 def test_weatherapi_api_error(mocker, requests_mock):
+    """
+    Test handling errors in the API.
+    """
     mocker.patch(
         "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
         return_value=Session(),
@@ -115,7 +129,10 @@ def test_weatherapi_api_error(mocker, requests_mock):
         """CREATE VIRTUAL TABLE iceland USING weatherapi('"iceland"', '"XXX"')""",
     )
 
-    sql = "SELECT * FROM iceland WHERE time >= '2021-03-17T12:00:00+00:00' AND time <= '2021-03-18T12:00:00+00:00'"
+    sql = (
+        "SELECT * FROM iceland WHERE time >= '2021-03-17T12:00:00+00:00' "
+        "AND time <= '2021-03-18T12:00:00+00:00'"
+    )
     data = list(cursor.execute(sql))
     assert data == [
         (
@@ -518,6 +535,9 @@ def test_weatherapi_api_error(mocker, requests_mock):
 
 
 def test_dispatch(mocker, requests_mock):
+    """
+    Test the dispatcher.
+    """
     mocker.patch(
         "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
         return_value=Session(),
@@ -579,6 +599,9 @@ def test_dispatch(mocker, requests_mock):
 
 
 def test_dispatch_api_key_connection(mocker, requests_mock):
+    """
+    Test passing the key via the adapter kwargs.
+    """
     mocker.patch(
         "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
         return_value=Session(),
@@ -610,10 +633,15 @@ def test_dispatch_api_key_connection(mocker, requests_mock):
     assert data.call_count == 1
 
 
-def test_dispatch_impossible(mocker, requests_mock):
-    mocker.patch(
+def test_dispatch_impossible(mocker):
+    """
+    Test that no data is returned on an impossible constraint.
+
+    Shillelagh should identify the impossible constraint and not do
+    any network requests.
+    """
+    session = mocker.patch(
         "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
-        return_value=Session(),
     )
 
     entry_points = [FakeEntryPoint("weatherapi", WeatherAPI)]
@@ -638,8 +666,13 @@ def test_dispatch_impossible(mocker, requests_mock):
     data = list(cursor.execute(sql))
     assert data == []
 
+    assert session.return_value.get.call_count == 0
+
 
 def test_combine_time_filters():
+    """
+    Test queries with both ``time`` and ``time_epoch``.
+    """
     bounds = {
         "time": Range(datetime(2021, 1, 1, tzinfo=timezone.utc)),
         "time_epoch": Range(
@@ -676,6 +709,9 @@ def test_combine_time_filters():
 
 @pytest.mark.integration_test
 def test_integration(adapter_kwargs):
+    """
+    Full integration test reading from the API.
+    """
     connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
     cursor = connection.cursor()
 
@@ -700,3 +736,55 @@ def test_integration(adapter_kwargs):
     data = cursor.fetchall()
     assert len(data) == 1
     assert len(data[0]) == 31
+
+
+def test_get_cost(mocker):
+    """
+    Test get_cost.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    adapter = WeatherAPI("location", "XXX")
+    assert adapter.get_cost([], []) == 0
+    assert adapter.get_cost([("one", Operator.GT)], []) == 7000
+    assert adapter.get_cost([("one", Operator.GT), ("two", Operator.EQ)], []) == 8000
+    assert (
+        adapter.get_cost(
+            [("one", Operator.GT), ("two", Operator.EQ)],
+            ["one", Order.ASCENDING],
+        )
+        == 8000
+    )
+
+    adapter = WeatherAPI("location", "XXX", 14)
+    assert adapter.get_cost([], []) == 0
+    assert adapter.get_cost([("one", Operator.GT)], []) == 14000
+    assert adapter.get_cost([("one", Operator.GT), ("two", Operator.EQ)], []) == 15000
+    assert (
+        adapter.get_cost(
+            [("one", Operator.GT), ("two", Operator.EQ)],
+            ["one", Order.ASCENDING],
+        )
+        == 15000
+    )
+
+
+def test_window(mocker):
+    """
+    Test the default window size of days to fetch data.
+    """
+    session = mocker.patch(
+        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+    )
+
+    adapter = WeatherAPI("location", "XXX")
+    list(adapter.get_data({}, []))
+    assert session.return_value.get.call_count == 7
+
+    session.reset_mock()
+    adapter = WeatherAPI("location", "XXX", 14)
+    list(adapter.get_data({}, []))
+    assert session.return_value.get.call_count == 14

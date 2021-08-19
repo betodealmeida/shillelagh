@@ -177,6 +177,21 @@ The `WeatherAPI <https://www.weatherapi.com/>`_ adapter was the first one to be 
     for row in cursor.execute(sql, (three_days_ago,)):
         print(row)
 
+By default the adapter will only look at the last 7 days of data, since that's what's available for free accounts. You can specify a larger time window:
+
+.. code-block:: python
+
+    from datetime import datetime, timedelta
+    from shillelagh.backends.apsw.db import connect
+
+    three_days_ago = datetime.now() - timedelta(days=3)
+
+    # sign up for an API key at https://www.weatherapi.com/my/
+    api_key = "XXX"
+
+    # query 30 days of data
+    connection = connect(":memory:", adapter_kwargs={"weatherapi": {"api_key": api_key, "window": 30}})
+
 Pandas
 ======
 

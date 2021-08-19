@@ -8,7 +8,9 @@ from shillelagh.adapters.memory.pandas import find_dataframe
 from shillelagh.adapters.memory.pandas import PandasMemory
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
+from shillelagh.fields import Order
 from shillelagh.filters import Equal
+from shillelagh.filters import Operator
 
 
 def test_pandas():
@@ -173,3 +175,45 @@ def test_find_dataframe():
     with pytest.raises(ProgrammingError) as excinfo:
         PandasMemory("foobar")
     assert str(excinfo.value) == "Could not find dataframe"
+
+
+def test_get_cost(mocker):
+    """
+    Test cost estimation.
+    """
+    mydf = pd.DataFrame(
+        [
+            {"index": 10, "temperature": 15.2, "site": "Diamond_St"},
+            {"index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
+            {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
+            {"index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
+        ],
+    )
+
+    mock_find_dataframe = mocker.patch(
+        "shillelagh.adapters.memory.pandas.find_dataframe",
+    )
+    mock_find_dataframe.return_value = mydf
+
+    adapter = PandasMemory(mydf)
+    assert adapter.get_cost([], []) == 0
+
+    # linear filtering cost
+    assert adapter.get_cost([("one", Operator.EQ)], []) == 1000
+    assert adapter.get_cost([("one", Operator.EQ), ("two", Operator.EQ)], []) == 2000
+
+    # linear sorting cost
+    assert (
+        adapter.get_cost(
+            [("one", Operator.EQ), ("two", Operator.EQ)],
+            [("one", Order.ASCENDING)],
+        )
+        == 11965
+    )
+    assert (
+        adapter.get_cost(
+            [("one", Operator.EQ), ("two", Operator.EQ)],
+            [("one", Order.ASCENDING), ("two", Order.DESCENDING)],
+        )
+        == 21931
+    )
