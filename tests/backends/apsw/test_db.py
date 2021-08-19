@@ -1,5 +1,5 @@
 import datetime
-import urllib.parse
+from typing import NoReturn
 from unittest import mock
 
 import apsw
@@ -409,6 +409,33 @@ def test_connect_safe(mocker):
 
     connection = connect(":memory:", ["dummy"], safe=True, isolation_level="IMMEDIATE")
     assert connection._adapters == []
+
+
+def test_connect_unmet_dependency(mocker):
+    """
+    Test that we ignore adapters with unmet dependencies.
+    """
+
+    class ProblematicEntryPoint(FakeEntryPoint):
+        def load(self) -> NoReturn:
+            raise ModuleNotFoundError("Couldn't find some dep")
+
+    class AnotherProblematicEntryPoint(FakeEntryPoint):
+        def load(self) -> NoReturn:
+            raise ImportError("Couldn't find some dep")
+
+    entry_points = [
+        FakeEntryPoint("dummy", FakeAdapter),
+        ProblematicEntryPoint("trouble", FakeAdapter),
+        AnotherProblematicEntryPoint("more_trouble", FakeAdapter),
+    ]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    connection = connect(":memory:")
+    assert connection._adapters == [FakeAdapter]
 
 
 def test_convert_binding():

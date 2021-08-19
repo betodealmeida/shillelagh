@@ -4,6 +4,7 @@ A DB API 2.0 wrapper for APSW.
 """
 import datetime
 import itertools
+import logging
 from collections import Counter
 from functools import partial
 from functools import wraps
@@ -54,6 +55,8 @@ NO_SUCH_TABLE = "SQLError: no such table: "
 SCHEMA = "main"
 
 CURSOR_METHOD = TypeVar("CURSOR_METHOD", bound=Callable[..., Any])
+
+_logger = logging.getLogger(__name__)
 
 
 def check_closed(method: CURSOR_METHOD) -> CURSOR_METHOD:
@@ -479,10 +482,15 @@ def connect(
     """
     adapter_kwargs = adapter_kwargs or {}
 
-    all_adapters = [
-        (entry_point.name, entry_point.load())
-        for entry_point in iter_entry_points("shillelagh.adapter")
-    ]
+    all_adapters = []
+    for entry_point in iter_entry_points("shillelagh.adapter"):
+        try:
+            adapter = entry_point.load()
+        except (ImportError, ModuleNotFoundError):
+            _logger.warning("Couldn't load adapter")
+            continue
+        all_adapters.append((entry_point.name, adapter))
+
     all_adapters_names = [name for name, adapter in all_adapters]
 
     # check if there are any repeated names, to prevent malicious adapters
