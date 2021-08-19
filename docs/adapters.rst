@@ -180,7 +180,7 @@ The `WeatherAPI <https://www.weatherapi.com/>`_ adapter was the first one to be 
 Pandas
 ======
 
-Shillelagh has support for Pandas dataframes, inspired by [DuckDB](https://duckdb.org/2021/05/14/sql-on-pandas.html):
+Shillelagh has support for Pandas dataframes, inspired by `DuckDB <https://duckdb.org/2021/05/14/sql-on-pandas.html>`_:
 
 .. code-block:: python
 
