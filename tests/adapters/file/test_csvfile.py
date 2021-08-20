@@ -141,6 +141,25 @@ def test_csvfile_unordered(mocker):
     }
 
 
+def test_csvfile_single_row_of_data(mocker):
+    """
+    Test adapter when we have only 1 row of data.
+
+    In this case, order cannot be determined.
+    """
+    contents = """"a","b"
+1,2"""
+    mocker.patch("builtins.open", mock_open(read_data=contents))
+
+    adapter = CSVFile("test.csv")
+
+    assert adapter.get_columns() == {
+        "a": Float(filters=[Range], order=Order.NONE, exact=True),
+        "b": Float(filters=[Range], order=Order.NONE, exact=True),
+    }
+    assert list(adapter.get_data({}, [])) == [{"a": 1.0, "b": 2.0, "rowid": 0}]
+
+
 def test_csvfile_get_data(mocker):
     """
     Test get_data.
