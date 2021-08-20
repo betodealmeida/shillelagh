@@ -428,3 +428,35 @@ The ``shilellagh.fields`` module has implementation of common representations. F
             return str(value)
 
 Note that the base class for ``IntBoolean`` is ``Field[int, bool]`` — that means that the internal representation of the value is an integer, and the external is a boolean.
+
+Estimating query cost
+=====================
+
+You can define a method ``get_cost`` on your adapter to help the query planner to optimize queries. The method receives two lists, one with the column names and operations applied to filter them, and the other with column names and the requested sort order:
+
+.. code-block:: python
+
+    class MyAdapter:
+
+        def get_cost(
+            self,
+            filtered_columns: List[Tuple[str, Operator]],
+            order: List[Tuple[str, RequestedOrder]],
+        ) -> int:
+            return (
+                100
+                + 1000 * len(filtered_columns)
+                + 10000 * len(order)
+            )
+
+In the example above, we have an initial cost of 100. Each filtering operation costs an additional 1000 units, and each sorting costs 10000. This is a simple representation of filtering 1000 points in O(n), and sorting them in O(n log n) (note that the numbers are unitless). These numbers can be improved if you know the size of the data.
+
+If you want to use the model above you can do this in your adapter
+
+.. code-block:: python
+
+    from shillelagh.lib import SimpleCostModel
+
+    class MyAdapter:
+
+        get_cost = SimpleCostModel(rows=1000, fixed_cost=100)

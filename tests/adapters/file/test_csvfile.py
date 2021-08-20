@@ -1,3 +1,7 @@
+# pylint: disable=c-extension-no-member, invalid-name, unused-argument
+"""
+Tests for shilellagh.adapters.file.csvfile.
+"""
 from unittest.mock import mock_open
 
 import apsw
@@ -14,10 +18,11 @@ from shillelagh.fields import Float
 from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Impossible
+from shillelagh.filters import Operator
 from shillelagh.filters import Range
 
 
-contents = """"index","temperature","site"
+CONTENTS = """"index","temperature","site"
 10,15.2,"Diamond_St"
 11,13.1,"Blacktail_Loop"
 12,13.3,"Platinum_St"
@@ -26,7 +31,10 @@ contents = """"index","temperature","site"
 
 
 def test_csvfile_get_columns(mocker):
-    mocker.patch("builtins.open", mock_open(read_data=contents))
+    """
+    Test that columns are returned correctly.
+    """
+    mocker.patch("builtins.open", mock_open(read_data=CONTENTS))
 
     adapter = CSVFile("test.csv")
 
@@ -37,7 +45,40 @@ def test_csvfile_get_columns(mocker):
     }
 
 
+def test_csvfile_get_cost(mocker):
+    """
+    Test cost estimation.
+    """
+    mocker.patch("builtins.open", mock_open(read_data=CONTENTS))
+
+    adapter = CSVFile("test.csv")
+    assert adapter.get_cost([], []) == 0
+
+    # constant filtering cost
+    assert adapter.get_cost([("one", Operator.EQ)], []) == 1000
+    assert adapter.get_cost([("one", Operator.EQ), ("two", Operator.EQ)], []) == 1000
+
+    # linear sorting cost
+    assert (
+        adapter.get_cost(
+            [("one", Operator.EQ), ("two", Operator.EQ)],
+            [("one", Order.ASCENDING)],
+        )
+        == 11000
+    )
+    assert (
+        adapter.get_cost(
+            [("one", Operator.EQ), ("two", Operator.EQ)],
+            [("one", Order.ASCENDING), ("two", Order.DESCENDING)],
+        )
+        == 21000
+    )
+
+
 def test_csvfile_different_types(mocker):
+    """
+    Test type coercion when a column has different types.
+    """
     contents = '''"a"
 1
 2.0
@@ -70,7 +111,7 @@ def test_csvfile_empty_get_data(mocker):
     externally during the connection.
     """
     mock_files = [
-        mock_open(read_data=contents).return_value,
+        mock_open(read_data=CONTENTS).return_value,
         mock_open(read_data="").return_value,
     ]
     mock_opener = mock_open()
@@ -84,6 +125,9 @@ def test_csvfile_empty_get_data(mocker):
 
 
 def test_csvfile_unordered(mocker):
+    """
+    Test order return when data is not sorted.
+    """
     contents = """"a"
 1
 2
@@ -98,7 +142,10 @@ def test_csvfile_unordered(mocker):
 
 
 def test_csvfile_get_data(mocker):
-    mocker.patch("builtins.open", mock_open(read_data=contents))
+    """
+    Test get_data.
+    """
+    mocker.patch("builtins.open", mock_open(read_data=CONTENTS))
 
     adapter = CSVFile("test.csv")
 
@@ -134,15 +181,21 @@ def test_csvfile_get_data(mocker):
 
 
 def test_csvfile_get_data_impossible_filter(mocker):
-    mocker.patch("builtins.open", mock_open(read_data=contents))
+    """
+    Test that impossible conditions return no data.
+    """
+    mocker.patch("builtins.open", mock_open(read_data=CONTENTS))
 
     adapter = CSVFile("test.csv")
     assert list(adapter.get_data({"index": Impossible()}, [])) == []
 
 
 def test_csvfile(fs):
+    """
+    Test the whole workflow.
+    """
     with open("test.csv", "w") as fp:
-        fp.write(contents)
+        fp.write(CONTENTS)
 
     connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
@@ -189,6 +242,9 @@ def test_csvfile(fs):
 
 
 def test_dispatch(mocker, fs):
+    """
+    Test the URI dispatcher.
+    """
     entry_points = [FakeEntryPoint("csvfile", CSVFile)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -196,7 +252,7 @@ def test_dispatch(mocker, fs):
     )
 
     with open("test.csv", "w") as fp:
-        fp.write(contents)
+        fp.write(CONTENTS)
 
     connection = connect(":memory:", ["csvfile"])
     cursor = connection.cursor()
@@ -207,6 +263,9 @@ def test_dispatch(mocker, fs):
 
 
 def test_row_tracker():
+    """
+    Test the RowTracker.
+    """
     rows = [{"col0_": 1}, {"col0_": 2}]
     row_tracker = RowTracker(iter(rows))
     assert next(row_tracker) == {"col0_": 1}

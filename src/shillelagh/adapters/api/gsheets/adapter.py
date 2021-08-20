@@ -37,12 +37,16 @@ from shillelagh.fields import Field
 from shillelagh.fields import Order
 from shillelagh.filters import Filter
 from shillelagh.lib import build_sql
+from shillelagh.lib import SimpleCostModel
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 
 _logger = logging.getLogger(__name__)
 
 JSON_PAYLOAD_PREFIX = ")]}'\n"
+
+# this is just a wild guess; used to estimate query cost
+AVERAGE_NUMBER_OF_ROWS = 1000
 
 
 class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
@@ -302,6 +306,8 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
+
+    get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
 
     def _clear_columns(self) -> None:
         """

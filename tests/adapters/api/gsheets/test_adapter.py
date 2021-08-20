@@ -21,6 +21,7 @@ from shillelagh.fields import Float
 from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
+from shillelagh.filters import Operator
 
 
 @pytest.fixture
@@ -2203,3 +2204,53 @@ def test_header_rows(mocker):
     with pytest.raises(InternalError) as excinfo:
         gsheets_adapter._get_header_rows(values)
     assert str(excinfo.value) == "Could not determine number of header rows"
+
+
+def test_get_cost(mocker):
+    """
+    Test get_cost.
+    """
+    mock_authorized_session = mock.MagicMock()
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.adapter.AuthorizedSession",
+        mock_authorized_session,
+    )
+    mock_session = mock.MagicMock()
+    mocker.patch("shillelagh.adapters.api.gsheets.adapter.Session", mock_session)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
+        return_value=None,
+    )
+
+    # prevent network calls
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._set_columns",
+        mock.MagicMock(),
+    )
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._set_metadata",
+        mock.MagicMock(),
+    )
+
+    gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1")
+
+    assert gsheets_adapter.get_cost([], []) == 0
+    assert gsheets_adapter.get_cost([("one", Operator.EQ)], []) == 1000
+    assert (
+        gsheets_adapter.get_cost([("one", Operator.EQ), ("two", Operator.GT)], [])
+        == 2000
+    )
+    assert (
+        gsheets_adapter.get_cost(
+            [("one", Operator.EQ), ("two", Operator.GT)],
+            [("one", Order.ASCENDING)],
+        )
+        == 11965
+    )
+    assert (
+        gsheets_adapter.get_cost(
+            [("one", Operator.EQ), ("two", Operator.GT)],
+            [("one", Order.ASCENDING), ("two", Order.DESCENDING)],
+        )
+        == 21931
+    )

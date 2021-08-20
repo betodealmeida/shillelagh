@@ -42,6 +42,7 @@ from shillelagh.typing import Constraint
 from shillelagh.typing import Index
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
+from shillelagh.typing import SQLiteConstraint
 from shillelagh.typing import SQLiteValidType
 
 _logger = logging.getLogger(__name__)
@@ -153,6 +154,22 @@ def get_all_bounds(
     return all_bounds
 
 
+def get_order(
+    orderbys: List[Tuple[int, bool]],
+    column_names: List[str],
+) -> List[Tuple[str, RequestedOrder]]:
+    """
+    Return a list of column names and sort order from a SQLite orderbys.
+    """
+    return [
+        (
+            column_names[column_index],
+            Order.DESCENDING if descending else Order.ASCENDING,
+        )
+        for column_index, descending in orderbys
+    ]
+
+
 def get_bounds(
     columns: Dict[str, Field],
     all_bounds: DefaultDict[str, Set[Tuple[Operator, Any]]],
@@ -242,7 +259,7 @@ class VTTable:
 
     def BestIndex(  # pylint: disable=too-many-locals
         self,
-        constraints: List[Tuple[int, int]],
+        constraints: List[Tuple[int, SQLiteConstraint]],
         orderbys: List[Tuple[int, bool]],
     ) -> Tuple[List[Constraint], int, str, bool, int]:
         """
@@ -251,24 +268,25 @@ class VTTable:
         The purpose of this method is to ask if you have the ability to determine if
         a row meets certain constraints that doesn’t involve visiting every row.
         """
-        column_types = list(self.adapter.get_columns().values())
+        columns = self.adapter.get_columns()
+        column_names = list(columns.keys())
+        column_types = list(columns.values())
 
         # currently the index number is not used for anything; instead, we encode the
         # the index as JSON in ``index_name``
         index_number = 42
 
-        # currently we have no cost estimation, and just return a constant value;
-        # maybe in the future this could be retrieved from each adapter
-        estimated_cost = 666
-
         indexes: List[Index] = []
         constraints_used: List[Constraint] = []
         filter_index = 0
+        filtered_columns: List[Tuple[str, Operator]] = []
         for column_index, sqlite_index_constraint in constraints:
             operator = operator_map.get(sqlite_index_constraint)
+            column_name = column_names[column_index]
             column_type = column_types[column_index]
             for class_ in column_type.filters:
                 if operator in class_.operators:
+                    filtered_columns.append((column_name, operator))
                     constraints_used.append((filter_index, column_type.exact))
                     filter_index += 1
                     indexes.append((column_index, sqlite_index_constraint))
@@ -276,6 +294,10 @@ class VTTable:
             else:
                 # no indexes supported in this column
                 constraints_used.append(None)
+
+        # estimate query cost
+        order = get_order(orderbys, column_names)
+        estimated_cost = self.adapter.get_cost(filtered_columns, order)
 
         # is the data being returned in the requested order? if not, SQLite will have
         # to sort it
@@ -393,13 +415,7 @@ class VTCursor:
         bounds = get_bounds(columns, all_bounds)
 
         # compute requested order
-        order: List[Tuple[str, RequestedOrder]] = [
-            (
-                column_names[column_index],
-                Order.DESCENDING if descending else Order.ASCENDING,
-            )
-            for column_index, descending in orderbys
-        ]
+        order = get_order(orderbys, column_names)
 
         rows = self.adapter.get_rows(bounds, order)
         rows = convert_rows_to_sqlite(columns, rows)

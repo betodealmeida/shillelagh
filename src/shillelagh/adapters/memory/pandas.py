@@ -28,9 +28,13 @@ from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Impossible
 from shillelagh.filters import Range
+from shillelagh.lib import SimpleCostModel
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 
+
+# this is just a wild guess; used to estimate query cost
+AVERAGE_NUMBER_OF_ROWS = 1000
 
 type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
     "i": (Integer, [Range]),
@@ -104,6 +108,8 @@ class PandasMemory(Adapter):
 
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
+
+    get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
 
     def get_data(
         self,

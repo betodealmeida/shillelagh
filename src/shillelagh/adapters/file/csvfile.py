@@ -24,6 +24,7 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.filters import Filter
+from shillelagh.filters import Operator
 from shillelagh.filters import Range
 from shillelagh.lib import analyze
 from shillelagh.lib import filter_data
@@ -33,6 +34,10 @@ from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 
 _logger = logging.getLogger(__name__)
+
+INITIAL_COST = 0
+FILTERING_COST = 1000
+SORTING_COST = 10000
 
 
 class RowTracker:
@@ -138,6 +143,25 @@ class CSVFile(Adapter):
 
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
+
+    def get_cost(
+        self,
+        filtered_columns: List[Tuple[str, Operator]],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> int:
+        cost = INITIAL_COST
+
+        # filtering the data has constant cost, since ``filter_data`` builds a
+        # single filter function applied as the data is streamed
+        if filtered_columns:
+            cost += FILTERING_COST
+
+        # sorting, on the other hand, is costy, requiring loading all the data
+        # in memory and calling ``.sort()`` for each column that needs to be
+        # ordered
+        cost += SORTING_COST * len(order)
+
+        return cost
 
     def get_data(
         self,

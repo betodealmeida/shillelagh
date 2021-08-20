@@ -9,8 +9,11 @@ from requests import Session
 from ...fakes import cdc_data_response
 from ...fakes import cdc_metadata_response
 from shillelagh.adapters.api.socrata import Number
+from shillelagh.adapters.api.socrata import SocrataAPI
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
+from shillelagh.fields import Order
+from shillelagh.filters import Operator
 
 
 def test_socrata(requests_mock):
@@ -218,3 +221,32 @@ def test_integration(adapter_kwargs):
     """
     cursor.execute(sql, ("US", date(2021, 7, 4)))
     assert cursor.fetchall() == [(67.1,)]
+
+
+def test_get_cost(mocker):
+    """
+    Test get_cost.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
+    )
+
+    adapter = SocrataAPI("netloc", "dataset", "XXX")
+
+    assert adapter.get_cost([], []) == 0
+    assert adapter.get_cost([("one", Operator.EQ)], []) == 1000
+    assert adapter.get_cost([("one", Operator.EQ), ("two", Operator.GT)], []) == 2000
+    assert (
+        adapter.get_cost(
+            [("one", Operator.EQ), ("two", Operator.GT)],
+            [("one", Order.ASCENDING)],
+        )
+        == 11965
+    )
+    assert (
+        adapter.get_cost(
+            [("one", Operator.EQ), ("two", Operator.GT)],
+            [("one", Order.ASCENDING), ("two", Order.DESCENDING)],
+        )
+        == 21931
+    )

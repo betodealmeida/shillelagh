@@ -23,12 +23,13 @@ from shillelagh.fields import Order
 #         By default SQLite will check what you return. If you set the boolean
 #         to False then SQLite won’t do that double checking.
 Constraint = Union[None, int, Tuple[int, bool]]
+SQLiteConstraint = int
 
 # A row of data
 Row = Dict[str, Any]
 
 # An index is a tuple with a column index and an operator to filter it
-Index = Tuple[int, int]
+Index = Tuple[int, SQLiteConstraint]
 
 RequestedOrder = Union[Literal[Order.ASCENDING], Literal[Order.DESCENDING]]
 
