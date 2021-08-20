@@ -152,7 +152,8 @@ def analyze(
     types: Dict[str, Type[Field]] = {}
 
     previous_row: Row = {}
-    i = 0
+    row: Row = {}
+    i = -1
     for i, row in enumerate(data):
         for column_name, value in row.items():
             # determine order
@@ -180,6 +181,9 @@ def analyze(
                 types[column_name] = Integer
 
         previous_row = row
+
+    if row and not order:
+        order = {column_name: Order.NONE for column_name in row.keys()}
 
     num_rows = i + 1
 
