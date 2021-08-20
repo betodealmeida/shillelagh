@@ -740,7 +740,7 @@ def test_integration(adapter_kwargs):
 
 def test_get_cost(mocker):
     """
-    Test get_cost.
+    Test ``get_cost``.
     """
     mocker.patch(
         "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",

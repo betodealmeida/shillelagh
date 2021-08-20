@@ -1,3 +1,7 @@
+# pylint: disable=protected-access, c-extension-no-member, too-few-public-methods
+"""
+Tests for shillelagh.backends.apsw.db.
+"""
 import datetime
 from typing import NoReturn
 from unittest import mock
@@ -7,25 +11,20 @@ import pytest
 
 from ...fakes import FakeAdapter
 from ...fakes import FakeEntryPoint
-from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
-from shillelagh.backends.apsw.db import Connection
 from shillelagh.backends.apsw.db import convert_binding
-from shillelagh.backends.apsw.db import Cursor
 from shillelagh.exceptions import InterfaceError
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
-from shillelagh.fields import Order
 from shillelagh.fields import String
-from shillelagh.filters import Equal
-from shillelagh.filters import Filter
-from shillelagh.filters import Range
-from shillelagh.typing import Row
 
 
 def test_connect(mocker):
+    """
+    Test ``connect``.
+    """
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -68,6 +67,9 @@ def test_connect(mocker):
 
 
 def test_connect_schema_prefix(mocker):
+    """
+    Test querying a table with the schema.
+    """
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -85,6 +87,9 @@ def test_connect_schema_prefix(mocker):
 
 
 def test_connect_adapter_kwargs(mocker):
+    """
+    Test that ``adapter_kwargs`` are passed to the adapter.
+    """
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -107,13 +112,29 @@ def test_connect_adapter_kwargs(mocker):
 
 
 def test_conect_safe(mocker):
+    """
+    Test the safe option.
+    """
+
     class FakeAdapter1(FakeAdapter):
+        """
+        A safe adapter.
+        """
+
         safe = True
 
     class FakeAdapter2(FakeAdapter):
+        """
+        An unsafe adapter.
+        """
+
         safe = False
 
     class FakeAdapter3(FakeAdapter):
+        """
+        Another unsafe adapter.
+        """
+
         safe = False
 
     entry_points = [
@@ -125,6 +146,7 @@ def test_conect_safe(mocker):
         "shillelagh.backends.apsw.db.iter_entry_points",
         return_value=entry_points,
     )
+    # pylint: disable=invalid-name
     db_Connection = mocker.patch("shillelagh.backends.apsw.db.Connection")
 
     # if we don't specify adapters we should get all
@@ -177,6 +199,9 @@ def test_conect_safe(mocker):
 
 
 def test_execute_with_native_parameters(mocker):
+    """
+    Test passing native types to the cursor.
+    """
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -194,7 +219,10 @@ def test_execute_with_native_parameters(mocker):
     assert cursor.rowcount == -1  # can't determine
 
 
-def test_check_closed(mocker):
+def test_check_closed():
+    """
+    Test trying to use cursor/connection after closing them.
+    """
     connection = connect(":memory:", isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
@@ -210,6 +238,9 @@ def test_check_closed(mocker):
 
 
 def test_check_result(mocker):
+    """
+    Test exception raised when fetching results before query.
+    """
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -224,14 +255,20 @@ def test_check_result(mocker):
     assert str(excinfo.value) == "Called before ``execute``"
 
 
-def test_check_invalid_syntax(mocker):
+def test_check_invalid_syntax():
+    """
+    Test exception raised on syntax error.
+    """
     connection = connect(":memory:", isolation_level="IMMEDIATE")
     with pytest.raises(ProgrammingError) as excinfo:
         connection.execute("SELLLLECT 1")
     assert str(excinfo.value) == 'SQLError: near "SELLLLECT": syntax error'
 
 
-def test_unsupported_table(mocker):
+def test_unsupported_table():
+    """
+    Test exception raised on unsupported tables.
+    """
     connection = connect(":memory:", isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
@@ -241,6 +278,9 @@ def test_unsupported_table(mocker):
 
 
 def test_description(mocker):
+    """
+    Test cursor description.
+    """
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -265,6 +305,9 @@ def test_description(mocker):
 
 
 def test_execute_many(mocker):
+    """
+    Test ``execute_many``.
+    """
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -287,6 +330,9 @@ def test_execute_many(mocker):
 
 
 def test_setsize():
+    """
+    Test ``setinputsizes`` and ``setoutputsizes``.
+    """
     connection = connect(":memory:", isolation_level="IMMEDIATE")
     cursor = connection.cursor()
     cursor.setinputsizes(100)
@@ -294,6 +340,9 @@ def test_setsize():
 
 
 def test_close_connection():
+    """
+    Testing closing a connection.
+    """
     connection = connect(":memory:", isolation_level="IMMEDIATE")
     cursor1 = connection.cursor()
     cursor2 = connection.cursor()
@@ -309,6 +358,9 @@ def test_close_connection():
 
 
 def test_transaction(mocker):
+    """
+    Test transactions.
+    """
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -382,6 +434,9 @@ def test_transaction(mocker):
 
 
 def test_connection_context_manager():
+    """
+    Test that connection can be used as context manager.
+    """
     with connect(":memory:", isolation_level="IMMEDIATE") as connection:
         cursor = connection.cursor()
         cursor._cursor = mock.MagicMock()
@@ -397,7 +452,15 @@ def test_connection_context_manager():
 
 
 def test_connect_safe(mocker):
+    """
+    Test the safe connection.
+    """
+
     class UnsafeAdapter(FakeAdapter):
+
+        """
+        A safe adapter.
+        """
 
         safe = False
 
@@ -417,10 +480,18 @@ def test_connect_unmet_dependency(mocker):
     """
 
     class ProblematicEntryPoint(FakeEntryPoint):
+        """
+        A problematic entry point.
+        """
+
         def load(self) -> NoReturn:
             raise ModuleNotFoundError("Couldn't find some dep")
 
     class AnotherProblematicEntryPoint(FakeEntryPoint):
+        """
+        Another problematic entry point.
+        """
+
         def load(self) -> NoReturn:
             raise ImportError("Couldn't find some dep")
 
@@ -439,6 +510,9 @@ def test_connect_unmet_dependency(mocker):
 
 
 def test_convert_binding():
+    """
+    Test conversion to SQLite types.
+    """
     assert convert_binding(1) == 1
     assert convert_binding(1.0) == 1.0
     assert convert_binding("test") == "test"

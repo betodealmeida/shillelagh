@@ -8,7 +8,6 @@ import apsw
 import pytest
 
 from ...fakes import FakeEntryPoint
-from shillelagh.adapters.base import Adapter
 from shillelagh.adapters.file.csvfile import CSVFile
 from shillelagh.adapters.file.csvfile import RowTracker
 from shillelagh.backends.apsw.db import connect
@@ -162,7 +161,7 @@ def test_csvfile_single_row_of_data(mocker):
 
 def test_csvfile_get_data(mocker):
     """
-    Test get_data.
+    Test ``get_data``.
     """
     mocker.patch("builtins.open", mock_open(read_data=CONTENTS))
 

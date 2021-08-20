@@ -1,3 +1,6 @@
+"""
+Tests for shillelagh.lib.
+"""
 import pytest
 
 from .fakes import FakeAdapter
@@ -26,6 +29,9 @@ from shillelagh.lib import update_order
 
 
 def test_row_id_manager_empty_range():
+    """
+    Test instantiating ``RowIDManager`` with an empty range.
+    """
     with pytest.raises(Exception) as excinfo:
         RowIDManager([])
 
@@ -33,6 +39,9 @@ def test_row_id_manager_empty_range():
 
 
 def test_row_id_manager():
+    """
+    Test ``RowIDManager``.
+    """
     manager = RowIDManager([range(0, 6)])
     assert list(manager) == [0, 1, 2, 3, 4, 5]
 
@@ -86,6 +95,9 @@ def test_row_id_manager():
 
 
 def test_analyze():
+    """
+    Test ``analyze``.
+    """
     data = [
         {"int": 1, "float": 10.0, "str": "Alice"},
         {"int": 3, "float": 9.5, "str": "Bob"},
@@ -102,6 +114,9 @@ def test_analyze():
 
 
 def test_update_order():
+    """
+    Test ``update_order``.
+    """
     order = update_order(Order.NONE, previous=None, current=1, num_rows=1)
     assert order == Order.NONE
 
@@ -116,12 +131,18 @@ def test_update_order():
 
 
 def test_update_order_none():
+    """
+    Test ``update_order`` when original order is none.
+    """
     order = update_order(Order.NONE, previous=None, current=1, num_rows=1)
     order = update_order(order, previous=1, current=None, num_rows=2)
     assert order == Order.NONE
 
 
 def test_build_sql():
+    """
+    Test ``build_sql``.
+    """
     columns = {"a": String(), "b": Float()}
 
     sql = build_sql(columns, {"a": Equal("b")}, [])
@@ -145,6 +166,9 @@ def test_build_sql():
 
 
 def test_build_sql_with_map():
+    """
+    Test ``build_sql`` with a column map.
+    """
     columns = {f"col{i}_": Integer() for i in range(4)}
     bounds = {
         "col0_": Equal(1),
@@ -155,13 +179,16 @@ def test_build_sql_with_map():
     order = [("col0_", Order.ASCENDING), ("col1_", Order.DESCENDING)]
     column_map = {f"col{i}_": letter for i, letter in enumerate("ABCD")}
     sql = build_sql(columns, bounds, order, column_map, 1)
-    assert (
-        sql
-        == "SELECT * WHERE A = 1 AND B >= 0 AND B < 1 AND C <= 1 AND D > 0 ORDER BY A, B DESC OFFSET 1"
+    assert sql == (
+        "SELECT * WHERE A = 1 AND B >= 0 AND B < 1 AND "
+        "C <= 1 AND D > 0 ORDER BY A, B DESC OFFSET 1"
     )
 
 
 def test_build_sql_impossible():
+    """
+    Test ``build_sql`` with an impossible filter.
+    """
     columns = {"a": String(), "b": Float()}
 
     with pytest.raises(ImpossibleFilterError):
@@ -169,24 +196,40 @@ def test_build_sql_impossible():
 
 
 def test_escape():
+    """
+    Test ``escape``.
+    """
     assert escape("1") == "1"
     assert escape("O'Malley's") == "O''Malley''s"
 
 
 def test_unescape():
+    """
+    Test ``unescape``.
+    """
     assert unescape("1") == "1"
     assert unescape("O''Malley''s") == "O'Malley's"
 
 
 def test_serialize():
+    """
+    Test ``serialize``.
+    """
     assert serialize(["O'Malley's"]) == """'["O''Malley''s"]'"""
 
 
 def test_deserialize():
+    """
+    Test ``deserialize``.
+    """
     assert deserialize("""'["O''Malley''s"]'""") == ["O'Malley's"]
 
 
 def test_combine_args_kwargs():
+    """
+    Test ``combine_args_kwargs``.
+    """
+    # pylint: disable=unused-argument, invalid-name
     def func(a: int = 0, b: str = "test", c: float = 10.0) -> None:
         pass
 
@@ -196,6 +239,9 @@ def test_combine_args_kwargs():
 
 
 def test_filter_data():
+    """
+    Test ``filter_data``.
+    """
     data = [
         {"index": 10, "temperature": 15.2, "site": "Diamond_St"},
         {"index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
@@ -240,6 +286,9 @@ def test_filter_data():
 
 
 def test_get_available_adapters(mocker):
+    """
+    Test ``get_available_adapters``.
+    """
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.lib.iter_entry_points",

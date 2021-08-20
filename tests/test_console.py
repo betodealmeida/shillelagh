@@ -1,3 +1,7 @@
+# pylint: disable=invalid-name
+"""
+Tests for shillelagh.console.
+"""
 import os.path
 from io import StringIO
 
@@ -7,6 +11,9 @@ from shillelagh import console
 
 
 def test_main(mocker):
+    """
+    Test ``main``.
+    """
     stdout = mocker.patch("sys.stdout", new_callable=StringIO)
     PromptSession = mocker.patch("shillelagh.console.PromptSession")
 
@@ -16,7 +23,10 @@ def test_main(mocker):
     assert result == "  1\n---\n  1\nGoodBye!\n"
 
 
-def test_exception(mocker, fs):
+def test_exception(mocker):
+    """
+    Test that exceptions are captured and printed.
+    """
     stdout = mocker.patch("sys.stdout", new_callable=StringIO)
     PromptSession = mocker.patch("shillelagh.console.PromptSession")
 
@@ -26,7 +36,10 @@ def test_exception(mocker, fs):
     assert result == 'SQLError: near "SSELECT": syntax error\nGoodBye!\n'
 
 
-def test_ctrl_c(mocker, fs):
+def test_ctrl_c(mocker):
+    """
+    Test that ``CTRL-C`` exists the REPL.
+    """
     stdout = mocker.patch("sys.stdout", new_callable=StringIO)
     PromptSession = mocker.patch("shillelagh.console.PromptSession")
 
@@ -41,6 +54,9 @@ def test_ctrl_c(mocker, fs):
 
 
 def test_configuration(mocker, fs):
+    """
+    Test loading the configuration file.
+    """
     config = os.path.expanduser("~/.config/shillelagh/shillelagh.yaml")
     fs.create_file(config)
     with open(config, "w") as fp:
@@ -56,7 +72,27 @@ def test_configuration(mocker, fs):
     connect.assert_called_with(":memory:", adapter_kwargs={"foo": {"bar": "baz"}})
 
 
+def test_no_configuration(mocker, fs):
+    """
+    Test no configuration file found.
+    """
+    config_dir = os.path.expanduser("~/.config/shillelagh/")
+    fs.create_dir(config_dir)
+
+    connect = mocker.patch("shillelagh.console.connect")
+    mocker.patch("sys.stdout", new_callable=StringIO)
+    PromptSession = mocker.patch("shillelagh.console.PromptSession")
+
+    PromptSession.return_value.prompt.side_effect = [EOFError()]
+    console.main()
+
+    connect.assert_called_with(":memory:", adapter_kwargs={})
+
+
 def test_configuration_invalid(mocker, fs):
+    """
+    Test that an exception is raised if the configuration is invalid.
+    """
     config = os.path.expanduser("~/.config/shillelagh/shillelagh.yaml")
     fs.create_file(config)
     with open(config, "w") as fp:

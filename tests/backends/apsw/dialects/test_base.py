@@ -1,3 +1,6 @@
+"""
+Tests for shillelagh.backends.apsw.dialects.base.
+"""
 from unittest import mock
 
 import pytest
@@ -14,6 +17,9 @@ from shillelagh.exceptions import ProgrammingError
 
 
 def test_create_engine(mocker):
+    """
+    Test ``create_engine``.
+    """
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",
@@ -23,11 +29,17 @@ def test_create_engine(mocker):
     engine = create_engine("shillelagh://")
 
     table = Table("dummy://", MetaData(bind=engine), autoload=True)
-    query = select([func.sum(table.columns.pets)], from_obj=table)
+    query = select(
+        [func.sum(table.columns.pets)],  # pylint: disable=no-member
+        from_obj=table,
+    )
     assert query.scalar() == 3
 
 
-def test_create_engine_no_adapters(mocker):
+def test_create_engine_no_adapters():
+    """
+    Test ``create_engine`` with invalid adapter.
+    """
     engine = create_engine("shillelagh://")
 
     with pytest.raises(ProgrammingError) as excinfo:
@@ -36,6 +48,9 @@ def test_create_engine_no_adapters(mocker):
 
 
 def test_dialect_ping():
+    """
+    Test ``do_ping``.
+    """
     mock_dbapi_connection = mock.MagicMock()
     dialect = APSWDialect()
     assert dialect.do_ping(mock_dbapi_connection) is True

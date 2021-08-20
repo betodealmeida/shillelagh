@@ -1,3 +1,6 @@
+"""
+Fake objects to simplify testing.
+"""
 import json
 import os
 import urllib.parse
@@ -21,16 +24,27 @@ from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
 
 
-class FakeEntryPoint:
+class FakeEntryPoint:  # pylint: disable=too-few-public-methods
+    """
+    A fake entry point for loading adapters.
+    """
+
     def __init__(self, name: str, adapter: Adapter):
         self.name = name
         self.adapter = adapter
 
     def load(self) -> Adapter:
+        """
+        Load the adapter.
+        """
         return self.adapter
 
 
 class FakeAdapter(Adapter):
+
+    """
+    A simple adapter that keeps data in memory.
+    """
 
     safe = True
 
@@ -48,6 +62,8 @@ class FakeAdapter(Adapter):
         return ()
 
     def __init__(self):
+        super().__init__()
+
         self.data = [
             {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
             {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},

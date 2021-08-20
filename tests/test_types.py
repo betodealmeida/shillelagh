@@ -1,9 +1,10 @@
+"""
+Tests for shillelagh.types.
+"""
 from datetime import date
 from datetime import datetime
 from datetime import time
 from datetime import timezone
-
-import pytest
 
 from shillelagh.backends.apsw.db import connect
 from shillelagh.fields import String
@@ -18,6 +19,9 @@ from shillelagh.types import TimestampFromTicks
 
 
 def test_types():
+    """
+    Test that native Python types can be used in queries.
+    """
     connection = connect(":memory:")
     cursor = connection.cursor()
 
@@ -77,5 +81,8 @@ def test_types():
 
 
 def test_comparison():
+    """
+    Test type comparison.
+    """
     assert STRING == String
-    assert not STRING == 1
+    assert (STRING == 1) is False

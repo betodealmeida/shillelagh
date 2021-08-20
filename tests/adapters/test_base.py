@@ -1,3 +1,6 @@
+"""
+Test for shillelagh.adapter.base.
+"""
 from datetime import datetime
 from typing import List
 
@@ -17,21 +20,28 @@ from shillelagh.typing import Row
 
 class FakeAdapterWithDateTime(FakeAdapter):
 
+    """
+    An adapter with a timestamp column.
+    """
+
     birthday = DateTime(filters=[Range], order=Order.ANY, exact=True)
 
     data: List[Row] = []
 
-    def __init__(self):
+    def __init__(self):  # pylint: disable=super-init-not-called
         pass
 
 
-class ReadOnlyAdapter(Adapter):
+class ReadOnlyAdapter(Adapter):  # pylint: disable=abstract-method
     """
     A read-only adapter.
     """
 
 
 def test_adapter_get_columns():
+    """
+    Test ``get_columns``.
+    """
     adapter = FakeAdapter()
     assert adapter.get_columns() == {
         "age": FakeAdapter.age,
@@ -42,11 +52,17 @@ def test_adapter_get_columns():
 
 
 def test_adapter_get_metadata():
+    """
+    Test ``get_metadata``.
+    """
     adapter = FakeAdapter()
     assert adapter.get_metadata() == {}
 
 
 def test_adapter_read_only():
+    """
+    Test a read-only adapter.
+    """
     adapter = ReadOnlyAdapter()
 
     with pytest.raises(NotSupportedError) as excinfo:
@@ -63,6 +79,9 @@ def test_adapter_read_only():
 
 
 def test_adapter_get_data():
+    """
+    Test ``get_data``.
+    """
     adapter = FakeAdapter()
 
     data = adapter.get_data({}, [])
@@ -89,6 +108,9 @@ def test_adapter_get_data():
 
 
 def test_adapter_get_rows():
+    """
+    Test ``get_rows``.
+    """
     adapter = FakeAdapter()
 
     adapter.insert_row({"rowid": None, "name": "Charlie", "age": 6, "pets": 1})
@@ -109,6 +131,9 @@ def test_adapter_get_rows():
 
 
 def test_adapter_manipulate_rows():
+    """
+    Test ``DML``.
+    """
     adapter = FakeAdapter()
 
     adapter.insert_row({"rowid": None, "name": "Charlie", "age": 6, "pets": 1})
@@ -145,7 +170,9 @@ def test_adapter_manipulate_rows():
 
 
 def test_type_conversion(mocker):
-
+    """
+    Test that native types are converted correctly.
+    """
     entry_points = [FakeEntryPoint("dummy", FakeAdapterWithDateTime)]
     mocker.patch(
         "shillelagh.backends.apsw.db.iter_entry_points",

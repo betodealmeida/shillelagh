@@ -1,3 +1,6 @@
+"""
+Tests for shillelagh.filters.
+"""
 import pytest
 
 from shillelagh.filters import Endpoint
@@ -9,12 +12,18 @@ from shillelagh.filters import Side
 
 
 def test_equal():
+    """
+    Test ``Equal``.
+    """
     operations = {(Operator.EQ, 10)}
     filter_ = Equal.build(operations)
     assert filter_.value == 10
 
 
 def test_equal_multiple_value():
+    """
+    Test multiple operations.
+    """
     operations = [
         (Operator.EQ, 10),
         (Operator.EQ, 10),
@@ -24,6 +33,9 @@ def test_equal_multiple_value():
 
 
 def test_equal_check():
+    """
+    Test ``_check``.
+    """
     operations = [
         (Operator.EQ, 10),
         (Operator.EQ, 10),
@@ -34,6 +46,9 @@ def test_equal_check():
 
 
 def test_equal_impossible():
+    """
+    Test impossible operations.
+    """
     operations = [
         (Operator.EQ, 10),
         (Operator.EQ, 20),
@@ -43,6 +58,9 @@ def test_equal_impossible():
 
 
 def test_range():
+    """
+    Test ``Range``.
+    """
     operations = [
         (Operator.GT, 0),
         (Operator.LT, 10),
@@ -59,6 +77,9 @@ def test_range():
 
 
 def test_range_equal():
+    """
+    Test ``Range`` collapsed to an equality.
+    """
     operations = [
         (Operator.GT, 0),
         (Operator.EQ, 3),
@@ -76,6 +97,9 @@ def test_range_equal():
 
 
 def test_range_equal_impossible():
+    """
+    Test an impossible range.
+    """
     operations = [
         (Operator.GT, 0),
         (Operator.LT, -1),
@@ -92,6 +116,9 @@ def test_range_equal_impossible():
 
 
 def test_range_include():
+    """
+    Test operations with different includes.
+    """
     operations = [
         (Operator.GE, 2),
         (Operator.GT, 2),
@@ -106,6 +133,9 @@ def test_range_include():
 
 
 def test_range_check():
+    """
+    Test ``_check`` in different ranges.
+    """
     filter_ = Range(2, 4, False, True)
     assert not filter_.check(2)
     assert filter_.check(3)
@@ -132,6 +162,9 @@ def test_range_check():
 
 
 def test_range_invalid_operator():
+    """
+    Test that ``build`` raises an exception on invalid operators.
+    """
     operations = {(-1, 0)}
     with pytest.raises(Exception) as excinfo:
         Range.build(operations)
@@ -140,9 +173,12 @@ def test_range_invalid_operator():
 
 
 def test_combine_ranges():
-    assert not Range(0, 1, False, False) == 1
+    """
+    Test combining ranges.
+    """
+    assert (Range(0, 1, False, False) == 1) is False
     with pytest.raises(TypeError) as excinfo:
-        Range(0, 1, False, False) + 1
+        _ = Range(0, 1, False, False) + 1
     assert str(excinfo.value) == "unsupported operand type(s) for +: 'Range' and 'int'"
 
     range1 = Range(1, 10, False, False)
@@ -165,12 +201,18 @@ def test_combine_ranges():
 
 
 def test_impossible():
+    """
+    Test ``Impossible``.
+    """
     assert Impossible.build([]) == Impossible()
     assert Impossible().check(10) is False
     assert Impossible() != 0
 
 
 def build_endpoint(representation: str) -> Endpoint:
+    """
+    Function to build an endpoint.
+    """
     if representation[0] in {"(", "["}:
         return Endpoint(
             value=int(representation[1:]),
@@ -185,6 +227,9 @@ def build_endpoint(representation: str) -> Endpoint:
 
 
 def test_endpoints():
+    """
+    Test building endpoints.
+    """
     start = build_endpoint("(0")
     assert start == Endpoint(0, False, Side.LEFT)
     assert str(start) == "(0"
@@ -206,11 +251,11 @@ def test_endpoints():
     assert build_endpoint("[0") == end
 
     # 0] < (0
-    assert not Endpoint(0, True, Side.RIGHT) > Endpoint(0, False, Side.LEFT)
+    assert (Endpoint(0, True, Side.RIGHT) > Endpoint(0, False, Side.LEFT)) is False
 
     assert end != 1
     with pytest.raises(TypeError) as excinfo:
-        end > 1
+        end > 1  # pylint: disable=pointless-statement
     assert (
         str(excinfo.value)
         == "'>' not supported between instances of 'Endpoint' and 'int'"
