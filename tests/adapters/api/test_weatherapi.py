@@ -779,6 +779,7 @@ def test_window(mocker):
     session = mocker.patch(
         "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
     )
+    session.return_value.get.return_value.json.return_value = weatherapi_response
 
     adapter = WeatherAPI("location", "XXX")
     list(adapter.get_data({}, []))
