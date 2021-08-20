@@ -30,7 +30,7 @@ from shillelagh.filters import Range
 
 def test_get_field():
     """
-    Test get_field.
+    Test ``get_field``.
     """
     assert get_field({"type": "string"}, None) == GSheetsString(
         [Equal],
@@ -78,7 +78,7 @@ def test_get_field():
 
 def test_format_error_message():
     """
-    Test format_error_message.
+    Test ``format_error_message``.
     """
     assert format_error_message([]) == ""
     response = {
@@ -98,7 +98,7 @@ def test_format_error_message():
 
 def test_get_url():
     """
-    Test get_url.
+    Test ``get_url``.
     """
     assert (
         get_url(
@@ -131,7 +131,7 @@ def test_get_url():
 
 def test_get_sync_mode():
     """
-    Test get_sync_mode.
+    Test ``get_sync_mode``.
     """
     assert get_sync_mode("https://docs.google.com/spreadsheets/d/1/edit#gid=42") is None
     assert (
@@ -166,7 +166,7 @@ def test_get_sync_mode():
 
 def test_gen_letters():
     """
-    Test gen_letters.
+    Test ``gen_letters``.
     """
     letters = list(itertools.islice(gen_letters(), 60))
     assert letters == [
@@ -235,7 +235,7 @@ def test_gen_letters():
 
 def test_get_index_from_letters():
     """
-    Test get_index_from_letters.
+    Test ``get_index_from_letters``.
     """
     assert get_index_from_letters("A") == 0
     assert get_index_from_letters("Z") == 25
@@ -246,7 +246,7 @@ def test_get_index_from_letters():
 
 def test_get_values_from_row():
     """
-    Test get_values_from_row.
+    Test ``get_values_from_row``.
     """
     column_map = {"country": "A", "cnt": "C"}
     row = {"country": "BR", "cnt": 10}
@@ -255,7 +255,7 @@ def test_get_values_from_row():
 
 def test_get_credentials(mocker):
     """
-    Test get_credentials.
+    Test ``get_credentials``.
     """
     service_account = mocker.patch(
         "shillelagh.adapters.api.gsheets.lib.google.oauth2.service_account.Credentials",
@@ -305,7 +305,7 @@ def test_get_credentials(mocker):
 
 def test_get_value_from_cell():
     """
-    Test get_value_from_cell.
+    Test ``get_value_from_cell``.
     """
     assert (
         get_value_from_cell({"v": "Date(2018,8,1,0,0,0)", "f": "9/1/2018 0:00:00"})

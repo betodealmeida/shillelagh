@@ -48,7 +48,7 @@ def test_comparison():
 
 def test_GSheetsDateTime():
     """
-    Test GSheetsDateTime.
+    Test ``GSheetsDateTime``.
     """
     assert GSheetsDateTime().parse(None) is None
     assert GSheetsDateTime().parse("") is None
@@ -103,7 +103,7 @@ def test_GSheetsDateTime_timezone():
 
 def test_GSheetsDate():
     """
-    Test GSheetsDate.
+    Test ``GSheetsDate``.
     """
     assert GSheetsDate().parse(None) is None
     assert GSheetsDate().parse("") is None
@@ -127,7 +127,7 @@ def test_GSheetsDate():
 
 def test_GSheetsTime():
     """
-    Test GSheetsTime.
+    Test ``GSheetsTime``.
     """
     assert GSheetsTime().parse(None) is None
     assert GSheetsTime().parse("") is None
@@ -154,7 +154,7 @@ def test_GSheetsTime():
 
 def test_GSheetsBoolean():
     """
-    Test GSheetsBoolean.
+    Test ``GSheetsBoolean``.
     """
     assert GSheetsBoolean().parse(None) is None
     assert GSheetsBoolean().parse("") is None
@@ -173,7 +173,7 @@ def test_GSheetsBoolean():
 
 def test_GSheetsNumber():
     """
-    Test GSheetsNumber.
+    Test ``GSheetsNumber``.
     """
     assert GSheetsNumber().parse(None) is None
     assert GSheetsNumber().parse("") is None
@@ -195,7 +195,7 @@ def test_GSheetsNumber():
 
 def test_GSheetsString():
     """
-    Test GSheetsString.
+    Test ``GSheetsString``.
     """
     assert GSheetsString().parse(None) is None
     assert GSheetsString().parse("") is None

@@ -1,3 +1,7 @@
+# pylint: disable=c-extension-no-member
+"""
+Tests for shillelagh.backends.apsw.vt.
+"""
 import datetime
 from typing import Dict
 
@@ -5,7 +9,6 @@ import apsw
 import pytest
 
 from ...fakes import FakeAdapter
-from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.vt import convert_rows_from_sqlite
 from shillelagh.backends.apsw.vt import convert_rows_to_sqlite
 from shillelagh.backends.apsw.vt import type_map
@@ -18,12 +21,13 @@ from shillelagh.fields import Integer
 from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
-from shillelagh.filters import Filter
-from shillelagh.filters import Range
-from shillelagh.typing import Row
 
 
 class FakeAdapterNoFilters(FakeAdapter):
+
+    """
+    An adapter where columns have no filters.
+    """
 
     age = Float()
     name = String()
@@ -32,6 +36,10 @@ class FakeAdapterNoFilters(FakeAdapter):
 
 class FakeAdapterOnlyEqual(FakeAdapter):
 
+    """
+    An adapter where columns can only be filtered via equality.
+    """
+
     age = Float(filters=[Equal], order=Order.NONE, exact=True)
     name = String(filters=[Equal], order=Order.ASCENDING, exact=True)
     pets = Integer()
@@ -39,20 +47,31 @@ class FakeAdapterOnlyEqual(FakeAdapter):
 
 class FakeAdapterStaticSort(FakeAdapter):
 
+    """
+    An adapter with columns having a static order.
+    """
+
     age = Float(filters=[Equal], order=Order.NONE)
     name = String(filters=[Equal], order=Order.ASCENDING)
     pets = Integer()
 
 
 class FakeAdapterNoColumns(FakeAdapter):
+
+    """
+    An adapter without columns.
+    """
+
     def get_columns(self) -> Dict[str, Field]:
         return {}
 
 
 def test_vt_module():
-    table = VTTable(FakeAdapter)
+    """
+    Test ``VTModule``.
+    """
     vt_module = VTModule(FakeAdapter)
-    create_table, table = vt_module.Create(None, "", "", "table")
+    create_table, _ = vt_module.Create(None, "", "", "table")
     assert (
         create_table
         == """CREATE TABLE "table" ("age" REAL, "name" TEXT, "pets" INTEGER)"""
@@ -60,6 +79,9 @@ def test_vt_module():
 
 
 def test_virtual_best_index():
+    """
+    Test ``BestIndex``.
+    """
     table = VTTable(FakeAdapter())
     result = table.BestIndex(
         [
@@ -72,13 +94,19 @@ def test_virtual_best_index():
     assert result == (
         [(0, True), None, (1, True)],
         42,
-        f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}], [0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}]], [[1, false]]]",
+        (
+            f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}], "
+            f"[0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}]], [[1, false]]]"
+        ),
         True,
         666,
     )
 
 
-def test_virtual_best_index_static_order_consumed():
+def test_virtual_best_index_static_order_not_consumed():
+    """
+    Test ``BestIndex`` when the adapter cannot consume the order.
+    """
     table = VTTable(FakeAdapterStaticSort())
     result = table.BestIndex(
         [
@@ -97,7 +125,10 @@ def test_virtual_best_index_static_order_consumed():
     )
 
 
-def test_virtual_best_index_static_order_not_consumed():
+def test_virtual_best_index_static_order_not_consumed_descending():
+    """
+    Test ``BestIndex`` when the adapter cannot consume the order.
+    """
     table = VTTable(FakeAdapterStaticSort())
     result = table.BestIndex(
         [
@@ -117,6 +148,9 @@ def test_virtual_best_index_static_order_not_consumed():
 
 
 def test_virtual_best_index_operator_not_supported():
+    """
+    Test ``BestIndex`` with an unsupported operator.
+    """
     table = VTTable(FakeAdapter())
     result = table.BestIndex(
         [(1, apsw.SQLITE_INDEX_CONSTRAINT_MATCH)],  # name LIKE?
@@ -125,7 +159,10 @@ def test_virtual_best_index_operator_not_supported():
     assert result == ([None], 42, "[[], [[1, false]]]", True, 666)
 
 
-def test_virtual_best_index_no_order_by():
+def test_virtual_best_index_order_consumed():
+    """
+    Test ``BestIndex`` when the adapter can consume the order.
+    """
     table = VTTable(FakeAdapter())
     result = table.BestIndex(
         [
@@ -138,18 +175,27 @@ def test_virtual_best_index_no_order_by():
     assert result == (
         [(0, True), None, (1, True)],
         42,
-        f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}], [0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}]], [[0, true]]]",
+        (
+            f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}], "
+            f"[0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}]], [[0, true]]]"
+        ),
         True,
         666,
     )
 
 
 def test_virtual_disconnect():
+    """
+    Test ``Disconnect``.
+    """
     table = VTTable(FakeAdapter())
     table.Disconnect()  # no-op
 
 
 def test_update_insert_row():
+    """
+    Test ``UpdateInsertRow``.
+    """
     adapter = FakeAdapter()
     table = VTTable(adapter)
 
@@ -172,6 +218,9 @@ def test_update_insert_row():
 
 
 def test_update_delete_row():
+    """
+    Test ``UpdateDeleteRow``.
+    """
     adapter = FakeAdapter()
     table = VTTable(adapter)
 
@@ -182,6 +231,9 @@ def test_update_delete_row():
 
 
 def test_update_change_row():
+    """
+    Test ``UpdateChangeRow``.
+    """
     adapter = FakeAdapter()
     table = VTTable(adapter)
 
@@ -199,6 +251,9 @@ def test_update_change_row():
 
 
 def test_cursor():
+    """
+    Test the cursor.
+    """
     table = VTTable(FakeAdapter())
     cursor = table.Open()
     cursor.Filter(42, "[[], []]", [])
@@ -216,6 +271,9 @@ def test_cursor():
 
 
 def test_cursor_with_constraints():
+    """
+    Test filtering a cursor.
+    """
     table = VTTable(FakeAdapter())
     cursor = table.Open()
     cursor.Filter(42, f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}]], []]", ["Alice"])
@@ -227,6 +285,9 @@ def test_cursor_with_constraints():
 
 
 def test_cursor_with_constraints_invalid_filter():
+    """
+    Test passing an invalid constraint to a cursor.
+    """
     table = VTTable(FakeAdapter())
     cursor = table.Open()
 
@@ -241,6 +302,9 @@ def test_cursor_with_constraints_invalid_filter():
 
 
 def test_cursor_with_constraints_no_filters():
+    """
+    Test passing a constraint to an adapter that cannot be filtered.
+    """
     table = VTTable(FakeAdapterNoFilters())
     cursor = table.Open()
     with pytest.raises(Exception) as excinfo:
@@ -250,6 +314,9 @@ def test_cursor_with_constraints_no_filters():
 
 
 def test_cursor_with_constraints_only_equal():
+    """
+    Test passing a constraint not supported by the adapter.
+    """
     table = VTTable(FakeAdapterOnlyEqual())
     cursor = table.Open()
     with pytest.raises(Exception) as excinfo:
@@ -259,15 +326,20 @@ def test_cursor_with_constraints_only_equal():
 
 
 def test_adapter_with_no_columns():
-    table = VTTable(FakeAdapter)
+    """
+    Test creating a table without columns.
+    """
     vt_module = VTModule(FakeAdapterNoColumns)
     with pytest.raises(ProgrammingError) as excinfo:
-        create_table, table = vt_module.Create(None, "", "", "table")
+        vt_module.Create(None, "", "", "table")
 
     assert str(excinfo.value) == "Virtual table table has no columns"
 
 
 def test_convert_rows_to_sqlite():
+    """
+    Test that rows get converted to types supported by SQLite.
+    """
     rows = [
         {
             "INTEGER": 1,
@@ -322,6 +394,9 @@ def test_convert_rows_to_sqlite():
 
 
 def test_convert_rows_from_sqlite():
+    """
+    Test that rows get converted from the types supported by SQLite.
+    """
     rows = [
         {
             "INTEGER": 1,

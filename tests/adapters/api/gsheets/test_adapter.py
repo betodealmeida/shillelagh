@@ -156,7 +156,7 @@ def simple_sheet_adapter():
 
 def test_credentials(mocker):
     """
-    Test credentials.
+    Test ``credentials``.
     """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
@@ -203,7 +203,7 @@ def test_credentials(mocker):
 
 def test_execute(mocker, simple_sheet_adapter):
     """
-    Test execute.
+    Test ``execute``.
     """
     entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
     mocker.patch(
@@ -635,7 +635,7 @@ def test_convert_rows(mocker):
 
 def test_get_session(mocker):
     """
-    Test _get_session.
+    Test ``_get_session``.
     """
     mock_authorized_session = mock.MagicMock()
     mocker.patch(
@@ -1057,7 +1057,7 @@ def test_headers_not_detected_no_rows(mocker):
 
 def test_set_metadata(mocker, simple_sheet_adapter):
     """
-    Test _set_metadata.
+    Test ``_set_metadata``.
     """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._set_columns",
@@ -1140,7 +1140,7 @@ def test_set_metadata_error(mocker):
 
 def test_insert_data(mocker, simple_sheet_adapter):
     """
-    Test insert_data.
+    Test ``insert_data``.
     """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
@@ -1214,7 +1214,7 @@ def test_insert_data(mocker, simple_sheet_adapter):
 
 def test_delete_data(mocker, simple_sheet_adapter):
     """
-    Test delete_data.
+    Test ``delete_data``.
     """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
@@ -1309,7 +1309,7 @@ def test_delete_data(mocker, simple_sheet_adapter):
 
 def test_update_data(mocker, simple_sheet_adapter):
     """
-    Test update_data.
+    Test ``update_data``.
     """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
@@ -1943,7 +1943,7 @@ def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
 
 def test_get_metadata(mocker, simple_sheet_adapter):
     """
-    Test get_metadata.
+    Test ``get_metadata``.
     """
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
@@ -2033,7 +2033,7 @@ def test_get_metadata(mocker, simple_sheet_adapter):
 
 def test_supports():
     """
-    Test supports.
+    Test ``supports``.
 
     The method should use the catalog, in addition to validating the URLs.
     """
@@ -2208,7 +2208,7 @@ def test_header_rows(mocker):
 
 def test_get_cost(mocker):
     """
-    Test get_cost.
+    Test ``get_cost``.
     """
     mock_authorized_session = mock.MagicMock()
     mocker.patch(

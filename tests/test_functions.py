@@ -1,3 +1,6 @@
+"""
+Tests for shillelagh.functions.
+"""
 import json
 
 import pkg_resources
@@ -11,6 +14,9 @@ from shillelagh.functions import get_metadata
 
 
 def test_sleep_from_sql(mocker):
+    """
+    Test ``sleep``.
+    """
     sleep = mocker.patch("time.sleep")
     entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
     mocker.patch(
@@ -24,7 +30,10 @@ def test_sleep_from_sql(mocker):
     sleep.assert_called_with(5)
 
 
-def test_get_metadata(mocker):
+def test_get_metadata():
+    """
+    Test ``get_metadata``.
+    """
     assert (
         get_metadata(
             {"dummy": {"key": "value"}, "other": {"one": "two"}},
@@ -44,6 +53,9 @@ def test_get_metadata(mocker):
 
 
 def test_get_metadata_from_sql(mocker):
+    """
+    Test calling ``get_metadata`` from SQL.
+    """
     mocker.patch(
         "shillelagh.functions.get_metadata",
         return_value=json.dumps({"hello": "world"}),
@@ -59,7 +71,10 @@ def test_get_metadata_from_sql(mocker):
     assert cursor.fetchall() == [('{"hello": "world"}',)]
 
 
-def test_version_from_sql(mocker):
+def test_version_from_sql():
+    """
+    Test calling ``version`` from SQL.
+    """
     connection = connect(":memory:")
     cursor = connection.cursor()
     cursor.execute("SELECT version()")

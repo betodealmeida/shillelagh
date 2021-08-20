@@ -1,3 +1,6 @@
+"""
+Test for shillelagh.backends.apsw.dialects.gsheets.
+"""
 from unittest import mock
 
 import pytest
@@ -12,6 +15,9 @@ from shillelagh.exceptions import ProgrammingError
 
 
 def test_gsheets_dialect():
+    """
+    Test the basic usage of the dialect
+    """
     dialect = APSWGSheetsDialect()
     assert dialect.create_connect_args(make_url("gsheets://")) == (
         (),
@@ -84,6 +90,9 @@ def test_gsheets_dialect():
 
 
 def test_get_table_names(mocker):
+    """
+    Test ``get_table_names``.
+    """
     get_credentials = mocker.patch(
         "shillelagh.backends.apsw.dialects.gsheets.get_credentials",
     )
@@ -97,7 +106,10 @@ def test_get_table_names(mocker):
     )
     adapter.register_uri(
         "GET",
-        "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'",
+        (
+            "https://www.googleapis.com/drive/v3/files?"
+            "q=mimeType='application/vnd.google-apps.spreadsheet'"
+        ),
         json={"files": [{"id": 1}, {"id": 2}, {"id": 3}]},
     )
     adapter.register_uri(
@@ -121,7 +133,14 @@ def test_get_table_names(mocker):
         json={
             "error": {
                 "code": 403,
-                "message": "Google Sheets API has not been used in project 1034909279888 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=1034909279888 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.",
+                "message": (
+                    "Google Sheets API has not been used in project 1034909279888 "
+                    "before or it is disabled. Enable it by visiting "
+                    "https://console.developers.google.com/apis/api/"
+                    "sheets.googleapis.com/overview?project=1034909279888 then "
+                    "retry. If you enabled this API recently, wait a few minutes "
+                    "for the action to propagate to our systems and retry."
+                ),
                 "status": "PERMISSION_DENIED",
                 "details": [
                     {
@@ -129,7 +148,10 @@ def test_get_table_names(mocker):
                         "links": [
                             {
                                 "description": "Google developers console API activation",
-                                "url": "https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=1034909279888",
+                                "url": (
+                                    "https://console.developers.google.com/apis/api/"
+                                    "sheets.googleapis.com/overview?project=1034909279888"
+                                ),
                             },
                         ],
                     },
@@ -164,11 +186,21 @@ def test_get_table_names(mocker):
 
     _logger.warning.assert_called_with(
         "Error loading sheets from file: %s",
-        "Google Sheets API has not been used in project 1034909279888 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=1034909279888 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.",
+        (
+            "Google Sheets API has not been used in project 1034909279888 before "
+            "or it is disabled. Enable it by visiting "
+            "https://console.developers.google.com/apis/api/"
+            "sheets.googleapis.com/overview?project=1034909279888 then retry. "
+            "If you enabled this API recently, wait a few minutes for the action "
+            "to propagate to our systems and retry."
+        ),
     )
 
 
 def test_drive_api_disabled(mocker):
+    """
+    Test error message when the Drive API is disabled.
+    """
     get_credentials = mocker.patch(
         "shillelagh.backends.apsw.dialects.gsheets.get_credentials",
     )
@@ -182,19 +214,39 @@ def test_drive_api_disabled(mocker):
     )
     adapter.register_uri(
         "GET",
-        "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'",
+        (
+            "https://www.googleapis.com/drive/v3/files?"
+            "q=mimeType='application/vnd.google-apps.spreadsheet'"
+        ),
         json={
             "error": {
                 "errors": [
                     {
                         "domain": "usageLimits",
                         "reason": "accessNotConfigured",
-                        "message": "Access Not Configured. Drive API has not been used in project 1034909279888 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=1034909279888 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.",
-                        "extendedHelp": "https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=1034909279888",
+                        "message": (
+                            "Access Not Configured. Drive API has not been used in "
+                            "project 1034909279888 before or it is disabled. Enable "
+                            "it by visiting https://console.developers.google.com/apis/api/"
+                            "drive.googleapis.com/overview?project=1034909279888 then retry. "
+                            "If you enabled this API recently, wait a few minutes for the "
+                            "action to propagate to our systems and retry."
+                        ),
+                        "extendedHelp": (
+                            "https://console.developers.google.com/apis/api/"
+                            "drive.googleapis.com/overview?project=1034909279888"
+                        ),
                     },
                 ],
                 "code": 403,
-                "message": "Access Not Configured. Drive API has not been used in project 1034909279888 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=1034909279888 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.",
+                "message": (
+                    "Access Not Configured. Drive API has not been used in project "
+                    "1034909279888 before or it is disabled. Enable it by visiting "
+                    "https://console.developers.google.com/apis/api/"
+                    "drive.googleapis.com/overview?project=1034909279888 then retry. "
+                    "If you enabled this API recently, wait a few minutes for the "
+                    "action to propagate to our systems and retry."
+                ),
             },
         },
     )
@@ -205,13 +257,22 @@ def test_drive_api_disabled(mocker):
     with pytest.raises(ProgrammingError) as excinfo:
         engine.table_names()
 
-    assert (
-        str(excinfo.value)
-        == "Access Not Configured. Drive API has not been used in project 1034909279888 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=1034909279888 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."
+    assert str(excinfo.value) == (
+        "Access Not Configured. Drive API has not been used in project 1034909279888 "
+        "before or it is disabled. Enable it by visiting "
+        "https://console.developers.google.com/apis/api/"
+        "drive.googleapis.com/overview?project=1034909279888 then retry. If you "
+        "enabled this API recently, wait a few minutes for the action to propagate "
+        "to our systems and retry."
     )
 
 
 def test_extract_query():
+    """
+    Test ``extract_query``.
+
+    Older version of SQLAlchemy (<1.4) have a bug in ``make_url``.
+    """
     assert extract_query(make_url("gsheets://")) == {}
     assert extract_query(make_url("gsheets://host")) == {}
     assert extract_query(make_url("gsheets://?foo=bar")) == {"foo": "bar"}

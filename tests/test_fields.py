@@ -1,6 +1,7 @@
+"""
+Tests for shillelagh.fields.
+"""
 import datetime
-
-import pytest
 
 from shillelagh.fields import Blob
 from shillelagh.fields import Boolean
@@ -26,6 +27,9 @@ from shillelagh.types import STRING
 
 
 def test_comparison():
+    """
+    Test comparing fields.
+    """
     field1 = Field(filters=[Equal], order=Order.ASCENDING, exact=True)
     field2 = Field(filters=[Equal], order=Order.ASCENDING, exact=True)
     field3 = Field(filters=[Equal], order=Order.ASCENDING, exact=False)
@@ -42,6 +46,9 @@ def test_comparison():
 
 
 def test_integer():
+    """
+    Test ``Integer``.
+    """
     assert Integer().parse(1) == 1
     assert Integer().parse(None) is None
     assert Integer().format(1) == 1
@@ -51,6 +58,9 @@ def test_integer():
 
 
 def test_float():
+    """
+    Test ``Float``.
+    """
     assert Float().parse(1.0) == 1.0
     assert Float().parse(None) is None
     assert Float().format(1.0) == 1.0
@@ -60,6 +70,9 @@ def test_float():
 
 
 def test_string():
+    """
+    Test ``String``.
+    """
     assert String().parse("1.0") == "1.0"
     assert String().parse(None) is None
     assert String().format("test") == "test"
@@ -70,6 +83,9 @@ def test_string():
 
 
 def test_date():
+    """
+    Test ``Date``.
+    """
     assert Date().parse(datetime.date(2020, 1, 1)) == datetime.date(2020, 1, 1)
     assert Date().parse(None) is None
     assert Date().format(datetime.date(2020, 1, 1)) == datetime.date(2020, 1, 1)
@@ -79,6 +95,9 @@ def test_date():
 
 
 def test_isodate():
+    """
+    Test ``ISODate``.
+    """
     assert ISODate().parse("2020-01-01") == datetime.date(2020, 1, 1)
     assert ISODate().parse("2020-01-01T00:00+00:00") == datetime.date(
         2020,
@@ -94,6 +113,9 @@ def test_isodate():
 
 
 def test_time():
+    """
+    Test ``Time``.
+    """
     assert (
         Time().parse(
             datetime.time(12, 0, tzinfo=datetime.timezone.utc),
@@ -116,6 +138,9 @@ def test_time():
 
 
 def test_iso_time():
+    """
+    Test ``ISOTime``.
+    """
     assert ISOTime().parse("12:00+00:00") == datetime.time(
         12,
         0,
@@ -137,6 +162,9 @@ def test_iso_time():
 
 
 def test_datetime():
+    """
+    Test ``DateTime``.
+    """
     assert (
         DateTime().parse(
             datetime.datetime(2020, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc),
@@ -161,6 +189,9 @@ def test_datetime():
 
 
 def test_iso_datetime():
+    """
+    Test ``ISODateTime``.
+    """
     assert ISODateTime().parse("2020-01-01T12:00+00:00") == datetime.datetime(
         2020,
         1,
@@ -195,6 +226,9 @@ def test_iso_datetime():
 
 
 def test_boolean():
+    """
+    Test ``Boolean``.
+    """
     assert Boolean().parse(True) is True
     assert Boolean().parse(False) is False
     assert Boolean().parse(None) is None
@@ -207,6 +241,9 @@ def test_boolean():
 
 
 def test_int_boolean():
+    """
+    Test ``IntBoolean``.
+    """
     assert IntBoolean().parse(1) is True
     assert IntBoolean().parse(0) is False
     assert IntBoolean().parse(10) is True
@@ -220,6 +257,9 @@ def test_int_boolean():
 
 
 def test_string_boolean():
+    """
+    Test ``StringBoolean``.
+    """
     assert StringBoolean().parse("TRUE") is True
     assert StringBoolean().parse("FALSE") is False
     assert StringBoolean().parse(None) is None
@@ -232,6 +272,9 @@ def test_string_boolean():
 
 
 def test_blob():
+    """
+    Test ``Blob``.
+    """
     assert Blob().parse(b"test") == b"test"
     assert Blob().parse(None) is None
     assert Blob().format(b"test") == b"test"
@@ -241,6 +284,9 @@ def test_blob():
 
 
 def test_string_blob():
+    """
+    Test ``StringBlob``.
+    """
     assert StringBlob().parse("74657374") == b"test"
     assert StringBlob().parse(None) is None
     assert StringBlob().format(b"test") == "74657374"
@@ -250,6 +296,9 @@ def test_string_blob():
 
 
 def test_type_code():
+    """
+    Test typecodes for Python DB API.
+    """
     assert Integer == NUMBER
     assert Float == NUMBER
     assert String == STRING
