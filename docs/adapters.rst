@@ -211,3 +211,11 @@ Shillelagh has support for Pandas dataframes, inspired by `DuckDB <https://duckd
     for row in cursor.execute(sql):
         print(row)
     
+Datasette
+---------
+
+You can select data from any `Datasette <https://datasette.io/>`_ table, appending ``datasette+`` to the URL:
+
+.. code-block:: sql
+
+    SELECT * FROM "datasette+https://fivethirtyeight.datasettes.com/polls/president_polls"
