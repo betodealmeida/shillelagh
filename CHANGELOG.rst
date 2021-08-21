@@ -5,12 +5,13 @@ Changelog
 Version 1.x.y - 2021-MM-DD
 ==========================
 
-- Added cost estimation to all adapters
+- Add cost estimation to all adapters
+- Add Datasette adapter
 
 Version 1.0.0 - 2021-08-18
 ==========================
 
-- Moved config to ``~/.config/shillelagh/``
+- Move config to ``~/.config/shillelagh/``
 - Add function ``get_available_adapters`` to list installed adapters
 - Developer and user docs `added <https://shillelagh.readthedocs.io/>`_
 - Small fixes
@@ -18,8 +19,8 @@ Version 1.0.0 - 2021-08-18
 Version 0.8.1 - 2021-07-11
 ==========================
 
-- Added integration tests
-- Fixed couple bugs on GSheets while adding integration tests
+- Add integration tests
+- Fix couple bugs on GSheets while adding integration tests
 
 Version 0.8.0 - 2021-07-08
 ==========================
@@ -56,10 +57,10 @@ Version 0.7.0 - 2021-07-01
 - GSheets dialect now return "main" as its schema
 - Schema prefix can now be used on table names
 - GSheets now supports defining a catalog of spreadsheets
-- Improved many small bugs in the type conversion system
+- Improve many small bugs in the type conversion system
 - Add ``sleep``, ``version``, and ``get_metadata`` functions
 - Add REPL command-line utility (``shillelagh``)
-- Removed ``adapter_args``, use only ``adapter_kwargs`` now
+- Remove ``adapter_args``, use only ``adapter_kwargs`` now
 
 Version 0.6.1 - 2021-06-22
 ==========================
@@ -132,10 +133,10 @@ Version 0.2.1 - 2021-03-15
 Version 0.2 - 2021-02-17
 ========================
 
-- Added DB API 2.0 layer
-- Added SQLAlchemy dialect
-- Added GSheets adapter
-- Added drop-in replacement for ``gsheets://`` dialect
+- Add DB API 2.0 layer
+- Add SQLAlchemy dialect
+- Add GSheets adapter
+- Add drop-in replacement for ``gsheets://`` dialect
 
 Version 0.1 - 2020-10-26
 ========================
