@@ -6,7 +6,7 @@
 #
 apsw==3.9.2.post1
     # via shillelagh (setup.py)
-greenlet==1.1.0
+greenlet==1.1.1
     # via sqlalchemy
 python-dateutil==2.8.2
     # via shillelagh (setup.py)
