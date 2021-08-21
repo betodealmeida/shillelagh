@@ -212,7 +212,7 @@ Shillelagh has support for Pandas dataframes, inspired by `DuckDB <https://duckd
         print(row)
     
 Datasette
----------
+=========
 
 You can select data from any `Datasette <https://datasette.io/>`_ table, appending ``datasette+`` to the URL:
 
