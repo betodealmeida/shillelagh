@@ -402,6 +402,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                     self.columns,
                     bounds,
                     order,
+                    None,
                     self._column_map,
                     self._offset,
                 )

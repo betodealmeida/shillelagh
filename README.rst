@@ -75,6 +75,7 @@ Queries like this are supported by `adapters <https://shillelagh.readthedocs.io/
 - `Socrata Open Data API <https://dev.socrata.com/>`_
 - CSV files
 - Pandas dataframes
+- `Datasette tables <https://datasette.io/>`_
 
 A query can combine data from multiple adapters:
 

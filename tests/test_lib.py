@@ -160,6 +160,9 @@ def test_build_sql():
     sql = build_sql(columns, {}, [])
     assert sql == "SELECT *"
 
+    sql = build_sql(columns, {}, [], "some_table")
+    assert sql == "SELECT * FROM some_table"
+
     with pytest.raises(ProgrammingError) as excinfo:
         build_sql(columns, {"a": [1, 2, 3]}, [])
     assert str(excinfo.value) == "Invalid filter: [1, 2, 3]"
@@ -178,7 +181,7 @@ def test_build_sql_with_map():
     }
     order = [("col0_", Order.ASCENDING), ("col1_", Order.DESCENDING)]
     column_map = {f"col{i}_": letter for i, letter in enumerate("ABCD")}
-    sql = build_sql(columns, bounds, order, column_map, 1)
+    sql = build_sql(columns, bounds, order, None, column_map, 1)
     assert sql == (
         "SELECT * WHERE A = 1 AND B >= 0 AND B < 1 AND "
         "C <= 1 AND D > 0 ORDER BY A, B DESC OFFSET 1"

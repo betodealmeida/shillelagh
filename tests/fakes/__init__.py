@@ -97,3 +97,5 @@ with open(os.path.join(dirname, "cdc_metadata_response.json")) as fp:
     cdc_metadata_response = json.load(fp)
 with open(os.path.join(dirname, "cdc_data_response.json")) as fp:
     cdc_data_response = json.load(fp)
+with open(os.path.join(dirname, "datasette_data_response.json")) as fp:
+    datasette_data_response = json.load(fp)

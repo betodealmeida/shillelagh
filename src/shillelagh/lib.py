@@ -254,6 +254,7 @@ def build_sql(
     columns: Dict[str, Field],
     bounds: Dict[str, Filter],
     order: List[Tuple[str, RequestedOrder]],
+    table: Optional[str] = None,
     column_map: Optional[Dict[str, str]] = None,
     offset: int = 0,
 ) -> str:
@@ -265,6 +266,9 @@ def build_sql(
     SQL references columns by label ("A", "B", etc.) instead of name.
     """
     sql = "SELECT *"
+
+    if table:
+        sql = f"{sql} FROM {table}"
 
     conditions = []
     for column_name, filter_ in bounds.items():
