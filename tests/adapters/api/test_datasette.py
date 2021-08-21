@@ -10,8 +10,14 @@ from ...fakes import datasette_data_response_2
 from ...fakes import datasette_metadata_response
 from ...fakes import datasette_results
 from shillelagh.adapters.api.datasette import DatasetteAPI
+from shillelagh.adapters.api.datasette import get_field
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
+from shillelagh.fields import Float
+from shillelagh.fields import Integer
+from shillelagh.fields import ISODate
+from shillelagh.fields import ISODateTime
+from shillelagh.fields import String
 
 
 def test_datasette(requests_mock):
@@ -115,3 +121,15 @@ def test_get_metadata(requests_mock):
 
     adapter = DatasetteAPI("https://example.com", "database", "table")
     assert adapter.get_metadata() == {"foo": "bar"}
+
+
+def test_get_field():
+    """
+    Test ``get_field``.
+    """
+    assert isinstance(get_field(1), Integer)
+    assert isinstance(get_field(1.1), Float)
+    assert isinstance(get_field("test"), String)
+    assert isinstance(get_field("2021-01-01"), ISODate)
+    assert isinstance(get_field("2021-01-01 00:00:00"), ISODateTime)
+    assert isinstance(get_field(None), String)
