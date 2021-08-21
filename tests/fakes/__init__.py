@@ -97,5 +97,13 @@ with open(os.path.join(dirname, "cdc_metadata_response.json")) as fp:
     cdc_metadata_response = json.load(fp)
 with open(os.path.join(dirname, "cdc_data_response.json")) as fp:
     cdc_data_response = json.load(fp)
-with open(os.path.join(dirname, "datasette_data_response.json")) as fp:
-    datasette_data_response = json.load(fp)
+with open(os.path.join(dirname, "datasette_columns_response.json")) as fp:
+    datasette_columns_response = json.load(fp)
+with open(os.path.join(dirname, "datasette_data_response_1.json")) as fp:
+    datasette_data_response_1 = json.load(fp)
+with open(os.path.join(dirname, "datasette_data_response_2.json")) as fp:
+    datasette_data_response_2 = json.load(fp)
+with open(os.path.join(dirname, "datasette_metadata_response.json")) as fp:
+    datasette_metadata_response = json.load(fp)
+with open(os.path.join(dirname, "datasette_results.json")) as fp:
+    datasette_results = [tuple(row) for row in json.load(fp)]
