@@ -11,7 +11,9 @@ from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import Tuple
+from typing import Type
 
+import dateutil.parser
 import requests_cache
 
 from shillelagh.adapters.base import Adapter
@@ -19,6 +21,8 @@ from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.fields import Float
 from shillelagh.fields import Integer
+from shillelagh.fields import ISODate
+from shillelagh.fields import ISODateTime
 from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Filter
@@ -38,11 +42,21 @@ def get_field(value: Any) -> Field:
     """
     Return a Shillelagh ``Field`` based on the value type.
     """
+    class_: Type[Field] = String
+
     if isinstance(value, int):
-        return Integer(filters=[Range], order=Order.ANY, exact=True)
-    if isinstance(value, float):
-        return Float(filters=[Range], order=Order.ANY, exact=True)
-    return String(filters=[Range], order=Order.ANY, exact=True)
+        class_ = Integer
+    elif isinstance(value, float):
+        class_ = Float
+    elif isinstance(value, str):
+        try:
+            dateutil.parser.isoparse(value)
+        except Exception:  # pylint: disable=broad-except
+            pass
+        else:
+            class_ = ISODate if len(value) == 10 else ISODateTime  # type: ignore
+
+    return class_(filters=[Range], order=Order.ANY, exact=True)
 
 
 class DatasetteAPI(Adapter):
