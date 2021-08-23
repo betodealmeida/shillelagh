@@ -476,7 +476,7 @@ def connect(
         >>> from pyfakefs.fake_filesystem_unittest import Patcher
         >>> with Patcher() as patcher:
         ...     fake_file = patcher.fs.create_file('/foo/bar.csv', contents='"a","b"\n1,2\n3,4')
-        ...     list(curs.execute("SELECT * FROM 'csv:///foo/bar.csv'"))
+        ...     list(curs.execute("SELECT * FROM '/foo/bar.csv'"))
         [(1.0, 2.0), (3.0, 4.0)]
 
     """
