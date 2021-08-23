@@ -54,3 +54,19 @@ def test_dialect_ping():
     mock_dbapi_connection = mock.MagicMock()
     dialect = APSWDialect()
     assert dialect.do_ping(mock_dbapi_connection) is True
+
+
+def test_has_table(mocker):
+    """
+    Test ``has_table``.
+    """
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    engine = create_engine("shillelagh://")
+    assert engine.has_table("dummy://a")
+    assert engine.has_table("dummy://b")
+    assert not engine.has_table("funny://b")
