@@ -186,9 +186,14 @@ class DatasetteAPI(Adapter):
                 bounds,
                 order,
                 f'"{self.table}"',
+                limit=-1,
                 offset=offset,
             )
             payload = self._run_query(sql)
+
+            if "error" in payload:
+                raise ProgrammingError("Error ({title}): {error}".format(**payload))
+
             columns = payload["columns"]
 
             i = -1
