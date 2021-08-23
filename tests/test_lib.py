@@ -21,6 +21,7 @@ from shillelagh.lib import DELETED
 from shillelagh.lib import deserialize
 from shillelagh.lib import escape
 from shillelagh.lib import filter_data
+from shillelagh.lib import find_adapter
 from shillelagh.lib import get_available_adapters
 from shillelagh.lib import RowIDManager
 from shillelagh.lib import serialize
@@ -299,3 +300,28 @@ def test_get_available_adapters(mocker):
     )
 
     assert get_available_adapters() == {"dummy"}
+
+
+def test_find_adapter(mocker):
+    """
+    Test ``find_adapter``.
+    """
+    adapter1 = mocker.MagicMock()
+    adapter1.configure_mock(__name__="adapter1")
+    adapter2 = mocker.MagicMock()
+    adapter2.configure_mock(__name__="adapter2")
+
+    uri = "https://example.com/"
+    adapter_kwargs = {}
+    adapters = [
+        adapter1,
+        adapter2,
+    ]
+
+    adapter1.supports.return_value = True
+    adapter2.supports.side_effect = [None, False]
+    assert find_adapter(uri, adapter_kwargs, adapters) == adapter1
+
+    adapter1.supports.return_value = False
+    adapter2.supports.side_effect = [None, True]
+    assert find_adapter(uri, adapter_kwargs, adapters) == adapter2

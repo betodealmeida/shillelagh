@@ -86,7 +86,7 @@ class PandasMemory(Adapter):
     safe = False
 
     @staticmethod
-    def supports(uri: str, **kwargs: Any) -> bool:
+    def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         return find_dataframe(uri) is not None
 
     @staticmethod

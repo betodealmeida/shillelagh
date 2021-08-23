@@ -53,7 +53,7 @@ class FakeAdapter(Adapter):
     pets = Integer(order=Order.ANY)
 
     @staticmethod
-    def supports(uri: str, **kwargs: Any) -> bool:
+    def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         parsed = urllib.parse.urlparse(uri)
         return parsed.scheme == "dummy"
 

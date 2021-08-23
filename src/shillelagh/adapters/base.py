@@ -5,6 +5,7 @@ from typing import Any
 from typing import Dict
 from typing import Iterator
 from typing import List
+from typing import Optional
 from typing import Tuple
 
 from shillelagh.exceptions import NotSupportedError
@@ -55,12 +56,21 @@ class Adapter:
         atexit.register(self.close)
 
     @staticmethod
-    def supports(uri: str, **kwargs: Any) -> bool:
+    def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         """
         Return if a given table is supported by the adapter.
 
+        The discovery is done in 2 passes. First all adapters have their methods
+        called with ``fast=True``. On the first pass adapters should implement
+        a cheap method, without any network calls.
+
+        If no adapter returns ``True`` a second pass is made with ``fast=False``
+        using only adapters that returned ``None`` on the first pass. In this
+        second pass adapters can perform network requests to get more
+        information about the URI.
+
         The method receives the table URI, as well as the adapter connection
-        arguments::
+        arguments, eg::
 
             >>> from shillelagh.backends.apsw.db import connect
             >>> connection = connect(
@@ -73,7 +83,7 @@ class Adapter:
         the table ``table``. The Gsheets adapter would be called with::
 
             >>> from shillelagh.adapters.api.gsheets.adapter import GSheetsAPI
-            >>> GSheetsAPI.supports("table",
+            >>> GSheetsAPI.supports("table", fast=True,  # first pass
             ...     catalog={"table": "https://docs.google.com/spreadsheets/d/1"})
             True
 

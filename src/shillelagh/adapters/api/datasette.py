@@ -10,6 +10,7 @@ from typing import cast
 from typing import Dict
 from typing import Iterator
 from typing import List
+from typing import Optional
 from typing import Tuple
 from typing import Type
 
@@ -70,11 +71,7 @@ def is_datasette(uri: str) -> bool:
         expire_after=180,
     )
 
-    try:
-        response = session.head(uri)
-    except Exception:  # pylint: disable=broad-except
-        return False
-
+    response = session.head(uri)
     return cast(bool, response.ok)
 
 
@@ -108,11 +105,16 @@ class DatasetteAPI(Adapter):
     safe = True
 
     @staticmethod
-    def supports(uri: str, **kwargs: Any) -> bool:
+    def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         parsed = urllib.parse.urlparse(uri)
-        return parsed.scheme in {"http", "https"} and (
-            is_known_domain(parsed.netloc) or is_datasette(uri)
-        )
+
+        if parsed.scheme in {"http", "https"} and is_known_domain(parsed.netloc):
+            return True
+
+        if fast:
+            return None
+
+        return is_datasette(uri)
 
     @staticmethod
     def parse_uri(uri: str) -> Tuple[str, str, str]:

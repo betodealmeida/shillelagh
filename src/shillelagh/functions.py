@@ -6,13 +6,12 @@ import time
 from typing import Any
 from typing import Dict
 from typing import List
-from typing import Optional
 from typing import Type
 
 import pkg_resources
 
 from shillelagh.adapters.base import Adapter
-from shillelagh.exceptions import ProgrammingError
+from shillelagh.lib import find_adapter
 
 
 __all__ = ["sleep", "get_metadata"]
@@ -53,15 +52,7 @@ def get_metadata(
         }
 
     """
-    adapter: Optional[Type[Adapter]] = None
-    for adapter in adapters:
-        key = adapter.__name__.lower()
-        kwargs = adapter_kwargs.get(key, {})
-        if adapter.supports(uri, **kwargs):
-            break
-    else:
-        raise ProgrammingError(f"Unsupported table: {uri}")
-
+    adapter = find_adapter(uri, adapter_kwargs, adapters)
     key = adapter.__name__.lower()
     args = adapter.parse_uri(uri)
     kwargs = adapter_kwargs.get(key, {})

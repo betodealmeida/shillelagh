@@ -17,7 +17,7 @@ from typing_extensions import TypedDict
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw import db
 from shillelagh.backends.apsw.vt import VTTable
-from shillelagh.exceptions import ProgrammingError
+from shillelagh.lib import find_adapter
 
 
 class SQLAlchemyColumn(TypedDict):
@@ -124,13 +124,12 @@ def get_adapter_for_table_name(
     using the connection to properly pass any adapter kwargs.
     """
     raw_connection = cast(db.Connection, connection.engine.raw_connection())
-    for adapter in raw_connection._adapters:
-        key = adapter.__name__.lower()
-        kwargs = raw_connection._adapter_kwargs.get(key, {})
-        if adapter.supports(table_name, **kwargs):
-            key = adapter.__name__.lower()
-            args = adapter.parse_uri(table_name)
-            kwargs = raw_connection._adapter_kwargs.get(key, {})
-            return adapter(*args, **kwargs)  # type: ignore
-
-    raise ProgrammingError(f"Unsupported table: {table_name}")
+    adapter = find_adapter(
+        table_name,
+        raw_connection._adapter_kwargs,
+        raw_connection._adapters,
+    )
+    key = adapter.__name__.lower()
+    args = adapter.parse_uri(table_name)
+    kwargs = raw_connection._adapter_kwargs.get(key, {})
+    return adapter(*args, **kwargs)  # type: ignore
