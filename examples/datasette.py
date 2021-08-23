@@ -6,7 +6,7 @@ if __name__ == "__main__":
     cursor = connection.cursor()
 
     sql = """
-    SELECT * FROM "datasette+https://latest.datasette.io/fixtures/facetable"
+    SELECT * FROM "https://latest.datasette.io/fixtures/facetable"
     """
     for row in cursor.execute(sql):
         print(row)

@@ -81,7 +81,7 @@ A query can combine data from multiple adapters:
 
 .. code-block:: sql
 
-    INSERT INTO "csv:///tmp/file.csv"
+    INSERT INTO "/tmp/file.csv"
     SELECT time, chance_of_rain
     FROM "https://api.weatherapi.com/v1/history.json?q=London"
     WHERE time IN (

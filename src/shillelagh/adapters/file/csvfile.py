@@ -92,15 +92,11 @@ class CSVFile(Adapter):
 
     @staticmethod
     def supports(uri: str, **kwargs: Any) -> bool:
-        parsed = urllib.parse.urlparse(uri)
-        return parsed.scheme == "csv"
+        return Path(uri).suffix == ".csv"
 
     @staticmethod
     def parse_uri(uri: str) -> Tuple[str]:
-        parsed = urllib.parse.urlparse(uri)
-
-        # netloc is populated for relative paths, path for absolute
-        return (parsed.path or parsed.netloc,)
+        return (uri,)
 
     def __init__(self, path: str):
         super().__init__()

@@ -34,8 +34,48 @@ from shillelagh.typing import Row
 
 _logger = logging.getLogger(__name__)
 
+KNOWN_DOMAINS = {"datasette.io", "datasettes.com"}
+
 # this is just a wild guess; used to estimate query cost
 AVERAGE_NUMBER_OF_ROWS = 1000
+
+
+def is_known_domain(netloc: str) -> bool:
+    """
+    Identify well known Datasette domains.
+    """
+    for domain in KNOWN_DOMAINS:
+        if netloc == domain or netloc.endswith("." + domain):
+            return True
+    return False
+
+
+def is_datasette(uri: str) -> bool:
+    """
+    Identify Datasette servers via a HEAD request.
+    """
+    parts = list(urllib.parse.urlparse(uri))
+    try:
+        # pylint: disable=unused-variable
+        mountpoint, database, table = parts[2].rsplit("/", 2)
+    except ValueError:
+        return False
+
+    parts[2] = f"{mountpoint}/-/versions.json"
+    uri = urllib.parse.urlunparse(parts)
+
+    session = requests_cache.CachedSession(
+        cache_name="datasette_cache",
+        backend="sqlite",
+        expire_after=180,
+    )
+
+    try:
+        response = session.head(uri)
+    except Exception:  # pylint: disable=broad-except
+        return False
+
+    return cast(bool, response.ok)
 
 
 def get_field(value: Any) -> Field:
@@ -70,13 +110,12 @@ class DatasetteAPI(Adapter):
     @staticmethod
     def supports(uri: str, **kwargs: Any) -> bool:
         parsed = urllib.parse.urlparse(uri)
-        return parsed.scheme in {"datasette+http", "datasette+https"}
+        return parsed.scheme in {"http", "https"} and (
+            is_known_domain(parsed.netloc) or is_datasette(uri)
+        )
 
     @staticmethod
     def parse_uri(uri: str) -> Tuple[str, str, str]:
-        parts = list(urllib.parse.urlparse(uri))
-        parts[0] = parts[0].split("+")[1]
-        uri = urllib.parse.urlunparse(parts)
         server_url, database, table = uri.rsplit("/", 2)
         return server_url, database, table
 

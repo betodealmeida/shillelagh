@@ -11,6 +11,8 @@ from ...fakes import datasette_metadata_response
 from ...fakes import datasette_results
 from shillelagh.adapters.api.datasette import DatasetteAPI
 from shillelagh.adapters.api.datasette import get_field
+from shillelagh.adapters.api.datasette import is_datasette
+from shillelagh.adapters.api.datasette import is_known_domain
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
@@ -74,7 +76,7 @@ def test_datasette(requests_mock):
     cursor = connection.cursor()
     sql = """
         SELECT * FROM
-        "datasette+https://global-power-plants.datasettes.com/global-power-plants/global-power-plants"
+        "https://global-power-plants.datasettes.com/global-power-plants/global-power-plants"
     """
     data = list(cursor.execute(sql))
     assert data == datasette_results
@@ -133,3 +135,61 @@ def test_get_field():
     assert isinstance(get_field("2021-01-01"), ISODate)
     assert isinstance(get_field("2021-01-01 00:00:00"), ISODateTime)
     assert isinstance(get_field(None), String)
+
+
+def test_is_known_domain():
+    """
+    Test ``is_known_domain``.
+    """
+    assert is_known_domain("latest.datasette.io")
+    assert is_known_domain("san-francisco.datasettes.com")
+    assert not is_known_domain("example.com")
+
+
+def test_is_datasette(requests_mock):
+    """
+    Test ``is_datasette``.
+    """
+    assert not is_datasette("https://example.com/")
+
+    requests_mock.head(
+        "https://example.com/-/versions.json",
+        json={
+            "python": {
+                "version": "3.8.11",
+                "full": "3.8.11 (default, Aug 17 2021, 15:56:41) \n[GCC 10.2.1 20210110]",
+            },
+            "datasette": {
+                "version": "0.59a1",
+                "note": "7e15422aacfa9e9735cb9f9beaa32250edbf4905",
+            },
+            "asgi": "3.0",
+            "uvicorn": "0.15.0",
+            "sqlite": {
+                "version": "3.35.4",
+                "fts_versions": ["FTS5", "FTS4", "FTS3"],
+                "extensions": {"json1": None},
+                "compile_options": [
+                    "ALLOW_COVERING_INDEX_SCAN",
+                    "COMPILER=gcc-4.8.2 20140120 (Red Hat 4.8.2-15)",
+                    "ENABLE_FTS3",
+                    "ENABLE_FTS3_PARENTHESIS",
+                    "ENABLE_FTS4",
+                    "ENABLE_FTS5",
+                    "ENABLE_JSON1",
+                    "ENABLE_LOAD_EXTENSION",
+                    "ENABLE_RTREE",
+                    "ENABLE_STAT4",
+                    "ENABLE_UPDATE_DELETE_LIMIT",
+                    "MAX_MMAP_SIZE=1099511627776",
+                    "MAX_VARIABLE_NUMBER=250000",
+                    "SOUNDEX",
+                    "TEMP_STORE=3",
+                    "THREADSAFE=1",
+                    "USE_URI",
+                ],
+            },
+            "pysqlite3": "0.4.6",
+        },
+    )
+    assert is_datasette("https://example.com/database/table")

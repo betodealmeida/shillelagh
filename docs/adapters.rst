@@ -127,11 +127,11 @@ The dialect also allows users to specify a "catalog" of sheets, so they can be r
 CSV files
 =========
 
-CSV (comma separated values) are supported via the ``csv://`` scheme (`an example <https://github.com/betodealmeida/shillelagh/blob/main/examples/csvfile.py>`__):
+CSV (comma separated values) are supported (`an example <https://github.com/betodealmeida/shillelagh/blob/main/examples/csvfile.py>`__):
 
 .. code-block:: sql
 
-    SELECT * FROM "csv:///path/to/file.csv";
+    SELECT * FROM "/path/to/file.csv";
         
 The adapter supports full DML, so you can also ``INSERT``, ``UPDATE``, or ``DELETE`` rows from the CSV file. Deleted rows are marked for deletion, modified and inserted rows are appended at the end of the file, and garbage collection is applied when the connection is closed.
 
@@ -214,8 +214,8 @@ Shillelagh has support for Pandas dataframes, inspired by `DuckDB <https://duckd
 Datasette
 =========
 
-You can select data from any `Datasette <https://datasette.io/>`_ table, appending ``datasette+`` to the URL:
+You can select data from any `Datasette <https://datasette.io/>`_ table, by using the full URL with the database and the table:
 
 .. code-block:: sql
 
-    SELECT * FROM "datasette+https://fivethirtyeight.datasettes.com/polls/president_polls"
+    SELECT * FROM "https://fivethirtyeight.datasettes.com/polls/president_polls"

@@ -7,6 +7,7 @@ Version 1.x.y - 2021-MM-DD
 
 - Add cost estimation to all adapters
 - Add Datasette adapter
+- Remove ``csv://`` and ``datasette+`` prefixes to simply URIs
 
 Version 1.0.0 - 2021-08-18
 ==========================

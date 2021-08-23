@@ -275,7 +275,7 @@ def test_dispatch(mocker, fs):
     connection = connect(":memory:", ["csvfile"])
     cursor = connection.cursor()
 
-    sql = """SELECT * FROM "csv://test.csv" WHERE "index" > 11"""
+    sql = """SELECT * FROM "/test.csv" WHERE "index" > 11"""
     data = list(cursor.execute(sql))
     assert data == [(12.0, 13.3, "Platinum_St"), (13.0, 12.1, "Kodiak_Trail")]
 
