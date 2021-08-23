@@ -12,6 +12,7 @@ from typing import cast
 from typing import Dict
 from typing import Iterator
 from typing import List
+from typing import Optional
 from typing import Tuple
 from typing import Union
 
@@ -132,7 +133,7 @@ class WeatherAPI(Adapter):
     gust_kph = Float()
 
     @staticmethod
-    def supports(uri: str, **kwargs: Any) -> bool:
+    def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         """https://api.weatherapi.com/v1/history.json?key=XXX&q=94158"""
         parsed = urllib.parse.urlparse(uri)
         query_string = urllib.parse.parse_qs(parsed.query)

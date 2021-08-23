@@ -84,7 +84,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
     safe = True
 
     @staticmethod
-    def supports(uri: str, **kwargs: Any) -> bool:
+    def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         catalog = kwargs.get("catalog", {})
         if uri in catalog:
             uri = catalog[uri]

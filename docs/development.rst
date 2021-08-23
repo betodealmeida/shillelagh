@@ -88,7 +88,7 @@ So our method should look like this:
 .. code-block:: python
 
     @staticmethod
-    def supports(uri: str, **kwargs: Any) -> bool:
+    def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         parsed = urllib.parse.urlparse(uri)
         query_string = urllib.parse.parse_qs(parsed.query)
         return (
@@ -97,6 +97,10 @@ So our method should look like this:
             and "q" in query_string
             and ("key" in query_string or "api_key" in kwargs)
         )
+
+Note that the ``supports`` method takes a parameter called ``fast``. Adapter discovery is done in 2 phases: first all adapters have their ``supports`` method called with ``fast=True``. When this happens, adapter should return an optional boolean quickly. If your adapter needs to perform costy operations to determine if it supports a given URI it should return ``None`` in this first pass, to indicate that it **may** support the URI.
+
+If no adapters return ``True`` on the first pass, a second pass is performed with ``fast=False``. On this second pass adapters can perform expensive operations, performing network requests to instrospect the URI and gather more information.
 
 Instantiating the class
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -306,7 +310,7 @@ Here's a simple example that supports these methods:
         pets = Integer()
 
         @staticmethod
-        def supports(uri: str, **kwargs: Any) -> bool:
+        def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
             """
             Supports tables with the ``simple://`` scheme.
 

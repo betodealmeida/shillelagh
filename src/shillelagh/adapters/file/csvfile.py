@@ -10,7 +10,6 @@ filtering and sorting in Python, instead of relying on the backend.
 import csv
 import logging
 import os
-import urllib.parse
 from pathlib import Path
 from typing import Any
 from typing import cast
@@ -91,7 +90,7 @@ class CSVFile(Adapter):
     safe = False
 
     @staticmethod
-    def supports(uri: str, **kwargs: Any) -> bool:
+    def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         return Path(uri).suffix == ".csv"
 
     @staticmethod

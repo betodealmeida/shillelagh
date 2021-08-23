@@ -40,6 +40,7 @@ from shillelagh.fields import Blob
 from shillelagh.fields import Field
 from shillelagh.lib import combine_args_kwargs
 from shillelagh.lib import escape
+from shillelagh.lib import find_adapter
 from shillelagh.lib import serialize
 from shillelagh.typing import Description
 from shillelagh.typing import SQLiteValidType
@@ -233,17 +234,8 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         if uri.startswith(prefix):
             uri = uri[len(prefix) :]
 
-        # https://github.com/PyCQA/pylint/issues/1175
-        adapter: Optional[Type[Adapter]] = None
-        for adapter in self._adapters:
-            key = adapter.__name__.lower()
-            kwargs = self._adapter_kwargs.get(key, {})
-            if adapter.supports(uri, **kwargs):
-                break
-        else:
-            raise ProgrammingError(f"Unsupported table: {uri}")
-
         # collect arguments from URI and connection and serialize them
+        adapter = find_adapter(uri, self._adapter_kwargs, self._adapters)
         key = adapter.__name__.lower()
         args = adapter.parse_uri(uri)
         kwargs = self._adapter_kwargs.get(key, {})

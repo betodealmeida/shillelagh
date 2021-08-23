@@ -16,6 +16,7 @@ from typing import Type
 
 from pkg_resources import iter_entry_points
 
+from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
@@ -250,7 +251,7 @@ def deserialize(value: str) -> Any:
     return json.loads(unescape(value[1:-1]))
 
 
-def build_sql(
+def build_sql(  # pylint: disable=too-many-locals, too-many-arguments
     columns: Dict[str, Field],
     bounds: Dict[str, Filter],
     order: List[Tuple[str, RequestedOrder]],
@@ -401,3 +402,36 @@ def SimpleCostModel(rows: int, fixed_cost: int = 0):  # pylint: disable=invalid-
         )
 
     return method
+
+
+def find_adapter(
+    uri: str,
+    adapter_kwargs: Dict[str, Any],
+    adapters: List[Type[Adapter]],
+) -> Type[Adapter]:
+    """
+    Find an adapter that handles a given URI.
+
+    This is done in 2 passes: first the ``supports`` method is called with ``fast=True``.
+    If no adapter returns ``True`` we do a second pass on the plugins that returned
+    ``None``, passing ``fast=False`` so they can do network requests to better inspect
+    the URI.
+    """
+    candidates = set()
+
+    for adapter in adapters:
+        key = adapter.__name__.lower()
+        kwargs = adapter_kwargs.get(key, {})
+        supported: Optional[bool] = adapter.supports(uri, fast=True, **kwargs)
+        if supported:
+            return adapter
+        if supported is None:
+            candidates.add(adapter)
+
+    for adapter in candidates:
+        key = adapter.__name__.lower()
+        kwargs = adapter_kwargs.get(key, {})
+        if adapter.supports(uri, fast=False, **kwargs):
+            return adapter
+
+    raise ProgrammingError(f"Unsupported table: {uri}")

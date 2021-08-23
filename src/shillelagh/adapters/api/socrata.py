@@ -114,7 +114,7 @@ class SocrataAPI(Adapter):
     safe = True
 
     @staticmethod
-    def supports(uri: str, **kwargs: Any) -> bool:
+    def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         """https://data.cdc.gov/resource/unsk-b7fc.json"""
         parsed = urllib.parse.urlparse(uri)
         return bool(path_regex.match(parsed.path))
