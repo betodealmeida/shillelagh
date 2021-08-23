@@ -214,8 +214,8 @@ Shillelagh has support for Pandas dataframes, inspired by `DuckDB <https://duckd
 Datasette
 =========
 
-You can select data from any `Datasette <https://datasette.io/>`_ table, appending ``datasette+`` to the URL:
+You can select data from any `Datasette <https://datasette.io/>`_ table, by using the full URL with the database and the table:
 
 .. code-block:: sql
 
-    SELECT * FROM "datasette+https://fivethirtyeight.datasettes.com/polls/president_polls"
+    SELECT * FROM "https://fivethirtyeight.datasettes.com/polls/president_polls"
