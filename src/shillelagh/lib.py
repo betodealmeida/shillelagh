@@ -274,6 +274,16 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments
 
     conditions = []
     for column_name, filter_ in bounds.items():
+        if (
+            isinstance(filter_, Range)
+            and filter_.start is not None
+            and filter_.end is not None
+            and filter_.start == filter_.end
+            and filter_.include_start
+            and filter_.include_end
+        ):
+            filter_ = Equal(filter_.start)
+
         field = columns[column_name]
         id_ = column_map[column_name] if column_map else column_name
         if isinstance(filter_, Impossible):
