@@ -2,7 +2,7 @@
 Changelog
 =========
 
-Version 1.x.y - 2021-MM-DD
+Version 1.0.1 - 2021-08-23
 ==========================
 
 - Add cost estimation to all adapters
