@@ -17,6 +17,7 @@ from typing_extensions import TypedDict
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw import db
 from shillelagh.backends.apsw.vt import VTTable
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.lib import find_adapter
 
 
@@ -77,6 +78,21 @@ class APSWDialect(SQLiteDialect):
         }
 
     def do_ping(self, dbapi_connection: _ConnectionFairy) -> bool:
+        return True
+
+    def has_table(
+        self,
+        connection: _ConnectionFairy,
+        table_name: str,
+        schema: Optional[str] = None,
+    ) -> bool:
+        """
+        Return true if a given table exists.
+        """
+        try:
+            get_adapter_for_table_name(connection, table_name)
+        except ProgrammingError:
+            return False
         return True
 
     # needed for SQLAlchemy
