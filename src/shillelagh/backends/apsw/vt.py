@@ -55,6 +55,12 @@ operator_map = {
     apsw.SQLITE_INDEX_CONSTRAINT_GT: Operator.GT,
     apsw.SQLITE_INDEX_CONSTRAINT_LE: Operator.LE,
     apsw.SQLITE_INDEX_CONSTRAINT_LT: Operator.LT,
+    # SQLITE_INDEX_CONSTRAINT_NE, >= 3.21
+    68: Operator.NE,
+    # SQLITE_INDEX_CONSTRAINT_ISNULL, >=3.21
+    69: Operator.IS_NULL,
+    # SQLITE_INDEX_CONSTRAINT_ISNOTNULL, >=3.21
+    70: Operator.IS_NOT_NULL,
 }
 
 # map for converting between Python native types (boolean, datetime, etc.)

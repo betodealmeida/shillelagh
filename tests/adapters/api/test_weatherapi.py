@@ -19,6 +19,7 @@ from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.fields import Order
 from shillelagh.filters import Equal
+from shillelagh.filters import Impossible
 from shillelagh.filters import Operator
 from shillelagh.filters import Range
 
@@ -691,6 +692,13 @@ def test_combine_time_filters():
             None,
             datetime(2020, 1, 1, tzinfo=timezone.utc).timestamp(),
         ),
+    }
+    with pytest.raises(ImpossibleFilterError):
+        combine_time_filters(bounds)
+
+    bounds = {
+        "time": Range(datetime(2021, 1, 1, tzinfo=timezone.utc)),
+        "time_epoch": Impossible(),
     }
     with pytest.raises(ImpossibleFilterError):
         combine_time_filters(bounds)

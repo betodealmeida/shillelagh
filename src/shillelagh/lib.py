@@ -27,6 +27,9 @@ from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Impossible
+from shillelagh.filters import IsNotNull
+from shillelagh.filters import IsNull
+from shillelagh.filters import NotEqual
 from shillelagh.filters import Operator
 from shillelagh.filters import Range
 from shillelagh.typing import RequestedOrder
@@ -251,7 +254,7 @@ def deserialize(value: str) -> Any:
     return json.loads(unescape(value[1:-1]))
 
 
-def build_sql(  # pylint: disable=too-many-locals, too-many-arguments
+def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-branches
     columns: Dict[str, Field],
     bounds: Dict[str, Filter],
     order: List[Tuple[str, RequestedOrder]],
@@ -275,7 +278,7 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments
     conditions = []
     for column_name, filter_ in bounds.items():
         if (
-            isinstance(filter_, Range)
+            isinstance(filter_, Range)  # pylint: disable=too-many-boolean-expressions
             and filter_.start is not None
             and filter_.end is not None
             and filter_.start == filter_.end
@@ -290,6 +293,8 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments
             raise ImpossibleFilterError()
         if isinstance(filter_, Equal):
             conditions.append(f"{id_} = {field.quote(filter_.value)}")
+        elif isinstance(filter_, NotEqual):
+            conditions.append(f"{id_} != {field.quote(filter_.value)}")
         elif isinstance(filter_, Range):
             if filter_.start is not None:
                 operator_ = ">=" if filter_.include_start else ">"
@@ -297,6 +302,10 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments
             if filter_.end is not None:
                 operator_ = "<=" if filter_.include_end else "<"
                 conditions.append(f"{id_} {operator_} {field.quote(filter_.end)}")
+        elif isinstance(filter_, IsNull):
+            conditions.append(f"{id_} IS NULL")
+        elif isinstance(filter_, IsNotNull):
+            conditions.append(f"{id_} IS NOT NULL")
         else:
             raise ProgrammingError(f"Invalid filter: {filter_}")
     if conditions:
@@ -330,6 +339,20 @@ def combine_args_kwargs(
     bound_args = signature.bind(*args, **kwargs)
     bound_args.apply_defaults()
     return bound_args.args
+
+
+def is_null(column: Any, _: Any) -> bool:
+    """
+    Operator for ``IS NULL``.
+    """
+    return column is None
+
+
+def is_not_null(column: Any, _: Any) -> bool:
+    """
+    Operator for ``IS NOT NULL``.
+    """
+    return column is not None
 
 
 def filter_data(
@@ -366,13 +389,21 @@ def filter_data(
             return
         if isinstance(filter_, Equal):
             data = apply_filter(data, operator.eq, column_name, filter_.value)
-        if isinstance(filter_, Range):
+        elif isinstance(filter_, NotEqual):
+            data = apply_filter(data, operator.ne, column_name, filter_.value)
+        elif isinstance(filter_, Range):
             if filter_.start is not None:
                 operator_ = operator.ge if filter_.include_start else operator.gt
                 data = apply_filter(data, operator_, column_name, filter_.start)
             if filter_.end is not None:
                 operator_ = operator.le if filter_.include_end else operator.lt
                 data = apply_filter(data, operator_, column_name, filter_.end)
+        elif isinstance(filter_, IsNull):
+            data = apply_filter(data, is_null, column_name, None)
+        elif isinstance(filter_, IsNotNull):
+            data = apply_filter(data, is_not_null, column_name, None)
+        else:
+            raise ProgrammingError(f"Invalid filter: {filter_}")
 
     if order:
         # in order to sort we need to consume the iterator and load it into

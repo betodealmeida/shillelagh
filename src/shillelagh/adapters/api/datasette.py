@@ -27,6 +27,8 @@ from shillelagh.fields import ISODateTime
 from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Filter
+from shillelagh.filters import IsNotNull
+from shillelagh.filters import IsNull
 from shillelagh.filters import Range
 from shillelagh.lib import build_sql
 from shillelagh.lib import SimpleCostModel
@@ -96,7 +98,7 @@ def get_field(value: Any) -> Field:
         else:
             class_ = ISODate if len(value) == 10 else ISODateTime  # type: ignore
 
-    return class_(filters=[Range], order=Order.ANY, exact=True)
+    return class_(filters=[Range, IsNull, IsNotNull], order=Order.ANY, exact=True)
 
 
 class DatasetteAPI(Adapter):

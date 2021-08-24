@@ -25,6 +25,9 @@ from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
 from shillelagh.filters import Equal
+from shillelagh.filters import IsNotNull
+from shillelagh.filters import IsNull
+from shillelagh.filters import NotEqual
 from shillelagh.filters import Range
 
 
@@ -33,23 +36,27 @@ def test_get_field():
     Test ``get_field``.
     """
     assert get_field({"type": "string"}, None) == GSheetsString(
-        [Equal],
+        [Equal, NotEqual, IsNull, IsNotNull],
         Order.ANY,
         True,
     )
     assert get_field({"type": "number"}, None) == GSheetsNumber(
-        [Range],
+        [Range, Equal, NotEqual, IsNull, IsNotNull],
         Order.ANY,
         True,
     )
     assert get_field({"type": "boolean"}, None) == GSheetsBoolean(
-        [Equal],
+        [Equal, NotEqual, IsNull, IsNotNull],
         Order.ANY,
         True,
     )
-    assert get_field({"type": "date"}, None) == GSheetsDate([Range], Order.ANY, True)
+    assert get_field({"type": "date"}, None) == GSheetsDate(
+        [Range, Equal, NotEqual, IsNull, IsNotNull],
+        Order.ANY,
+        True,
+    )
     assert get_field({"type": "datetime"}, None) == GSheetsDateTime(
-        [Range],
+        [Range, Equal, NotEqual, IsNull, IsNotNull],
         Order.ANY,
         True,
     )
@@ -58,19 +65,19 @@ def test_get_field():
         {"type": "datetime", "pattern": "M/d/yyyy H:mm:ss"},
         timezone,
     ) == GSheetsDateTime(
-        [Range],
+        [Range, Equal, NotEqual, IsNull, IsNotNull],
         Order.ANY,
         True,
         "M/d/yyyy H:mm:ss",
         timezone,
     )
     assert get_field({"type": "timeofday"}, None) == GSheetsTime(
-        [Range],
+        [Range, Equal, NotEqual, IsNull, IsNotNull],
         Order.ANY,
         True,
     )
     assert get_field({"type": "invalid"}, None) == GSheetsString(
-        [Equal],
+        [Equal, NotEqual, IsNull, IsNotNull],
         Order.ANY,
         True,
     )

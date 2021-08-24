@@ -11,15 +11,16 @@ from typing import Tuple
 class Operator(Enum):
     """
     Enum representing support comparisons.
-
-    Note that inequality is currently not supported.
     """
 
     EQ = "=="
+    NE = "!="
     GE = ">="
     GT = ">"
     LE = "<="
     LT = "<"
+    IS_NULL = "IS NULL"
+    IS_NOT_NULL = "IS NOT NULL"
 
 
 class Side(Enum):
@@ -156,7 +157,9 @@ class Filter:
 
 
 class Impossible(Filter):
-    """Custom Filter returned when impossible conditions are passed."""
+    """
+    Custom Filter returned when impossible conditions are passed.
+    """
 
     @classmethod
     def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
@@ -170,6 +173,54 @@ class Impossible(Filter):
             return NotImplemented
 
         return True
+
+
+class IsNull(Filter):
+    """
+    Filter for ``IS NULL``.
+    """
+
+    operators: Set[Operator] = {Operator.IS_NULL}
+
+    @classmethod
+    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+        return IsNull()
+
+    def check(self, value: Any) -> bool:
+        return value is None
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, IsNull):
+            return NotImplemented
+
+        return True
+
+    def __repr__(self) -> str:
+        return "IS NULL"
+
+
+class IsNotNull(Filter):
+    """
+    Filter for ``IS NOT NULL``.
+    """
+
+    operators: Set[Operator] = {Operator.IS_NOT_NULL}
+
+    @classmethod
+    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+        return IsNotNull()
+
+    def check(self, value: Any) -> bool:
+        return value is not None
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, IsNotNull):
+            return NotImplemented
+
+        return True
+
+    def __repr__(self) -> str:
+        return "IS NOT NULL"
 
 
 class Equal(Filter):
@@ -197,6 +248,33 @@ class Equal(Filter):
 
     def __repr__(self) -> str:
         return f"=={self.value}"
+
+
+class NotEqual(Filter):
+    """
+    Inequality comparison.
+    """
+
+    operators: Set[Operator] = {
+        Operator.NE,
+    }
+
+    def __init__(self, value: Any):
+        self.value = value
+
+    @classmethod
+    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+        values = {value for operator, value in operations}
+        if len(values) != 1:
+            return Impossible()
+
+        return cls(values.pop())
+
+    def check(self, value: Any) -> bool:
+        return bool(value != self.value)
+
+    def __repr__(self) -> str:
+        return f"!={self.value}"
 
 
 class Range(Filter):

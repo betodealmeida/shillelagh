@@ -6,7 +6,18 @@ if __name__ == "__main__":
     cursor = connection.cursor()
 
     sql = """
-    SELECT * FROM "https://latest.datasette.io/fixtures/facetable"
+SELECT "Latitude" AS "Latitude",
+       "Longitude" AS "Longitude",
+       COUNT(*) AS count
+FROM "https://san-francisco.datasettes.com/sf-trees/Street_Tree_List"
+WHERE "Latitude" IS NOT NULL
+  AND "Longitude" IS NOT NULL
+  AND "qSpecies" = 6
+GROUP BY "Latitude",
+         "Longitude"
+ORDER BY count DESC
+LIMIT 1000
+OFFSET 0;
     """
     for row in cursor.execute(sql):
         print(row)

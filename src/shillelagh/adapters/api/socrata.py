@@ -29,6 +29,9 @@ from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
+from shillelagh.filters import IsNotNull
+from shillelagh.filters import IsNull
+from shillelagh.filters import NotEqual
 from shillelagh.filters import Range
 from shillelagh.lib import build_sql
 from shillelagh.lib import SimpleCostModel
@@ -84,9 +87,9 @@ class Number(Field[str, float]):
 
 
 type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
-    "calendar_date": (ISODate, [Range]),
-    "number": (Number, [Range]),
-    "text": (String, [Equal]),
+    "calendar_date": (ISODate, [Range, Equal, NotEqual, IsNull, IsNotNull]),
+    "number": (Number, [Range, Equal, NotEqual, IsNull, IsNotNull]),
+    "text": (String, [Equal, NotEqual, IsNull, IsNotNull]),
 }
 
 

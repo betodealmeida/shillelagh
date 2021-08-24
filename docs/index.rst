@@ -6,6 +6,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   Installation <install>
    Usage <usage>
    Adapters <adapters>
    Creating a new adapter <development>

@@ -16,7 +16,11 @@ from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Float
 from shillelagh.fields import Order
 from shillelagh.fields import String
+from shillelagh.filters import Equal
 from shillelagh.filters import Impossible
+from shillelagh.filters import IsNotNull
+from shillelagh.filters import IsNull
+from shillelagh.filters import NotEqual
 from shillelagh.filters import Operator
 from shillelagh.filters import Range
 
@@ -38,9 +42,21 @@ def test_csvfile_get_columns(mocker):
     adapter = CSVFile("test.csv")
 
     assert adapter.get_columns() == {
-        "index": Float(filters=[Range], order=Order.ASCENDING, exact=True),
-        "temperature": Float(filters=[Range], order=Order.NONE, exact=True),
-        "site": String(filters=[Range], order=Order.NONE, exact=True),
+        "index": Float(
+            filters=[Range, Equal, NotEqual, IsNull, IsNotNull],
+            order=Order.ASCENDING,
+            exact=True,
+        ),
+        "temperature": Float(
+            filters=[Range, Equal, NotEqual, IsNull, IsNotNull],
+            order=Order.NONE,
+            exact=True,
+        ),
+        "site": String(
+            filters=[Range, Equal, NotEqual, IsNull, IsNotNull],
+            order=Order.NONE,
+            exact=True,
+        ),
     }
 
 
@@ -87,7 +103,11 @@ def test_csvfile_different_types(mocker):
     adapter = CSVFile("test.csv")
 
     assert adapter.get_columns() == {
-        "a": String(filters=[Range], order=Order.NONE, exact=True),
+        "a": String(
+            filters=[Range, Equal, NotEqual, IsNull, IsNotNull],
+            order=Order.NONE,
+            exact=True,
+        ),
     }
 
 
@@ -136,7 +156,11 @@ def test_csvfile_unordered(mocker):
     adapter = CSVFile("test.csv")
 
     assert adapter.get_columns() == {
-        "a": Float(filters=[Range], order=Order.NONE, exact=True),
+        "a": Float(
+            filters=[Range, Equal, NotEqual, IsNull, IsNotNull],
+            order=Order.NONE,
+            exact=True,
+        ),
     }
 
 
@@ -153,8 +177,16 @@ def test_csvfile_single_row_of_data(mocker):
     adapter = CSVFile("test.csv")
 
     assert adapter.get_columns() == {
-        "a": Float(filters=[Range], order=Order.NONE, exact=True),
-        "b": Float(filters=[Range], order=Order.NONE, exact=True),
+        "a": Float(
+            filters=[Range, Equal, NotEqual, IsNull, IsNotNull],
+            order=Order.NONE,
+            exact=True,
+        ),
+        "b": Float(
+            filters=[Range, Equal, NotEqual, IsNull, IsNotNull],
+            order=Order.NONE,
+            exact=True,
+        ),
     }
     assert list(adapter.get_data({}, [])) == [{"a": 1.0, "b": 2.0, "rowid": 0}]
 
