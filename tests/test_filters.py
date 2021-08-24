@@ -6,6 +6,9 @@ import pytest
 from shillelagh.filters import Endpoint
 from shillelagh.filters import Equal
 from shillelagh.filters import Impossible
+from shillelagh.filters import IsNotNull
+from shillelagh.filters import IsNull
+from shillelagh.filters import NotEqual
 from shillelagh.filters import Operator
 from shillelagh.filters import Range
 from shillelagh.filters import Side
@@ -54,6 +57,52 @@ def test_equal_impossible():
         (Operator.EQ, 20),
     ]
     filter_ = Equal.build(operations)
+    assert isinstance(filter_, Impossible)
+
+
+def test_not_equal():
+    """
+    Test ``NotEqual``.
+    """
+    operations = {(Operator.NE, 10)}
+    filter_ = NotEqual.build(operations)
+    assert filter_.value == 10
+
+
+def test_not_equal_multiple_value():
+    """
+    Test multiple operations.
+    """
+    operations = [
+        (Operator.NE, 10),
+        (Operator.NE, 10),
+    ]
+    filter_ = NotEqual.build(operations)
+    assert filter_.value == 10
+
+
+def test_not_equal_check():
+    """
+    Test ``_check``.
+    """
+    operations = [
+        (Operator.NE, 10),
+        (Operator.NE, 10),
+    ]
+    filter_ = NotEqual.build(operations)
+    assert filter_.check(20)
+    assert not filter_.check(10)
+
+
+def test_not_equal_impossible():
+    """
+    Test impossible operations.
+    """
+    operations = [
+        (Operator.NE, 10),
+        (Operator.NE, 20),
+    ]
+    filter_ = NotEqual.build(operations)
     assert isinstance(filter_, Impossible)
 
 
@@ -260,3 +309,21 @@ def test_endpoints():
         str(excinfo.value)
         == "'>' not supported between instances of 'Endpoint' and 'int'"
     )
+
+
+def test_is_null():
+    """
+    Test ``IsNull``.
+    """
+    assert IsNull.build([]) == IsNull()
+    assert IsNull().check(None) is True
+    assert IsNull() != 0
+
+
+def test_is_not_null():
+    """
+    Test ``IsNotNull``.
+    """
+    assert IsNotNull.build([]) == IsNotNull()
+    assert IsNotNull().check(None) is False
+    assert IsNotNull() != 0

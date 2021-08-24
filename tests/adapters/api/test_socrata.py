@@ -11,8 +11,10 @@ from ...fakes import cdc_metadata_response
 from shillelagh.adapters.api.socrata import Number
 from shillelagh.adapters.api.socrata import SocrataAPI
 from shillelagh.backends.apsw.db import connect
+from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
+from shillelagh.filters import Impossible
 from shillelagh.filters import Operator
 
 
@@ -140,10 +142,15 @@ def test_socrata_no_data(requests_mock):
     assert data == []
 
 
-def test_socrata_impossible(requests_mock):
+def test_socrata_impossible(mocker, requests_mock):
     """
     Test that impossible queries return no data.
     """
+    mocker.patch(
+        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
     metadata_url = "https://data.cdc.gov/api/views/unsk-b7fc"
     requests_mock.get(metadata_url, json=cdc_metadata_response)
 
@@ -157,6 +164,12 @@ def test_socrata_impossible(requests_mock):
         LIMIT 7
     """
     data = list(cursor.execute(sql))
+    assert data == []
+
+    # test for apsw 3.36, since it doesn't call ``get_data`` when the
+    # query is impossible to resolve
+    adapter = SocrataAPI("data.cdc.gov", "unsk-b7fc")
+    data = list(adapter.get_data({"location": Impossible()}, []))
     assert data == []
 
 

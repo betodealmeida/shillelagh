@@ -10,6 +10,9 @@ from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
 from shillelagh.filters import Equal
+from shillelagh.filters import IsNotNull
+from shillelagh.filters import IsNull
+from shillelagh.filters import NotEqual
 from shillelagh.filters import Operator
 
 
@@ -120,6 +123,12 @@ def test_adapter(mocker):
         {"rowid": 0, "index": 10, "site": "Diamond_St", "temperature": 15.2},
     ]
 
+    assert list(adapter.get_data({"index": NotEqual(10)}, [])) == [
+        {"rowid": 1, "index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
+        {"rowid": 2, "index": 12, "temperature": 13.3, "site": "Platinum_St"},
+        {"rowid": 3, "index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
+    ]
+
     adapter.update_data(
         3,
         {"rowid": 5, "index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
@@ -153,6 +162,38 @@ def test_adapter(mocker):
         {"index": 12, "rowid": 2, "site": "Platinum_St", "temperature": 13.3},
         {"index": 13, "rowid": 3, "site": "Kodiak_Trail", "temperature": 12.1},
     ]
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        list(adapter.get_data({"a": [1, 2, 3]}, []))
+    assert str(excinfo.value) == "Invalid filter: [1, 2, 3]"
+
+
+def test_adapter_nulls(mocker):
+    """
+    Test operations with nulls on the adapter.
+    """
+    mydf = pd.DataFrame([{"a": None, "b": 10}, {"a": 20, "b": None}])
+
+    mock_find_dataframe = mocker.patch(
+        "shillelagh.adapters.memory.pandas.find_dataframe",
+    )
+    mock_find_dataframe.return_value = mydf
+
+    adapter = PandasMemory("mydf")
+
+    rows = list(adapter.get_data({"a": IsNull()}, []))
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["a"] != row["a"]  # NaN
+    assert row["b"] == 10.0
+    assert row["rowid"] == 0
+
+    rows = list(adapter.get_data({"a": IsNotNull()}, []))
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["a"] == 20.0
+    assert row["b"] != row["b"]  # NaN
+    assert row["rowid"] == 1
 
 
 outer_df = pd.DataFrame()

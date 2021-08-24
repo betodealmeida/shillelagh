@@ -22,7 +22,11 @@ from typing import Tuple
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
+from shillelagh.filters import Equal
 from shillelagh.filters import Filter
+from shillelagh.filters import IsNotNull
+from shillelagh.filters import IsNull
+from shillelagh.filters import NotEqual
 from shillelagh.filters import Operator
 from shillelagh.filters import Range
 from shillelagh.lib import analyze
@@ -123,7 +127,7 @@ class CSVFile(Adapter):
 
         self.columns = {
             column_name: types[column_name](
-                filters=[Range],
+                filters=[Range, Equal, NotEqual, IsNull, IsNotNull],
                 order=order[column_name],
                 exact=True,
             )

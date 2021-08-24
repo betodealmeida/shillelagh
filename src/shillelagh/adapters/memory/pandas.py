@@ -27,6 +27,9 @@ from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import Impossible
+from shillelagh.filters import IsNotNull
+from shillelagh.filters import IsNull
+from shillelagh.filters import NotEqual
 from shillelagh.filters import Range
 from shillelagh.lib import SimpleCostModel
 from shillelagh.typing import RequestedOrder
@@ -37,13 +40,13 @@ from shillelagh.typing import Row
 AVERAGE_NUMBER_OF_ROWS = 1000
 
 type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
-    "i": (Integer, [Range]),
-    "b": (Boolean, [Equal]),
-    "u": (Integer, [Range]),
-    "f": (Float, [Range]),
-    "M": (DateTime, [Range]),
-    "S": (String, [Range]),
-    "O": (String, [Range]),
+    "i": (Integer, [Range, Equal, NotEqual, IsNull, IsNotNull]),
+    "b": (Boolean, [Equal, NotEqual, IsNull, IsNotNull]),
+    "u": (Integer, [Range, Equal, NotEqual, IsNull, IsNotNull]),
+    "f": (Float, [Range, Equal, NotEqual, IsNull, IsNotNull]),
+    "M": (DateTime, [Range, Equal, NotEqual, IsNull, IsNotNull]),
+    "S": (String, [Range, Equal, NotEqual, IsNull, IsNotNull]),
+    "O": (String, [Range, Equal, NotEqual, IsNull, IsNotNull]),
 }
 
 
@@ -124,13 +127,21 @@ class PandasMemory(Adapter):
                 return
             if isinstance(filter_, Equal):
                 df = df[df[column_name] == filter_.value]
-            if isinstance(filter_, Range):
+            elif isinstance(filter_, NotEqual):
+                df = df[df[column_name] != filter_.value]
+            elif isinstance(filter_, Range):
                 if filter_.start is not None:
                     operator_ = operator.ge if filter_.include_start else operator.gt
                     df = df[operator_(df[column_name], filter_.start)]
                 if filter_.end is not None:
                     operator_ = operator.le if filter_.include_end else operator.lt
                     df = df[operator_(df[column_name], filter_.end)]
+            elif isinstance(filter_, IsNull):
+                df = df[~df[column_name].notnull()]
+            elif isinstance(filter_, IsNotNull):
+                df = df[df[column_name].notnull()]
+            else:
+                raise ProgrammingError(f"Invalid filter: {filter_}")
 
         if order:
             by, requested_orders = list(zip(*order))

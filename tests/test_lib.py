@@ -13,6 +13,9 @@ from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.filters import Equal
 from shillelagh.filters import Impossible
+from shillelagh.filters import IsNotNull
+from shillelagh.filters import IsNull
+from shillelagh.filters import NotEqual
 from shillelagh.filters import Range
 from shillelagh.lib import analyze
 from shillelagh.lib import build_sql
@@ -23,6 +26,8 @@ from shillelagh.lib import escape
 from shillelagh.lib import filter_data
 from shillelagh.lib import find_adapter
 from shillelagh.lib import get_available_adapters
+from shillelagh.lib import is_not_null
+from shillelagh.lib import is_null
 from shillelagh.lib import RowIDManager
 from shillelagh.lib import serialize
 from shillelagh.lib import unescape
@@ -146,8 +151,11 @@ def test_build_sql():
     """
     columns = {"a": String(), "b": Float()}
 
-    sql = build_sql(columns, {"a": Equal("b")}, [])
-    assert sql == "SELECT * WHERE a = 'b'"
+    sql = build_sql(columns, {"a": Equal("b"), "b": NotEqual(1.0)}, [])
+    assert sql == "SELECT * WHERE a = 'b' AND b != 1.0"
+
+    sql = build_sql(columns, {"a": IsNull(), "b": IsNotNull()}, [])
+    assert sql == "SELECT * WHERE a IS NULL AND b IS NOT NULL"
 
     sql = build_sql(columns, {"b": Range(1, 10, False, True)}, [])
     assert sql == "SELECT * WHERE b > 1 AND b <= 10"
@@ -277,6 +285,13 @@ def test_filter_data():
         {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
     ]
 
+    bounds = {"index": NotEqual(10)}
+    assert list(filter_data(data, bounds, [])) == [
+        {"index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
+        {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
+        {"index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
+    ]
+
     order = [("index", Order.DESCENDING)]
     assert list(filter_data(data, {}, order)) == [
         {"index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
@@ -287,6 +302,16 @@ def test_filter_data():
 
     bounds = {"index": Impossible()}
     assert list(filter_data(data, bounds, [])) == []
+
+    data = [{"a": None, "b": 10}, {"a": 20, "b": None}]
+    bounds = {"a": IsNull()}
+    assert list(filter_data(data, bounds, [])) == [{"a": None, "b": 10}]
+    bounds = {"a": IsNotNull()}
+    assert list(filter_data(data, bounds, [])) == [{"a": 20, "b": None}]
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        list(filter_data(data, {"a": [1, 2, 3]}, []))
+    assert str(excinfo.value) == "Invalid filter: [1, 2, 3]"
 
 
 def test_get_available_adapters(mocker):
@@ -325,3 +350,19 @@ def test_find_adapter(mocker):
     adapter1.supports.return_value = False
     adapter2.supports.side_effect = [None, True]
     assert find_adapter(uri, adapter_kwargs, adapters) == adapter2
+
+
+def test_is_null():
+    """
+    Test ``is_null``.
+    """
+    assert is_null(None, 10)
+    assert not is_null(20, 10)
+
+
+def test_is_not_null():
+    """
+    Test ``is_not_null``.
+    """
+    assert is_not_null(20, 10)
+    assert not is_not_null(None, 10)
