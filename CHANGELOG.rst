@@ -2,7 +2,7 @@
 Changelog
 =========
 
-Version 1.0.2 - 2021-MM-DD
+Version 1.0.2 - 2021-08-24
 ==========================
 
 - Fix Datasette by always using ``LIMIT`` with ``OFFSET``
