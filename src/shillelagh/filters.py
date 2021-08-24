@@ -1,6 +1,7 @@
 """
 Filters for representing SQL predicates.
 """
+import re
 from enum import Enum
 from typing import Any
 from typing import Optional
@@ -21,6 +22,7 @@ class Operator(Enum):
     LT = "<"
     IS_NULL = "IS NULL"
     IS_NOT_NULL = "IS NOT NULL"
+    LIKE = "LIKE"
 
 
 class Side(Enum):
@@ -275,6 +277,38 @@ class NotEqual(Filter):
 
     def __repr__(self) -> str:
         return f"!={self.value}"
+
+
+class Like(Filter):
+    """
+    Substring searches.
+    """
+
+    operators: Set[Operator] = {
+        Operator.LIKE,
+    }
+
+    def __init__(self, value: Any):
+        self.value = value
+        self.regex = re.compile(
+            self.value.replace("_", ".").replace("%", ".*"),
+            re.IGNORECASE,
+        )
+
+    @classmethod
+    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+        # we only accept a single value
+        values = {value for operator, value in operations}
+        if len(values) != 1:
+            return Impossible()
+
+        return cls(values.pop())
+
+    def check(self, value: Any) -> bool:
+        return bool(self.regex.match(value))
+
+    def __repr__(self) -> str:
+        return f"LIKE {self.value}"
 
 
 class Range(Filter):
