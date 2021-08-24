@@ -40,6 +40,9 @@ KNOWN_DOMAINS = {"datasette.io", "datasettes.com"}
 # this is just a wild guess; used to estimate query cost
 AVERAGE_NUMBER_OF_ROWS = 1000
 
+# how many rows to get when performing our own pagination
+DEFAULT_LIMIT = 1000
+
 
 def is_known_domain(netloc: str) -> bool:
     """
@@ -186,18 +189,24 @@ class DatasetteAPI(Adapter):
                 bounds,
                 order,
                 f'"{self.table}"',
+                limit=DEFAULT_LIMIT + 1,
                 offset=offset,
             )
             payload = self._run_query(sql)
+
+            if payload.get("error"):
+                raise ProgrammingError("Error ({title}): {error}".format(**payload))
+
             columns = payload["columns"]
+            rows = payload["rows"]
 
             i = -1
-            for i, values in enumerate(payload["rows"]):
+            for i, values in enumerate(rows[:DEFAULT_LIMIT]):
                 row = dict(zip(columns, values))
                 row["rowid"] = i
                 _logger.debug(row)
                 yield row
 
-            if not payload["truncated"]:
+            if not payload["truncated"] and len(rows) <= DEFAULT_LIMIT:
                 break
             offset += i + 1

@@ -3,6 +3,7 @@
 Tests for the Datasette adapter.
 """
 import pytest
+from requests import Session
 
 from ...fakes import datasette_columns_response
 from ...fakes import datasette_data_response_1
@@ -22,10 +23,15 @@ from shillelagh.fields import ISODateTime
 from shillelagh.fields import String
 
 
-def test_datasette(requests_mock):
+def test_datasette(mocker, requests_mock):
     """
     Test a simple query.
     """
+    mocker.patch(
+        "shillelagh.adapters.api.datasette.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
     columns_url = (
         "https://global-power-plants.datasettes.com/global-power-plants.json?"
         "sql=SELECT+*+FROM+%22global-power-plants%22+LIMIT+0"
@@ -63,12 +69,14 @@ def test_datasette(requests_mock):
     requests_mock.get(metadata_url, json=datasette_metadata_response)
     data_url_1 = (
         "https://global-power-plants.datasettes.com/global-power-plants.json?"
-        "sql=SELECT+*+FROM+%22global-power-plants%22"
+        "sql=select+*+FROM+%22global-power-plants%22+WHERE+country+%3D+%27CAN%27+"
+        "LIMIT+1001+OFFSET+0"
     )
     requests_mock.get(data_url_1, json=datasette_data_response_1)
     data_url_2 = (
         "https://global-power-plants.datasettes.com/global-power-plants.json?"
-        "sql=SELECT+%2A+FROM+%22global-power-plants%22+OFFSET+1000"
+        "sql=select+*+FROM+%22global-power-plants%22+WHERE+country+%3D+%27CAN%27+"
+        "LIMIT+1001+OFFSET+1000"
     )
     requests_mock.get(data_url_2, json=datasette_data_response_2)
 
@@ -77,6 +85,7 @@ def test_datasette(requests_mock):
     sql = """
         SELECT * FROM
         "https://global-power-plants.datasettes.com/global-power-plants/global-power-plants"
+        WHERE country='CAN'
     """
     data = list(cursor.execute(sql))
     assert data == datasette_results
@@ -193,3 +202,74 @@ def test_is_datasette(requests_mock):
         },
     )
     assert is_datasette("https://example.com/database/table")
+
+
+def test_datasette_error(mocker, requests_mock):
+    """
+    Test error handling.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.datasette.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    columns_url = (
+        "https://global-power-plants.datasettes.com/global-power-plants.json?"
+        "sql=SELECT+*+FROM+%22global-power-plants%22+LIMIT+0"
+    )
+    requests_mock.get(columns_url, json=datasette_columns_response)
+    metadata_url = (
+        "https://global-power-plants.datasettes.com/global-power-plants.json?sql=SELECT+"
+        "MAX%28%22country%22%29%2C+"
+        "MAX%28%22country_long%22%29%2C+"
+        "MAX%28%22name%22%29%2C+"
+        "MAX%28%22gppd_idnr%22%29%2C+"
+        "MAX%28%22capacity_mw%22%29%2C+"
+        "MAX%28%22latitude%22%29%2C+"
+        "MAX%28%22longitude%22%29%2C+"
+        "MAX%28%22primary_fuel%22%29%2C+"
+        "MAX%28%22other_fuel1%22%29%2C+"
+        "MAX%28%22other_fuel2%22%29%2C+"
+        "MAX%28%22other_fuel3%22%29%2C+"
+        "MAX%28%22commissioning_year%22%29%2C+"
+        "MAX%28%22owner%22%29%2C+"
+        "MAX%28%22source%22%29%2C+"
+        "MAX%28%22url%22%29%2C+"
+        "MAX%28%22geolocation_source%22%29%2C+"
+        "MAX%28%22wepp_id%22%29%2C+"
+        "MAX%28%22year_of_capacity_data%22%29%2C+"
+        "MAX%28%22generation_gwh_2013%22%29%2C+"
+        "MAX%28%22generation_gwh_2014%22%29%2C+"
+        "MAX%28%22generation_gwh_2015%22%29%2C+"
+        "MAX%28%22generation_gwh_2016%22%29%2C+"
+        "MAX%28%22generation_gwh_2017%22%29%2C+"
+        "MAX%28%22generation_data_source%22%29%2C+"
+        "MAX%28%22estimated_generation_gwh%22%29+"
+        "FROM+%22global-power-plants%22+LIMIT+1"
+    )
+    requests_mock.get(metadata_url, json=datasette_metadata_response)
+    data_url_1 = (
+        "https://global-power-plants.datasettes.com/global-power-plants.json?"
+        "sql=select+*+FROM+%22global-power-plants%22+WHERE+country+%3D+%27CAN%27+"
+        "LIMIT+1001+OFFSET+0"
+    )
+    requests_mock.get(
+        data_url_1,
+        json={
+            "ok": False,
+            "error": "no such table: invalid",
+            "status": 400,
+            "title": "Invalid SQL",
+        },
+    )
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+    sql = """
+        SELECT * FROM
+        "https://global-power-plants.datasettes.com/global-power-plants/global-power-plants"
+        WHERE country='CAN'
+    """
+    with pytest.raises(ProgrammingError) as excinfo:
+        list(cursor.execute(sql))
+    assert str(excinfo.value) == "Error (Invalid SQL): no such table: invalid"

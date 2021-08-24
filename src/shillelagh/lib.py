@@ -257,7 +257,8 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments
     order: List[Tuple[str, RequestedOrder]],
     table: Optional[str] = None,
     column_map: Optional[Dict[str, str]] = None,
-    offset: int = 0,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
 ) -> str:
     """
     Build a SQL query.
@@ -273,6 +274,16 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments
 
     conditions = []
     for column_name, filter_ in bounds.items():
+        if (
+            isinstance(filter_, Range)
+            and filter_.start is not None
+            and filter_.end is not None
+            and filter_.start == filter_.end
+            and filter_.include_start
+            and filter_.include_end
+        ):
+            filter_ = Equal(filter_.start)
+
         field = columns[column_name]
         id_ = column_map[column_name] if column_map else column_name
         if isinstance(filter_, Impossible):
@@ -298,7 +309,9 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments
         column_order.append(f"{id_}{desc}")
     if column_order:
         sql = f"{sql} ORDER BY {', '.join(column_order)}"
-    if offset > 0:
+    if limit is not None:
+        sql = f"{sql} LIMIT {limit}"
+    if offset is not None:
         sql = f"{sql} OFFSET {offset}"
 
     return sql

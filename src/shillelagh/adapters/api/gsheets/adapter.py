@@ -130,7 +130,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         # When the Chart API fails to recognize the headers we need to
         # keep track of the offset, so we can request data correctly.
-        self._offset = 0
+        self._offset: Optional[int] = None
 
         # Extra metadata. Some of this metadata (sheet name and timezone)
         # can only be fetched if the user is authenticated -- that's OK,
@@ -404,6 +404,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                     order,
                     None,
                     self._column_map,
+                    None,
                     self._offset,
                 )
             except ImpossibleFilterError:

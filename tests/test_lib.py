@@ -182,7 +182,7 @@ def test_build_sql_with_map():
     }
     order = [("col0_", Order.ASCENDING), ("col1_", Order.DESCENDING)]
     column_map = {f"col{i}_": letter for i, letter in enumerate("ABCD")}
-    sql = build_sql(columns, bounds, order, None, column_map, 1)
+    sql = build_sql(columns, bounds, order, None, column_map, None, 1)
     assert sql == (
         "SELECT * WHERE A = 1 AND B >= 0 AND B < 1 AND "
         "C <= 1 AND D > 0 ORDER BY A, B DESC OFFSET 1"
