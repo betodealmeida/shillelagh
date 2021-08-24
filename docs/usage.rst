@@ -110,7 +110,7 @@ The SQLAlchemy engine can be configured in the same way as the :ref:`dbapi2` ``c
     engine = create_engine(
         "shillelagh://",
          adapters=["gsheetspi"],
-         adapter_kwags={
+         adapter_kwargs={
              "gsheetsapi": {
                  "service_account_file": "/path/to/credentials.json",
                  "subject": "user@example.com",
