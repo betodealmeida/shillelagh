@@ -6,7 +6,7 @@ Version 1.0.2 - 2021-MM-DD
 ==========================
 
 - Fix Datasette by always using ``LIMIT`` with ``OFFSET``
-- More operators: ``IS NULL``, ``IS NOT NULL`` and ``!=``
+- More operators: ``LIKE``, ``IS NULL``, ``IS NOT NULL`` and ``!=``
 
 Version 1.0.1 - 2021-08-23
 ==========================

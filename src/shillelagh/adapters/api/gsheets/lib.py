@@ -34,6 +34,7 @@ from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import IsNotNull
 from shillelagh.filters import IsNull
+from shillelagh.filters import Like
 from shillelagh.filters import NotEqual
 from shillelagh.filters import Range
 from shillelagh.typing import Row
@@ -55,7 +56,7 @@ def get_field(
     Return a Shillelagh ``Field`` from a Google Chart API results column.
     """
     type_map: Dict[str, Tuple[Type[GSheetsField], List[Type[Filter]]]] = {
-        "string": (GSheetsString, [Equal, NotEqual, IsNull, IsNotNull]),
+        "string": (GSheetsString, [Range, Equal, NotEqual, Like, IsNull, IsNotNull]),
         "number": (GSheetsNumber, [Range, Equal, NotEqual, IsNull, IsNotNull]),
         "boolean": (GSheetsBoolean, [Equal, NotEqual, IsNull, IsNotNull]),
         "date": (GSheetsDate, [Range, Equal, NotEqual, IsNull, IsNotNull]),
@@ -64,7 +65,7 @@ def get_field(
     }
     class_, filters = type_map.get(
         col["type"],
-        (GSheetsString, [Equal, NotEqual, IsNull, IsNotNull]),
+        (GSheetsString, [Range, Equal, NotEqual, Like, IsNull, IsNotNull]),
     )
     return class_(
         filters=filters,

@@ -15,6 +15,7 @@ from shillelagh.filters import Equal
 from shillelagh.filters import Impossible
 from shillelagh.filters import IsNotNull
 from shillelagh.filters import IsNull
+from shillelagh.filters import Like
 from shillelagh.filters import NotEqual
 from shillelagh.filters import Range
 from shillelagh.lib import analyze
@@ -165,6 +166,9 @@ def test_build_sql():
 
     sql = build_sql(columns, {"b": Range(None, 10, True, False)}, [])
     assert sql == "SELECT * WHERE b < 10"
+
+    sql = build_sql(columns, {"a": Like("%test%")}, [])
+    assert sql == "SELECT * WHERE a LIKE '%test%'"
 
     sql = build_sql(columns, {}, [])
     assert sql == "SELECT *"

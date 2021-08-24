@@ -31,6 +31,7 @@ from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import IsNotNull
 from shillelagh.filters import IsNull
+from shillelagh.filters import Like
 from shillelagh.filters import NotEqual
 from shillelagh.filters import Range
 from shillelagh.lib import build_sql
@@ -89,7 +90,7 @@ class Number(Field[str, float]):
 type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
     "calendar_date": (ISODate, [Range, Equal, NotEqual, IsNull, IsNotNull]),
     "number": (Number, [Range, Equal, NotEqual, IsNull, IsNotNull]),
-    "text": (String, [Equal, NotEqual, IsNull, IsNotNull]),
+    "text": (String, [Range, Equal, NotEqual, Like, IsNull, IsNotNull]),
 }
 
 

@@ -29,6 +29,7 @@ from shillelagh.filters import Filter
 from shillelagh.filters import Impossible
 from shillelagh.filters import IsNotNull
 from shillelagh.filters import IsNull
+from shillelagh.filters import Like
 from shillelagh.filters import NotEqual
 from shillelagh.filters import Operator
 from shillelagh.filters import Range
@@ -302,6 +303,8 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-
             if filter_.end is not None:
                 operator_ = "<=" if filter_.include_end else "<"
                 conditions.append(f"{id_} {operator_} {field.quote(filter_.end)}")
+        elif isinstance(filter_, Like):
+            conditions.append(f"{id_} LIKE {field.quote(filter_.value)}")
         elif isinstance(filter_, IsNull):
             conditions.append(f"{id_} IS NULL")
         elif isinstance(filter_, IsNotNull):

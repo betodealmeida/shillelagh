@@ -26,9 +26,12 @@ from shillelagh.fields import ISODate
 from shillelagh.fields import ISODateTime
 from shillelagh.fields import Order
 from shillelagh.fields import String
+from shillelagh.filters import Equal
 from shillelagh.filters import Filter
 from shillelagh.filters import IsNotNull
 from shillelagh.filters import IsNull
+from shillelagh.filters import Like
+from shillelagh.filters import NotEqual
 from shillelagh.filters import Range
 from shillelagh.lib import build_sql
 from shillelagh.lib import SimpleCostModel
@@ -85,6 +88,7 @@ def get_field(value: Any) -> Field:
     Return a Shillelagh ``Field`` based on the value type.
     """
     class_: Type[Field] = String
+    filters = [Range, Equal, NotEqual, IsNull, IsNotNull]
 
     if isinstance(value, int):
         class_ = Integer
@@ -94,11 +98,12 @@ def get_field(value: Any) -> Field:
         try:
             dateutil.parser.isoparse(value)
         except Exception:  # pylint: disable=broad-except
-            pass
+            # regular string
+            filters.append(Like)
         else:
             class_ = ISODate if len(value) == 10 else ISODateTime  # type: ignore
 
-    return class_(filters=[Range, IsNull, IsNotNull], order=Order.ANY, exact=True)
+    return class_(filters=filters, order=Order.ANY, exact=True)
 
 
 class DatasetteAPI(Adapter):

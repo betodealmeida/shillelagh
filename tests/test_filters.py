@@ -8,6 +8,7 @@ from shillelagh.filters import Equal
 from shillelagh.filters import Impossible
 from shillelagh.filters import IsNotNull
 from shillelagh.filters import IsNull
+from shillelagh.filters import Like
 from shillelagh.filters import NotEqual
 from shillelagh.filters import Operator
 from shillelagh.filters import Range
@@ -103,6 +104,52 @@ def test_not_equal_impossible():
         (Operator.NE, 20),
     ]
     filter_ = NotEqual.build(operations)
+    assert isinstance(filter_, Impossible)
+
+
+def test_like():
+    """
+    Test ``Like``.
+    """
+    operations = {(Operator.LIKE, "%test%")}
+    filter_ = Like.build(operations)
+    assert filter_.value == "%test%"
+
+
+def test_like_multiple_value():
+    """
+    Test multiple operations.
+    """
+    operations = [
+        (Operator.LIKE, "%test%"),
+        (Operator.LIKE, "%test%"),
+    ]
+    filter_ = Like.build(operations)
+    assert filter_.value == "%test%"
+
+
+def test_like_check():
+    """
+    Test ``_check``.
+    """
+    operations = [
+        (Operator.LIKE, "%test%"),
+        (Operator.LIKE, "%test%"),
+    ]
+    filter_ = Like.build(operations)
+    assert filter_.check("this is a test")
+    assert not filter_.check("this is not")
+
+
+def test_like_impossible():
+    """
+    Test impossible operations.
+    """
+    operations = [
+        (Operator.LIKE, "%foo%"),
+        (Operator.LIKE, "%bar%"),
+    ]
+    filter_ = Like.build(operations)
     assert isinstance(filter_, Impossible)
 
 

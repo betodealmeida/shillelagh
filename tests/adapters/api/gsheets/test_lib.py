@@ -27,6 +27,7 @@ from shillelagh.fields import Order
 from shillelagh.filters import Equal
 from shillelagh.filters import IsNotNull
 from shillelagh.filters import IsNull
+from shillelagh.filters import Like
 from shillelagh.filters import NotEqual
 from shillelagh.filters import Range
 
@@ -36,7 +37,7 @@ def test_get_field():
     Test ``get_field``.
     """
     assert get_field({"type": "string"}, None) == GSheetsString(
-        [Equal, NotEqual, IsNull, IsNotNull],
+        [Range, Equal, NotEqual, Like, IsNull, IsNotNull],
         Order.ANY,
         True,
     )
@@ -77,7 +78,7 @@ def test_get_field():
         True,
     )
     assert get_field({"type": "invalid"}, None) == GSheetsString(
-        [Equal, NotEqual, IsNull, IsNotNull],
+        [Range, Equal, NotEqual, Like, IsNull, IsNotNull],
         Order.ANY,
         True,
     )
