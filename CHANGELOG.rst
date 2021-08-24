@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 1.0.3 - 2021-08-24
+==========================
+
+- Add optional dependencies for Datasette
+
 Version 1.0.2 - 2021-08-24
 ==========================
 
