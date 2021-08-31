@@ -22,6 +22,7 @@ from shillelagh.adapters.api.gsheets.parsing.pattern import HPlusDuration
 from shillelagh.adapters.api.gsheets.parsing.pattern import is_unescaped_literal
 from shillelagh.adapters.api.gsheets.parsing.pattern import LITERAL
 from shillelagh.adapters.api.gsheets.parsing.pattern import M
+from shillelagh.adapters.api.gsheets.parsing.pattern import Meridiem
 from shillelagh.adapters.api.gsheets.parsing.pattern import MM
 from shillelagh.adapters.api.gsheets.parsing.pattern import MMM
 from shillelagh.adapters.api.gsheets.parsing.pattern import MMMM
@@ -570,8 +571,8 @@ def test_ap_token():
     token = AP("A/P")
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "P"
 
-    assert token.parse("P 09:00", tokens) == ({"hour_offset": 12}, " 09:00")
-    assert token.parse("A 09:00", tokens) == ({"hour_offset": 0}, " 09:00")
+    assert token.parse("P 09:00", tokens) == ({"meridiem": Meridiem.PM}, " 09:00")
+    assert token.parse("A 09:00", tokens) == ({"meridiem": Meridiem.AM}, " 09:00")
 
 
 def test_ampm_token():
@@ -590,8 +591,8 @@ def test_ampm_token():
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "PM"
     assert token.format(datetime(2021, 11, 12, 1, 14, 15, 16), tokens) == "AM"
 
-    assert token.parse("PM 09:00", tokens) == ({"hour_offset": 12}, " 09:00")
-    assert token.parse("AM 09:00", tokens) == ({"hour_offset": 0}, " 09:00")
+    assert token.parse("PM 09:00", tokens) == ({"meridiem": Meridiem.PM}, " 09:00")
+    assert token.parse("AM 09:00", tokens) == ({"meridiem": Meridiem.AM}, " 09:00")
 
 
 def test_literal_token():
@@ -613,7 +614,7 @@ def test_literal_token():
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "dd/mm/yy"
 
     token = LITERAL('"invalid"')
-    assert token.parse('"invalid"', tokens) == ({}, "")
+    assert token.parse("invalid", tokens) == ({}, "")
 
     token = LITERAL(r"\d")
     assert token.parse("d", tokens) == ({}, "")
@@ -690,4 +691,60 @@ def test_format_date_time_pattern():
             "yyyy/mm/dd hh/mm/ss.000",
         )
         == "2021/11/12 13/14/15.000"
+    )
+
+
+def test_parse_date_time_pattern_with_quotes():
+    """
+    Test parsing a timestamp with quotes.
+    """
+    parsed = parse_date_time_pattern(
+        "1/1/2021",
+        'm"/"d"/"yyyy',
+        date,
+    )
+    assert parsed == date(2021, 1, 1)
+
+
+def test_parse_date_time_with_meridiem():
+    """
+    Test parsing a timestamp with AM/PM in the hour.
+    """
+    parsed = parse_date_time_pattern(
+        "12:34:56 AM",
+        "h:mm:ss am/pm",
+        time,
+    )
+    assert parsed == time(0, 34, 56)
+
+    parsed = parse_date_time_pattern(
+        "12:34:56 PM",
+        "h:mm:ss am/pm",
+        time,
+    )
+    assert parsed == time(12, 34, 56)
+
+
+def test_parse_date_time_without_meridiem():
+    """
+    Test parsing a timestamp without AM/PM in the hour.
+    """
+    parsed = parse_date_time_pattern(
+        "12/31/2020 12:34:56",
+        "m/d/yyyy h:mm:ss",
+        datetime,
+    )
+    assert parsed == datetime(2020, 12, 31, 12, 34, 56)
+
+
+def test_format_date_time_with_meridiem():
+    """
+    Test formatting a timestamp with AM/pM in the hour.
+    """
+    assert (
+        format_date_time_pattern(
+            time(12, 34, 56),
+            "h:mm:ss am/pm",
+        )
+        == "12:34:56 PM"
     )

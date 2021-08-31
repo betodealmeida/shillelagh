@@ -11,6 +11,7 @@ from datetime import date
 from datetime import datetime
 from datetime import time
 from datetime import timedelta
+from enum import Enum
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -21,6 +22,19 @@ from typing import Union
 
 from shillelagh.adapters.api.gsheets.parsing.base import DateTime
 from shillelagh.adapters.api.gsheets.parsing.base import Token
+
+
+class Meridiem(Enum):
+    """
+    Represent ante or post meridiem.
+
+    We nede to track this because 11:59am is not followed by 12:00am, so to
+    resolve "AM" or "PM" we need to know the hour number in order to apply
+    an offset if applicable.
+    """
+
+    AM = "AM"
+    PM = "PM"
 
 
 class H(Token):
@@ -36,15 +50,21 @@ class H(Token):
     def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
         hour = value.hour
 
-        if any(token.__class__.__name__ in {"AP", "AMPM"} for token in tokens):
+        if (
+            any(token.__class__.__name__ in {"AP", "AMPM"} for token in tokens)
+            and hour != 12
+        ):
             hour %= 12
 
         # the 5th example in https://developers.google.com/sheets/api/guides/formats?hl=en
         # has a "PM" literal that switches to 12 hour format
-        if any(
-            token.__class__.__name__ == "LITERAL"
-            and ("AM" in token.token or "PM" in token.token)
-            for token in tokens
+        if (
+            any(
+                token.__class__.__name__ == "LITERAL"
+                and ("AM" in token.token or "PM" in token.token)
+                for token in tokens
+            )
+            and hour != 12
         ):
             hour %= 12
 
@@ -440,8 +460,8 @@ class AP(Token):
 
     def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
         letter = value[:1]
-        hour_offset = 12 if letter.upper() == "P" else 0
-        return {"hour_offset": hour_offset}, value[1:]
+        meridiem = Meridiem.PM if letter.upper() == "P" else Meridiem.AM
+        return {"meridiem": meridiem}, value[1:]
 
 
 class AMPM(AP):
@@ -456,8 +476,8 @@ class AMPM(AP):
 
     def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
         letter = value[:2]
-        hour_offset = 12 if letter.upper() == "PM" else 0
-        return {"hour_offset": hour_offset}, value[2:]
+        meridiem = Meridiem.PM if letter.upper() == "PM" else Meridiem.AM
+        return {"meridiem": meridiem}, value[2:]
 
 
 class LITERAL(Token):
@@ -489,6 +509,8 @@ class LITERAL(Token):
     def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
         if self.token.startswith("\\"):
             size = 1
+        elif self.token.startswith('"'):
+            size = len(self.token) - 2
         else:
             size = len(self.token)
         return {}, value[size:]
@@ -570,8 +592,11 @@ def parse_date_time_pattern(
 
     # add PM offset
     if "hour" in kwargs:
-        hour_offset = kwargs.pop("hour_offset", 0)
-        kwargs["hour"] += hour_offset
+        meridiem = kwargs.pop("meridiem", None)
+        if meridiem == Meridiem.PM and kwargs["hour"] != 12:
+            kwargs["hour"] += 12
+        elif meridiem == Meridiem.AM and kwargs["hour"] == 12:
+            kwargs["hour"] -= 12
 
     # we can't really do anything with ``weekday``
     if "weekday" in kwargs:

@@ -2,6 +2,8 @@
 Integration tests for GSheets.
 
 These tests operate on a spreadsheet, fetching and changing data.
+
+Uses a private sheet: https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit
 """
 import datetime
 
@@ -552,4 +554,111 @@ def test_order_by(adapter_kwargs):
         (1.0, 3.0, 1.0),
         (2.0, 3.0, 4.0),
         (3.0, 3.0, 7.0),
+    ]
+
+
+@pytest.mark.slow_integration_test
+def test_date_time_formats(adapter_kwargs):
+    """
+    Test that we can parse and modify timestamps with different formats.
+    """
+    table = (
+        '"https://docs.google.com/spreadsheets/d/'
+        '1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=526664434"'
+    )
+
+    connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
+    cursor = connection.cursor()
+
+    sql = f"SELECT * FROM {table}"
+    cursor.execute(sql)
+    assert cursor.fetchall() == [
+        (
+            datetime.date(2021, 1, 1),
+            datetime.date(2021, 1, 1),
+            datetime.date(2021, 1, 1),
+            datetime.date(2021, 1, 1),
+            datetime.date(2021, 1, 1),
+            datetime.datetime(2020, 12, 31, 12, 34, 56, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2020, 12, 31, 12, 34, 56, tzinfo=datetime.timezone.utc),
+        ),
+        (
+            datetime.date(2021, 1, 2),
+            datetime.date(2021, 1, 2),
+            datetime.date(2021, 1, 2),
+            datetime.date(2021, 1, 2),
+            datetime.date(2021, 1, 2),
+            None,
+            None,
+        ),
+        (
+            datetime.date(2021, 1, 3),
+            datetime.date(2021, 1, 3),
+            datetime.date(2021, 1, 3),
+            datetime.date(2021, 1, 3),
+            datetime.date(2021, 1, 3),
+            None,
+            None,
+        ),
+        (
+            datetime.date(2021, 1, 4),
+            datetime.date(2021, 1, 4),
+            datetime.date(2021, 1, 4),
+            datetime.date(2021, 1, 4),
+            datetime.date(2021, 1, 4),
+            None,
+            None,
+        ),
+    ]
+
+    sql = f'INSERT INTO {table} ("M/d/yyyy H:mm:ss") VALUES (?)'
+    cursor.execute(sql, (datetime.datetime(2021, 1, 1, 12, 0, 0),))
+    sql = f'SELECT "M/d/yyyy H:mm:ss" FROM {table} WHERE "M/d/yyyy H:mm:ss" IS NOT NULL'
+    cursor.execute(sql)
+    assert cursor.fetchall() == [
+        (datetime.datetime(2020, 12, 31, 12, 34, 56, tzinfo=datetime.timezone.utc),),
+        (datetime.datetime(2021, 1, 1, 20, 0, tzinfo=datetime.timezone.utc),),
+    ]
+
+    sql = f'DELETE FROM {table} WHERE "default" IS NULL'
+    cursor.execute(sql)
+    sql = f"SELECT * FROM {table}"
+    cursor.execute(sql)
+    assert cursor.fetchall() == [
+        (
+            datetime.date(2021, 1, 1),
+            datetime.date(2021, 1, 1),
+            datetime.date(2021, 1, 1),
+            datetime.date(2021, 1, 1),
+            datetime.date(2021, 1, 1),
+            datetime.datetime(2020, 12, 31, 12, 34, 56, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2020, 12, 31, 12, 34, 56, tzinfo=datetime.timezone.utc),
+        ),
+        (
+            datetime.date(2021, 1, 2),
+            datetime.date(2021, 1, 2),
+            datetime.date(2021, 1, 2),
+            datetime.date(2021, 1, 2),
+            datetime.date(2021, 1, 2),
+            None,
+            None,
+        ),
+        (
+            datetime.date(2021, 1, 3),
+            datetime.date(2021, 1, 3),
+            datetime.date(2021, 1, 3),
+            datetime.date(2021, 1, 3),
+            datetime.date(2021, 1, 3),
+            None,
+            None,
+        ),
+        (
+            datetime.date(2021, 1, 4),
+            datetime.date(2021, 1, 4),
+            datetime.date(2021, 1, 4),
+            datetime.date(2021, 1, 4),
+            datetime.date(2021, 1, 4),
+            None,
+            None,
+        ),
     ]

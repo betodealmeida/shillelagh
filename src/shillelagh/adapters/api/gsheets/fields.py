@@ -8,6 +8,8 @@ from typing import List
 from typing import Optional
 from typing import Type
 
+from shillelagh.adapters.api.gsheets.parsing.pattern import format_date_time_pattern
+from shillelagh.adapters.api.gsheets.parsing.pattern import parse_date_time_pattern
 from shillelagh.fields import External
 from shillelagh.fields import Field
 from shillelagh.fields import Internal
@@ -15,47 +17,23 @@ from shillelagh.fields import Order
 from shillelagh.filters import Filter
 
 
-# Timestamp format used to insert data into cells. Note that the timezone is not
-# present, since GSheets assumes all timestamps are in the same timezone as the
-# sheet.
-DATETIME_CELL_FORMAT = "%m/%d/%Y %H:%M:%S"
-DATE_CELL_FORMAT = "%m/%d/%Y"
-TIME_CELL_FORMAT = "%I:%M:%S %p"
-
 # timestamp format used in SQL queries
 DATETIME_SQL_QUOTE = "%Y-%m-%d %H:%M:%S"
 DATE_SQL_QUOTE = "%Y-%m-%d"
 TIME_SQL_QUOTE = "%H:%M:%S"
 
 
-def convert_pattern_to_format(pattern: Optional[str]) -> str:
-    """
-    Convert a Google Chart API pattern to a python time format.
-
-    Reference: https://developers.google.com/sheets/api/guides/formats?hl=en
-    """
-    # Google Chart API uses ICU to represent patterns. In Python we can use
-    # PyICU to parse the values given a pattern, but the library is difficult
-    # to install and big. For now we have hardcoded values.
-    formats = {
-        "M/d/yyyy H:mm:ss": DATETIME_CELL_FORMAT,
-        "M/d/yyyy": DATE_CELL_FORMAT,
-        "h:mm:ss am/pm": TIME_CELL_FORMAT,
-    }
-
-    if pattern not in formats:
-        raise NotImplementedError(
-            f'Unknown pattern "{pattern}". Please file a ticket at '
-            "https://github.com/betodealmeida/shillelagh/issues.",
-        )
-
-    return formats[pattern]
-
-
 class GSheetsField(Field[Internal, External]):
     """
     A base class for GSheets fields.
     """
+
+    # the default formats for date and datetime do not follow the same syntax
+    # as user-configured formats (I suspect it uses ICU instead)
+    pattern_substitutions = {
+        "M/d/yyyy H:mm:ss": "m/d/yyyy h:mm:ss",
+        "M/d/yyyy": "m/d/yyyy",
+    }
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -66,7 +44,11 @@ class GSheetsField(Field[Internal, External]):
         timezone: Optional[datetime.tzinfo] = None,
     ):
         super().__init__(filters, order, exact)
-        self.pattern = pattern
+        self.pattern: Optional[str] = (
+            self.pattern_substitutions[pattern]
+            if pattern in self.pattern_substitutions
+            else pattern
+        )
         self.timezone = timezone
 
     def __eq__(self, other: Any) -> bool:
@@ -107,11 +89,10 @@ class GSheetsDateTime(GSheetsField[str, datetime.datetime]):
     def parse(self, value: Optional[str]) -> Optional[datetime.datetime]:
         # Google Chart API returns ``None`` for a NULL cell, while the Google
         # Sheets API returns an empty string
-        if value is None or value == "":
+        if self.pattern is None or value is None or value == "":
             return None
 
-        format_ = convert_pattern_to_format(self.pattern)
-        timestamp = datetime.datetime.strptime(value, format_)
+        timestamp = parse_date_time_pattern(value, self.pattern, datetime.datetime)
 
         # Set the timestamp to the spreadsheet timezone, if any.
         timestamp = timestamp.replace(tzinfo=self.timezone)
@@ -121,7 +102,7 @@ class GSheetsDateTime(GSheetsField[str, datetime.datetime]):
     def format(self, value: Optional[datetime.datetime]) -> str:
         # This method is used only when inserting or updating rows, so we
         # encode NULLs as an empty string to match the Google Sheets API.
-        if value is None:
+        if self.pattern is None or value is None:
             return ""
 
         # Google Sheets does not support timezones in datetime values, so we
@@ -129,18 +110,18 @@ class GSheetsDateTime(GSheetsField[str, datetime.datetime]):
         if self.timezone:
             value = value.astimezone(self.timezone)
 
-        format_ = convert_pattern_to_format(self.pattern)
-        return value.strftime(format_)
+        return format_date_time_pattern(value, self.pattern)
 
     def quote(self, value: Optional[str]) -> str:
-        if value == "" or value is None:
+        if self.pattern is None or value == "" or value is None:
             return "null"
 
         # On SQL queries the timestamp should be prefix by "datetime"
-        format_ = convert_pattern_to_format(self.pattern)
-        value = datetime.datetime.strptime(value, format_).strftime(
-            DATETIME_SQL_QUOTE,
-        )
+        value = parse_date_time_pattern(
+            value,
+            self.pattern,
+            datetime.datetime,
+        ).strftime(DATETIME_SQL_QUOTE)
         return f"datetime '{value}'"
 
 
@@ -162,26 +143,25 @@ class GSheetsDate(GSheetsField[str, datetime.date]):
     def parse(self, value: Optional[str]) -> Optional[datetime.date]:
         # Google Chart API returns ``None`` for a NULL cell, while the Google
         # Sheets API returns an empty string
-        if value is None or value == "":
+        if self.pattern is None or value is None or value == "":
             return None
 
-        format_ = convert_pattern_to_format(self.pattern)
-        return datetime.datetime.strptime(value, format_).date()
+        return parse_date_time_pattern(value, self.pattern, datetime.date)
 
     def format(self, value: Optional[datetime.date]) -> str:
-        if value is None:
+        if self.pattern is None or value is None:
             return ""
 
-        format_ = convert_pattern_to_format(self.pattern)
-        return value.strftime(format_)
+        return format_date_time_pattern(value, self.pattern)
 
     def quote(self, value: Optional[str]) -> str:
-        if value == "" or value is None:
+        if self.pattern is None or value == "" or value is None:
             return "null"
 
         # On SQL queries the timestamp should be prefix by "date"
-        format_ = convert_pattern_to_format(self.pattern)
-        value = datetime.datetime.strptime(value, format_).strftime(DATE_SQL_QUOTE)
+        value = parse_date_time_pattern(value, self.pattern, datetime.date).strftime(
+            DATE_SQL_QUOTE,
+        )
         return f"date '{value}'"
 
 
@@ -206,26 +186,23 @@ class GSheetsTime(GSheetsField[str, datetime.time]):
         """
         # Google Chart API returns ``None`` for a NULL cell, while the Google
         # Sheets API returns an empty string
-        if value is None or value == "":
+        if self.pattern is None or value is None or value == "":
             return None
 
-        format_ = convert_pattern_to_format(self.pattern)
-        return datetime.datetime.strptime(value, format_).time()
+        return parse_date_time_pattern(value, self.pattern, datetime.time)
 
     def format(self, value: Optional[datetime.time]) -> str:
-        if value is None:
+        if self.pattern is None or value is None:
             return ""
 
-        format_ = convert_pattern_to_format(self.pattern)
-        return value.strftime(format_)
+        return format_date_time_pattern(value, self.pattern)
 
     def quote(self, value: Optional[str]) -> str:
-        if value == "" or value is None:
+        if self.pattern is None or value == "" or value is None:
             return "null"
 
         # On SQL queries the timestamp should be prefix by "timeofday"
-        format_ = convert_pattern_to_format(self.pattern)
-        value = datetime.datetime.strptime(value, format_).strftime(
+        value = parse_date_time_pattern(value, self.pattern, datetime.time).strftime(
             TIME_SQL_QUOTE,
         )
         return f"timeofday '{value}'"

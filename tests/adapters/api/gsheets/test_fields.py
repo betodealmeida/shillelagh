@@ -5,9 +5,7 @@ Tests for shilellagh.adapters.api.gsheets.fields.
 import datetime
 
 import dateutil.tz
-import pytest
 
-from shillelagh.adapters.api.gsheets.fields import convert_pattern_to_format
 from shillelagh.adapters.api.gsheets.fields import GSheetsBoolean
 from shillelagh.adapters.api.gsheets.fields import GSheetsDate
 from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime
@@ -16,22 +14,6 @@ from shillelagh.adapters.api.gsheets.fields import GSheetsString
 from shillelagh.adapters.api.gsheets.fields import GSheetsTime
 from shillelagh.fields import ISODateTime
 from shillelagh.fields import Order
-
-
-def test_convert_pattern_to_format():
-    """
-    Test pattern conversion from ICU to strftime.
-    """
-    assert convert_pattern_to_format("M/d/yyyy H:mm:ss") == "%m/%d/%Y %H:%M:%S"
-    assert convert_pattern_to_format("M/d/yyyy") == "%m/%d/%Y"
-    assert convert_pattern_to_format("h:mm:ss am/pm") == "%I:%M:%S %p"
-
-    with pytest.raises(NotImplementedError) as excinfo:
-        convert_pattern_to_format("hh:mm:ss am/pm")
-    assert str(excinfo.value) == (
-        'Unknown pattern "hh:mm:ss am/pm". Please file a ticket at '
-        "https://github.com/betodealmeida/shillelagh/issues."
-    )
 
 
 def test_comparison():
@@ -97,7 +79,7 @@ def test_GSheetsDateTime_timezone():
         GSheetsDateTime(pattern="M/d/yyyy H:mm:ss", timezone=timezone).format(
             datetime.datetime(2020, 12, 31, 12, 34, 56, tzinfo=datetime.timezone.utc),
         )
-        == "12/31/2020 04:34:56"
+        == "12/31/2020 4:34:56"
     )
 
 
