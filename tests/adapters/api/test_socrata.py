@@ -23,7 +23,7 @@ def test_socrata(mocker, requests_mock):
     Test a simple query.
     """
     mocker.patch(
-        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
         return_value=Session(),
     )
 
@@ -126,7 +126,7 @@ def test_socrata_no_data(mocker, requests_mock):
     Test that some queries return no data.
     """
     mocker.patch(
-        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
         return_value=Session(),
     )
 
@@ -188,7 +188,7 @@ def test_socrata_invalid_query(mocker, requests_mock):
     Test that invalid queries are handled correctly.
     """
     mocker.patch(
-        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
         return_value=Session(),
     )
 
