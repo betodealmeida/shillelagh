@@ -41,7 +41,7 @@ from shillelagh.typing import Row
 
 _logger = logging.getLogger(__name__)
 
-# regex used to determien if the URI is supported by the adapter
+# regex used to determine if the URI is supported by the adapter
 path_regex = re.compile(r"/resource/\w{4}-\w{4}.json")
 
 # this is just a wild guess; used to estimate query cost
