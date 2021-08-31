@@ -6,12 +6,14 @@ This dialect was implemented to replace the ``gsheetsdb`` library.
 """
 import logging
 import urllib.parse
+from operator import itemgetter
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
 
+import requests
 from google.auth.transport.requests import AuthorizedSession
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
@@ -91,6 +93,28 @@ class APSWGSheetsDialect(APSWDialect):
             "safe": True,
             "isolation_level": self.isolation_level,
         }
+
+    def do_ping(self, dbapi_connection: _ConnectionFairy) -> bool:
+        """
+        Return Google Sheets API status.
+        """
+        response = requests.get(
+            "https://www.google.com/appsstatus/dashboard/incidents.json",
+        )
+        payload = response.json()
+
+        updates = [
+            update for update in payload if update["service_name"] == "Google Sheets"
+        ]
+        updates.sort(key=itemgetter("modified"), reverse=True)
+        latest_update = updates[0]
+        status: str = latest_update["most_recent_update"]["status"]
+
+        if status in {"AVAILABLE", "SERVICE_DISRUPTION"}:
+            return True
+
+        # in case we don't understand the status, return True to be conservative
+        return status != "SERVICE_OUTAGE"
 
     def get_table_names(  # pylint: disable=unused-argument
         self, connection: _ConnectionFairy, schema: str = None, **kwargs: Any

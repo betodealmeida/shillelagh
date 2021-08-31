@@ -5,10 +5,10 @@ from unittest import mock
 
 import pytest
 import requests
-import requests_mock
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine.url import make_url
 
+from ....fakes import incidents
 from shillelagh.backends.apsw.dialects.gsheets import APSWGSheetsDialect
 from shillelagh.backends.apsw.dialects.gsheets import extract_query
 from shillelagh.exceptions import ProgrammingError
@@ -89,7 +89,7 @@ def test_gsheets_dialect():
     assert dialect.get_schema_names(mock_dbapi_connection) == []
 
 
-def test_get_table_names(mocker):
+def test_get_table_names(mocker, requests_mock):
     """
     Test ``get_table_names``.
     """
@@ -97,14 +97,13 @@ def test_get_table_names(mocker):
         "shillelagh.backends.apsw.dialects.gsheets.get_credentials",
     )
 
-    adapter = requests_mock.Adapter()
     session = requests.Session()
-    session.mount("https://", adapter)
+    session.mount("https://", requests_mock)
     mocker.patch(
         "shillelagh.backends.apsw.dialects.gsheets.AuthorizedSession",
         return_value=session,
     )
-    adapter.register_uri(
+    requests_mock.register_uri(
         "GET",
         (
             "https://www.googleapis.com/drive/v3/files?"
@@ -112,7 +111,7 @@ def test_get_table_names(mocker):
         ),
         json={"files": [{"id": 1}, {"id": 2}, {"id": 3}]},
     )
-    adapter.register_uri(
+    requests_mock.register_uri(
         "GET",
         "https://sheets.googleapis.com/v4/spreadsheets/1?includeGridData=false",
         json={
@@ -122,12 +121,12 @@ def test_get_table_names(mocker):
             ],
         },
     )
-    adapter.register_uri(
+    requests_mock.register_uri(
         "GET",
         "https://sheets.googleapis.com/v4/spreadsheets/2?includeGridData=false",
         json={"sheets": [{"properties": {"sheetId": 0}}]},
     )
-    adapter.register_uri(
+    requests_mock.register_uri(
         "GET",
         "https://sheets.googleapis.com/v4/spreadsheets/3?includeGridData=false",
         json={
@@ -197,7 +196,7 @@ def test_get_table_names(mocker):
     )
 
 
-def test_drive_api_disabled(mocker):
+def test_drive_api_disabled(mocker, requests_mock):
     """
     Test error message when the Drive API is disabled.
     """
@@ -205,14 +204,13 @@ def test_drive_api_disabled(mocker):
         "shillelagh.backends.apsw.dialects.gsheets.get_credentials",
     )
 
-    adapter = requests_mock.Adapter()
     session = requests.Session()
-    session.mount("https://", adapter)
+    session.mount("https://", requests_mock)
     mocker.patch(
         "shillelagh.backends.apsw.dialects.gsheets.AuthorizedSession",
         return_value=session,
     )
-    adapter.register_uri(
+    requests_mock.register_uri(
         "GET",
         (
             "https://www.googleapis.com/drive/v3/files?"
@@ -277,3 +275,29 @@ def test_extract_query():
     assert extract_query(make_url("gsheets://host")) == {}
     assert extract_query(make_url("gsheets://?foo=bar")) == {"foo": "bar"}
     assert extract_query(make_url("gsheets:///?foo=bar")) == {"foo": "bar"}
+
+
+def test_do_ping(mocker, requests_mock):
+    """
+    Test ``do_ping``.
+    """
+    connection = mocker.MagicMock()
+
+    dialect = APSWGSheetsDialect()
+
+    requests_mock.get(
+        "https://www.google.com/appsstatus/dashboard/incidents.json",
+        json=incidents,
+    )
+    assert dialect.do_ping(connection)
+
+    outage = {
+        "service_name": "Google Sheets",
+        "modified": "2021-04-12T17:00:00+00:00",
+        "most_recent_update": {"status": "SERVICE_OUTAGE"},
+    }
+    requests_mock.get(
+        "https://www.google.com/appsstatus/dashboard/incidents.json",
+        json=[outage],
+    )
+    assert dialect.do_ping(connection) is False
