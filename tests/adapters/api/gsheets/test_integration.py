@@ -612,12 +612,15 @@ def test_date_time_formats(adapter_kwargs):
     ]
 
     sql = f'INSERT INTO {table} ("M/d/yyyy H:mm:ss") VALUES (?)'
-    cursor.execute(sql, (datetime.datetime(2021, 1, 1, 12, 0, 0),))
+    cursor.execute(
+        sql,
+        (datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc),),
+    )
     sql = f'SELECT "M/d/yyyy H:mm:ss" FROM {table} WHERE "M/d/yyyy H:mm:ss" IS NOT NULL'
     cursor.execute(sql)
     assert cursor.fetchall() == [
         (datetime.datetime(2020, 12, 31, 12, 34, 56, tzinfo=datetime.timezone.utc),),
-        (datetime.datetime(2021, 1, 1, 20, 0, tzinfo=datetime.timezone.utc),),
+        (datetime.datetime(2021, 1, 1, 12, 0, tzinfo=datetime.timezone.utc),),
     ]
 
     sql = f'DELETE FROM {table} WHERE "default" IS NULL'
