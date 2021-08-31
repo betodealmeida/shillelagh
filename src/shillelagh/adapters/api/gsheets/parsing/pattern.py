@@ -27,10 +27,6 @@ from shillelagh.adapters.api.gsheets.parsing.base import Token
 class Meridiem(Enum):
     """
     Represent ante or post meridiem.
-
-    We nede to track this because 11:59am is not followed by 12:00am, so to
-    resolve "AM" or "PM" we need to know the hour number in order to apply
-    an offset if applicable.
     """
 
     AM = "AM"
