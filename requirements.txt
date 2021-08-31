@@ -14,5 +14,5 @@ six==1.16.0
     # via python-dateutil
 sqlalchemy==1.4.23
     # via shillelagh (setup.py)
-typing-extensions==3.10.0.0
+typing-extensions==3.10.0.2
     # via shillelagh (setup.py)
