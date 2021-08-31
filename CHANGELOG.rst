@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 1.0.4 - 2021-08-30
+==========================
+
+- Add pattern parser/formatter for GSheets
+
 Version 1.0.3 - 2021-08-24
 ==========================
 
