@@ -273,3 +273,48 @@ def test_datasette_error(mocker, requests_mock):
     with pytest.raises(ProgrammingError) as excinfo:
         list(cursor.execute(sql))
     assert str(excinfo.value) == "Error (Invalid SQL): no such table: invalid"
+
+
+@pytest.mark.integration_test
+def test_integration(adapter_kwargs):
+    """
+    Test fetching data from the demo Datasette.
+    """
+    connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
+    cursor = connection.cursor()
+
+    sql = """
+        SELECT *
+        FROM "https://global-power-plants.datasettes.com/global-power-plants/global-power-plants"
+        WHERE wepp_id = ?
+    """
+    cursor.execute(sql, ("67644",))
+    assert cursor.fetchall() == [
+        (
+            "USA",
+            "United States of America",
+            "145 Talmadge Solar",
+            "USA0057458",
+            3.8,
+            40.5358,
+            -74.3913,
+            "Solar",
+            None,
+            None,
+            None,
+            2011.0,
+            "Avidan Energy Solutions",
+            "U.S. Energy Information Administration",
+            "http://www.eia.gov/electricity/data/browser/",
+            "U.S. Energy Information Administration",
+            "67644",
+            2017,
+            5.0360000000000005,
+            4.524,
+            4.8020000000000005,
+            5.051,
+            4.819,
+            "U.S. Energy Information Administration",
+            None,
+        ),
+    ]
