@@ -6,6 +6,7 @@ Version 1.x.y - YYYY-MM-DD
 ==========================
 
 - Implement ``do_ping`` for GSheets dialect
+- Create a ``cookiecutter`` template for new adapters
 
 Version 1.0.4 - 2021-08-30
 ==========================
