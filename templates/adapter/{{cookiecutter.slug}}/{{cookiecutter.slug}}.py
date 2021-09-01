@@ -117,7 +117,7 @@ class {{ cookiecutter.adapter_name|replace(' ', '') }}{{ cookiecutter.adapter_ty
     def get_metadata(self) -> Dict[str, Any]:
         return {}
 
-    # This method yield rows of data, each row a dictionary. If any columns are
+    # This method yields rows of data, each row a dictionary. If any columns are
     # declared as filterable there might be a corresponding ``Filter`` object in
     # the ``bounds`` argument that must be used to filter the column (unless the
     # column was declared as inexact).
