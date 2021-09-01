@@ -332,6 +332,10 @@ def test_string_duration():
         microseconds=789012,
     )
     assert StringDuration().parse(None) is None
+    assert StringDuration().parse("2 days, 4:00:00") == datetime.timedelta(
+        days=2,
+        hours=4,
+    )
     assert (
         StringDuration().format(datetime.timedelta(hours=12, minutes=34, seconds=56))
         == "12:34:56"
@@ -343,6 +347,10 @@ def test_string_duration():
         == "12:34:56.789012"
     )
     assert StringDuration().format(None) is None
+    assert (
+        StringDuration().format(datetime.timedelta(days=2, hours=4))
+        == "2 days, 4:00:00"
+    )
     assert (
         StringDuration().quote(
             datetime.timedelta(hours=12, minutes=34, seconds=56, microseconds=789012),
