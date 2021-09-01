@@ -16,4 +16,4 @@ clean:
 	rm -rf venv
 
 spellcheck:
-	codespell -S "*.json" src/shillelagh docs/*rst tests
+	codespell -S "*.json" src/shillelagh docs/*rst tests templates

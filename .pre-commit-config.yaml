@@ -6,14 +6,17 @@ repos:
     hooks:
     - id: black
       language_version: python3.9
+      exclude: ^templates/
 -   repo: https://gitlab.com/pycqa/flake8
     rev: 3.9.2
     hooks:
     - id: flake8
+      exclude: ^templates/
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: 'v0.910'  # Use the sha / tag you want to point at
     hooks:
     - id: mypy
+      exclude: ^templates/
       additional_dependencies:
         - types-requests
         - types-freezegun
@@ -25,17 +28,21 @@ repos:
     rev: v2.1.0
     hooks:
     - id: add-trailing-comma
+      exclude: ^templates/
 -   repo: https://github.com/asottile/reorder_python_imports
     rev: v2.5.0
     hooks:
     - id: reorder-python-imports
+      exclude: ^templates/
       args: [--application-directories=.:src]
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1
     hooks:
     - id: debug-statements
+      exclude: ^templates/
 - repo: https://github.com/hadialqattan/pycln
   rev: v1.0.3 # Possible releases: https://github.com/hadialqattan/pycln/tags
   hooks:
     - id: pycln
       args: [--config=pyproject.toml]
+      exclude: ^templates/
