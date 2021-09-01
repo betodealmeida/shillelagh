@@ -35,6 +35,7 @@ from shillelagh.fields import ISOTime
 from shillelagh.fields import Order
 from shillelagh.fields import RowID
 from shillelagh.fields import String
+from shillelagh.fields import StringDuration
 from shillelagh.filters import Filter
 from shillelagh.filters import Operator
 from shillelagh.lib import deserialize
@@ -71,6 +72,7 @@ type_map: Dict[str, Type[Field]] = {
     field.type: field  # type: ignore
     for field in {
         Blob,
+        StringDuration,
         Float,
         IntBoolean,
         Integer,
