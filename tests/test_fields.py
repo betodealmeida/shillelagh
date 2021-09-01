@@ -3,6 +3,7 @@ Tests for shillelagh.fields.
 """
 import datetime
 
+from shillelagh.backends.apsw.db import connect
 from shillelagh.fields import Blob
 from shillelagh.fields import Boolean
 from shillelagh.fields import Date
@@ -18,6 +19,7 @@ from shillelagh.fields import Order
 from shillelagh.fields import String
 from shillelagh.fields import StringBlob
 from shillelagh.fields import StringBoolean
+from shillelagh.fields import StringDuration
 from shillelagh.fields import Time
 from shillelagh.filters import Equal
 from shillelagh.types import BINARY
@@ -312,3 +314,60 @@ def test_type_code():
     assert Boolean == NUMBER
 
     assert NUMBER != 1
+
+
+def test_string_duration():
+    """
+    Test ``StringDuration``.
+    """
+    assert StringDuration().parse("12:34:56") == datetime.timedelta(
+        hours=12,
+        minutes=34,
+        seconds=56,
+    )
+    assert StringDuration().parse("12:34:56.789012") == datetime.timedelta(
+        hours=12,
+        minutes=34,
+        seconds=56,
+        microseconds=789012,
+    )
+    assert StringDuration().parse(None) is None
+    assert StringDuration().parse("2 days, 4:00:00") == datetime.timedelta(
+        days=2,
+        hours=4,
+    )
+    assert (
+        StringDuration().format(datetime.timedelta(hours=12, minutes=34, seconds=56))
+        == "12:34:56"
+    )
+    assert (
+        StringDuration().format(
+            datetime.timedelta(hours=12, minutes=34, seconds=56, microseconds=789012),
+        )
+        == "12:34:56.789012"
+    )
+    assert StringDuration().format(None) is None
+    assert (
+        StringDuration().format(datetime.timedelta(days=2, hours=4))
+        == "2 days, 4:00:00"
+    )
+    assert (
+        StringDuration().quote(
+            datetime.timedelta(hours=12, minutes=34, seconds=56, microseconds=789012),
+        )
+        == "'12:34:56.789012'"
+    )
+    assert StringDuration().quote(None) == "NULL"
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = "CREATE TABLE test_table (a DURATION)"
+    cursor.execute(sql)
+
+    sql = "INSERT INTO test_table (a) VALUES (?)"
+    cursor.execute(sql, (datetime.timedelta(hours=1),))
+
+    sql = "SELECT * FROM test_table"
+    cursor.execute(sql)
+    assert cursor.fetchall() == [(datetime.timedelta(hours=1),)]

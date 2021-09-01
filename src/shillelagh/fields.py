@@ -24,8 +24,9 @@ Internal = TypeVar(
     str,
     bool,
     datetime.date,
-    datetime.time,
     datetime.datetime,
+    datetime.time,
+    datetime.timedelta,
     bytes,
 )
 
@@ -36,8 +37,9 @@ External = TypeVar(
     str,
     bool,
     datetime.date,
-    datetime.time,
     datetime.datetime,
+    datetime.time,
+    datetime.timedelta,
     bytes,
 )
 
@@ -460,6 +462,50 @@ class ISODateTime(Field[str, datetime.datetime]):
             value = value.astimezone(datetime.timezone.utc)
 
         return value.isoformat()
+
+    def quote(self, value: Optional[str]) -> str:
+        if value is None:
+            return "NULL"
+        return f"'{value}'"
+
+
+class StringDuration(Field[str, datetime.timedelta]):
+    """
+    A duration.
+
+    This field represents durations as a string.
+    """
+
+    type = "DURATION"
+    db_api_type = "DATETIME"
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.timedelta]:
+        if value is None:
+            return None
+
+        if ", " in value:
+            rest, value = value.split(", ")
+            days = int(rest.split(" ")[0])
+        else:
+            days = 0
+
+        pattern = "%H:%M:%S.%f" if "." in value else "%H:%M:%S"
+
+        return (
+            datetime.datetime.strptime(value, pattern)
+            - datetime.datetime(
+                1900,
+                1,
+                1,
+            )
+            + datetime.timedelta(days=days)
+        )
+
+    def format(self, value: Optional[datetime.timedelta]) -> Optional[str]:
+        if value is None:
+            return None
+
+        return str(value)
 
     def quote(self, value: Optional[str]) -> str:
         if value is None:
