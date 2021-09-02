@@ -1,5 +1,6 @@
+import logging
 from shillelagh.backends.apsw.db import connect
-
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
     connection = connect(":memory:")
@@ -7,7 +8,7 @@ if __name__ == "__main__":
 
     sql = """
     SELECT *
-    FROM "https://api.opensea.io/api/v1/events?only_opensea=false&offset=0&limit=20"
+    FROM "https://api.opensea.io/api/v1/events"
     """
     for row in cursor.execute(sql):
         print(row)

@@ -3,6 +3,7 @@
 Write SQL to explore opensea.io data
 """
 import logging
+from re import T
 import urllib.parse
 
 from typing import Any
@@ -19,13 +20,18 @@ from shillelagh.fields import Field
 from shillelagh.filters import Filter
 from shillelagh.typing import RequestedOrder
 from shillelagh.typing import Row
+from shillelagh.fields import String
 
+from requests import Request
 
+_logger = logging.getLogger(__name__)
 class OpenseaAPI(Adapter):
 
     """
     Write SQL to explore opensea.io data
     """
+
+    permalink = String()
 
     # This method is used to determine which URIs your adapter will handle. For
     # example, if your adapter interfaces with an API at api.example.com you
@@ -105,7 +111,58 @@ class OpenseaAPI(Adapter):
     #     self.columns["time"] = DateTime(filters=[Range], exact=False)
     #
     def _set_columns(self) -> None:
-        self.columns: Dict[str, Field] = {}
+        self.columns: Dict[str, Field] = {
+            'event_type': String(),
+            'approved_account': String(),
+            'asset_bundle': String(),
+            'auction_type': String(),
+            'bid_amount': String(),
+            'collection_slug': String(),
+            'contract_address': String(),
+            'created_date': String(),
+            'custom_event_name': String(),
+            'dev_fee_payment_event': String(),
+            'duration': String(),
+            'ending_price': String(),
+            'quantity': String(),
+            'seller': String(),
+            'starting_price': String(),
+            'to_account': String(),
+            'total_price': String(),
+            'transaction': String(),
+            'winner_account': String(),
+
+            # assets dict
+            'asset_id': String(),
+            'asset_token_id': String(),
+            'asset_num_sales': String(),
+            'asset_background_color': String(),
+            'asset_image_url': String(),
+            'asset_image_preview_url': String(),
+            'asset_image_thumbnail_url': String(),
+            'asset_image_original_url': String(),
+            'asset_animation_url': String(),
+            'asset_animation_original_url': String(),
+            'asset_name': String(),
+            'asset_description': String(),
+            'asset_external_link': String(),
+            'asset_permalink': String(),
+            'asset_decimals': String(),
+            'asset_token_metadata': String(),
+            
+                # asset nested fields
+                # 'asset_asset_contract': String(),
+                # 'asset_owner: String(),
+                # 'asset_collection': String(),
+                # 'asset_contract': String(),
+
+            # nested 
+            # 'from_account': String(),
+            # 'id': String(),
+            # 'is_private': String(),
+            # 'owner_account': String(),
+            # 'payment_token': String(),
+        }
 
     # If you have static columns you can get rid of the ``get_columns`` method,
     # get rid of ``_set_columns``, and simply define the columns as class
@@ -133,4 +190,23 @@ class OpenseaAPI(Adapter):
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
     ) -> Iterator[Row]:
-        pass
+
+        url = f"https://api.opensea.io/api/v1/events?only_opensea=false&offset=0&limit=20"
+        headers = {}
+        prepared = Request(
+            "GET",
+            url,
+            params={},
+            headers=headers,
+        ).prepare()
+        
+        _logger.info("GET %s", prepared.url)
+        response = self._session.send(prepared)
+        payload = response.json()
+
+        for record in payload['asset_events']:
+            asset_data = record.get('asset')
+            asset_row = {f"asset_{column}": asset_data[column] for column in asset_data.keys()}
+            record.update(asset_row)
+            row = {column: record[column] for column in self.get_columns()}
+            yield row
