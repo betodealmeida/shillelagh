@@ -177,7 +177,7 @@ class WeatherAPI(Adapter):
     ) -> int:
         cost = INITIAL_COST
 
-        # if the operator is ``Operator.EQ`` we  only need to fetch 1 day of data;
+        # if the operator is ``Operator.EQ`` we only need to fetch 1 day of data;
         # otherwise we potentially need to fetch "window" days of data
         for _, operator in filtered_columns:
             weight = 1 if operator == Operator.EQ else self.window
