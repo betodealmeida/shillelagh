@@ -109,3 +109,7 @@ with open(os.path.join(dirname, "datasette_results.json")) as fp:
     datasette_results = [tuple(row) for row in json.load(fp)]
 with open(os.path.join(dirname, "incidents.json")) as fp:
     incidents = json.load(fp)
+with open(os.path.join(dirname, "github_response.json")) as fp:
+    github_response = json.load(fp)
+with open(os.path.join(dirname, "github_single_response.json")) as fp:
+    github_single_response = json.load(fp)
