@@ -24,6 +24,9 @@ class {{ cookiecutter.adapter_name|replace(' ', '') }}{{ cookiecutter.adapter_ty
     {{ cookiecutter.description }}
     """
 
+    # Set this to ``True`` if the adapter doesn't access the filesystem.
+    safe = False
+
     # This method is used to determine which URIs your adapter will handle. For
     # example, if your adapter interfaces with an API at api.example.com you
     # can do:
