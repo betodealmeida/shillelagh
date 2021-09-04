@@ -93,6 +93,7 @@ Queries like this are supported by `adapters <https://shillelagh.readthedocs.io/
 - CSV files
 - Pandas dataframes
 - `Datasette tables <https://datasette.io/>`_
+- GitHub (currently only pull requests, but other endpoints can be easily added)
 
 A query can combine data from multiple adapters:
 

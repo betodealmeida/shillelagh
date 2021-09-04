@@ -219,3 +219,16 @@ You can select data from any `Datasette <https://datasette.io/>`_ table, by usin
 .. code-block:: sql
 
     SELECT * FROM "https://fivethirtyeight.datasettes.com/polls/president_polls"
+
+GitHub
+======
+
+The GitHub adapter currently allows pull requests to be queried (other endpoints can be easily added):
+
+.. code-block:: sql
+
+   SELECT *
+   FROM "https://api.github.com/repos/apache/superset/pulls"
+   WHERE
+       state = 'open' AND
+       username = 'betodealmeida'

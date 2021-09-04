@@ -45,13 +45,13 @@ class Column:
     # ``user.id``.
     json_path: str
 
-    # The Shillelagh field to be used.
+    # The Shillelagh field to be used for the column.
     field: Field
 
     # A default value for when the column is not specified. Eg, for ``pulls``
     # the API defaults to show only PRs with an open state, so we need to
     # default the column to ``all`` to fetch all PRs when state is not
-    # specified
+    # specified in the query.
     default: Optional[Filter] = None
 
 
