@@ -9,14 +9,8 @@ from requests import Session
 
 from ...fakes import github_response
 from ...fakes import github_single_response
-from shillelagh.adapters.api.github import GitHubAPI
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Float
-from shillelagh.fields import Integer
-from shillelagh.fields import ISODate
-from shillelagh.fields import ISODateTime
-from shillelagh.fields import String
 
 
 def test_github(mocker, requests_mock):
@@ -28,9 +22,9 @@ def test_github(mocker, requests_mock):
         return_value=Session(),
     )
 
-    page1_url = "https://api.github.com/repos/apache/superset/pulls?per_page=100&page=1"
+    page1_url = "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=100&page=1"
     requests_mock.get(page1_url, json=github_response)
-    page2_url = "https://api.github.com/repos/apache/superset/pulls?per_page=100&page=2"
+    page2_url = "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=100&page=2"
     requests_mock.get(page2_url, json=[])
 
     connection = connect(":memory:")
@@ -204,8 +198,8 @@ def test_github_single_resource(mocker, requests_mock):
         return_value=Session(),
     )
 
-    page1_url = "https://api.github.com/repos/apache/superset/pulls/16581"
-    requests_mock.get(page1_url, json=github_single_response)
+    url = "https://api.github.com/repos/apache/superset/pulls/16581"
+    requests_mock.get(url, json=github_single_response)
 
     connection = connect(":memory:")
     cursor = connection.cursor()
@@ -233,3 +227,87 @@ def test_github_single_resource(mocker, requests_mock):
             None,
         ),
     ]
+
+
+def test_github_rate_limit(mocker, requests_mock):
+    """
+    Test that the adapter was rate limited by the API.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    url = "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=100&page=1"
+    requests_mock.get(
+        url,
+        status_code=403,
+        json={
+            "message": (
+                "API rate limit exceeded for 66.220.13.38. (But here's the good "
+                "news: Authenticated requests get a higher rate limit. Check out "
+                "the documentation for more details.)"
+            ),
+            "documentation_url": (
+                "https://docs.github.com/rest/overview/"
+                "resources-in-the-rest-api#rate-limiting"
+            ),
+        },
+    )
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = """
+        SELECT * FROM
+        "https://api.github.com/repos/apache/superset/pulls"
+    """
+    with pytest.raises(ProgrammingError) as excinfo:
+        list(cursor.execute(sql))
+    assert str(excinfo.value) == (
+        "API rate limit exceeded for 66.220.13.38. (But here's the good "
+        "news: Authenticated requests get a higher rate limit. Check out "
+        "the documentation for more details.)"
+    )
+
+
+def test_github_auth_token(mocker, requests_mock):
+    """
+    Test a simple request.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    single_resource_url = "https://api.github.com/repos/apache/superset/pulls/16581"
+    single_resource_mock = requests_mock.get(
+        single_resource_url,
+        json=github_single_response,
+    )
+    multiple_resources_url = (
+        "https://api.github.com/repos/apache/superset/pulls?"
+        "state=all&per_page=100&page=1"
+    )
+    multiple_resources_mock = requests_mock.get(multiple_resources_url, json=[])
+
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={"githubapi": {"access_token": "XXX"}},
+    )
+    cursor = connection.cursor()
+
+    sql = """
+        SELECT * FROM
+        "https://api.github.com/repos/apache/superset/pulls"
+        WHERE number = 16581
+    """
+    list(cursor.execute(sql))
+    assert single_resource_mock.last_request.headers["Authorization"] == "Bearer XXX"
+
+    sql = """
+        SELECT * FROM
+        "https://api.github.com/repos/apache/superset/pulls"
+    """
+    list(cursor.execute(sql))
+    assert multiple_resources_mock.last_request.headers["Authorization"] == "Bearer XXX"
