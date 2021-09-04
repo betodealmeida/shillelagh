@@ -11,7 +11,6 @@ from ...fakes import cdc_metadata_response
 from shillelagh.adapters.api.socrata import Number
 from shillelagh.adapters.api.socrata import SocrataAPI
 from shillelagh.backends.apsw.db import connect
-from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
 from shillelagh.filters import Impossible
