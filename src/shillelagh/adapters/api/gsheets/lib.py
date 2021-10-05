@@ -55,7 +55,6 @@ def get_field(
     """
     Return a Shillelagh ``Field`` from a Google Chart API results column.
     """
-    print(col)
     type_map: Dict[str, Tuple[Type[GSheetsField], List[Type[Filter]]]] = {
         "string": (GSheetsString, [Range, Equal, NotEqual, Like, IsNull, IsNotNull]),
         "number": (GSheetsNumber, [Range, Equal, NotEqual, IsNull, IsNotNull]),

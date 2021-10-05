@@ -9,9 +9,12 @@ from datetime import timedelta
 from typing import Any
 from typing import Dict
 from typing import Generic
+from typing import Iterator
 from typing import List
 from typing import Tuple
+from typing import Type
 from typing import TypeVar
+from typing import Union
 
 DateTime = TypeVar("DateTime", datetime, date, time, timedelta)
 
@@ -66,6 +69,68 @@ class Token(Generic[DateTime]):
             return NotImplemented
 
         return bool(self.token == other.token)
+
+
+class LITERAL(Token):
+    """
+    A literal.
+    """
+
+    regex = r'(\\.)|(".*?")|(.)'
+
+    def format(
+        self,
+        value: Union[date, datetime, time, timedelta],
+        tokens: List[Token],
+    ) -> str:
+        if self.token.startswith("\\"):
+            return self.token[1:]
+        if self.token.startswith('"'):
+            return self.token[1:-1]
+        return self.token
+
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
+        if self.token.startswith("\\"):
+            size = 1
+        elif self.token.startswith('"'):
+            size = len(self.token) - 2
+        else:
+            size = len(self.token)
+        return {}, value[size:]
+
+
+def tokenize(pattern: str, classes: List[Type[Token]]) -> Iterator[Token]:
+    """
+    Tokenize a pattern.
+    """
+    tokens = []
+    while pattern:
+        for class_ in classes:  # pragma: no cover
+            if class_.match(pattern):
+                token, pattern = class_.consume(pattern)
+                tokens.append(token)
+                break
+
+    # combine unescaped literals
+    while tokens:
+        token = tokens.pop(0)
+        if is_unescaped_literal(token):
+            acc = [token.token]
+            while tokens and is_unescaped_literal(tokens[0]):
+                next_ = tokens.pop(0)
+                acc.append(next_.token)
+            yield LITERAL("".join(acc))
+        else:
+            yield token
+
+
+def is_unescaped_literal(token: Token) -> bool:
+    """
+    Return true if the token is an unescaped literal.
+    """
+    return isinstance(token, LITERAL) and not (
+        token.token.startswith('"') or token.token.startswith("\\")
+    )
 
 
 class InvalidPattern(Exception):

@@ -14,14 +14,15 @@ from datetime import timedelta
 from enum import Enum
 from typing import Any
 from typing import Dict
-from typing import Iterator
 from typing import List
 from typing import Tuple
 from typing import Type
 from typing import Union
 
 from shillelagh.adapters.api.gsheets.parsing.base import DateTime
+from shillelagh.adapters.api.gsheets.parsing.base import LITERAL
 from shillelagh.adapters.api.gsheets.parsing.base import Token
+from shillelagh.adapters.api.gsheets.parsing.base import tokenize
 
 
 class Meridiem(Enum):
@@ -476,45 +477,15 @@ class AMPM(AP):
         return {"meridiem": meridiem}, value[2:]
 
 
-class LITERAL(Token):
-    r"""
-    A literal.
-
-    Can be defined in different ways:
-
-        \       Treats the next character as a literal value and not any special
-                meaning it might have.
-        "text"  Displays whatever text is inside the quotation marks as a literal.
-
-    It's also a catchall.
+def parse_date_time_pattern(
+    value: str,
+    pattern: str,
+    class_: Type[DateTime],
+) -> DateTime:
     """
+    Parse a value using a given pattern.
 
-    regex = r'(\\.)|(".*?")|(.)'
-
-    def format(
-        self,
-        value: Union[date, datetime, time, timedelta],
-        tokens: List[Token],
-    ) -> str:
-        if self.token.startswith("\\"):
-            return self.token[1:]
-        if self.token.startswith('"'):
-            return self.token[1:-1]
-        return self.token
-
-    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
-        if self.token.startswith("\\"):
-            size = 1
-        elif self.token.startswith('"'):
-            size = len(self.token) - 2
-        else:
-            size = len(self.token)
-        return {}, value[size:]
-
-
-def tokenize(pattern: str) -> Iterator[Token]:
-    """
-    Tokenize a pattern.
+    See https://developers.google.com/sheets/api/guides/formats?hl=en.
     """
     classes = [
         H,
@@ -541,48 +512,8 @@ def tokenize(pattern: str) -> Iterator[Token]:
         LITERAL,
     ]
 
-    tokens = []
-    while pattern:
-        for class_ in classes:
-            if class_.match(pattern):
-                token, pattern = class_.consume(pattern)
-                tokens.append(token)
-                break
-
-    # combine unescaped literals
-    while tokens:
-        token = tokens.pop(0)
-        if is_unescaped_literal(token):
-            acc = [token.token]
-            while tokens and is_unescaped_literal(tokens[0]):
-                next_ = tokens.pop(0)
-                acc.append(next_.token)
-            yield LITERAL("".join(acc))
-        else:
-            yield token
-
-
-def is_unescaped_literal(token: Token) -> bool:
-    """
-    Return true if the token is an unescaped literal.
-    """
-    return isinstance(token, LITERAL) and not (
-        token.token.startswith('"') or token.token.startswith("\\")
-    )
-
-
-def parse_date_time_pattern(
-    value: str,
-    pattern: str,
-    class_: Type[DateTime],
-) -> DateTime:
-    """
-    Parse a value using a given pattern.
-
-    See https://developers.google.com/sheets/api/guides/formats?hl=en.
-    """
     kwargs: Dict[str, Any] = {}
-    tokens = list(tokenize(pattern))
+    tokens = list(tokenize(pattern, classes))
     for token in tokens:
         consumed, value = token.parse(value, tokens)
         kwargs.update(**consumed)
@@ -614,8 +545,33 @@ def format_date_time_pattern(value: DateTime, pattern: str) -> str:
 
     See https://developers.google.com/sheets/api/guides/formats?hl=en.
     """
+    classes = [
+        H,
+        HHPlus,
+        M,
+        MM,
+        MMM,
+        MMMM,
+        MMMMM,
+        S,
+        SS,
+        HPlusDuration,
+        MPlusDuration,
+        SPlusDuration,
+        D,
+        DD,
+        DDD,
+        DDDDPlus,
+        YY,
+        YYYY,
+        AP,
+        AMPM,
+        ZERO,
+        LITERAL,
+    ]
+
     parts = []
-    tokens = list(tokenize(pattern))
+    tokens = list(tokenize(pattern, classes))
     for token in tokens:
         parts.append(token.format(value, tokens))
 

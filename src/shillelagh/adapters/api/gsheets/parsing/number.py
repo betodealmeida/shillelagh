@@ -9,14 +9,14 @@ from datetime import datetime
 from datetime import time
 from typing import Any
 from typing import Dict
-from typing import Iterator
 from typing import List
 from typing import Tuple
 from typing import Union
 
-from shillelagh.adapters.api.gsheets.parsing.base import InvalidPattern
 from shillelagh.adapters.api.gsheets.parsing.base import InvalidValue
+from shillelagh.adapters.api.gsheets.parsing.base import LITERAL
 from shillelagh.adapters.api.gsheets.parsing.base import Token
+from shillelagh.adapters.api.gsheets.parsing.base import tokenize
 
 
 class ZERO(Token):
@@ -283,76 +283,6 @@ class COLOR(Token):
         return {}, value
 
 
-class LITERAL(Token):
-    """
-    A literal.
-    """
-
-    regex = r'(\\.)|(".*?")|(.)'
-
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
-
-    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
-        if self.token.startswith("\\"):
-            size = 1
-        elif self.token.startswith('"'):
-            size = len(self.token) - 2
-        else:
-            size = len(self.token)
-        return {}, value[size:]
-
-
-def tokenize(pattern: str) -> Iterator[Token]:
-    """
-    Tokenize a pattern.
-    """
-    classes = [
-        FRACTION,  # should come first
-        ZERO,
-        HASH,
-        QUESTION,
-        PERIOD,
-        PERCENT,
-        COMMA,
-        E,
-        STAR,
-        UNDERSCORE,
-        AT,
-        COLOR,
-        LITERAL,
-    ]
-
-    tokens = []
-    while pattern:
-        for class_ in classes:  # pragma: no cover
-            if class_.match(pattern):
-                token, pattern = class_.consume(pattern)
-                tokens.append(token)
-                break
-
-    # combine unescaped literals
-    while tokens:
-        token = tokens.pop(0)
-        if is_unescaped_literal(token):
-            acc = [token.token]
-            while tokens and is_unescaped_literal(tokens[0]):
-                next_ = tokens.pop(0)
-                acc.append(next_.token)
-            yield LITERAL("".join(acc))
-        else:
-            yield token
-
-
-def is_unescaped_literal(token: Token) -> bool:
-    """
-    Return true if the token is an unescaped literal.
-    """
-    return isinstance(token, LITERAL) and not (
-        token.token.startswith('"') or token.token.startswith("\\")
-    )
-
-
 def get_fraction(number: int) -> float:
     """
     Return the fraction associated with a fractional part.
@@ -404,37 +334,28 @@ def parse_number_format(value: str, format_: str) -> float:
     """
     Parse a value using a given format pattern.
     """
+    classes = [
+        FRACTION,  # should come first
+        ZERO,
+        HASH,
+        QUESTION,
+        PERIOD,
+        PERCENT,
+        COMMA,
+        E,
+        STAR,
+        UNDERSCORE,
+        AT,
+        COLOR,
+        LITERAL,
+    ]
+
     number = 0
 
-    tokens = list(tokenize(format_))
+    tokens = list(tokenize(format_, classes))
     for token in tokens:
         consumed, value = token.parse(value, tokens)
         if "operation" in consumed:
             number = consumed["operation"](number)
 
     return number
-
-
-if __name__ == "__main__":
-    assert parse_number_pattern("123", "#,##0.00") == 123
-    assert parse_number_pattern("123.00", "#,##0.00") == 123
-    assert parse_number_pattern("(123.00)", "(#,##0.00)") == 123
-    assert parse_number_pattern("(123.00)", "[Red](#,##0.00)") == 123
-    assert parse_number_pattern("(123.00)", "#,##0.00_);[Red](#,##0.00)") == -123
-
-    assert parse_number_pattern("12345.1", "####.#") == 12345.1
-    assert parse_number_pattern("012.3400", "000.0000") == 12.34
-    assert parse_number_pattern("12.0", "#.0#") == 12
-    assert parse_number_pattern("5 1/8", "# ???/???") == 5.125
-    assert parse_number_pattern("23 1/4", "0 #/#") == 23.25
-    assert parse_number_pattern("23 2/8", "0 #/8") == 23.25
-    assert parse_number_pattern("23", "0 #/3") == 23
-    assert parse_number_pattern("12,000", "#,###") == 12000
-    assert parse_number_pattern("1.2M", '0.0,,"M"') == 1200000
-    assert parse_number_pattern("1.23e+09", "0.00e+00") == 1230000000
-
-    assert parse_number_pattern("80%", "##%") == 0.8
-    assert parse_number_pattern("80.00", "#,##0.00") == 80.0
-    assert parse_number_pattern("12.2", "#0.0,,") == 12200000
-    assert parse_number_pattern("12.2", "*#0.0,,") == 12200000
-    assert parse_number_pattern("$12.2", "$#0.0,,") == 12200000
