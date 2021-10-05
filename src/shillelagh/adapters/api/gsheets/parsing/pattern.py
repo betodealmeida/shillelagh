@@ -66,7 +66,7 @@ class H(Token):
 
         return str(hour)
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
         if not match:
             raise Exception(f"Cannot parse value: {value}")
@@ -85,7 +85,7 @@ class HHPlus(H):
     def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
         return super().format(value, tokens).zfill(2)
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         return {"hour": int(value[:2])}, value[2:]
 
 
@@ -135,7 +135,7 @@ class M(Token):
 
         raise Exception(f"Cannot format value: {value}")
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
         if not match:
             raise Exception(f"Cannot parse value: {value}")
@@ -156,7 +156,7 @@ class MM(M):
     def format(self, value: Union[date, datetime, time], tokens: List[Token]) -> str:
         return super().format(value, tokens).zfill(2)
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         if self._is_minute(tokens):
             return {"minute": int(value[:2])}, value[2:]
         return {"month": int(value[:2])}, value[2:]
@@ -172,7 +172,7 @@ class MMM(Token):
     def format(self, value: Union[date, datetime, time], tokens: List[Token]) -> str:
         return value.strftime("%b")
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         month = datetime.strptime(value[:3], "%b").month
         return {"month": month}, value[3:]
 
@@ -187,7 +187,7 @@ class MMMM(MMM):
     def format(self, value: Union[date, datetime, time], tokens: List[Token]) -> str:
         return value.strftime("%B")
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         token = re.split(r"\b", value, 2)[1]
         size = len(token)
         month = datetime.strptime(value[:size], "%B").month
@@ -204,7 +204,7 @@ class MMMMM(MMM):
     def format(self, value: Union[date, datetime, time], tokens: List[Token]) -> str:
         return value.strftime("%B")[0]
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         letter = value[0]
 
         mapping = defaultdict(list)
@@ -228,7 +228,7 @@ class S(Token):
     def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
         return str(value.second)
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
         if not match:
             raise Exception(f"Cannot parse value: {value}")
@@ -248,7 +248,7 @@ class SS(S):
     def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
         return super().format(value, tokens).zfill(2)
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         return {"second": int(value[:2])}, value[2:]
 
 
@@ -263,7 +263,7 @@ class HPlusDuration(Token):
     def format(self, value: Union[timedelta], tokens: List[Token]) -> str:
         return str(int(value.total_seconds() // 3600)).zfill(len(self.token) - 2)
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         size = len(self.token) - 2
         return {"hours": int(value[:size])}, value[size:]
 
@@ -285,7 +285,7 @@ class MPlusDuration(Token):
 
         return str(int(seconds // 60)).zfill(len(self.token) - 2)
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         size = len(self.token) - 2
         return {"minutes": int(value[:size])}, value[size:]
 
@@ -311,7 +311,7 @@ class SPlusDuration(Token):
 
         return str(int(seconds)).zfill(len(self.token) - 2)
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         size = len(self.token) - 2
         return {"seconds": int(value[:size])}, value[size:]
 
@@ -326,7 +326,7 @@ class D(Token):
     def format(self, value: Union[date, datetime], tokens: List[Token]) -> str:
         return str(value.day)
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
         if not match:
             raise Exception(f"Cannot parse value: {value}")
@@ -344,7 +344,7 @@ class DD(D):
     def format(self, value: Union[date, datetime], tokens: List[Token]) -> str:
         return value.strftime("%d")
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         return {"day": int(value[:2])}, value[2:]
 
 
@@ -358,7 +358,7 @@ class DDD(D):
     def format(self, value: Union[date, datetime], tokens: List[Token]) -> str:
         return value.strftime("%a")
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         return {"weekday": datetime.strptime(value[:3], "%a").weekday()}, value[3:]
 
 
@@ -372,7 +372,7 @@ class DDDDPlus(D):
     def format(self, value: Union[date, datetime], tokens: List[Token]) -> str:
         return value.strftime("%A")
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         token = re.split(r"\b", value, 2)[1]
         size = len(token)
         return {"weekday": datetime.strptime(value[:size], "%A").weekday()}, value[
@@ -390,7 +390,7 @@ class YY(Token):
     def format(self, value: Union[date, datetime], tokens: List[Token]) -> str:
         return value.strftime("%y")
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         # assume 00 == 2000
         year = int(value[:2]) + 2000
 
@@ -407,7 +407,7 @@ class YYYY(Token):
     def format(self, value: Union[date, datetime], tokens: List[Token]) -> str:
         return value.strftime("%Y")
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         return {"year": int(value[:4])}, value[4:]
 
 
@@ -429,7 +429,7 @@ class ZERO(Token):
         rounded = round(us / 1e6, precision)
         return str(int(rounded * 10 ** precision)).zfill(precision)
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         size = len(self.token)
 
         # adjust precision
@@ -454,7 +454,7 @@ class AP(Token):
             output = output.upper()
         return output
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         letter = value[:1]
         meridiem = Meridiem.PM if letter.upper() == "P" else Meridiem.AM
         return {"meridiem": meridiem}, value[1:]
@@ -470,7 +470,7 @@ class AMPM(AP):
     def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
         return "AM" if value.hour < 12 else "PM"
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         letter = value[:2]
         meridiem = Meridiem.PM if letter.upper() == "PM" else Meridiem.AM
         return {"meridiem": meridiem}, value[2:]
@@ -502,7 +502,7 @@ class LITERAL(Token):
             return self.token[1:-1]
         return self.token
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         if self.token.startswith("\\"):
             size = 1
         elif self.token.startswith('"'):
@@ -547,6 +547,7 @@ def tokenize(pattern: str) -> Iterator[Token]:
             if class_.match(pattern):
                 token, pattern = class_.consume(pattern)
                 tokens.append(token)
+                break
 
     # combine unescaped literals
     while tokens:

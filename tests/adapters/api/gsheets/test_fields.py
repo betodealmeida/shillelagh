@@ -161,6 +161,7 @@ def test_GSheetsNumber():
     assert GSheetsNumber().parse("") is None
     assert GSheetsNumber().parse("1") == 1.0
     assert GSheetsNumber().parse("1.0") == 1.0
+    assert GSheetsNumber(pattern="# ???/???").parse("5 1/8") == 5.125
 
     assert isinstance(GSheetsNumber().parse("1"), int)
     assert isinstance(GSheetsNumber().parse("1.0"), float)

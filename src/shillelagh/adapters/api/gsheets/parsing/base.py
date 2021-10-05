@@ -66,3 +66,15 @@ class Token(Generic[DateTime]):
             return NotImplemented
 
         return bool(self.token == other.token)
+
+
+class InvalidPattern(Exception):
+    """
+    Raised when the pattern can't be consumed.
+    """
+
+
+class InvalidValue(Exception):
+    """
+    Raised when the value can't be consumed.
+    """

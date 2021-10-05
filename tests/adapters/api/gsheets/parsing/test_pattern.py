@@ -1,7 +1,7 @@
-# pylint: disable=protected-access
 """
 Test the date/time pattern handling (parsing and formatting).
 """
+# pylint: disable=protected-access
 from datetime import date
 from datetime import datetime
 from datetime import time
