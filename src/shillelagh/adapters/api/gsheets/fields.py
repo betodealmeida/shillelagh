@@ -8,9 +8,9 @@ from typing import List
 from typing import Optional
 from typing import Type
 
+from shillelagh.adapters.api.gsheets.parsing.datetime import format_date_time_pattern
+from shillelagh.adapters.api.gsheets.parsing.datetime import parse_date_time_pattern
 from shillelagh.adapters.api.gsheets.parsing.number import parse_number_pattern
-from shillelagh.adapters.api.gsheets.parsing.pattern import format_date_time_pattern
-from shillelagh.adapters.api.gsheets.parsing.pattern import parse_date_time_pattern
 from shillelagh.fields import External
 from shillelagh.fields import Field
 from shillelagh.fields import Internal

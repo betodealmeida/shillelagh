@@ -10,31 +10,31 @@ from datetime import timedelta
 import pytest
 
 from shillelagh.adapters.api.gsheets.parsing.base import LITERAL
-from shillelagh.adapters.api.gsheets.parsing.pattern import AMPM
-from shillelagh.adapters.api.gsheets.parsing.pattern import AP
-from shillelagh.adapters.api.gsheets.parsing.pattern import D
-from shillelagh.adapters.api.gsheets.parsing.pattern import DD
-from shillelagh.adapters.api.gsheets.parsing.pattern import DDD
-from shillelagh.adapters.api.gsheets.parsing.pattern import DDDDPlus
-from shillelagh.adapters.api.gsheets.parsing.pattern import format_date_time_pattern
-from shillelagh.adapters.api.gsheets.parsing.pattern import H
-from shillelagh.adapters.api.gsheets.parsing.pattern import HHPlus
-from shillelagh.adapters.api.gsheets.parsing.pattern import HPlusDuration
-from shillelagh.adapters.api.gsheets.parsing.pattern import M
-from shillelagh.adapters.api.gsheets.parsing.pattern import Meridiem
-from shillelagh.adapters.api.gsheets.parsing.pattern import MM
-from shillelagh.adapters.api.gsheets.parsing.pattern import MMM
-from shillelagh.adapters.api.gsheets.parsing.pattern import MMMM
-from shillelagh.adapters.api.gsheets.parsing.pattern import MMMMM
-from shillelagh.adapters.api.gsheets.parsing.pattern import MPlusDuration
-from shillelagh.adapters.api.gsheets.parsing.pattern import parse_date_time_pattern
-from shillelagh.adapters.api.gsheets.parsing.pattern import S
-from shillelagh.adapters.api.gsheets.parsing.pattern import SPlusDuration
-from shillelagh.adapters.api.gsheets.parsing.pattern import SS
-from shillelagh.adapters.api.gsheets.parsing.pattern import tokenize
-from shillelagh.adapters.api.gsheets.parsing.pattern import YY
-from shillelagh.adapters.api.gsheets.parsing.pattern import YYYY
-from shillelagh.adapters.api.gsheets.parsing.pattern import ZERO
+from shillelagh.adapters.api.gsheets.parsing.datetime import AMPM
+from shillelagh.adapters.api.gsheets.parsing.datetime import AP
+from shillelagh.adapters.api.gsheets.parsing.datetime import D
+from shillelagh.adapters.api.gsheets.parsing.datetime import DD
+from shillelagh.adapters.api.gsheets.parsing.datetime import DDD
+from shillelagh.adapters.api.gsheets.parsing.datetime import DDDDPlus
+from shillelagh.adapters.api.gsheets.parsing.datetime import format_date_time_pattern
+from shillelagh.adapters.api.gsheets.parsing.datetime import H
+from shillelagh.adapters.api.gsheets.parsing.datetime import HHPlus
+from shillelagh.adapters.api.gsheets.parsing.datetime import HPlusDuration
+from shillelagh.adapters.api.gsheets.parsing.datetime import M
+from shillelagh.adapters.api.gsheets.parsing.datetime import Meridiem
+from shillelagh.adapters.api.gsheets.parsing.datetime import MM
+from shillelagh.adapters.api.gsheets.parsing.datetime import MMM
+from shillelagh.adapters.api.gsheets.parsing.datetime import MMMM
+from shillelagh.adapters.api.gsheets.parsing.datetime import MMMMM
+from shillelagh.adapters.api.gsheets.parsing.datetime import MPlusDuration
+from shillelagh.adapters.api.gsheets.parsing.datetime import parse_date_time_pattern
+from shillelagh.adapters.api.gsheets.parsing.datetime import S
+from shillelagh.adapters.api.gsheets.parsing.datetime import SPlusDuration
+from shillelagh.adapters.api.gsheets.parsing.datetime import SS
+from shillelagh.adapters.api.gsheets.parsing.datetime import tokenize
+from shillelagh.adapters.api.gsheets.parsing.datetime import YY
+from shillelagh.adapters.api.gsheets.parsing.datetime import YYYY
+from shillelagh.adapters.api.gsheets.parsing.datetime import ZERO
 
 
 classes = [

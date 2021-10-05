@@ -7,9 +7,9 @@ from datetime import datetime
 from shillelagh.adapters.api.gsheets.parsing.base import is_unescaped_literal
 from shillelagh.adapters.api.gsheets.parsing.base import LITERAL
 from shillelagh.adapters.api.gsheets.parsing.base import tokenize
-from shillelagh.adapters.api.gsheets.parsing.pattern import DD
-from shillelagh.adapters.api.gsheets.parsing.pattern import MM
-from shillelagh.adapters.api.gsheets.parsing.pattern import YYYY
+from shillelagh.adapters.api.gsheets.parsing.datetime import DD
+from shillelagh.adapters.api.gsheets.parsing.datetime import MM
+from shillelagh.adapters.api.gsheets.parsing.datetime import YYYY
 
 
 def test_literal_token():
