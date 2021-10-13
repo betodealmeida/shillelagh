@@ -17,12 +17,14 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 from typing import Type
+from typing import TypeVar
 from typing import Union
 
-from shillelagh.adapters.api.gsheets.parsing.base import DateTime
 from shillelagh.adapters.api.gsheets.parsing.base import LITERAL
 from shillelagh.adapters.api.gsheets.parsing.base import Token
 from shillelagh.adapters.api.gsheets.parsing.base import tokenize
+
+DateTime = TypeVar("DateTime", datetime, date, time, timedelta)
 
 
 class Meridiem(Enum):

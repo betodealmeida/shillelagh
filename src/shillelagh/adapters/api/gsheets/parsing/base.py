@@ -14,12 +14,11 @@ from typing import List
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
-from typing import Union
 
-DateTime = TypeVar("DateTime", datetime, date, time, timedelta)
+Valid = TypeVar("Valid", datetime, date, time, timedelta, str, int, float)
 
 
-class Token(Generic[DateTime]):
+class Token(Generic[Valid]):
     """
     A token.
     """
@@ -47,7 +46,7 @@ class Token(Generic[DateTime]):
         token = match.group()
         return cls(token), pattern[len(token) :]
 
-    def format(self, value: DateTime, tokens: List["Token"]) -> str:
+    def format(self, value: Valid, tokens: List["Token"]) -> str:
         """
         Format the value using the pattern.
         """
@@ -80,7 +79,7 @@ class LITERAL(Token):
 
     def format(
         self,
-        value: Union[date, datetime, time, timedelta],
+        value: Valid,
         tokens: List[Token],
     ) -> str:
         if self.token.startswith("\\"):
@@ -92,10 +91,16 @@ class LITERAL(Token):
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         if self.token.startswith("\\"):
             size = 1
+            if not value[:size] == self.token[1:]:
+                raise InvalidValue(value)
         elif self.token.startswith('"'):
             size = len(self.token) - 2
+            if not value[:size] == self.token[1:-1]:
+                raise InvalidValue(value)
         else:
             size = len(self.token)
+            if not value[:size] == self.token:
+                raise InvalidValue(value)
         return {}, value[size:]
 
 

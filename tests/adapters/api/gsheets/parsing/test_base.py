@@ -4,12 +4,15 @@ Test the base parser/tokenizer.
 # pylint: disable=protected-access
 from datetime import datetime
 
+import pytest
+
+from shillelagh.adapters.api.gsheets.parsing.base import InvalidValue
 from shillelagh.adapters.api.gsheets.parsing.base import is_unescaped_literal
 from shillelagh.adapters.api.gsheets.parsing.base import LITERAL
 from shillelagh.adapters.api.gsheets.parsing.base import tokenize
-from shillelagh.adapters.api.gsheets.parsing.datetime import DD
-from shillelagh.adapters.api.gsheets.parsing.datetime import MM
-from shillelagh.adapters.api.gsheets.parsing.datetime import YYYY
+from shillelagh.adapters.api.gsheets.parsing.date import DD
+from shillelagh.adapters.api.gsheets.parsing.date import MM
+from shillelagh.adapters.api.gsheets.parsing.date import YYYY
 
 
 def test_literal_token():
@@ -41,6 +44,21 @@ def test_literal_token():
 
     token = LITERAL(r"\d")
     assert token.parse("d", tokens) == ({}, "")
+
+    token = LITERAL('"test"')
+    with pytest.raises(InvalidValue) as excinfo:
+        token.parse("invalid", tokens)
+    assert str(excinfo.value) == "invalid"
+
+    token = LITERAL("A")
+    with pytest.raises(InvalidValue) as excinfo:
+        token.parse("B", tokens)
+    assert str(excinfo.value) == "B"
+
+    token = LITERAL(r"\.")
+    with pytest.raises(InvalidValue) as excinfo:
+        token.parse("B", tokens)
+    assert str(excinfo.value) == "B"
 
 
 def test_tokenize():

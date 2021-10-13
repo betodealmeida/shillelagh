@@ -4,11 +4,13 @@ Parse and format Google Sheet number formats.
 https://developers.google.com/sheets/api/guides/formats#number_format_tokens
 """
 # pylint: disable=c-extension-no-member
+import math
+import operator
 import re
-from datetime import datetime
-from datetime import time
+from itertools import zip_longest
 from typing import Any
 from typing import Dict
+from typing import Iterator
 from typing import List
 from typing import Tuple
 from typing import Union
@@ -19,63 +21,107 @@ from shillelagh.adapters.api.gsheets.parsing.base import Token
 from shillelagh.adapters.api.gsheets.parsing.base import tokenize
 
 
-class ZERO(Token):
+def adjust_value(value: Union[int, float], tokens: List[Token]) -> Union[int, float]:
     """
-    A digit in the number.
+    Adjust value applying percent, scientific notation, and comma multiplier.
+    """
+    for token in tokens:
+        if token.__class__.__name__ == "PERCENT":
+            value *= 100
+        elif token.__class__.__name__ == "COMMA":
+            value /= 1000 ** len(token.token)
+        elif token.__class__.__name__ == "E":
+            while value > 10:
+                value /= 10
+            while value < 1:
+                value *= 10
 
-    If the digit is an insignificant 0, it is rendered as 0.
+    return value
+
+
+class DIGITS(Token):
+    """
+    One or more digits in the number.
+
+    Each token renders digits differently:
+
+    - 0: if the digit is an insignificant 0, it is rendered as 0.
+    - #: if the digit is an insignificant 0, it is not rendered.
+    - ?: if the digit is an insignificant 0, it is rendered as a space.
+
+    If there's a comma between tokens it renders the entire number with grouping
+    separators (grouping by the thousands)
     """
 
-    regex = "0+"
+    regex = r"(0|#|\?)+(,(0|#|\?){3})?"
 
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
+    def format(  # pylint: disable=too-many-branches
+        self,
+        value: Union[int, float],
+        tokens: List[Token],
+    ) -> str:
+        value = adjust_value(value, tokens)
+        number = str(value)
+
+        formatted: List[str] = []
+        if is_fractional(self, tokens):
+            number = number.split(".")[1] if "." in number else "0"
+            for token, digit in zip_longest(self.token, number):
+                if token is None:
+                    break
+                if token == "0":
+                    formatted.append(digit or "0")
+                elif token == "#":
+                    formatted.append(digit or "")
+                elif token == "?":
+                    formatted.append(digit or " ")
+                else:
+                    raise Exception(f"Invalid token: {token}")
+            return "".join(formatted)
+
+        number = number.split(".")[0]
+        has_comma = "," in self.token
+        token = self.token.replace(",", "")
+
+        for i, (token, digit) in enumerate(zip_longest(token[::-1], number[::-1])):
+            if token is None:
+                formatted.append(digit)
+            elif token == "0":
+                formatted.append(digit or "0")
+            elif token == "#":
+                formatted.append(digit or "")
+            elif token == "?":
+                formatted.append(digit or " ")
+            else:
+                raise Exception(f"Invalid token: {token}")
+
+            # group by thousands
+            if has_comma and (i + 1) % 3 == 0:
+                formatted.append(",")
+
+        return "".join(formatted[::-1]).strip(",")
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
-        match = re.match(r"\d+", value)
+        match = re.match(r"\s*(\+|-)?\d+(,\d+)*", value)
         if not match:
-            return {}, value
+            raise InvalidValue(value)
 
-        size = len(match.group())
+        digits = match.group().replace(",", "")
+        if is_fractional(self, tokens):
+            return (
+                {
+                    "operation": lambda number: math.copysign(
+                        abs(number) + get_fraction(int(digits)),
+                        number,
+                    ),
+                },
+                value[len(match.group()) :],
+            )
 
-        # is this a fractional part?
-        seen_self = False
-        for token in tokens:
-            if token is self:
-                seen_self = True
-            elif token.__class__.__name__ == "PERIOD" and not seen_self:
-                part = get_fraction(int(value[:size]))
-                break
-        else:
-            part = int(value[:size])
-
-        return {"operation": lambda number: number + part}, value[size:]
-
-
-class HASH(ZERO):
-    """
-    A digit in the number.
-
-    If the digit is an insignificant 0, it is not rendered.
-    """
-
-    regex = "#+"
-
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
-
-
-class QUESTION(ZERO):
-    """
-    A digit in the number.
-
-    If the digit is an insignificant 0, it is rendered as a space.
-    """
-
-    regex = r"\?+"
-
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
+        return (
+            {"operation": lambda number: number + int(digits)},
+            value[len(match.group()) :],
+        )
 
 
 class PERIOD(Token):
@@ -89,8 +135,8 @@ class PERIOD(Token):
 
     regex = r"\."
 
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
+    def format(self, value: Union[int, float], tokens: List[Token]) -> str:
+        return "."
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         match = re.match(r"\.", value)
@@ -110,8 +156,8 @@ class PERCENT(Token):
 
     regex = "%"
 
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
+    def format(self, value: Union[int, float], tokens: List[Token]) -> str:
+        return "%"
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         match = re.match("%", value)
@@ -123,35 +169,20 @@ class PERCENT(Token):
 
 class COMMA(Token):
     """
-    Group separator or multiplier.
+    Multiplier.
 
-    If it appears between two digit characters (0, # or ?), then it renders
-    the entire number with grouping separators (grouping by the thousands).
-    If it follows the digit characters, it scales the digits by one thousand
+    When appearing after the digit characters the comma scales the digits by one thousand
     per comma.
     """
 
     regex = ",+"
 
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
+    def format(self, value: Union[int, float], tokens: List[Token]) -> str:
+        return ""
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
-        seen_self = False
-        is_multiplier = True
-        for token in tokens:
-            if token is self:
-                seen_self = True
-            elif token.__class__.__name__ in {"ZERO", "HASH", "QUESTION"} and seen_self:
-                is_multiplier = False
-
-        if is_multiplier:
-            size = len(self.token)
-        else:
-            match = re.match(",*", value)
-            size = len(match.group()) if match else 0
-
-        return {"operation": lambda number: number * 1000 ** size}, value[size:]
+        size = len(self.token)
+        return {"operation": lambda number: number * 1000 ** size}, value
 
 
 class E(Token):  # pylint: disable=invalid-name
@@ -165,10 +196,33 @@ class E(Token):  # pylint: disable=invalid-name
     lowercased as well.
     """
 
-    regex = r"(E|e)(-|\+)"
+    regex = r"(E|e)(-|\+)((0|#|\?)+)"
 
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
+    def format(self, value: Union[int, float], tokens: List[Token]) -> str:
+        exponent = 0
+
+        if value >= 1:
+            sign = "+" if "+" in self.token else ""
+            while value > 10:
+                value /= 10
+                exponent += 1
+        else:
+            sign = "-"
+            while value < 1:
+                value *= 10
+                exponent += 1
+
+        match = re.match(self.regex, self.token)
+        if not match:
+            # should never happen
+            raise Exception("You are likely to be eaten by a grue.")
+        cased_e = match.group(1)
+
+        # process the exponent according to the pattern
+        pattern = match.group(3)
+        formatted_exponent = format_number_pattern(exponent, pattern)
+
+        return f"{cased_e}{sign}{formatted_exponent}"
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         match = re.match(r"(E|e)((\+|-)?\d+)", value)
@@ -195,15 +249,40 @@ class FRACTION(Token):
     or a format with a decimal point in it.
     """
 
-    regex = r"(0+/0+)|(#+/#+)|(\?+/\?+)|(0+/\d+)|(#+/\d+)|(\?+/\d+)"
+    regex = r"(?:((?:0|#|\?)+))/(?:((?:0|#|\?)+)|(\d+))"
 
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
+    def format(self, value: Union[int, float], tokens: List[Token]) -> str:
+        fractional_part = float(value - math.floor(value))
+        numerator: Union[int, float]
+        numerator, denominator = fractional_part.as_integer_ratio()
+
+        # force denominator?
+        match = re.match(self.regex, self.token)
+        if not match:
+            # should never happen
+            raise Exception("You are likely to be eaten by a grue.")
+        groups = match.groups()
+        if groups[2] is not None:
+            numerator *= int(groups[2]) / denominator
+            formatted_denominator = groups[2]
+        else:
+            # the denominator needs to be formatted as a fraction, with spaces and zeros
+            # right padded
+            pattern = "." + groups[1]
+            number = get_fraction(denominator)
+            formatted_denominator = format_number_pattern(number, pattern).lstrip(".")
+
+        if math.floor(numerator) == 0:
+            return ""
+
+        formatted_numerator = format_number_pattern(numerator, groups[0])
+
+        return f"{formatted_numerator}/{formatted_denominator}"
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
-        match = re.match(r"(\d+)/(\d+)", value)
+        match = re.match(r"\s*(\d+)/(\d+)", value)
         if not match:
-            # no numbers due to rounding
+            # fractions with numerator 0 are not shown
             return {}, value
 
         numerator = int(match.group(1))
@@ -222,8 +301,8 @@ class STAR(Token):
 
     regex = r"\*"
 
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
+    def format(self, value: Union[int, float], tokens: List[Token]) -> str:
+        return ""
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         return {}, value
@@ -239,10 +318,13 @@ class UNDERSCORE(Token):
 
     regex = "_."
 
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
+    def format(self, value: Union[int, float], tokens: List[Token]) -> str:
+        return " "
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
+        if value[:1] != " ":
+            raise InvalidValue(value[:1])
+
         return {}, value[1:]
 
 
@@ -256,11 +338,29 @@ class AT(Token):
 
     regex = "@"
 
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
+    def format(self, value: Union[int, float, str], tokens: List[Token]) -> str:
+        return str(value)
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
-        raise NotImplementedError()
+        i = tokens.index(self)
+
+        if i == len(tokens) - 1:
+            # last token, consume everything
+            return {"operation": lambda number: value}, ""
+
+        # LL(1) to see how much can be consumed
+        sibling = tokens[i + 1]
+        j = 0
+        for j in range(len(value)):
+            try:
+                sibling.parse(value[j:], tokens)
+                break
+            except InvalidValue:
+                continue
+        else:
+            raise InvalidValue(value)
+
+        return {"operation": lambda number: value[:j]}, value[j:]
 
 
 class COLOR(Token):
@@ -274,10 +374,34 @@ class COLOR(Token):
     formatting.
     """
 
-    regex = r"\[(Black|Blue|Cyan|Green|Magenta|Red|White|Yellow|\d{1,2})\]"
+    regex = r"\[(Black|Blue|Cyan|Green|Magenta|Red|White|Yellow|Color\d{1,2})\]"
 
-    def format(self, value: Union[datetime, time], tokens: List[Token]) -> str:
-        raise NotImplementedError()
+    def format(self, value: Union[int, float], tokens: List[Token]) -> str:
+        return ""
+
+    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
+        return {}, value
+
+
+class CONDITION(Token):
+    """
+    Replaces the default comparison section with another conditional expression.
+
+    Replaces the default positive, negative, or zero comparison section with another
+    conditional expression. For example, [<100]”Low”;[>1000]”High”;000 will render the
+    word “Low” for values below 100, “High” for values above 1000 and a three digit
+    number (with leading 0s) for anything in between. Conditions can only be applied to
+    the first two sub-formats and if a number matches more than one, it will use the
+    first one it matches. If there is a third format, it will be used for "everything
+    else", otherwise if a number doesn’t match either format, it will be rendered as all
+    "#"s filling up the cell width. The fourth format is always used for text, if it
+    exists.
+    """
+
+    regex = r"\[(>|>=|<|<=|=)\d*(\.\d*)?\]"
+
+    def format(self, value: Union[int, float], tokens: List[Token]) -> str:
+        return ""
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         return {}, value
@@ -330,32 +454,149 @@ def parse_number_pattern(value: str, pattern: str) -> float:
     return number
 
 
+def fix_periods(tokens: Iterator[Token]) -> Iterator[Token]:
+    """
+    Convert periods into literals after the first one.
+    """
+    seen_period = False
+    for token in tokens:
+        if token.__class__.__name__ == "PERIOD":
+            yield LITERAL(".") if seen_period else token
+            seen_period = True
+        else:
+            yield token
+
+
 def parse_number_format(value: str, format_: str) -> float:
     """
     Parse a value using a given format pattern.
     """
     classes = [
         FRACTION,  # should come first
-        ZERO,
-        HASH,
-        QUESTION,
+        DIGITS,
+        COMMA,
         PERIOD,
         PERCENT,
-        COMMA,
         E,
         STAR,
         UNDERSCORE,
         AT,
         COLOR,
+        CONDITION,
         LITERAL,
     ]
 
     number = 0
 
-    tokens = list(tokenize(format_, classes))
+    tokens = list(fix_periods(tokenize(format_, classes)))
     for token in tokens:
         consumed, value = token.parse(value, tokens)
         if "operation" in consumed:
             number = consumed["operation"](number)
 
     return number
+
+
+def has_condition(pattern: str) -> bool:
+    """
+    Return true if the pattern has condition metra instructions.
+    """
+    return bool(re.match(r"\[(>|>=|<|<=|=)\d*(\.\d*)?\]", pattern))
+
+
+def condition_matches(value: Union[int, float], format_: str) -> bool:
+    """
+    Return true if the value matches the condition in the pattern.
+    """
+    match = re.search(r"\[(>|>=|<|<=|=)(\d*(?:\.\d*)?)\]", format_)
+    if not match:
+        return True
+
+    operators = {
+        ">": operator.gt,
+        ">=": operator.ge,
+        "<": operator.lt,
+        "<=": operator.le,
+        "=": operator.eq,
+    }
+    comparison, threshold = match.groups()
+    op = operators[comparison]  # pylint: disable=invalid-name
+    return bool(op(float(value), float(threshold)))
+
+
+def format_number_pattern(  # pylint: disable=too-many-branches
+    value: Union[int, float, str],
+    pattern: str,
+) -> str:
+    """
+    Format a number to a given pattern.
+    """
+    formats = pattern.split(";")
+
+    if not any(format_ for format_ in formats):
+        raise Exception("Empty pattern!")
+
+    if isinstance(value, str):
+        for format_ in formats:
+            if "@" in format_:
+                break
+        else:
+            raise Exception("No text format found for string value")
+
+    elif has_condition(pattern):
+        for format_ in formats:
+            if condition_matches(value, format_):
+                break
+        else:
+            format_ = '"########"'
+
+    else:
+        # remove any text format
+        formats = [format_ for format_ in formats if "@" not in format_]
+
+        if value > 0:
+            format_ = formats[0]
+        elif value == 0:
+            format_ = formats[2] if len(formats) == 3 else formats[0]
+        else:
+            if len(formats) >= 2:
+                format_ = formats[1]
+                value *= -1
+            else:
+                format_ = formats[0]
+
+    classes = [
+        FRACTION,  # should come first
+        DIGITS,
+        COMMA,
+        PERIOD,
+        PERCENT,
+        E,
+        STAR,
+        UNDERSCORE,
+        AT,
+        COLOR,
+        CONDITION,
+        LITERAL,
+    ]
+
+    parts = []
+
+    tokens = list(fix_periods(tokenize(format_, classes)))
+    for token in tokens:
+        parts.append(token.format(value, tokens))
+
+    return "".join(parts)
+
+
+def is_fractional(token: Token, tokens: List[Token]) -> bool:
+    """
+    Return true if the token is after the period.
+    """
+    seen_self = False
+    for sibling in tokens:
+        if sibling is token:
+            seen_self = True
+        elif isinstance(sibling, PERIOD) and not seen_self:
+            return True
+    return False
