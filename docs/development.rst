@@ -66,7 +66,7 @@ We want Shillelagh to know that it should be handled by our adapter. The first t
     shillelagh.adapter =
         weatherapi = shillelagh.adapters.api.weatherapi:WeatherAPI
 
-Ssecond, we need to implement a method called ``supports`` in our class, that returns true when it knows how to handle a given table (or URI, in this case). In our case, it should return true if these 2 conditions are met:
+Second, we need to implement a method called ``supports`` in our class, that returns true when it knows how to handle a given table (or URI, in this case). In our case, it should return true if these 2 conditions are met:
 
 1. The URI matches "https://api.weatherapi.com/v1/history.json?q=${location}[&key=${api_key}]"
 2. The user has provided an API key, either via the URI (``&key=XXX``) or via the configuration arguments.
