@@ -126,9 +126,10 @@ The dialect also allows users to specify a "catalog" of sheets, so they can be r
 
 Header rows
 ~~~~~~~~~~~
-The Google Chart API (which is used when fetching data) will "guess" how many rows are headers in the GSheet.  If all your columns are string data, the spreadsheet might have difficulty determining which rows are header rows without this parameter `details <https://developers.google.com/chart/interactive/docs/spreadsheets#creating-a-chart-from-a-separate-spreadsheet>`_ 
 
-You can specify a fixed number of header rows by adding ``headers=N`` to the sheet URI.  eg:
+The Google Chart API (which is used when fetching data) will try to guess how many rows are headers in the Google sheet. If all your columns are string data, the spreadsheet might have difficulty determining which rows are header rows, requiring it to be `passed manually <https://developers.google.com/chart/interactive/docs/spreadsheets#creating-a-chart-from-a-separate-spreadsheet>`_.
+
+You can specify a fixed number of header rows by adding ``headers=N`` to the sheet URI, eg:
 
 .. code-block:: python
 
@@ -137,7 +138,11 @@ You can specify a fixed number of header rows by adding ``headers=N`` to the she
     engine = create_engine(
         "gsheets://",
         "catalog": {
-            "simple_sheet": "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit?headers=1#gid=0",
+            "simple_sheet": (
+                "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit?"
+                "headers=1"  # <= here
+                "#gid=0"
+            ),
         },
     )
     connection = engine.connect()
