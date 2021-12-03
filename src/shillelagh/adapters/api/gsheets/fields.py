@@ -8,8 +8,10 @@ from typing import List
 from typing import Optional
 from typing import Type
 
-from shillelagh.adapters.api.gsheets.parsing.pattern import format_date_time_pattern
-from shillelagh.adapters.api.gsheets.parsing.pattern import parse_date_time_pattern
+from shillelagh.adapters.api.gsheets.parsing.date import format_date_time_pattern
+from shillelagh.adapters.api.gsheets.parsing.date import parse_date_time_pattern
+from shillelagh.adapters.api.gsheets.parsing.number import format_number_pattern
+from shillelagh.adapters.api.gsheets.parsing.number import parse_number_pattern
 from shillelagh.fields import External
 from shillelagh.fields import Field
 from shillelagh.fields import Internal
@@ -253,18 +255,22 @@ class GSheetsNumber(GSheetsField[str, float]):
         if value is None or value == "":
             return None
 
-        try:
-            return int(value)
-        except ValueError:
-            pass
+        if self.pattern is None or self.pattern == "General":
+            try:
+                return int(value)
+            except ValueError:
+                return float(value)
 
-        return float(value)
+        return parse_number_pattern(value, self.pattern)
 
     def format(self, value: Optional[float]) -> str:
         if value is None:
             return ""
 
-        return str(value)
+        if self.pattern is None or self.pattern == "General":
+            return str(value)
+
+        return format_number_pattern(value, self.pattern)
 
     def quote(self, value: Optional[str]) -> str:
         if value == "" or value is None:
