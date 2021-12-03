@@ -2,13 +2,14 @@
 Changelog
 =========
 
-Version 1.x.y - YYYY-MM-DD
+Version 1.0.5 - 2021-12-02
 ==========================
 
 - Implement ``do_ping`` for GSheets dialect
 - Create a ``cookiecutter`` template for new adapters
 - Add a ``StringDuration`` field
 - Add GitHub adapter
+- Handle arbitrary number formats in Gsheets
 
 Version 1.0.4 - 2021-08-30
 ==========================
