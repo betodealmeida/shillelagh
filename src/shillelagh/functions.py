@@ -14,7 +14,7 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.lib import find_adapter
 
 
-__all__ = ["sleep", "get_metadata"]
+__all__ = ["sleep", "get_metadata", "version"]
 
 
 def sleep(seconds: int) -> None:

@@ -356,6 +356,21 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
     next = __next__
 
 
+def apsw_version() -> str:
+    """
+    Custom implementation of the ``VERSION`` function.
+
+    This function shows the backend version::
+
+        sql> SELECT VERSION();
+        VERSION()
+        ----------------------
+        1.0.5 (apsw 3.36.0-r1)
+
+    """
+    return f"{functions.version()} (apsw {apsw.apswversion()})"
+
+
 class Connection:
 
     """Connection."""
@@ -380,7 +395,7 @@ class Connection:
         # register functions
         available_functions = {
             "sleep": functions.sleep,
-            "version": functions.version,
+            "version": apsw_version,
             "get_metadata": partial(
                 functions.get_metadata,
                 self._adapter_kwargs,
