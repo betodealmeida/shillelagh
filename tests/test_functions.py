@@ -3,6 +3,7 @@ Tests for shillelagh.functions.
 """
 import json
 
+import apsw
 import pkg_resources
 import pytest
 
@@ -78,5 +79,7 @@ def test_version_from_sql():
     connection = connect(":memory:")
     cursor = connection.cursor()
     cursor.execute("SELECT version()")
-    version = pkg_resources.get_distribution("shillelagh").version
+    shillelagh_version = pkg_resources.get_distribution("shillelagh").version
+    apsw_version = apsw.apswversion()  # pylint: disable=c-extension-no-member
+    version = f"{shillelagh_version} (apsw {apsw_version})"
     assert cursor.fetchall() == [(version,)]
