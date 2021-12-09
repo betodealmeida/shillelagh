@@ -3,9 +3,11 @@
 Google Sheets adapter.
 """
 import datetime
+import hashlib
 import json
 import logging
 import urllib.parse
+from contextlib import contextmanager
 from typing import Any
 from typing import cast
 from typing import Dict
@@ -15,6 +17,7 @@ from typing import Optional
 from typing import Tuple
 
 import dateutil.tz
+import requests_cache
 from google.auth.transport.requests import AuthorizedSession
 from requests import Session
 
@@ -176,13 +179,13 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         if not self.credentials:
             return
 
-        session = self._get_session()
         url = (
             f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
             "?includeGridData=false"
         )
         _logger.info("GET %s", url)
-        response = session.get(url)
+        with self._cached_session() as session:
+            response = session.get(url)
         payload = response.json()
         _logger.debug(payload)
         if "error" in payload:
@@ -198,11 +201,20 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         else:
             _logger.warning("Could not determine sheet name!")
 
-    def _get_session(self) -> Session:
-        return cast(
-            Session,
-            AuthorizedSession(self.credentials) if self.credentials else Session(),
-        )
+    @contextmanager
+    def _cached_session(self) -> Iterator[Session]:
+        # ``cache_name`` MUST include the credentials if present, to prevent one user from
+        # reusing the cache from another
+        if self.credentials:
+            hash_ = hashlib.sha224(self.credentials.token.encode()).hexdigest()
+            cache_name = f"gsheets_cache_{hash_}"
+            session = AuthorizedSession(self.credentials)
+        else:
+            cache_name = "gsheets_cache"
+            session = Session()
+
+        with requests_cache.enabled(cache_name, backend="sqlite", expire_after=180):
+            yield session(Session, session)
 
     def get_metadata(self) -> Dict[str, Any]:
         """
@@ -212,13 +224,13 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         return number of rows and columns, since they're available in the response
         payload.
         """
-        session = self._get_session()
         url = (
             f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
             "?includeGridData=false"
         )
         _logger.info("GET %s", url)
-        response = session.get(url)
+        with self._cached_session() as session:
+            response = session.get(url)
         payload = response.json()
         _logger.debug(payload)
         if "error" in payload:
@@ -246,9 +258,9 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         url = f"{self.url}&tq={quoted_sql}"
         headers = {"X-DataSource-Auth": "true"}
 
-        session = self._get_session()
         _logger.info("GET %s", url)
-        response = session.get(url, headers=headers)
+        with self._cached_session() as session:
+            response = session.get(url, headers=headers)
         if response.encoding is None:
             response.encoding = "utf-8"
 
@@ -447,7 +459,6 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         # In these modes we push all changes immediately to the sheet.
         if self._sync_mode in {SyncMode.BIDIRECTIONAL, SyncMode.UNIDIRECTIONAL}:
-            session = self._get_session()
             body = {
                 "range": self._sheet_name,
                 "majorDimension": "ROWS",
@@ -459,11 +470,12 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             )
             _logger.info("POST %s", url)
             _logger.debug(body)
-            response = session.post(
-                url,
-                json=body,
-                params={"valueInputOption": "USER_ENTERED"},
-            )
+            with self._cached_session() as session:
+                response = session.post(
+                    url,
+                    json=body,
+                    params={"valueInputOption": "USER_ENTERED"},
+                )
             payload = response.json()
             _logger.debug(payload)
             if "error" in payload:
@@ -483,7 +495,6 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         }:
             return self._values
 
-        session = self._get_session()
         url = (
             f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
             f"/values/{self._sheet_name}"
@@ -495,7 +506,8 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         query_string = urllib.parse.urlencode(params)
         _logger.info("GET %s?%s", url, query_string)
 
-        response = session.get(url, params=params)
+        with self._cached_session() as session:
+            response = session.get(url, params=params)
         payload = response.json()
         _logger.debug(payload)
         if "error" in payload:
@@ -542,7 +554,6 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         # In these modes we push all changes immediately to the sheet.
         if self._sync_mode in {SyncMode.BIDIRECTIONAL, SyncMode.UNIDIRECTIONAL}:
-            session = self._get_session()
             body = {
                 "requests": [
                     {
@@ -563,10 +574,11 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             )
             _logger.info("POST %s", url)
             _logger.debug(body)
-            response = session.post(
-                url,
-                json=body,
-            )
+            with self._cached_session() as session:
+                response = session.post(
+                    url,
+                    json=body,
+                )
             payload = response.json()
             _logger.debug(payload)
             if "error" in payload:
@@ -602,7 +614,6 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         # In these modes we push all changes immediately to the sheet.
         if self._sync_mode in {SyncMode.BIDIRECTIONAL, SyncMode.UNIDIRECTIONAL}:
-            session = self._get_session()
             range_ = f"{self._sheet_name}!A{row_number + 1}"
             body = {
                 "range": range_,
@@ -621,7 +632,8 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             _logger.info("PUT %s?%s", url, query_string)
             _logger.debug(body)
 
-            response = session.put(url, json=body, params=params)
+            with self._cached_session() as session:
+                response = session.put(url, json=body, params=params)
             payload = response.json()
             _logger.debug(payload)
             if "error" in payload:
@@ -660,7 +672,6 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         values.extend([dummy_row] * (self._original_rows - len(values)))
 
         _logger.info("Pushing pending changes to the spreadsheet")
-        session = self._get_session()
         range_ = f"{self._sheet_name}"
         body = {
             "range": range_,
@@ -679,7 +690,8 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         _logger.info("PUT %s?%s", url, query_string)
         _logger.debug(body)
 
-        response = session.put(url, json=body, params=params)
+        with self._cached_session() as session:
+            response = session.put(url, json=body, params=params)
         payload = response.json()
         _logger.debug(payload)
         if "error" in payload:

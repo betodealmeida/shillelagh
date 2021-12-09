@@ -214,9 +214,8 @@ def test_execute(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
 
     connection = connect(":memory:", ["gsheetsapi"])
     cursor = connection.cursor()
@@ -245,9 +244,8 @@ def test_execute_with_catalog(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
 
     connection = connect(
         ":memory:",
@@ -286,9 +284,8 @@ def test_execute_filter(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     simple_sheet_adapter.register_uri(
         "GET",
         (
@@ -343,9 +340,8 @@ def test_execute_impossible(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
 
     connection = connect(":memory:", ["gsheetsapi"])
     cursor = connection.cursor()
@@ -372,9 +368,8 @@ def test_convert_rows(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     adapter.register_uri(
         "GET",
         "https://docs.google.com/spreadsheets/d/2/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
@@ -633,9 +628,9 @@ def test_convert_rows(mocker):
     ]
 
 
-def test_get_session(mocker):
+def test_cached_session(mocker):
     """
-    Test ``_get_session``.
+    Test ``_cached_session``.
     """
     mock_authorized_session = mock.MagicMock()
     mocker.patch(
@@ -660,24 +655,28 @@ def test_get_session(mocker):
     )
 
     gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1")
-    gsheets_adapter._get_session()
+    with gsheets_adapter._cached_session():
+        pass
     mock_authorized_session.assert_not_called()
     mock_session.assert_called()
 
     mock_authorized_session.reset_mock()
     mock_session.reset_mock()
 
+    credentials = mocker.MagicMock()
+    credentials.token = "SECRET"
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
-        return_value="SECRET",
+        return_value=credentials,
     )
     gsheets_adapter = GSheetsAPI(
         "https://docs.google.com/spreadsheets/d/1",
         service_account_info={"secret": "XXX"},
         subject="user@example.com",
     )
-    assert gsheets_adapter.credentials == "SECRET"
-    gsheets_adapter._get_session()
+    assert gsheets_adapter.credentials.token == "SECRET"
+    with gsheets_adapter._cached_session():
+        pass
     mock_authorized_session.assert_called()
     mock_session.assert_not_called()
 
@@ -696,9 +695,8 @@ def test_api_bugs(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     # use content= so that the response has no encoding
     adapter.register_uri(
         "GET",
@@ -784,9 +782,8 @@ def test_execute_json_prefix(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     simple_sheet_adapter.register_uri(
         "GET",
         "https://docs.google.com/spreadsheets/d/1/gviz/tq?gid=0&tq=SELECT%20%2A",
@@ -850,9 +847,8 @@ def test_execute_invalid_json(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     adapter.register_uri(
         "GET",
         "https://docs.google.com/spreadsheets/d/5/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
@@ -885,9 +881,8 @@ def test_execute_error_response(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     adapter.register_uri(
         "GET",
         "https://docs.google.com/spreadsheets/d/6/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
@@ -928,9 +923,8 @@ def test_headers_not_detected(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     adapter.register_uri(
         "GET",
         "https://docs.google.com/spreadsheets/d/7/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
@@ -1002,9 +996,8 @@ def test_headers_not_detected_no_rows(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     adapter.register_uri(
         "GET",
         "https://docs.google.com/spreadsheets/d/8/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
@@ -1070,9 +1063,8 @@ def test_set_metadata(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
 
     gsheets_adapter = GSheetsAPI(
         "https://docs.google.com/spreadsheets/d/1/edit#gid=0",
@@ -1115,9 +1107,8 @@ def test_set_metadata_error(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     adapter.register_uri(
         "GET",
         "https://sheets.googleapis.com/v4/spreadsheets/1?includeGridData=false",
@@ -1150,9 +1141,8 @@ def test_insert_data(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     simple_sheet_adapter.register_uri(
         "POST",
         (
@@ -1225,9 +1215,8 @@ def test_delete_data(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     simple_sheet_adapter.register_uri(
         "POST",
         "https://sheets.googleapis.com/v4/spreadsheets/1:batchUpdate",
@@ -1319,9 +1308,8 @@ def test_update_data(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     simple_sheet_adapter.register_uri(
         "PUT",
         (
@@ -1445,9 +1433,8 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     update = simple_sheet_adapter.register_uri(
         "PUT",
         (
@@ -1638,9 +1625,8 @@ def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     update = simple_sheet_adapter.register_uri(
         "PUT",
         (
@@ -1727,9 +1713,8 @@ def test_execute_batch(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
         return_value="SECRET",
@@ -1823,9 +1808,8 @@ def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
     insert = simple_sheet_adapter.register_uri(
         "POST",
         (
@@ -1953,9 +1937,8 @@ def test_get_metadata(mocker, simple_sheet_adapter):
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
 
     gsheets_adapter = GSheetsAPI(
         "https://docs.google.com/spreadsheets/d/1/edit",
@@ -2157,9 +2140,8 @@ def test_empty_middle_column(mocker):
     session = requests.Session()
     session.mount("https://", adapter)
     mocker.patch(
-        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
-        return_value=session,
-    )
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._cached_session",
+    ).return_value.__enter__.return_value = session
 
     connection = connect(":memory:", ["gsheetsapi"])
     cursor = connection.cursor()
