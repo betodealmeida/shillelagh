@@ -251,8 +251,36 @@ The GitHub adapter currently allows pull requests to be queried (other endpoints
 
 .. code-block:: sql
 
-   SELECT *
-   FROM "https://api.github.com/repos/apache/superset/pulls"
-   WHERE
-       state = 'open' AND
-       username = 'betodealmeida'
+    SELECT *
+    FROM "https://api.github.com/repos/apache/superset/pulls"
+    WHERE
+        state = 'open' AND
+        username = 'betodealmeida'
+
+System resources
+================
+
+Shilellagh comes with a simple adapter that can query system resources. It's based on `psutil <https://github.com/giampaolo/psutil>`_, and currently displays CPU usage per processor:
+
+.. code-block:: sql
+
+    SELECT cpu0 FROM "system://cpu" LIMIT 1
+
+An important thing to know is that the adapter streams the data. If the query doesn't specify a ``LIMIT`` it might hang if the client expects all data to be returned before displaying the results. This is true for the ``shillelagh`` CLI, but not for Python cursors. For example, the following code will print a new line every 1 second until it's interrupted:
+
+.. code-block:: python
+
+    from shillelagh.backends.apsw.db import connect
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    query = 'SELECT * FROM "system://cpu"'
+    for row in cursor.execute(query):
+        print(row)
+
+It's possible to specify a different polling interval by passing the ``interval`` parameter to the URL:
+
+.. code-block:: sql
+
+    SELECT cpu0 FROM "system://cpu?interval=0.1" -- 0.1 seconds
