@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version X.Y.Z - YYYY-MM-DD
+==========================
+
+- Add an adapter for system resources (CPU usage for now)
+
 Version 1.0.5 - 2021-12-02
 ==========================
 
