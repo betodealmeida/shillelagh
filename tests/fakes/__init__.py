@@ -4,7 +4,7 @@ Fake objects to simplify testing.
 import json
 import os
 import urllib.parse
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.fields import Float, Integer, Order, String
@@ -18,11 +18,11 @@ class FakeEntryPoint:  # pylint: disable=too-few-public-methods
     A fake entry point for loading adapters.
     """
 
-    def __init__(self, name: str, adapter: Adapter):
+    def __init__(self, name: str, adapter: Type[Adapter]):
         self.name = name
         self.adapter = adapter
 
-    def load(self) -> Adapter:
+    def load(self) -> Type[Adapter]:
         """
         Load the adapter.
         """

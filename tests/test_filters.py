@@ -17,156 +17,163 @@ from shillelagh.filters import (
 )
 
 
-def test_equal():
+def test_equal() -> None:
     """
     Test ``Equal``.
     """
     operations = {(Operator.EQ, 10)}
     filter_ = Equal.build(operations)
+    assert isinstance(filter_, Equal)
     assert filter_.value == 10
 
 
-def test_equal_multiple_value():
+def test_equal_multiple_value() -> None:
     """
     Test multiple operations.
     """
-    operations = [
+    operations = {
         (Operator.EQ, 10),
         (Operator.EQ, 10),
-    ]
+    }
     filter_ = Equal.build(operations)
+    assert isinstance(filter_, Equal)
     assert filter_.value == 10
 
 
-def test_equal_check():
+def test_equal_check() -> None:
     """
     Test ``_check``.
     """
-    operations = [
+    operations = {
         (Operator.EQ, 10),
         (Operator.EQ, 10),
-    ]
+    }
     filter_ = Equal.build(operations)
     assert filter_.check(10)
     assert not filter_.check(20)
 
 
-def test_equal_impossible():
+def test_equal_impossible() -> None:
     """
     Test impossible operations.
     """
-    operations = [
+    operations = {
         (Operator.EQ, 10),
         (Operator.EQ, 20),
-    ]
+    }
     filter_ = Equal.build(operations)
     assert isinstance(filter_, Impossible)
 
 
-def test_not_equal():
+def test_not_equal() -> None:
     """
     Test ``NotEqual``.
     """
     operations = {(Operator.NE, 10)}
     filter_ = NotEqual.build(operations)
+    assert isinstance(filter_, NotEqual)
     assert filter_.value == 10
 
 
-def test_not_equal_multiple_value():
+def test_not_equal_multiple_value() -> None:
     """
     Test multiple operations.
     """
-    operations = [
+    operations = {
         (Operator.NE, 10),
         (Operator.NE, 10),
-    ]
+    }
     filter_ = NotEqual.build(operations)
+    assert isinstance(filter_, NotEqual)
     assert filter_.value == 10
 
 
-def test_not_equal_check():
+def test_not_equal_check() -> None:
     """
     Test ``_check``.
     """
-    operations = [
+    operations = {
         (Operator.NE, 10),
         (Operator.NE, 10),
-    ]
+    }
     filter_ = NotEqual.build(operations)
     assert filter_.check(20)
     assert not filter_.check(10)
 
 
-def test_not_equal_impossible():
+def test_not_equal_impossible() -> None:
     """
     Test impossible operations.
     """
-    operations = [
+    operations = {
         (Operator.NE, 10),
         (Operator.NE, 20),
-    ]
+    }
     filter_ = NotEqual.build(operations)
     assert isinstance(filter_, Impossible)
 
 
-def test_like():
+def test_like() -> None:
     """
     Test ``Like``.
     """
     operations = {(Operator.LIKE, "%test%")}
     filter_ = Like.build(operations)
+    assert isinstance(filter_, Like)
     assert filter_.value == "%test%"
 
 
-def test_like_multiple_value():
+def test_like_multiple_value() -> None:
     """
     Test multiple operations.
     """
-    operations = [
+    operations = {
         (Operator.LIKE, "%test%"),
         (Operator.LIKE, "%test%"),
-    ]
+    }
     filter_ = Like.build(operations)
+    assert isinstance(filter_, Like)
     assert filter_.value == "%test%"
 
 
-def test_like_check():
+def test_like_check() -> None:
     """
     Test ``_check``.
     """
-    operations = [
+    operations = {
         (Operator.LIKE, "%test%"),
         (Operator.LIKE, "%test%"),
-    ]
+    }
     filter_ = Like.build(operations)
     assert filter_.check("this is a test")
     assert not filter_.check("this is not")
 
 
-def test_like_impossible():
+def test_like_impossible() -> None:
     """
     Test impossible operations.
     """
-    operations = [
+    operations = {
         (Operator.LIKE, "%foo%"),
         (Operator.LIKE, "%bar%"),
-    ]
+    }
     filter_ = Like.build(operations)
     assert isinstance(filter_, Impossible)
 
 
-def test_range():
+def test_range() -> None:
     """
     Test ``Range``.
     """
-    operations = [
+    operations = {
         (Operator.GT, 0),
         (Operator.LT, 10),
         (Operator.GT, 2),
         (Operator.LE, 4),
         (Operator.GE, 2),
-    ]
+    }
     filter_ = Range.build(operations)
+    assert isinstance(filter_, Range)
     assert filter_.start == 2
     assert filter_.end == 4
     assert not filter_.include_start
@@ -174,19 +181,20 @@ def test_range():
     assert str(filter_) == ">2,<=4"
 
 
-def test_range_equal():
+def test_range_equal() -> None:
     """
     Test ``Range`` collapsed to an equality.
     """
-    operations = [
+    operations = {
         (Operator.GT, 0),
         (Operator.EQ, 3),
         (Operator.LT, 10),
         (Operator.GT, 2),
         (Operator.LE, 4),
         (Operator.GE, 2),
-    ]
+    }
     filter_ = Range.build(operations)
+    assert isinstance(filter_, Range)
     assert filter_.start == 3
     assert filter_.end == 3
     assert filter_.include_start
@@ -194,43 +202,44 @@ def test_range_equal():
     assert str(filter_) == "==3"
 
 
-def test_range_equal_impossible():
+def test_range_equal_impossible() -> None:
     """
     Test an impossible range.
     """
-    operations = [
+    operations = {
         (Operator.GT, 0),
         (Operator.LT, -1),
-    ]
+    }
     filter_ = Range.build(operations)
     assert isinstance(filter_, Impossible)
 
-    operations = [
+    operations = {
         (Operator.LT, -1),
         (Operator.GT, 0),
-    ]
+    }
     filter_ = Range.build(operations)
     assert isinstance(filter_, Impossible)
 
 
-def test_range_include():
+def test_range_include() -> None:
     """
     Test operations with different includes.
     """
-    operations = [
+    operations = {
         (Operator.GE, 2),
         (Operator.GT, 2),
         (Operator.LE, 4),
         (Operator.LT, 4),
-    ]
+    }
     filter_ = Range.build(operations)
+    assert isinstance(filter_, Range)
     assert filter_.start == 2
     assert filter_.end == 4
     assert not filter_.include_start
     assert not filter_.include_end
 
 
-def test_range_check():
+def test_range_check() -> None:
     """
     Test ``_check`` in different ranges.
     """
@@ -259,18 +268,18 @@ def test_range_check():
     assert str(filter_) == "<4"
 
 
-def test_range_invalid_operator():
+def test_range_invalid_operator() -> None:
     """
     Test that ``build`` raises an exception on invalid operators.
     """
     operations = {(-1, 0)}
     with pytest.raises(Exception) as excinfo:
-        Range.build(operations)
+        Range.build(operations)  # type: ignore
 
     assert str(excinfo.value) == "Invalid operator: -1"
 
 
-def test_combine_ranges():
+def test_combine_ranges() -> None:
     """
     Test combining ranges.
     """
@@ -298,11 +307,11 @@ def test_combine_ranges():
     assert range5 + range6 == Impossible()
 
 
-def test_impossible():
+def test_impossible() -> None:
     """
     Test ``Impossible``.
     """
-    assert Impossible.build([]) == Impossible()
+    assert Impossible.build([]) == Impossible()  # type: ignore
     assert Impossible().check(10) is False
     assert Impossible() != 0
 
@@ -324,7 +333,7 @@ def build_endpoint(representation: str) -> Endpoint:
     )
 
 
-def test_endpoints():
+def test_endpoints() -> None:
     """
     Test building endpoints.
     """
@@ -360,19 +369,19 @@ def test_endpoints():
     )
 
 
-def test_is_null():
+def test_is_null() -> None:
     """
     Test ``IsNull``.
     """
-    assert IsNull.build([]) == IsNull()
+    assert IsNull.build([]) == IsNull()  # type: ignore
     assert IsNull().check(None) is True
     assert IsNull() != 0
 
 
-def test_is_not_null():
+def test_is_not_null() -> None:
     """
     Test ``IsNotNull``.
     """
-    assert IsNotNull.build([]) == IsNotNull()
+    assert IsNotNull.build([]) == IsNotNull()  # type: ignore
     assert IsNotNull().check(None) is False
     assert IsNotNull() != 0

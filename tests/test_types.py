@@ -17,7 +17,7 @@ from shillelagh.types import (
 )
 
 
-def test_types():
+def test_types() -> None:
     """
     Test that native Python types can be used in queries.
     """
@@ -79,7 +79,7 @@ def test_types():
     ]
 
 
-def test_comparison():
+def test_comparison() -> None:
     """
     Test type comparison.
     """

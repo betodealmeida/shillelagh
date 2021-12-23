@@ -10,7 +10,7 @@ import yaml
 from shillelagh import console
 
 
-def test_main(mocker):
+def test_main(mocker) -> None:
     """
     Test ``main``.
     """
@@ -23,7 +23,7 @@ def test_main(mocker):
     assert result == "  1\n---\n  1\nGoodBye!\n"
 
 
-def test_exception(mocker):
+def test_exception(mocker) -> None:
     """
     Test that exceptions are captured and printed.
     """
@@ -36,7 +36,7 @@ def test_exception(mocker):
     assert result == 'SQLError: near "SSELECT": syntax error\nGoodBye!\n'
 
 
-def test_ctrl_c(mocker):
+def test_ctrl_c(mocker) -> None:
     """
     Test that ``CTRL-C`` exists the REPL.
     """
@@ -53,7 +53,7 @@ def test_ctrl_c(mocker):
     assert result == "  1\n---\n  1\nGoodBye!\n"
 
 
-def test_configuration(mocker, fs):
+def test_configuration(mocker, fs) -> None:
     """
     Test loading the configuration file.
     """
@@ -72,7 +72,7 @@ def test_configuration(mocker, fs):
     connect.assert_called_with(":memory:", adapter_kwargs={"foo": {"bar": "baz"}})
 
 
-def test_no_configuration(mocker, fs):
+def test_no_configuration(mocker, fs) -> None:
     """
     Test no configuration file found.
     """
@@ -89,7 +89,7 @@ def test_no_configuration(mocker, fs):
     connect.assert_called_with(":memory:", adapter_kwargs={})
 
 
-def test_configuration_invalid(mocker, fs):
+def test_configuration_invalid(mocker, fs) -> None:
     """
     Test that an exception is raised if the configuration is invalid.
     """

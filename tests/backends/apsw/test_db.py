@@ -3,7 +3,7 @@
 Tests for shillelagh.backends.apsw.db.
 """
 import datetime
-from typing import NoReturn
+from typing import Any, List, NoReturn, Tuple
 from unittest import mock
 
 import apsw
@@ -16,7 +16,7 @@ from shillelagh.fields import Float, Integer, String
 from ...fakes import FakeAdapter, FakeEntryPoint
 
 
-def test_connect(mocker):
+def test_connect(mocker) -> None:
     """
     Test ``connect``.
     """
@@ -61,7 +61,7 @@ def test_connect(mocker):
     assert cursor.rowcount == 2
 
 
-def test_connect_schema_prefix(mocker):
+def test_connect_schema_prefix(mocker) -> None:
     """
     Test querying a table with the schema.
     """
@@ -81,7 +81,7 @@ def test_connect_schema_prefix(mocker):
     assert cursor.rowcount == 2
 
 
-def test_connect_adapter_kwargs(mocker):
+def test_connect_adapter_kwargs(mocker) -> None:
     """
     Test that ``adapter_kwargs`` are passed to the adapter.
     """
@@ -106,7 +106,7 @@ def test_connect_adapter_kwargs(mocker):
     )
 
 
-def test_conect_safe(mocker):
+def test_conect_safe(mocker) -> None:
     """
     Test the safe option.
     """
@@ -193,7 +193,7 @@ def test_conect_safe(mocker):
     assert str(excinfo.value) == "Repeated adapter names found: one"
 
 
-def test_execute_with_native_parameters(mocker):
+def test_execute_with_native_parameters(mocker) -> None:
     """
     Test passing native types to the cursor.
     """
@@ -214,7 +214,7 @@ def test_execute_with_native_parameters(mocker):
     assert cursor.rowcount == -1  # can't determine
 
 
-def test_check_closed():
+def test_check_closed() -> None:
     """
     Test trying to use cursor/connection after closing them.
     """
@@ -232,7 +232,7 @@ def test_check_closed():
     assert str(excinfo.value) == "Connection already closed"
 
 
-def test_check_result(mocker):
+def test_check_result(mocker) -> None:
     """
     Test exception raised when fetching results before query.
     """
@@ -250,7 +250,7 @@ def test_check_result(mocker):
     assert str(excinfo.value) == "Called before ``execute``"
 
 
-def test_check_invalid_syntax():
+def test_check_invalid_syntax() -> None:
     """
     Test exception raised on syntax error.
     """
@@ -260,7 +260,7 @@ def test_check_invalid_syntax():
     assert str(excinfo.value) == 'SQLError: near "SELLLLECT": syntax error'
 
 
-def test_unsupported_table():
+def test_unsupported_table() -> None:
     """
     Test exception raised on unsupported tables.
     """
@@ -272,7 +272,7 @@ def test_unsupported_table():
     assert str(excinfo.value) == "Unsupported table: dummy://"
 
 
-def test_description(mocker):
+def test_description(mocker) -> None:
     """
     Test cursor description.
     """
@@ -299,7 +299,7 @@ def test_description(mocker):
     ]
 
 
-def test_execute_many(mocker):
+def test_execute_many(mocker) -> None:
     """
     Test ``execute_many``.
     """
@@ -312,7 +312,7 @@ def test_execute_many(mocker):
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
-    items = [(6, "Billy", 1), (7, "Timmy", 2)]
+    items: List[Tuple[Any, ...]] = [(6, "Billy", 1), (7, "Timmy", 2)]
     with pytest.raises(NotSupportedError) as excinfo:
         cursor.executemany(
             """INSERT INTO "dummy://" (age, name, pets) VALUES (?, ?, ?)""",
@@ -324,7 +324,7 @@ def test_execute_many(mocker):
     )
 
 
-def test_setsize():
+def test_setsize() -> None:
     """
     Test ``setinputsizes`` and ``setoutputsizes``.
     """
@@ -334,17 +334,17 @@ def test_setsize():
     cursor.setoutputsizes(100)
 
 
-def test_close_connection():
+def test_close_connection(mocker) -> None:
     """
     Testing closing a connection.
     """
     connection = connect(":memory:", isolation_level="IMMEDIATE")
-    cursor1 = connection.cursor()
-    cursor2 = connection.cursor()
 
-    cursor1.close()
-    cursor1.close = mock.MagicMock()
-    cursor2.close = mock.MagicMock()
+    cursor1 = mocker.MagicMock()
+    cursor1.closed = True
+    cursor2 = mocker.MagicMock()
+    cursor2.closed = False
+    connection.cursors.extend([cursor1, cursor2])
 
     connection.close()
 
@@ -352,7 +352,7 @@ def test_close_connection():
     cursor2.close.assert_called()
 
 
-def test_transaction(mocker):
+def test_transaction(mocker) -> None:
     """
     Test transactions.
     """
@@ -428,7 +428,7 @@ def test_transaction(mocker):
     cursor._cursor.execute.assert_not_called()
 
 
-def test_connection_context_manager():
+def test_connection_context_manager() -> None:
     """
     Test that connection can be used as context manager.
     """
@@ -446,7 +446,7 @@ def test_connection_context_manager():
     )
 
 
-def test_connect_safe(mocker):
+def test_connect_safe(mocker) -> None:
     """
     Test the safe connection.
     """
@@ -469,7 +469,7 @@ def test_connect_safe(mocker):
     assert connection._adapters == []
 
 
-def test_connect_unmet_dependency(mocker):
+def test_connect_unmet_dependency(mocker) -> None:
     """
     Test that we ignore adapters with unmet dependencies.
     """
@@ -504,7 +504,7 @@ def test_connect_unmet_dependency(mocker):
     assert connection._adapters == [FakeAdapter]
 
 
-def test_convert_binding():
+def test_convert_binding() -> None:
     """
     Test conversion to SQLite types.
     """

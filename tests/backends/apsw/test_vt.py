@@ -3,7 +3,7 @@
 Tests for shillelagh.backends.apsw.vt.
 """
 import datetime
-from typing import Dict
+from typing import Any, Dict, Iterable
 
 import apsw
 import pytest
@@ -65,7 +65,7 @@ class FakeAdapterNoColumns(FakeAdapter):
         return {}
 
 
-def test_vt_module():
+def test_vt_module() -> None:
     """
     Test ``VTModule``.
     """
@@ -77,7 +77,7 @@ def test_vt_module():
     )
 
 
-def test_virtual_best_index():
+def test_virtual_best_index() -> None:
     """
     Test ``BestIndex``.
     """
@@ -102,7 +102,7 @@ def test_virtual_best_index():
     )
 
 
-def test_virtual_best_index_static_order_not_consumed():
+def test_virtual_best_index_static_order_not_consumed() -> None:
     """
     Test ``BestIndex`` when the adapter cannot consume the order.
     """
@@ -124,7 +124,7 @@ def test_virtual_best_index_static_order_not_consumed():
     )
 
 
-def test_virtual_best_index_static_order_not_consumed_descending():
+def test_virtual_best_index_static_order_not_consumed_descending() -> None:
     """
     Test ``BestIndex`` when the adapter cannot consume the order.
     """
@@ -146,7 +146,7 @@ def test_virtual_best_index_static_order_not_consumed_descending():
     )
 
 
-def test_virtual_best_index_operator_not_supported():
+def test_virtual_best_index_operator_not_supported() -> None:
     """
     Test ``BestIndex`` with an unsupported operator.
     """
@@ -158,7 +158,7 @@ def test_virtual_best_index_operator_not_supported():
     assert result == ([None], 42, "[[], [[1, false]]]", True, 666)
 
 
-def test_virtual_best_index_order_consumed():
+def test_virtual_best_index_order_consumed() -> None:
     """
     Test ``BestIndex`` when the adapter can consume the order.
     """
@@ -183,7 +183,7 @@ def test_virtual_best_index_order_consumed():
     )
 
 
-def test_virtual_disconnect():
+def test_virtual_disconnect() -> None:
     """
     Test ``Disconnect``.
     """
@@ -191,14 +191,14 @@ def test_virtual_disconnect():
     table.Disconnect()  # no-op
 
 
-def test_update_insert_row():
+def test_update_insert_row() -> None:
     """
     Test ``UpdateInsertRow``.
     """
     adapter = FakeAdapter()
     table = VTTable(adapter)
 
-    new_row_id = table.UpdateInsertRow(None, [6, "Charlie", 1])
+    new_row_id = table.UpdateInsertRow(None, (6, "Charlie", 1))
     assert new_row_id == 2
     assert list(adapter.get_data({}, [])) == [
         {"age": 20, "name": "Alice", "pets": 0, "rowid": 0},
@@ -206,7 +206,7 @@ def test_update_insert_row():
         {"age": 6, "name": "Charlie", "pets": 1, "rowid": 2},
     ]
 
-    new_row_id = table.UpdateInsertRow(4, [40, "Dani", 2])
+    new_row_id = table.UpdateInsertRow(4, (40, "Dani", 2))
     assert new_row_id == 4
     assert list(adapter.get_data({}, [])) == [
         {"age": 20, "name": "Alice", "pets": 0, "rowid": 0},
@@ -216,7 +216,7 @@ def test_update_insert_row():
     ]
 
 
-def test_update_delete_row():
+def test_update_delete_row() -> None:
     """
     Test ``UpdateDeleteRow``.
     """
@@ -229,27 +229,27 @@ def test_update_delete_row():
     ]
 
 
-def test_update_change_row():
+def test_update_change_row() -> None:
     """
     Test ``UpdateChangeRow``.
     """
     adapter = FakeAdapter()
     table = VTTable(adapter)
 
-    table.UpdateChangeRow(1, 1, [24, "Bob", 4])
+    table.UpdateChangeRow(1, 1, (24, "Bob", 4))
     assert list(adapter.get_data({}, [])) == [
         {"age": 20, "name": "Alice", "pets": 0, "rowid": 0},
         {"age": 24, "name": "Bob", "pets": 4, "rowid": 1},
     ]
 
-    table.UpdateChangeRow(1, 2, [24, "Bob", 4])
+    table.UpdateChangeRow(1, 2, (24, "Bob", 4))
     assert list(adapter.get_data({}, [])) == [
         {"age": 20, "name": "Alice", "pets": 0, "rowid": 0},
         {"age": 24.0, "name": "Bob", "pets": 4, "rowid": 2},
     ]
 
 
-def test_cursor():
+def test_cursor() -> None:
     """
     Test the cursor.
     """
@@ -269,7 +269,7 @@ def test_cursor():
     cursor.Close()
 
 
-def test_cursor_with_constraints():
+def test_cursor_with_constraints() -> None:
     """
     Test filtering a cursor.
     """
@@ -283,7 +283,7 @@ def test_cursor_with_constraints():
     assert cursor.Eof()
 
 
-def test_cursor_with_constraints_invalid_filter():
+def test_cursor_with_constraints_invalid_filter() -> None:
     """
     Test passing an invalid constraint to a cursor.
     """
@@ -300,7 +300,7 @@ def test_cursor_with_constraints_invalid_filter():
     assert str(excinfo.value) == "Invalid constraint passed: 64"
 
 
-def test_cursor_with_constraints_no_filters():
+def test_cursor_with_constraints_no_filters() -> None:
     """
     Test passing a constraint to an adapter that cannot be filtered.
     """
@@ -312,7 +312,7 @@ def test_cursor_with_constraints_no_filters():
     assert str(excinfo.value) == "No valid filter found"
 
 
-def test_cursor_with_constraints_only_equal():
+def test_cursor_with_constraints_only_equal() -> None:
     """
     Test passing a constraint not supported by the adapter.
     """
@@ -324,7 +324,7 @@ def test_cursor_with_constraints_only_equal():
     assert str(excinfo.value) == "No valid filter found"
 
 
-def test_adapter_with_no_columns():
+def test_adapter_with_no_columns() -> None:
     """
     Test creating a table without columns.
     """
@@ -335,11 +335,11 @@ def test_adapter_with_no_columns():
     assert str(excinfo.value) == "Virtual table table has no columns"
 
 
-def test_convert_rows_to_sqlite():
+def test_convert_rows_to_sqlite() -> None:
     """
     Test that rows get converted to types supported by SQLite.
     """
-    rows = [
+    rows: Iterable[Dict[str, Any]] = [
         {
             "INTEGER": 1,
             "REAL": 1.0,
@@ -368,7 +368,8 @@ def test_convert_rows_to_sqlite():
             "BLOB": None,
         },
     ]
-    assert list(convert_rows_to_sqlite(type_map, iter(rows))) == [
+    columns = {k: v() for k, v in type_map.items()}
+    assert list(convert_rows_to_sqlite(columns, iter(rows))) == [
         {
             "INTEGER": 1,
             "REAL": 1.0,
@@ -392,11 +393,11 @@ def test_convert_rows_to_sqlite():
     ]
 
 
-def test_convert_rows_from_sqlite():
+def test_convert_rows_from_sqlite() -> None:
     """
     Test that rows get converted from the types supported by SQLite.
     """
-    rows = [
+    rows: Iterable[Dict[str, Any]] = [
         {
             "INTEGER": 1,
             "REAL": 1.0,
@@ -418,7 +419,8 @@ def test_convert_rows_from_sqlite():
             "BLOB": None,
         },
     ]
-    assert list(convert_rows_from_sqlite(type_map, iter(rows))) == [
+    columns = {k: v() for k, v in type_map.items()}
+    assert list(convert_rows_from_sqlite(columns, iter(rows))) == [
         {
             "INTEGER": 1,
             "REAL": 1.0,

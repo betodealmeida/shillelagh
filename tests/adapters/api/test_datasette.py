@@ -24,7 +24,7 @@ from ...fakes import (
 )
 
 
-def test_datasette(mocker, requests_mock):
+def test_datasette(mocker, requests_mock) -> None:
     """
     Test a simple query.
     """
@@ -92,7 +92,7 @@ def test_datasette(mocker, requests_mock):
     assert data == datasette_results
 
 
-def test_datasette_no_data(mocker):
+def test_datasette_no_data(mocker) -> None:
     """
     Test result with no rows.
     """
@@ -109,7 +109,7 @@ def test_datasette_no_data(mocker):
     assert str(excinfo.value) == 'Table "table" has no data'
 
 
-def test_get_metadata(requests_mock):
+def test_get_metadata(requests_mock) -> None:
     """
     Test ``get_metadata``.
     """
@@ -135,7 +135,7 @@ def test_get_metadata(requests_mock):
     assert adapter.get_metadata() == {"foo": "bar"}
 
 
-def test_get_field():
+def test_get_field() -> None:
     """
     Test ``get_field``.
     """
@@ -147,7 +147,7 @@ def test_get_field():
     assert isinstance(get_field(None), String)
 
 
-def test_is_known_domain():
+def test_is_known_domain() -> None:
     """
     Test ``is_known_domain``.
     """
@@ -156,7 +156,7 @@ def test_is_known_domain():
     assert not is_known_domain("example.com")
 
 
-def test_is_datasette(requests_mock):
+def test_is_datasette(requests_mock) -> None:
     """
     Test ``is_datasette``.
     """
@@ -205,7 +205,7 @@ def test_is_datasette(requests_mock):
     assert is_datasette("https://example.com/database/table")
 
 
-def test_datasette_error(mocker, requests_mock):
+def test_datasette_error(mocker, requests_mock) -> None:
     """
     Test error handling.
     """
@@ -277,7 +277,7 @@ def test_datasette_error(mocker, requests_mock):
 
 
 @pytest.mark.integration_test
-def test_integration(adapter_kwargs):
+def test_integration(adapter_kwargs) -> None:
     """
     Test fetching data from the demo Datasette.
     """

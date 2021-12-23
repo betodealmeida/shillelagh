@@ -11,7 +11,7 @@ from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 
 
-def test_system(mocker):
+def test_system(mocker) -> None:
     """
     Test a simple query.
     """
@@ -45,7 +45,7 @@ def test_system(mocker):
     )
 
 
-def test_system_different_interval(mocker):
+def test_system_different_interval(mocker) -> None:
     """
     Test a simple query with a custom interval.
     """
@@ -79,7 +79,7 @@ def test_system_different_interval(mocker):
     )
 
 
-def test_system_invalid_resource():
+def test_system_invalid_resource() -> None:
     """
     Test a query referencing an invalid resource.
     """
@@ -94,7 +94,7 @@ def test_system_invalid_resource():
     assert str(excinfo.value) == "Unknown resource: memory"
 
 
-def test_system_interrupt(mocker):
+def test_system_interrupt(mocker) -> None:
     """
     Test query interrupt.
     """

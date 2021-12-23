@@ -1,12 +1,15 @@
 """
 Tests for shillelagh.lib.
 """
+from typing import Any, Dict, Iterator, List, Tuple
+
 import pytest
 
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
-from shillelagh.fields import Float, Integer, Order, String
+from shillelagh.fields import Field, Float, Integer, Order, String
 from shillelagh.filters import (
     Equal,
+    Filter,
     Impossible,
     IsNotNull,
     IsNull,
@@ -31,11 +34,12 @@ from shillelagh.lib import (
     unescape,
     update_order,
 )
+from shillelagh.typing import RequestedOrder
 
 from .fakes import FakeAdapter, FakeEntryPoint
 
 
-def test_row_id_manager_empty_range():
+def test_row_id_manager_empty_range() -> None:
     """
     Test instantiating ``RowIDManager`` with an empty range.
     """
@@ -45,7 +49,7 @@ def test_row_id_manager_empty_range():
     assert str(excinfo.value) == "Argument ``ranges`` cannot be empty"
 
 
-def test_row_id_manager():
+def test_row_id_manager() -> None:
     """
     Test ``RowIDManager``.
     """
@@ -101,15 +105,17 @@ def test_row_id_manager():
     ]
 
 
-def test_analyze():
+def test_analyze() -> None:
     """
     Test ``analyze``.
     """
-    data = [
-        {"int": 1, "float": 10.0, "str": "Alice"},
-        {"int": 3, "float": 9.5, "str": "Bob"},
-        {"int": 2, "float": 8.0, "str": "Charlie"},
-    ]
+    data: Iterator[Dict[str, Any]] = iter(
+        [
+            {"int": 1, "float": 10.0, "str": "Alice"},
+            {"int": 3, "float": 9.5, "str": "Bob"},
+            {"int": 2, "float": 8.0, "str": "Charlie"},
+        ],
+    )
     num_rows, order, types = analyze(data)
     assert num_rows == 3
     assert order == {
@@ -120,7 +126,7 @@ def test_analyze():
     assert types == {"int": Integer, "float": Float, "str": String}
 
 
-def test_update_order():
+def test_update_order() -> None:
     """
     Test ``update_order``.
     """
@@ -137,7 +143,7 @@ def test_update_order():
     assert order == Order.NONE
 
 
-def test_update_order_none():
+def test_update_order_none() -> None:
     """
     Test ``update_order`` when original order is none.
     """
@@ -146,11 +152,11 @@ def test_update_order_none():
     assert order == Order.NONE
 
 
-def test_build_sql():
+def test_build_sql() -> None:
     """
     Test ``build_sql``.
     """
-    columns = {"a": String(), "b": Float()}
+    columns: Dict[str, Field[Any, Any]] = {"a": String(), "b": Float()}
 
     sql = build_sql(columns, {"a": Equal("b"), "b": NotEqual(1.0)}, [])
     assert sql == "SELECT * WHERE a = 'b' AND b != 1.0"
@@ -177,22 +183,25 @@ def test_build_sql():
     assert sql == "SELECT * FROM some_table"
 
     with pytest.raises(ProgrammingError) as excinfo:
-        build_sql(columns, {"a": [1, 2, 3]}, [])
+        build_sql(columns, {"a": [1, 2, 3]}, [])  # type: ignore
     assert str(excinfo.value) == "Invalid filter: [1, 2, 3]"
 
 
-def test_build_sql_with_map():
+def test_build_sql_with_map() -> None:
     """
     Test ``build_sql`` with a column map.
     """
-    columns = {f"col{i}_": Integer() for i in range(4)}
+    columns: Dict[str, Field] = {f"col{i}_": Integer() for i in range(4)}
     bounds = {
         "col0_": Equal(1),
         "col1_": Range(start=0, end=1, include_start=True, include_end=False),
         "col2_": Range(start=None, end=1, include_start=False, include_end=True),
         "col3_": Range(start=0, end=None, include_start=False, include_end=True),
     }
-    order = [("col0_", Order.ASCENDING), ("col1_", Order.DESCENDING)]
+    order: List[Tuple[str, RequestedOrder]] = [
+        ("col0_", Order.ASCENDING),
+        ("col1_", Order.DESCENDING),
+    ]
     column_map = {f"col{i}_": letter for i, letter in enumerate("ABCD")}
     sql = build_sql(columns, bounds, order, None, column_map, None, 1)
     assert sql == (
@@ -201,17 +210,17 @@ def test_build_sql_with_map():
     )
 
 
-def test_build_sql_impossible():
+def test_build_sql_impossible() -> None:
     """
     Test ``build_sql`` with an impossible filter.
     """
-    columns = {"a": String(), "b": Float()}
+    columns: Dict[str, Field] = {"a": String(), "b": Float()}
 
     with pytest.raises(ImpossibleFilterError):
         build_sql(columns, {"a": Impossible()}, [])
 
 
-def test_escape():
+def test_escape() -> None:
     """
     Test ``escape``.
     """
@@ -219,7 +228,7 @@ def test_escape():
     assert escape("O'Malley's") == "O''Malley''s"
 
 
-def test_unescape():
+def test_unescape() -> None:
     """
     Test ``unescape``.
     """
@@ -227,21 +236,21 @@ def test_unescape():
     assert unescape("O''Malley''s") == "O'Malley's"
 
 
-def test_serialize():
+def test_serialize() -> None:
     """
     Test ``serialize``.
     """
     assert serialize(["O'Malley's"]) == """'["O''Malley''s"]'"""
 
 
-def test_deserialize():
+def test_deserialize() -> None:
     """
     Test ``deserialize``.
     """
     assert deserialize("""'["O''Malley''s"]'""") == ["O'Malley's"]
 
 
-def test_combine_args_kwargs():
+def test_combine_args_kwargs() -> None:
     """
     Test ``combine_args_kwargs``.
     """
@@ -254,10 +263,13 @@ def test_combine_args_kwargs():
     assert combine_args_kwargs(func, *args, **kwargs) == (0, "TEST", 10.0)
 
 
-def test_filter_data():
+def test_filter_data() -> None:
     """
     Test ``filter_data``.
     """
+    data: List[Dict[str, Any]]
+    bounds: Dict[str, Filter]
+
     data = [
         {"index": 10, "temperature": 15.2, "site": "Diamond_St"},
         {"index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
@@ -266,38 +278,38 @@ def test_filter_data():
     ]
 
     bounds = {"index": Equal(11)}
-    assert list(filter_data(data, bounds, [])) == [
+    assert list(filter_data(iter(data), bounds, [])) == [
         {"index": 11, "site": "Blacktail_Loop", "temperature": 13.1},
     ]
 
     bounds = {"temperature": Range(13.1, None, False, False)}
-    assert list(filter_data(data, bounds, [])) == [
+    assert list(filter_data(iter(data), bounds, [])) == [
         {"index": 10, "temperature": 15.2, "site": "Diamond_St"},
         {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
     ]
 
     bounds = {"temperature": Range(None, 14, False, False)}
-    assert list(filter_data(data, bounds, [])) == [
+    assert list(filter_data(iter(data), bounds, [])) == [
         {"index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
         {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
         {"index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
     ]
 
     bounds = {"temperature": Range(13.1, 14, True, False)}
-    assert list(filter_data(data, bounds, [])) == [
+    assert list(filter_data(iter(data), bounds, [])) == [
         {"index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
         {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
     ]
 
     bounds = {"index": NotEqual(10)}
-    assert list(filter_data(data, bounds, [])) == [
+    assert list(filter_data(iter(data), bounds, [])) == [
         {"index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
         {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
         {"index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
     ]
 
-    order = [("index", Order.DESCENDING)]
-    assert list(filter_data(data, {}, order)) == [
+    order: List[Tuple[str, RequestedOrder]] = [("index", Order.DESCENDING)]
+    assert list(filter_data(iter(data), {}, order)) == [
         {"index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
         {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
         {"index": 11, "temperature": 13.1, "site": "Blacktail_Loop"},
@@ -305,20 +317,20 @@ def test_filter_data():
     ]
 
     bounds = {"index": Impossible()}
-    assert list(filter_data(data, bounds, [])) == []
+    assert list(filter_data(iter(data), bounds, [])) == []
 
     data = [{"a": None, "b": 10}, {"a": 20, "b": None}]
     bounds = {"a": IsNull()}
-    assert list(filter_data(data, bounds, [])) == [{"a": None, "b": 10}]
+    assert list(filter_data(iter(data), bounds, [])) == [{"a": None, "b": 10}]
     bounds = {"a": IsNotNull()}
-    assert list(filter_data(data, bounds, [])) == [{"a": 20, "b": None}]
+    assert list(filter_data(iter(data), bounds, [])) == [{"a": 20, "b": None}]
 
     with pytest.raises(ProgrammingError) as excinfo:
-        list(filter_data(data, {"a": [1, 2, 3]}, []))
+        list(filter_data(iter(data), {"a": [1, 2, 3]}, []))  # type: ignore
     assert str(excinfo.value) == "Invalid filter: [1, 2, 3]"
 
 
-def test_get_available_adapters(mocker):
+def test_get_available_adapters(mocker) -> None:
     """
     Test ``get_available_adapters``.
     """
@@ -331,7 +343,7 @@ def test_get_available_adapters(mocker):
     assert get_available_adapters() == {"dummy"}
 
 
-def test_find_adapter(mocker):
+def test_find_adapter(mocker) -> None:
     """
     Test ``find_adapter``.
     """
@@ -341,7 +353,7 @@ def test_find_adapter(mocker):
     adapter2.configure_mock(__name__="adapter2")
 
     uri = "https://example.com/"
-    adapter_kwargs = {}
+    adapter_kwargs: Dict[str, Any] = {}
     adapters = [
         adapter1,
         adapter2,
@@ -356,7 +368,7 @@ def test_find_adapter(mocker):
     assert find_adapter(uri, adapter_kwargs, adapters) == adapter2
 
 
-def test_is_null():
+def test_is_null() -> None:
     """
     Test ``is_null``.
     """
@@ -364,7 +376,7 @@ def test_is_null():
     assert not is_null(20, 10)
 
 
-def test_is_not_null():
+def test_is_not_null() -> None:
     """
     Test ``is_not_null``.
     """
