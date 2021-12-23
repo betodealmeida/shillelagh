@@ -32,7 +32,7 @@ CONTENTS = """"index","temperature","site"
 """
 
 
-def test_csvfile_get_columns(mocker):
+def test_csvfile_get_columns(mocker) -> None:
     """
     Test that columns are returned correctly.
     """
@@ -59,7 +59,7 @@ def test_csvfile_get_columns(mocker):
     }
 
 
-def test_csvfile_get_cost(mocker):
+def test_csvfile_get_cost(mocker) -> None:
     """
     Test cost estimation.
     """
@@ -89,7 +89,7 @@ def test_csvfile_get_cost(mocker):
     )
 
 
-def test_csvfile_different_types(mocker):
+def test_csvfile_different_types(mocker) -> None:
     """
     Test type coercion when a column has different types.
     """
@@ -110,7 +110,7 @@ def test_csvfile_different_types(mocker):
     }
 
 
-def test_csvfile_empty(mocker):
+def test_csvfile_empty(mocker) -> None:
     """
     Test empty file on instantiation.
     """
@@ -121,7 +121,7 @@ def test_csvfile_empty(mocker):
     assert str(excinfo.value) == "The file has no rows"
 
 
-def test_csvfile_empty_get_data(mocker):
+def test_csvfile_empty_get_data(mocker) -> None:
     """
     Test empty file on `get_data`.
 
@@ -142,7 +142,7 @@ def test_csvfile_empty_get_data(mocker):
     assert str(excinfo.value) == "The file has no rows"
 
 
-def test_csvfile_unordered(mocker):
+def test_csvfile_unordered(mocker) -> None:
     """
     Test order return when data is not sorted.
     """
@@ -163,7 +163,7 @@ def test_csvfile_unordered(mocker):
     }
 
 
-def test_csvfile_single_row_of_data(mocker):
+def test_csvfile_single_row_of_data(mocker) -> None:
     """
     Test adapter when we have only 1 row of data.
 
@@ -190,7 +190,7 @@ def test_csvfile_single_row_of_data(mocker):
     assert list(adapter.get_data({}, [])) == [{"a": 1.0, "b": 2.0, "rowid": 0}]
 
 
-def test_csvfile_get_data(mocker):
+def test_csvfile_get_data(mocker) -> None:
     """
     Test ``get_data``.
     """
@@ -229,7 +229,7 @@ def test_csvfile_get_data(mocker):
     )
 
 
-def test_csvfile_get_data_impossible_filter(mocker):
+def test_csvfile_get_data_impossible_filter(mocker) -> None:
     """
     Test that impossible conditions return no data.
     """
@@ -239,7 +239,7 @@ def test_csvfile_get_data_impossible_filter(mocker):
     assert list(adapter.get_data({"index": Impossible()}, [])) == []
 
 
-def test_csvfile(fs):
+def test_csvfile(fs) -> None:
     """
     Test the whole workflow.
     """
@@ -290,7 +290,7 @@ def test_csvfile(fs):
     )
 
 
-def test_dispatch(mocker, fs):
+def test_dispatch(mocker, fs) -> None:
     """
     Test the URI dispatcher.
     """
@@ -311,7 +311,7 @@ def test_dispatch(mocker, fs):
     assert data == [(12.0, 13.3, "Platinum_St"), (13.0, 12.1, "Kodiak_Trail")]
 
 
-def test_row_tracker():
+def test_row_tracker() -> None:
     """
     Test the RowTracker.
     """

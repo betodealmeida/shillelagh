@@ -36,7 +36,7 @@ class ReadOnlyAdapter(Adapter):  # pylint: disable=abstract-method
     """
 
 
-def test_adapter_get_columns():
+def test_adapter_get_columns() -> None:
     """
     Test ``get_columns``.
     """
@@ -49,7 +49,7 @@ def test_adapter_get_columns():
     adapter.close()
 
 
-def test_adapter_get_metadata():
+def test_adapter_get_metadata() -> None:
     """
     Test ``get_metadata``.
     """
@@ -57,7 +57,7 @@ def test_adapter_get_metadata():
     assert adapter.get_metadata() == {}
 
 
-def test_adapter_read_only():
+def test_adapter_read_only() -> None:
     """
     Test a read-only adapter.
     """
@@ -76,7 +76,7 @@ def test_adapter_read_only():
     assert str(excinfo.value) == "Adapter does not support ``DELETE`` statements"
 
 
-def test_adapter_get_data():
+def test_adapter_get_data() -> None:
     """
     Test ``get_data``.
     """
@@ -105,7 +105,7 @@ def test_adapter_get_data():
     ]
 
 
-def test_adapter_get_rows():
+def test_adapter_get_rows() -> None:
     """
     Test ``get_rows``.
     """
@@ -128,7 +128,7 @@ def test_adapter_get_rows():
     ]
 
 
-def test_adapter_manipulate_rows():
+def test_adapter_manipulate_rows() -> None:
     """
     Test ``DML``.
     """
@@ -167,7 +167,7 @@ def test_adapter_manipulate_rows():
     ]
 
 
-def test_type_conversion(mocker):
+def test_type_conversion(mocker) -> None:
     """
     Test that native types are converted correctly.
     """

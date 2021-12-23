@@ -6,7 +6,7 @@ from sqlalchemy.engine.url import make_url
 from shillelagh.backends.apsw.dialects.safe import APSWSafeDialect
 
 
-def test_safe_dialect():
+def test_safe_dialect() -> None:
     """
     Test that ``shillelagh+safe://`` forces safe mode.
     """

@@ -272,7 +272,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
     def executemany(
         self,
         operation: str,
-        seq_of_parameters: Optional[Tuple[Any, ...]] = None,
+        seq_of_parameters: Optional[List[Tuple[Any, ...]]] = None,
     ) -> "Cursor":
         """
         Execute multiple statements.

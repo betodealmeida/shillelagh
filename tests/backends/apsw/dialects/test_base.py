@@ -12,7 +12,7 @@ from shillelagh.exceptions import ProgrammingError
 from ....fakes import FakeAdapter, FakeEntryPoint
 
 
-def test_create_engine(mocker):
+def test_create_engine(mocker) -> None:
     """
     Test ``create_engine``.
     """
@@ -32,7 +32,7 @@ def test_create_engine(mocker):
     assert query.scalar() == 3
 
 
-def test_create_engine_no_adapters():
+def test_create_engine_no_adapters() -> None:
     """
     Test ``create_engine`` with invalid adapter.
     """
@@ -43,7 +43,7 @@ def test_create_engine_no_adapters():
     assert str(excinfo.value) == "Unsupported table: dummy://"
 
 
-def test_dialect_ping():
+def test_dialect_ping() -> None:
     """
     Test ``do_ping``.
     """
@@ -52,7 +52,7 @@ def test_dialect_ping():
     assert dialect.do_ping(mock_dbapi_connection) is True
 
 
-def test_has_table(mocker):
+def test_has_table(mocker) -> None:
     """
     Test ``has_table``.
     """

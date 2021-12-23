@@ -14,7 +14,7 @@ from shillelagh.exceptions import ProgrammingError
 from ....fakes import incidents
 
 
-def test_gsheets_dialect():
+def test_gsheets_dialect() -> None:
     """
     Test the basic usage of the dialect
     """
@@ -89,7 +89,7 @@ def test_gsheets_dialect():
     assert dialect.get_schema_names(mock_dbapi_connection) == []
 
 
-def test_get_table_names(mocker, requests_mock):
+def test_get_table_names(mocker, requests_mock) -> None:
     """
     Test ``get_table_names``.
     """
@@ -196,7 +196,7 @@ def test_get_table_names(mocker, requests_mock):
     )
 
 
-def test_drive_api_disabled(mocker, requests_mock):
+def test_drive_api_disabled(mocker, requests_mock) -> None:
     """
     Test error message when the Drive API is disabled.
     """
@@ -265,7 +265,7 @@ def test_drive_api_disabled(mocker, requests_mock):
     )
 
 
-def test_extract_query():
+def test_extract_query() -> None:
     """
     Test ``extract_query``.
 
@@ -277,7 +277,7 @@ def test_extract_query():
     assert extract_query(make_url("gsheets:///?foo=bar")) == {"foo": "bar"}
 
 
-def test_do_ping(mocker, requests_mock):
+def test_do_ping(mocker, requests_mock) -> None:
     """
     Test ``do_ping``.
     """

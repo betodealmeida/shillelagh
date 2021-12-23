@@ -11,7 +11,7 @@ from shillelagh.fields import Order
 from shillelagh.filters import Equal, IsNotNull, IsNull, NotEqual, Operator
 
 
-def test_pandas():
+def test_pandas() -> None:
     """
     Test basic operations with a dataframe.
     """
@@ -94,7 +94,7 @@ def test_pandas():
     cursor.execute(sql)
 
 
-def test_adapter(mocker):
+def test_adapter(mocker) -> None:
     """
     Test additional operations on the adapter.
     """
@@ -159,11 +159,11 @@ def test_adapter(mocker):
     ]
 
     with pytest.raises(ProgrammingError) as excinfo:
-        list(adapter.get_data({"a": [1, 2, 3]}, []))
+        list(adapter.get_data({"a": [1, 2, 3]}, []))  # type: ignore
     assert str(excinfo.value) == "Invalid filter: [1, 2, 3]"
 
 
-def test_adapter_nulls(mocker):
+def test_adapter_nulls(mocker) -> None:
     """
     Test operations with nulls on the adapter.
     """
@@ -194,7 +194,7 @@ def test_adapter_nulls(mocker):
 outer_df = pd.DataFrame()
 
 
-def test_find_dataframe():
+def test_find_dataframe() -> None:
     """
     Test that we can find the dataframe.
     """
@@ -213,7 +213,7 @@ def test_find_dataframe():
     assert str(excinfo.value) == "Could not find dataframe"
 
 
-def test_get_cost(mocker):
+def test_get_cost(mocker) -> None:
     """
     Test cost estimation.
     """

@@ -14,7 +14,7 @@ from shillelagh.functions import get_metadata
 from .fakes import FakeAdapter, FakeEntryPoint
 
 
-def test_sleep_from_sql(mocker):
+def test_sleep_from_sql(mocker) -> None:
     """
     Test ``sleep``.
     """
@@ -31,7 +31,7 @@ def test_sleep_from_sql(mocker):
     sleep.assert_called_with(5)
 
 
-def test_get_metadata():
+def test_get_metadata() -> None:
     """
     Test ``get_metadata``.
     """
@@ -53,7 +53,7 @@ def test_get_metadata():
     assert str(excinfo.value) == "Unsupported table: invalid://"
 
 
-def test_get_metadata_from_sql(mocker):
+def test_get_metadata_from_sql(mocker) -> None:
     """
     Test calling ``get_metadata`` from SQL.
     """
@@ -72,7 +72,7 @@ def test_get_metadata_from_sql(mocker):
     assert cursor.fetchall() == [('{"hello": "world"}',)]
 
 
-def test_version_from_sql():
+def test_version_from_sql() -> None:
     """
     Test calling ``version`` from SQL.
     """

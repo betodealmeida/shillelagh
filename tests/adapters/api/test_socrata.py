@@ -15,7 +15,7 @@ from shillelagh.filters import Impossible, Operator
 from ...fakes import cdc_data_response, cdc_metadata_response
 
 
-def test_socrata(mocker, requests_mock):
+def test_socrata(mocker, requests_mock) -> None:
     """
     Test a simple query.
     """
@@ -54,7 +54,7 @@ def test_socrata(mocker, requests_mock):
     ]
 
 
-def test_socrata_app_token_url(mocker, requests_mock):
+def test_socrata_app_token_url(mocker, requests_mock) -> None:
     """
     Test app token being passed via the URL.
     """
@@ -85,7 +85,7 @@ def test_socrata_app_token_url(mocker, requests_mock):
     assert data.last_request.headers == {"X-App-Token": "XXX"}
 
 
-def test_socrata_app_token_connection(mocker, requests_mock):
+def test_socrata_app_token_connection(mocker, requests_mock) -> None:
     """
     Test app token being passed via the connection instead of the URL.
     """
@@ -118,7 +118,7 @@ def test_socrata_app_token_connection(mocker, requests_mock):
     assert data.last_request.headers == {"X-App-Token": "YYY"}
 
 
-def test_socrata_no_data(mocker, requests_mock):
+def test_socrata_no_data(mocker, requests_mock) -> None:
     """
     Test that some queries return no data.
     """
@@ -149,7 +149,7 @@ def test_socrata_no_data(mocker, requests_mock):
     assert data == []
 
 
-def test_socrata_impossible(mocker, requests_mock):
+def test_socrata_impossible(mocker, requests_mock) -> None:
     """
     Test that impossible queries return no data.
     """
@@ -176,11 +176,10 @@ def test_socrata_impossible(mocker, requests_mock):
     # test for apsw 3.36, since it doesn't call ``get_data`` when the
     # query is impossible to resolve
     adapter = SocrataAPI("data.cdc.gov", "unsk-b7fc")
-    data = list(adapter.get_data({"location": Impossible()}, []))
-    assert data == []
+    assert list(adapter.get_data({"location": Impossible()}, [])) == []
 
 
-def test_socrata_invalid_query(mocker, requests_mock):
+def test_socrata_invalid_query(mocker, requests_mock) -> None:
     """
     Test that invalid queries are handled correctly.
     """
@@ -219,7 +218,7 @@ def test_socrata_invalid_query(mocker, requests_mock):
     assert str(excinfo.value) == "Invalid SoQL query"
 
 
-def test_number():
+def test_number() -> None:
     """
     Test that numbers are converted correctly.
     """
@@ -232,7 +231,7 @@ def test_number():
 
 
 @pytest.mark.integration_test
-def test_integration(adapter_kwargs):
+def test_integration(adapter_kwargs) -> None:
     """
     Test fetching data from the CDC.
     """
@@ -248,7 +247,7 @@ def test_integration(adapter_kwargs):
     assert cursor.fetchall() == [(67.1,)]
 
 
-def test_get_cost(mocker):
+def test_get_cost(mocker) -> None:
     """
     Test ``get_cost``.
     """

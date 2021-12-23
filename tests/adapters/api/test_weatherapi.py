@@ -3,6 +3,7 @@
 Tests for shillelagh.adapters.api.weatherapi.
 """
 from datetime import datetime, timedelta, timezone
+from typing import Dict
 
 import apsw
 import pytest
@@ -13,12 +14,12 @@ from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.fields import Order
-from shillelagh.filters import Equal, Impossible, Operator, Range
+from shillelagh.filters import Equal, Filter, Impossible, Operator, Range
 
 from ...fakes import FakeEntryPoint, weatherapi_response
 
 
-def test_weatherapi(mocker, requests_mock):
+def test_weatherapi(mocker, requests_mock) -> None:
     """
     Test the adapter.
     """
@@ -76,7 +77,7 @@ def test_weatherapi(mocker, requests_mock):
     ]
 
 
-def test_weatherapi_impossible(requests_mock):
+def test_weatherapi_impossible(requests_mock) -> None:
     """
     Test the adapter with impossible filters.
     """
@@ -102,7 +103,7 @@ def test_weatherapi_impossible(requests_mock):
     assert data == []
 
 
-def test_weatherapi_api_error(mocker, requests_mock):
+def test_weatherapi_api_error(mocker, requests_mock) -> None:
     """
     Test handling errors in the API.
     """
@@ -529,7 +530,7 @@ def test_weatherapi_api_error(mocker, requests_mock):
     ]
 
 
-def test_dispatch(mocker, requests_mock):
+def test_dispatch(mocker, requests_mock) -> None:
     """
     Test the dispatcher.
     """
@@ -593,7 +594,7 @@ def test_dispatch(mocker, requests_mock):
     ]
 
 
-def test_dispatch_api_key_connection(mocker, requests_mock):
+def test_dispatch_api_key_connection(mocker, requests_mock) -> None:
     """
     Test passing the key via the adapter kwargs.
     """
@@ -628,7 +629,7 @@ def test_dispatch_api_key_connection(mocker, requests_mock):
     assert data.call_count == 1
 
 
-def test_dispatch_impossible(mocker):
+def test_dispatch_impossible(mocker) -> None:
     """
     Test that no data is returned on an impossible constraint.
 
@@ -664,11 +665,11 @@ def test_dispatch_impossible(mocker):
     assert session.return_value.get.call_count == 0
 
 
-def test_combine_time_filters():
+def test_combine_time_filters() -> None:
     """
     Test queries with both ``time`` and ``time_epoch``.
     """
-    bounds = {
+    bounds: Dict[str, Filter] = {
         "time": Range(datetime(2021, 1, 1, tzinfo=timezone.utc)),
         "time_epoch": Range(
             None,
@@ -705,12 +706,12 @@ def test_combine_time_filters():
         ),
     }
     with pytest.raises(Exception) as excinfo:
-        combine_time_filters(bounds)
+        combine_time_filters(bounds)  # type: ignore
     assert str(excinfo.value) == "Invalid filter"
 
 
 @pytest.mark.integration_test
-def test_integration(adapter_kwargs):
+def test_integration(adapter_kwargs) -> None:
     """
     Full integration test reading from the API.
     """
@@ -740,7 +741,7 @@ def test_integration(adapter_kwargs):
     assert len(data[0]) == 31
 
 
-def test_get_cost(mocker):
+def test_get_cost(mocker) -> None:
     """
     Test ``get_cost``.
     """
@@ -756,7 +757,7 @@ def test_get_cost(mocker):
     assert (
         adapter.get_cost(
             [("one", Operator.GT), ("two", Operator.EQ)],
-            ["one", Order.ASCENDING],
+            [("one", Order.ASCENDING)],
         )
         == 8000
     )
@@ -768,13 +769,13 @@ def test_get_cost(mocker):
     assert (
         adapter.get_cost(
             [("one", Operator.GT), ("two", Operator.EQ)],
-            ["one", Order.ASCENDING],
+            [("one", Order.ASCENDING)],
         )
         == 15000
     )
 
 
-def test_window(mocker):
+def test_window(mocker) -> None:
     """
     Test the default window size of days to fetch data.
     """

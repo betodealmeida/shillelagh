@@ -27,7 +27,7 @@ from shillelagh.filters import Equal
 from shillelagh.types import BINARY, DATETIME, NUMBER, STRING
 
 
-def test_comparison():
+def test_comparison() -> None:
     """
     Test comparing fields.
     """
@@ -46,7 +46,7 @@ def test_comparison():
     )
 
 
-def test_integer():
+def test_integer() -> None:
     """
     Test ``Integer``.
     """
@@ -54,11 +54,11 @@ def test_integer():
     assert Integer().parse(None) is None
     assert Integer().format(1) == 1
     assert Integer().format(None) is None
-    assert Integer().quote("1") == "1"
+    assert Integer().quote("1") == "1"  # type: ignore
     assert Integer().quote(None) == "NULL"
 
 
-def test_float():
+def test_float() -> None:
     """
     Test ``Float``.
     """
@@ -66,11 +66,11 @@ def test_float():
     assert Float().parse(None) is None
     assert Float().format(1.0) == 1.0
     assert Float().format(None) is None
-    assert Float().quote("1.0") == "1.0"
+    assert Float().quote("1.0") == "1.0"  # type: ignore
     assert Float().quote(None) == "NULL"
 
 
-def test_string():
+def test_string() -> None:
     """
     Test ``String``.
     """
@@ -83,7 +83,7 @@ def test_string():
     assert String().quote(None) == "NULL"
 
 
-def test_date():
+def test_date() -> None:
     """
     Test ``Date``.
     """
@@ -95,7 +95,7 @@ def test_date():
     assert Date().quote(None) == "NULL"
 
 
-def test_isodate():
+def test_isodate() -> None:
     """
     Test ``ISODate``.
     """
@@ -113,7 +113,7 @@ def test_isodate():
     assert ISODate().quote(None) == "NULL"
 
 
-def test_time():
+def test_time() -> None:
     """
     Test ``Time``.
     """
@@ -138,7 +138,7 @@ def test_time():
     assert Time().quote(None) == "NULL"
 
 
-def test_iso_time():
+def test_iso_time() -> None:
     """
     Test ``ISOTime``.
     """
@@ -162,7 +162,7 @@ def test_iso_time():
     assert ISOTime().quote(None) == "NULL"
 
 
-def test_datetime():
+def test_datetime() -> None:
     """
     Test ``DateTime``.
     """
@@ -189,7 +189,7 @@ def test_datetime():
     assert DateTime().quote(None) == "NULL"
 
 
-def test_iso_datetime():
+def test_iso_datetime() -> None:
     """
     Test ``ISODateTime``.
     """
@@ -226,7 +226,7 @@ def test_iso_datetime():
     assert ISODateTime().quote(None) == "NULL"
 
 
-def test_boolean():
+def test_boolean() -> None:
     """
     Test ``Boolean``.
     """
@@ -241,7 +241,7 @@ def test_boolean():
     assert Boolean().quote(None) == "NULL"
 
 
-def test_int_boolean():
+def test_int_boolean() -> None:
     """
     Test ``IntBoolean``.
     """
@@ -257,7 +257,7 @@ def test_int_boolean():
     assert IntBoolean().quote(None) == "NULL"
 
 
-def test_string_boolean():
+def test_string_boolean() -> None:
     """
     Test ``StringBoolean``.
     """
@@ -272,7 +272,7 @@ def test_string_boolean():
     assert StringBoolean().quote(None) == "NULL"
 
 
-def test_blob():
+def test_blob() -> None:
     """
     Test ``Blob``.
     """
@@ -284,7 +284,7 @@ def test_blob():
     assert Blob().quote(None) == "NULL"
 
 
-def test_string_blob():
+def test_string_blob() -> None:
     """
     Test ``StringBlob``.
     """
@@ -296,7 +296,7 @@ def test_string_blob():
     assert StringBlob().quote(None) == "NULL"
 
 
-def test_type_code():
+def test_type_code() -> None:
     """
     Test typecodes for Python DB API.
     """
@@ -315,7 +315,7 @@ def test_type_code():
     assert NUMBER != 1
 
 
-def test_string_duration():
+def test_string_duration() -> None:
     """
     Test ``StringDuration``.
     """
@@ -352,7 +352,12 @@ def test_string_duration():
     )
     assert (
         StringDuration().quote(
-            datetime.timedelta(hours=12, minutes=34, seconds=56, microseconds=789012),
+            datetime.timedelta(  # type: ignore
+                hours=12,
+                minutes=34,
+                seconds=56,
+                microseconds=789012,
+            ),
         )
         == "'12:34:56.789012'"
     )
