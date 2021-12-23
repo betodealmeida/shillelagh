@@ -1,19 +1,23 @@
-venv: venv/.touchfile
+pyenv: .python-version
 
-venv/.touchfile: setup.cfg
-	test -d venv || python3 -m venv venv
-	. venv/bin/activate
+.python-version: setup.cfg
+	if [ -z "`pyenv virtualenvs | grep shillelagh`" ]; then\
+	    pyenv virtualenv shillelagh;\
+	fi
+	if [ ! -f .python-version ]; then\
+	    pyenv local shillelagh;\
+	fi
 	pip install -e '.[testing]'
-	touch venv/.touchfile
+	touch .python-version
 
-test: venv
+test: pyenv
 	pytest --cov=src/shillelagh -vv tests/ --doctest-modules src/shillelagh --without-integration --without-slow-integration
 
-integration: venv
+integration: pyenv
 	pytest --cov=src/shillelagh -vv tests/ --doctest-modules src/shillelagh --with-integration --with-slow-integration
 
 clean:
-	rm -rf venv
+	pyenv virtualenv-delete shillelagh
 
 spellcheck:
 	codespell -S "*.json" src/shillelagh docs/*rst tests templates
