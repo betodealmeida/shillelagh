@@ -7,23 +7,22 @@ from unittest.mock import mock_open
 import apsw
 import pytest
 
-from ...fakes import FakeEntryPoint
-from shillelagh.adapters.file.csvfile import CSVFile
-from shillelagh.adapters.file.csvfile import RowTracker
+from shillelagh.adapters.file.csvfile import CSVFile, RowTracker
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Float
-from shillelagh.fields import Order
-from shillelagh.fields import String
-from shillelagh.filters import Equal
-from shillelagh.filters import Impossible
-from shillelagh.filters import IsNotNull
-from shillelagh.filters import IsNull
-from shillelagh.filters import NotEqual
-from shillelagh.filters import Operator
-from shillelagh.filters import Range
+from shillelagh.fields import Float, Order, String
+from shillelagh.filters import (
+    Equal,
+    Impossible,
+    IsNotNull,
+    IsNull,
+    NotEqual,
+    Operator,
+    Range,
+)
 
+from ...fakes import FakeEntryPoint
 
 CONTENTS = """"index","temperature","site"
 10,15.2,"Diamond_St"
@@ -244,7 +243,7 @@ def test_csvfile(fs):
     """
     Test the whole workflow.
     """
-    with open("test.csv", "w") as fp:
+    with open("test.csv", "w", encoding="utf-8") as fp:
         fp.write(CONTENTS)
 
     connection = apsw.Connection(":memory:")
@@ -278,7 +277,7 @@ def test_csvfile(fs):
     connection.close()
 
     # test garbage collection
-    with open("test.csv") as fp:
+    with open("test.csv", encoding="utf-8") as fp:
         updated_contents = fp.read()
     assert (
         updated_contents
@@ -301,7 +300,7 @@ def test_dispatch(mocker, fs):
         return_value=entry_points,
     )
 
-    with open("test.csv", "w") as fp:
+    with open("test.csv", "w", encoding="utf-8") as fp:
         fp.write(CONTENTS)
 
     connection = connect(":memory:", ["csvfile"])

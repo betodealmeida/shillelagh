@@ -40,7 +40,7 @@ The first step is to create a class based on ``shillelagh.adapter.base.Adapter``
     from shillelagh.adapters.base import Adapter
 
     class WeatherAPI(Adapter):
-        
+
         """
         An adapter to historical data from https://www.weatherapi.com/.
         """
@@ -407,25 +407,25 @@ The ``shilellagh.fields`` module has implementation of common representations. F
     class IntBoolean(Field[int, bool]):
         """
         A boolean.
-    
+
         This field is used in adapters that represent booleans as an
         integer. SQLite, eg, has no boolean type, using 1 and 0 to
         represent true and false, respectively.
         """
-    
+
         type = "BOOLEAN"
         db_api_type = "NUMBER"
-    
+
         def parse(self, value: Optional[int]) -> Optional[bool]:
             if value is None:
                 return None
             return bool(value)
-    
+
         def format(self, value: Optional[bool]) -> Optional[int]:
             if value is None:
                 return None
             return 1 if value else 0
-    
+
         def quote(self, value: Optional[int]) -> str:
             if value is None:
                 return "NULL"

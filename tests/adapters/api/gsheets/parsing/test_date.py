@@ -2,40 +2,38 @@
 Test the date/time pattern handling (parsing and formatting).
 """
 # pylint: disable=protected-access
-from datetime import date
-from datetime import datetime
-from datetime import time
-from datetime import timedelta
+from datetime import date, datetime, time, timedelta
 
 import pytest
 
 from shillelagh.adapters.api.gsheets.parsing.base import LITERAL
-from shillelagh.adapters.api.gsheets.parsing.date import AMPM
-from shillelagh.adapters.api.gsheets.parsing.date import AP
-from shillelagh.adapters.api.gsheets.parsing.date import D
-from shillelagh.adapters.api.gsheets.parsing.date import DD
-from shillelagh.adapters.api.gsheets.parsing.date import DDD
-from shillelagh.adapters.api.gsheets.parsing.date import DDDDPlus
-from shillelagh.adapters.api.gsheets.parsing.date import format_date_time_pattern
-from shillelagh.adapters.api.gsheets.parsing.date import H
-from shillelagh.adapters.api.gsheets.parsing.date import HHPlus
-from shillelagh.adapters.api.gsheets.parsing.date import HPlusDuration
-from shillelagh.adapters.api.gsheets.parsing.date import M
-from shillelagh.adapters.api.gsheets.parsing.date import Meridiem
-from shillelagh.adapters.api.gsheets.parsing.date import MM
-from shillelagh.adapters.api.gsheets.parsing.date import MMM
-from shillelagh.adapters.api.gsheets.parsing.date import MMMM
-from shillelagh.adapters.api.gsheets.parsing.date import MMMMM
-from shillelagh.adapters.api.gsheets.parsing.date import MPlusDuration
-from shillelagh.adapters.api.gsheets.parsing.date import parse_date_time_pattern
-from shillelagh.adapters.api.gsheets.parsing.date import S
-from shillelagh.adapters.api.gsheets.parsing.date import SPlusDuration
-from shillelagh.adapters.api.gsheets.parsing.date import SS
-from shillelagh.adapters.api.gsheets.parsing.date import tokenize
-from shillelagh.adapters.api.gsheets.parsing.date import YY
-from shillelagh.adapters.api.gsheets.parsing.date import YYYY
-from shillelagh.adapters.api.gsheets.parsing.date import ZERO
-
+from shillelagh.adapters.api.gsheets.parsing.date import (
+    AMPM,
+    AP,
+    DD,
+    DDD,
+    MM,
+    MMM,
+    MMMM,
+    MMMMM,
+    SS,
+    YY,
+    YYYY,
+    ZERO,
+    D,
+    DDDDPlus,
+    H,
+    HHPlus,
+    HPlusDuration,
+    M,
+    Meridiem,
+    MPlusDuration,
+    S,
+    SPlusDuration,
+    format_date_time_pattern,
+    parse_date_time_pattern,
+    tokenize,
+)
 
 classes = [
     H,

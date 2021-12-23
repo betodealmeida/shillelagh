@@ -3,42 +3,32 @@ import datetime
 import itertools
 import string
 import urllib.parse
-from typing import Any
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Type
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
 
 import google.oauth2.credentials
 import google.oauth2.service_account
 from google.auth.credentials import Credentials
 
-from shillelagh.adapters.api.gsheets.fields import GSheetsBoolean
-from shillelagh.adapters.api.gsheets.fields import GSheetsDate
-from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime
-from shillelagh.adapters.api.gsheets.fields import GSheetsField
-from shillelagh.adapters.api.gsheets.fields import GSheetsNumber
-from shillelagh.adapters.api.gsheets.fields import GSheetsString
-from shillelagh.adapters.api.gsheets.fields import GSheetsTime
+from shillelagh.adapters.api.gsheets.fields import (
+    GSheetsBoolean,
+    GSheetsDate,
+    GSheetsDateTime,
+    GSheetsField,
+    GSheetsNumber,
+    GSheetsString,
+    GSheetsTime,
+)
 from shillelagh.adapters.api.gsheets.types import SyncMode
-from shillelagh.adapters.api.gsheets.typing import QueryResultsCell
-from shillelagh.adapters.api.gsheets.typing import QueryResultsColumn
-from shillelagh.adapters.api.gsheets.typing import QueryResultsError
-from shillelagh.adapters.api.gsheets.typing import UrlArgs
+from shillelagh.adapters.api.gsheets.typing import (
+    QueryResultsCell,
+    QueryResultsColumn,
+    QueryResultsError,
+    UrlArgs,
+)
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Field
-from shillelagh.fields import Order
-from shillelagh.filters import Equal
-from shillelagh.filters import Filter
-from shillelagh.filters import IsNotNull
-from shillelagh.filters import IsNull
-from shillelagh.filters import Like
-from shillelagh.filters import NotEqual
-from shillelagh.filters import Range
+from shillelagh.fields import Field, Order
+from shillelagh.filters import Equal, Filter, IsNotNull, IsNull, Like, NotEqual, Range
 from shillelagh.typing import Row
-
 
 # Google API scopes for authentication
 SCOPES = [

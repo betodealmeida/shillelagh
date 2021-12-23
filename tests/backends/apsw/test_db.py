@@ -9,16 +9,11 @@ from unittest import mock
 import apsw
 import pytest
 
-from ...fakes import FakeAdapter
-from ...fakes import FakeEntryPoint
-from shillelagh.backends.apsw.db import connect
-from shillelagh.backends.apsw.db import convert_binding
-from shillelagh.exceptions import InterfaceError
-from shillelagh.exceptions import NotSupportedError
-from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Float
-from shillelagh.fields import Integer
-from shillelagh.fields import String
+from shillelagh.backends.apsw.db import connect, convert_binding
+from shillelagh.exceptions import InterfaceError, NotSupportedError, ProgrammingError
+from shillelagh.fields import Float, Integer, String
+
+from ...fakes import FakeAdapter, FakeEntryPoint
 
 
 def test_connect(mocker):

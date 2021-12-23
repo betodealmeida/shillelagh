@@ -22,14 +22,14 @@ The DB API 2.0 specification defines standard mechanisms to create database conn
 
     query = "CREATE TABLE a_table (A int, B string)"
     cursor.execute(query)
-    
+
     query = "INSERT INTO a_table VALUES (?, ?)"
     cursor.execute(query, (1, "one"))
     cursor.execute(query, (2, "two"))
 
     query = "SELECT * FROM a_table"
     for row in cursor.execute(query):
-        print(row) 
+        print(row)
 
 You can use a file instead of ``:memory:``:
 
@@ -120,7 +120,7 @@ The SQLAlchemy engine can be configured in the same way as the :ref:`dbapi2` ``c
 
 Alternatively, Shillelagh also comes with a custom Google Sheets dialect for SQLAlchemy. See :ref:`gsheets` for more details.
 
- 
+
 Command-line utility
 ====================
 
@@ -153,7 +153,7 @@ The command-line utility can be configured through a YAML file stored in ``~/.co
       subject: user@example.com
     weatherapi:
       api_key: XXX
- 
+
 Custom functions
 ================
 
@@ -198,4 +198,4 @@ Sometimes it's useful to identify the version of Shillelagh that's running on a 
     sql> SELECT VERSION();
     VERSION()
     -----------
-    1.0.0 
+    1.0.0

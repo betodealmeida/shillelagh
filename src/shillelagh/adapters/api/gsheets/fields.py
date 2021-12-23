@@ -3,21 +3,18 @@ Custom fields for the GSheets adapter.
 """
 import datetime
 from distutils.util import strtobool
-from typing import Any
-from typing import List
-from typing import Optional
-from typing import Type
+from typing import Any, List, Optional, Type
 
-from shillelagh.adapters.api.gsheets.parsing.date import format_date_time_pattern
-from shillelagh.adapters.api.gsheets.parsing.date import parse_date_time_pattern
-from shillelagh.adapters.api.gsheets.parsing.number import format_number_pattern
-from shillelagh.adapters.api.gsheets.parsing.number import parse_number_pattern
-from shillelagh.fields import External
-from shillelagh.fields import Field
-from shillelagh.fields import Internal
-from shillelagh.fields import Order
+from shillelagh.adapters.api.gsheets.parsing.date import (
+    format_date_time_pattern,
+    parse_date_time_pattern,
+)
+from shillelagh.adapters.api.gsheets.parsing.number import (
+    format_number_pattern,
+    parse_number_pattern,
+)
+from shillelagh.fields import External, Field, Internal, Order
 from shillelagh.filters import Filter
-
 
 # timestamp format used in SQL queries
 DATETIME_SQL_QUOTE = "%Y-%m-%d %H:%M:%S"

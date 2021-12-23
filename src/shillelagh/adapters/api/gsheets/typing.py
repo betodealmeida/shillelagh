@@ -1,9 +1,7 @@
 """Custom types for the GSheets adapter."""
-from typing import Any
-from typing import List
+from typing import Any, List
 
-from typing_extensions import Literal
-from typing_extensions import TypedDict
+from typing_extensions import Literal, TypedDict
 
 
 class UrlArgs(TypedDict, total=False):

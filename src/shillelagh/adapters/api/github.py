@@ -4,27 +4,16 @@ An adapter for GitHub.
 import logging
 import urllib.parse
 from dataclasses import dataclass
-from typing import Any
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import requests_cache
 from jsonpath import JSONPath
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Boolean
-from shillelagh.fields import Field
-from shillelagh.fields import Integer
-from shillelagh.fields import ISODateTime
-from shillelagh.fields import String
-from shillelagh.filters import Equal
-from shillelagh.filters import Filter
-from shillelagh.typing import RequestedOrder
-from shillelagh.typing import Row
+from shillelagh.fields import Boolean, Field, Integer, ISODateTime, String
+from shillelagh.filters import Equal, Filter
+from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
 

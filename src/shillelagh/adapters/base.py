@@ -1,21 +1,12 @@
 """Base class for adapters."""
 import atexit
 import inspect
-from typing import Any
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 from shillelagh.exceptions import NotSupportedError
-from shillelagh.fields import Field
-from shillelagh.fields import RowID
-from shillelagh.filters import Filter
-from shillelagh.filters import Operator
-from shillelagh.typing import RequestedOrder
-from shillelagh.typing import Row
-
+from shillelagh.fields import Field, RowID
+from shillelagh.filters import Filter, Operator
+from shillelagh.typing import RequestedOrder, Row
 
 FIXED_COST = 666
 

@@ -3,10 +3,7 @@ Filters for representing SQL predicates.
 """
 import re
 from enum import Enum
-from typing import Any
-from typing import Optional
-from typing import Set
-from typing import Tuple
+from typing import Any, Optional, Set, Tuple
 
 
 class Operator(Enum):

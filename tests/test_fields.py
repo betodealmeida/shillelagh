@@ -4,28 +4,27 @@ Tests for shillelagh.fields.
 import datetime
 
 from shillelagh.backends.apsw.db import connect
-from shillelagh.fields import Blob
-from shillelagh.fields import Boolean
-from shillelagh.fields import Date
-from shillelagh.fields import DateTime
-from shillelagh.fields import Field
-from shillelagh.fields import Float
-from shillelagh.fields import IntBoolean
-from shillelagh.fields import Integer
-from shillelagh.fields import ISODate
-from shillelagh.fields import ISODateTime
-from shillelagh.fields import ISOTime
-from shillelagh.fields import Order
-from shillelagh.fields import String
-from shillelagh.fields import StringBlob
-from shillelagh.fields import StringBoolean
-from shillelagh.fields import StringDuration
-from shillelagh.fields import Time
+from shillelagh.fields import (
+    Blob,
+    Boolean,
+    Date,
+    DateTime,
+    Field,
+    Float,
+    IntBoolean,
+    Integer,
+    ISODate,
+    ISODateTime,
+    ISOTime,
+    Order,
+    String,
+    StringBlob,
+    StringBoolean,
+    StringDuration,
+    Time,
+)
 from shillelagh.filters import Equal
-from shillelagh.types import BINARY
-from shillelagh.types import DATETIME
-from shillelagh.types import NUMBER
-from shillelagh.types import STRING
+from shillelagh.types import BINARY, DATETIME, NUMBER, STRING
 
 
 def test_comparison():

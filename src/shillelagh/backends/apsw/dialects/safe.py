@@ -5,11 +5,7 @@ A "safe" Shillelagh dialect.
 When this dialect is used only adapters marked as safe and explicitly
 listed are loaded.
 """
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.engine.url import URL
 

@@ -7,37 +7,18 @@ import logging
 import re
 import urllib.parse
 from pathlib import Path
-from typing import Any
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Type
-from typing import Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, Union
 
 import requests_cache
 from requests import Request
 from typing_extensions import TypedDict
 
 from shillelagh.adapters.base import Adapter
-from shillelagh.exceptions import ImpossibleFilterError
-from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Field
-from shillelagh.fields import ISODate
-from shillelagh.fields import Order
-from shillelagh.fields import String
-from shillelagh.filters import Equal
-from shillelagh.filters import Filter
-from shillelagh.filters import IsNotNull
-from shillelagh.filters import IsNull
-from shillelagh.filters import Like
-from shillelagh.filters import NotEqual
-from shillelagh.filters import Range
-from shillelagh.lib import build_sql
-from shillelagh.lib import SimpleCostModel
-from shillelagh.typing import RequestedOrder
-from shillelagh.typing import Row
+from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
+from shillelagh.fields import Field, ISODate, Order, String
+from shillelagh.filters import Equal, Filter, IsNotNull, IsNull, Like, NotEqual, Range
+from shillelagh.lib import SimpleCostModel, build_sql
+from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
 

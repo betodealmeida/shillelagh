@@ -6,13 +6,13 @@ from datetime import datetime
 
 import pytest
 
-from shillelagh.adapters.api.gsheets.parsing.base import InvalidValue
-from shillelagh.adapters.api.gsheets.parsing.base import is_unescaped_literal
-from shillelagh.adapters.api.gsheets.parsing.base import LITERAL
-from shillelagh.adapters.api.gsheets.parsing.base import tokenize
-from shillelagh.adapters.api.gsheets.parsing.date import DD
-from shillelagh.adapters.api.gsheets.parsing.date import MM
-from shillelagh.adapters.api.gsheets.parsing.date import YYYY
+from shillelagh.adapters.api.gsheets.parsing.base import (
+    LITERAL,
+    InvalidValue,
+    is_unescaped_literal,
+    tokenize,
+)
+from shillelagh.adapters.api.gsheets.parsing.date import DD, MM, YYYY
 
 
 def test_literal_token():

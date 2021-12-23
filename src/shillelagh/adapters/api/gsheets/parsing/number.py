@@ -8,17 +8,14 @@ import math
 import operator
 import re
 from itertools import zip_longest
-from typing import Any
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Tuple
-from typing import Union
+from typing import Any, Dict, Iterator, List, Tuple, Union
 
-from shillelagh.adapters.api.gsheets.parsing.base import InvalidValue
-from shillelagh.adapters.api.gsheets.parsing.base import LITERAL
-from shillelagh.adapters.api.gsheets.parsing.base import Token
-from shillelagh.adapters.api.gsheets.parsing.base import tokenize
+from shillelagh.adapters.api.gsheets.parsing.base import (
+    LITERAL,
+    InvalidValue,
+    Token,
+    tokenize,
+)
 
 
 def adjust_value(value: Union[int, float], tokens: List[Token]) -> Union[int, float]:
@@ -79,7 +76,7 @@ class DIGITS(Token):
                     raise Exception(f"Invalid token: {token}")
             return "".join(formatted)
 
-        number = number.split(".")[0]
+        number = number.split(".", maxsplit=1)[0]
         has_comma = "," in self.token
         token = self.token.replace(",", "")
 

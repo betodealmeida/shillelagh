@@ -21,3 +21,6 @@ clean:
 
 spellcheck:
 	codespell -S "*.json" src/shillelagh docs/*rst tests templates
+
+requirements.txt:
+	pip-compile --no-annotate

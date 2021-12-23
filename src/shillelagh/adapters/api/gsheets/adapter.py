@@ -6,40 +6,31 @@ import datetime
 import json
 import logging
 import urllib.parse
-from typing import Any
-from typing import cast
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple, cast
 
 import dateutil.tz
 from google.auth.transport.requests import AuthorizedSession
 from requests import Session
 
-from shillelagh.adapters.api.gsheets.lib import format_error_message
-from shillelagh.adapters.api.gsheets.lib import gen_letters
-from shillelagh.adapters.api.gsheets.lib import get_credentials
-from shillelagh.adapters.api.gsheets.lib import get_field
-from shillelagh.adapters.api.gsheets.lib import get_index_from_letters
-from shillelagh.adapters.api.gsheets.lib import get_sync_mode
-from shillelagh.adapters.api.gsheets.lib import get_url
-from shillelagh.adapters.api.gsheets.lib import get_value_from_cell
-from shillelagh.adapters.api.gsheets.lib import get_values_from_row
+from shillelagh.adapters.api.gsheets.lib import (
+    format_error_message,
+    gen_letters,
+    get_credentials,
+    get_field,
+    get_index_from_letters,
+    get_sync_mode,
+    get_url,
+    get_value_from_cell,
+    get_values_from_row,
+)
 from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.adapters.api.gsheets.typing import QueryResults
 from shillelagh.adapters.base import Adapter
-from shillelagh.exceptions import ImpossibleFilterError
-from shillelagh.exceptions import InternalError
-from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Field
-from shillelagh.fields import Order
+from shillelagh.exceptions import ImpossibleFilterError, InternalError, ProgrammingError
+from shillelagh.fields import Field, Order
 from shillelagh.filters import Filter
-from shillelagh.lib import build_sql
-from shillelagh.lib import SimpleCostModel
-from shillelagh.typing import RequestedOrder
-from shillelagh.typing import Row
+from shillelagh.lib import SimpleCostModel, build_sql
+from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
 

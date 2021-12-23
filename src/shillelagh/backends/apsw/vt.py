@@ -9,42 +9,47 @@ simplify the work of writing new adapters.
 import json
 import logging
 from collections import defaultdict
-from typing import Any
-from typing import cast
-from typing import DefaultDict
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Type
+from typing import (
+    Any,
+    DefaultDict,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    cast,
+)
 
 import apsw
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Blob
-from shillelagh.fields import Field
-from shillelagh.fields import Float
-from shillelagh.fields import IntBoolean
-from shillelagh.fields import Integer
-from shillelagh.fields import ISODate
-from shillelagh.fields import ISODateTime
-from shillelagh.fields import ISOTime
-from shillelagh.fields import Order
-from shillelagh.fields import RowID
-from shillelagh.fields import String
-from shillelagh.fields import StringDuration
-from shillelagh.filters import Filter
-from shillelagh.filters import Operator
+from shillelagh.fields import (
+    Blob,
+    Field,
+    Float,
+    IntBoolean,
+    Integer,
+    ISODate,
+    ISODateTime,
+    ISOTime,
+    Order,
+    RowID,
+    String,
+    StringDuration,
+)
+from shillelagh.filters import Filter, Operator
 from shillelagh.lib import deserialize
-from shillelagh.typing import Constraint
-from shillelagh.typing import Index
-from shillelagh.typing import RequestedOrder
-from shillelagh.typing import Row
-from shillelagh.typing import SQLiteConstraint
-from shillelagh.typing import SQLiteValidType
+from shillelagh.typing import (
+    Constraint,
+    Index,
+    RequestedOrder,
+    Row,
+    SQLiteConstraint,
+    SQLiteValidType,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -70,7 +75,7 @@ operator_map = {
 # and types understood by SQLite (integers, strings, etc.)
 type_map: Dict[str, Type[Field]] = {
     field.type: field  # type: ignore
-    for field in {
+    for field in [
         Blob,
         StringDuration,
         Float,
@@ -80,7 +85,7 @@ type_map: Dict[str, Type[Field]] = {
         ISODateTime,
         ISOTime,
         String,
-    }
+    ]
 }
 
 

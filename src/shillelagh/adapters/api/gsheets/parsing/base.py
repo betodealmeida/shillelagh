@@ -2,18 +2,8 @@
 Token for parsing date and time.
 """
 import re
-from datetime import date
-from datetime import datetime
-from datetime import time
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import Generic
-from typing import Iterator
-from typing import List
-from typing import Tuple
-from typing import Type
-from typing import TypeVar
+from datetime import date, datetime, time, timedelta
+from typing import Any, Dict, Generic, Iterator, List, Tuple, Type, TypeVar
 
 Valid = TypeVar("Valid", datetime, date, time, timedelta, str, int, float)
 

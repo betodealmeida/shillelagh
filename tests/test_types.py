@@ -1,21 +1,20 @@
 """
 Tests for shillelagh.types.
 """
-from datetime import date
-from datetime import datetime
-from datetime import time
-from datetime import timezone
+from datetime import date, datetime, time, timezone
 
 from shillelagh.backends.apsw.db import connect
 from shillelagh.fields import String
-from shillelagh.types import Binary
-from shillelagh.types import Date
-from shillelagh.types import DateFromTicks
-from shillelagh.types import STRING
-from shillelagh.types import Time
-from shillelagh.types import TimeFromTicks
-from shillelagh.types import Timestamp
-from shillelagh.types import TimestampFromTicks
+from shillelagh.types import (
+    STRING,
+    Binary,
+    Date,
+    DateFromTicks,
+    Time,
+    TimeFromTicks,
+    Timestamp,
+    TimestampFromTicks,
+)
 
 
 def test_types():

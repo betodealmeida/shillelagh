@@ -6,44 +6,41 @@ import datetime
 import itertools
 import logging
 from collections import Counter
-from functools import partial
-from functools import wraps
-from typing import Any
-from typing import Callable
-from typing import cast
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Type
-from typing import TypeVar
+from functools import partial, wraps
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    cast,
+)
 
 import apsw
 from pkg_resources import iter_entry_points
 
 from shillelagh import functions
 from shillelagh.adapters.base import Adapter
-from shillelagh.backends.apsw.vt import type_map
-from shillelagh.backends.apsw.vt import VTModule
-from shillelagh.exceptions import DatabaseError
-from shillelagh.exceptions import DataError
-from shillelagh.exceptions import Error
-from shillelagh.exceptions import IntegrityError
-from shillelagh.exceptions import InterfaceError
-from shillelagh.exceptions import InternalError
-from shillelagh.exceptions import NotSupportedError
-from shillelagh.exceptions import OperationalError
-from shillelagh.exceptions import ProgrammingError
+from shillelagh.backends.apsw.vt import VTModule, type_map
 from shillelagh.exceptions import Warning  # pylint: disable=redefined-builtin
-from shillelagh.fields import Blob
-from shillelagh.fields import Field
-from shillelagh.lib import combine_args_kwargs
-from shillelagh.lib import escape
-from shillelagh.lib import find_adapter
-from shillelagh.lib import serialize
-from shillelagh.typing import Description
-from shillelagh.typing import SQLiteValidType
+from shillelagh.exceptions import (
+    DatabaseError,
+    DataError,
+    Error,
+    IntegrityError,
+    InterfaceError,
+    InternalError,
+    NotSupportedError,
+    OperationalError,
+    ProgrammingError,
+)
+from shillelagh.fields import Blob, Field
+from shillelagh.lib import combine_args_kwargs, escape, find_adapter, serialize
+from shillelagh.typing import Description, SQLiteValidType
 
 apilevel = "2.0"
 threadsafety = 2

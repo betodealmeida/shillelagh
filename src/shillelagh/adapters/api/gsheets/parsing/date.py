@@ -7,22 +7,11 @@ https://developers.google.com/sheets/api/guides/formats?hl=en#date_and_time_form
 import calendar
 import re
 from collections import defaultdict
-from datetime import date
-from datetime import datetime
-from datetime import time
-from datetime import timedelta
+from datetime import date, datetime, time, timedelta
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Tuple
-from typing import Type
-from typing import TypeVar
-from typing import Union
+from typing import Any, Dict, List, Tuple, Type, TypeVar, Union
 
-from shillelagh.adapters.api.gsheets.parsing.base import LITERAL
-from shillelagh.adapters.api.gsheets.parsing.base import Token
-from shillelagh.adapters.api.gsheets.parsing.base import tokenize
+from shillelagh.adapters.api.gsheets.parsing.base import LITERAL, Token, tokenize
 
 DateTime = TypeVar("DateTime", datetime, date, time, timedelta)
 

@@ -1,11 +1,6 @@
 # pylint: disable=protected-access, abstract-method
 """A SQLALchemy dialect."""
-from typing import Any
-from typing import cast
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import sqlalchemy.types
 from sqlalchemy.dialects.sqlite.base import SQLiteDialect

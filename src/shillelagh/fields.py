@@ -4,18 +4,11 @@ Fields representing columns of different types and capabilities.
 import datetime
 from distutils.util import strtobool
 from enum import Enum
-from typing import Any
-from typing import cast
-from typing import Generic
-from typing import List
-from typing import Optional
-from typing import Type
-from typing import TypeVar
+from typing import Any, Generic, List, Optional, Type, TypeVar, cast
 
 import dateutil.parser
 
 from shillelagh.filters import Filter
-
 
 Internal = TypeVar(
     "Internal",

@@ -180,7 +180,7 @@ def main():
     adapter_kwargs = {}
     if os.path.exists(config):
         try:
-            with open(config) as stream:
+            with open(config, encoding="utf-8") as stream:
                 adapter_kwargs = yaml.load(stream, Loader=yaml.SafeLoader)
         except (PermissionError, yaml.parser.ParserError, yaml.scanner.ScannerError):
             _logger.exception("Unable to load configuration file")

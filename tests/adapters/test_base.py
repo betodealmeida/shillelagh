@@ -6,16 +6,14 @@ from typing import List
 
 import pytest
 
-from ..fakes import FakeAdapter
-from ..fakes import FakeEntryPoint
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import NotSupportedError
-from shillelagh.fields import DateTime
-from shillelagh.fields import Order
-from shillelagh.filters import Equal
-from shillelagh.filters import Range
+from shillelagh.fields import DateTime, Order
+from shillelagh.filters import Equal, Range
 from shillelagh.typing import Row
+
+from ..fakes import FakeAdapter, FakeEntryPoint
 
 
 class FakeAdapterWithDateTime(FakeAdapter):

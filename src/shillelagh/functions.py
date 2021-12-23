@@ -3,16 +3,12 @@ Custom functions available to the SQL backend.
 """
 import json
 import time
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Type
+from typing import Any, Dict, List, Type
 
 import pkg_resources
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.lib import find_adapter
-
 
 __all__ = ["sleep", "get_metadata", "version"]
 
