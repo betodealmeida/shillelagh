@@ -18,7 +18,7 @@ from typing import Tuple
 
 import dateutil.tz
 import requests_cache
-from google.auth.transport.requests import AuthorizedSession
+from google.auth.transport.requests import AuthorizedSession, Request
 from requests import Session
 
 from shillelagh.adapters.api.gsheets.lib import format_error_message
@@ -54,10 +54,10 @@ AVERAGE_NUMBER_OF_ROWS = 1000
 
 class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
-    r"""
+    """
     A Google Sheets adapter.
 
-    The adapter uses two different APIs. When only ``SELECT``\s are used the
+    The adapter uses two different APIs. When only ``SELECT``s are used the
     adapter uses the Google Chart API, which queries in a dialect of SQL.
     The Chart API is efficient because the data can be filterd and sorted
     on the backend before being retrieved.
@@ -206,6 +206,8 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         # ``cache_name`` MUST include the credentials if present, to prevent one user from
         # reusing the cache from another
         if self.credentials:
+            if self.credentials.token is None:
+                self.credentials.refresh(Request())
             hash_ = hashlib.sha224(self.credentials.token.encode()).hexdigest()
             cache_name = f"gsheets_cache_{hash_}"
             session = AuthorizedSession(self.credentials)
@@ -213,8 +215,9 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             cache_name = "gsheets_cache"
             session = Session()
 
+        requests_cache.install_cache("demo_cache", backend="sqlite")
         with requests_cache.enabled(cache_name, backend="sqlite", expire_after=180):
-            yield session(Session, session)
+            yield cast(Session, session)
 
     def get_metadata(self) -> Dict[str, Any]:
         """
