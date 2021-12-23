@@ -5,22 +5,23 @@ Tests for the Datasette adapter.
 import pytest
 from requests import Session
 
-from ...fakes import datasette_columns_response
-from ...fakes import datasette_data_response_1
-from ...fakes import datasette_data_response_2
-from ...fakes import datasette_metadata_response
-from ...fakes import datasette_results
-from shillelagh.adapters.api.datasette import DatasetteAPI
-from shillelagh.adapters.api.datasette import get_field
-from shillelagh.adapters.api.datasette import is_datasette
-from shillelagh.adapters.api.datasette import is_known_domain
+from shillelagh.adapters.api.datasette import (
+    DatasetteAPI,
+    get_field,
+    is_datasette,
+    is_known_domain,
+)
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Float
-from shillelagh.fields import Integer
-from shillelagh.fields import ISODate
-from shillelagh.fields import ISODateTime
-from shillelagh.fields import String
+from shillelagh.fields import Float, Integer, ISODate, ISODateTime, String
+
+from ...fakes import (
+    datasette_columns_response,
+    datasette_data_response_1,
+    datasette_data_response_2,
+    datasette_metadata_response,
+    datasette_results,
+)
 
 
 def test_datasette(mocker, requests_mock):

@@ -3,18 +3,8 @@ An adapter to WeatherAPI (https://www.weatherapi.com/).
 """
 import logging
 import urllib.parse
-from datetime import date
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
-from typing import Any
-from typing import cast
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from datetime import date, datetime, timedelta, timezone
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union, cast
 
 import dateutil.parser
 import dateutil.tz
@@ -22,18 +12,9 @@ import requests_cache
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError
-from shillelagh.fields import DateTime
-from shillelagh.fields import Float
-from shillelagh.fields import IntBoolean
-from shillelagh.fields import Integer
-from shillelagh.fields import Order
-from shillelagh.fields import String
-from shillelagh.filters import Filter
-from shillelagh.filters import Impossible
-from shillelagh.filters import Operator
-from shillelagh.filters import Range
-from shillelagh.typing import RequestedOrder
-from shillelagh.typing import Row
+from shillelagh.fields import DateTime, Float, IntBoolean, Integer, Order, String
+from shillelagh.filters import Filter, Impossible, Operator, Range
+from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
 

@@ -8,19 +8,18 @@ from typing import Dict
 import apsw
 import pytest
 
-from ...fakes import FakeAdapter
-from shillelagh.backends.apsw.vt import convert_rows_from_sqlite
-from shillelagh.backends.apsw.vt import convert_rows_to_sqlite
-from shillelagh.backends.apsw.vt import type_map
-from shillelagh.backends.apsw.vt import VTModule
-from shillelagh.backends.apsw.vt import VTTable
+from shillelagh.backends.apsw.vt import (
+    VTModule,
+    VTTable,
+    convert_rows_from_sqlite,
+    convert_rows_to_sqlite,
+    type_map,
+)
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Field
-from shillelagh.fields import Float
-from shillelagh.fields import Integer
-from shillelagh.fields import Order
-from shillelagh.fields import String
+from shillelagh.fields import Field, Float, Integer, Order, String
 from shillelagh.filters import Equal
+
+from ...fakes import FakeAdapter
 
 
 class FakeAdapterNoFilters(FakeAdapter):

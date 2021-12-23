@@ -3,16 +3,18 @@ Tests for shillelagh.filters.
 """
 import pytest
 
-from shillelagh.filters import Endpoint
-from shillelagh.filters import Equal
-from shillelagh.filters import Impossible
-from shillelagh.filters import IsNotNull
-from shillelagh.filters import IsNull
-from shillelagh.filters import Like
-from shillelagh.filters import NotEqual
-from shillelagh.filters import Operator
-from shillelagh.filters import Range
-from shillelagh.filters import Side
+from shillelagh.filters import (
+    Endpoint,
+    Equal,
+    Impossible,
+    IsNotNull,
+    IsNull,
+    Like,
+    NotEqual,
+    Operator,
+    Range,
+    Side,
+)
 
 
 def test_equal():

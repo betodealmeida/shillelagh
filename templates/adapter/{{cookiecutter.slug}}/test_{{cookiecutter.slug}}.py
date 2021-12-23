@@ -2,6 +2,7 @@
 Tests for the {{ cookiecutter.adapter_name|replace(' ', '') }} adapter.
 """
 import requests
+
 from shillelagh.backends.apsw.db import connect
 
 

@@ -4,16 +4,11 @@ Test the Pandas in-memory adapter.
 import pandas as pd
 import pytest
 
-from shillelagh.adapters.memory.pandas import find_dataframe
-from shillelagh.adapters.memory.pandas import PandasMemory
+from shillelagh.adapters.memory.pandas import PandasMemory, find_dataframe
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
-from shillelagh.filters import Equal
-from shillelagh.filters import IsNotNull
-from shillelagh.filters import IsNull
-from shillelagh.filters import NotEqual
-from shillelagh.filters import Operator
+from shillelagh.filters import Equal, IsNotNull, IsNull, NotEqual, Operator
 
 
 def test_pandas():

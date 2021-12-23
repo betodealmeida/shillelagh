@@ -7,11 +7,7 @@ This dialect was implemented to replace the ``gsheetsdb`` library.
 import logging
 import urllib.parse
 from operator import itemgetter
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 from google.auth.transport.requests import AuthorizedSession

@@ -2,26 +2,20 @@
 """
 Tests for shillelagh.adapters.api.weatherapi.
 """
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
+from datetime import datetime, timedelta, timezone
 
 import apsw
 import pytest
 from requests import Session
 
-from ...fakes import FakeEntryPoint
-from ...fakes import weatherapi_response
-from shillelagh.adapters.api.weatherapi import combine_time_filters
-from shillelagh.adapters.api.weatherapi import WeatherAPI
+from shillelagh.adapters.api.weatherapi import WeatherAPI, combine_time_filters
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
 from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.fields import Order
-from shillelagh.filters import Equal
-from shillelagh.filters import Impossible
-from shillelagh.filters import Operator
-from shillelagh.filters import Range
+from shillelagh.filters import Equal, Impossible, Operator, Range
+
+from ...fakes import FakeEntryPoint, weatherapi_response
 
 
 def test_weatherapi(mocker, requests_mock):

@@ -1,3 +1,6 @@
 [MESSAGES CONTROL]
 disable =
   duplicate-code
+
+[MASTER]
+ignore=templates,docs

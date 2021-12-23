@@ -4,16 +4,12 @@ Tests for shillelagh.backends.apsw.dialects.base.
 from unittest import mock
 
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy import func
-from sqlalchemy import MetaData
-from sqlalchemy import select
-from sqlalchemy import Table
+from sqlalchemy import MetaData, Table, create_engine, func, select
 
-from ....fakes import FakeAdapter
-from ....fakes import FakeEntryPoint
 from shillelagh.backends.apsw.dialects.base import APSWDialect
 from shillelagh.exceptions import ProgrammingError
+
+from ....fakes import FakeAdapter, FakeEntryPoint
 
 
 def test_create_engine(mocker):

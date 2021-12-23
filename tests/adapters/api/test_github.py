@@ -7,10 +7,10 @@ import datetime
 import pytest
 from requests import Session
 
-from ...fakes import github_response
-from ...fakes import github_single_response
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
+
+from ...fakes import github_response, github_single_response
 
 
 def test_github(mocker, requests_mock):

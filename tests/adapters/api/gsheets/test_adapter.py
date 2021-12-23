@@ -12,16 +12,13 @@ import pytest
 import requests
 import requests_mock
 
-from ....fakes import FakeEntryPoint
 from shillelagh.adapters.api.gsheets.adapter import GSheetsAPI
 from shillelagh.backends.apsw.db import connect
-from shillelagh.exceptions import InternalError
-from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Float
-from shillelagh.fields import Order
-from shillelagh.fields import String
-from shillelagh.filters import Equal
-from shillelagh.filters import Operator
+from shillelagh.exceptions import InternalError, ProgrammingError
+from shillelagh.fields import Float, Order, String
+from shillelagh.filters import Equal, Operator
+
+from ....fakes import FakeEntryPoint
 
 
 @pytest.fixture
@@ -1507,7 +1504,7 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
     ]
 
     # check that columns have no filters/order
-    for column in {"country", "cnt"}:
+    for column in ["country", "cnt"]:
         assert gsheets_adapter.columns[column].filters == []
         assert gsheets_adapter.columns[column].order == Order.NONE
         assert not gsheets_adapter.columns[column].exact

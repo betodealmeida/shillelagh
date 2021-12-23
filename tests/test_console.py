@@ -59,7 +59,7 @@ def test_configuration(mocker, fs):
     """
     config = os.path.expanduser("~/.config/shillelagh/shillelagh.yaml")
     fs.create_file(config)
-    with open(config, "w") as fp:
+    with open(config, "w", encoding="utf-8") as fp:
         yaml.dump({"foo": {"bar": "baz"}}, fp)
 
     connect = mocker.patch("shillelagh.console.connect")
@@ -95,7 +95,7 @@ def test_configuration_invalid(mocker, fs):
     """
     config = os.path.expanduser("~/.config/shillelagh/shillelagh.yaml")
     fs.create_file(config)
-    with open(config, "w") as fp:
+    with open(config, "w", encoding="utf-8") as fp:
         fp.write("foo: *")
 
     _logger = mocker.patch("shillelagh.console._logger")

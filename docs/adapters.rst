@@ -97,7 +97,7 @@ The Google Sheets adapter has a custom SQLAlchemy dialect, ``gsheets://``. When 
 
     engine = create_engine("gsheets://", service_account_file="/path/to/credentials.json")
 
-The dialect also exposes the list of sheets that the user has via the ``get_table_names`` 
+The dialect also exposes the list of sheets that the user has via the ``get_table_names``
 
 .. code-block:: python
 
@@ -156,7 +156,7 @@ CSV (comma separated values) are supported (`an example <https://github.com/beto
 .. code-block:: sql
 
     SELECT * FROM "/path/to/file.csv";
-        
+
 The adapter supports full DML, so you can also ``INSERT``, ``UPDATE``, or ``DELETE`` rows from the CSV file. Deleted rows are marked for deletion, modified and inserted rows are appended at the end of the file, and garbage collection is applied when the connection is closed.
 
 
@@ -172,7 +172,7 @@ The `Socrata Open Data API <https://dev.socrata.com/>`_ is a simple API used by 
     WHERE location = 'US'
     ORDER BY date DESC
     LIMIT 10
-    
+
 The adapter is currently read-only.
 
 WeatherAPI
@@ -225,16 +225,16 @@ Shillelagh has support for Pandas dataframes, inspired by `DuckDB <https://duckd
 
     import pandas as pd
     from shillelagh.backends.apsw.db import connect
-    
+
     connection = connect(":memory:")
     cursor = connection.cursor()
-    
+
     mydf = pd.DataFrame({"a": [1, 2, 3]})
-    
+
     sql = "SELECT SUM(a) FROM mydf"
     for row in cursor.execute(sql):
         print(row)
-    
+
 Datasette
 =========
 

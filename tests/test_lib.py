@@ -3,36 +3,36 @@ Tests for shillelagh.lib.
 """
 import pytest
 
-from .fakes import FakeAdapter
-from .fakes import FakeEntryPoint
-from shillelagh.exceptions import ImpossibleFilterError
-from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Float
-from shillelagh.fields import Integer
-from shillelagh.fields import Order
-from shillelagh.fields import String
-from shillelagh.filters import Equal
-from shillelagh.filters import Impossible
-from shillelagh.filters import IsNotNull
-from shillelagh.filters import IsNull
-from shillelagh.filters import Like
-from shillelagh.filters import NotEqual
-from shillelagh.filters import Range
-from shillelagh.lib import analyze
-from shillelagh.lib import build_sql
-from shillelagh.lib import combine_args_kwargs
-from shillelagh.lib import DELETED
-from shillelagh.lib import deserialize
-from shillelagh.lib import escape
-from shillelagh.lib import filter_data
-from shillelagh.lib import find_adapter
-from shillelagh.lib import get_available_adapters
-from shillelagh.lib import is_not_null
-from shillelagh.lib import is_null
-from shillelagh.lib import RowIDManager
-from shillelagh.lib import serialize
-from shillelagh.lib import unescape
-from shillelagh.lib import update_order
+from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
+from shillelagh.fields import Float, Integer, Order, String
+from shillelagh.filters import (
+    Equal,
+    Impossible,
+    IsNotNull,
+    IsNull,
+    Like,
+    NotEqual,
+    Range,
+)
+from shillelagh.lib import (
+    DELETED,
+    RowIDManager,
+    analyze,
+    build_sql,
+    combine_args_kwargs,
+    deserialize,
+    escape,
+    filter_data,
+    find_adapter,
+    get_available_adapters,
+    is_not_null,
+    is_null,
+    serialize,
+    unescape,
+    update_order,
+)
+
+from .fakes import FakeAdapter, FakeEntryPoint
 
 
 def test_row_id_manager_empty_range():

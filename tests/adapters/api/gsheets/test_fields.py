@@ -6,14 +6,15 @@ import datetime
 
 import dateutil.tz
 
-from shillelagh.adapters.api.gsheets.fields import GSheetsBoolean
-from shillelagh.adapters.api.gsheets.fields import GSheetsDate
-from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime
-from shillelagh.adapters.api.gsheets.fields import GSheetsNumber
-from shillelagh.adapters.api.gsheets.fields import GSheetsString
-from shillelagh.adapters.api.gsheets.fields import GSheetsTime
-from shillelagh.fields import ISODateTime
-from shillelagh.fields import Order
+from shillelagh.adapters.api.gsheets.fields import (
+    GSheetsBoolean,
+    GSheetsDate,
+    GSheetsDateTime,
+    GSheetsNumber,
+    GSheetsString,
+    GSheetsTime,
+)
+from shillelagh.fields import ISODateTime, Order
 
 
 def test_comparison():

@@ -1,11 +1,13 @@
+"""
+A simple example showing the Datasette adapter.
+"""
 from shillelagh.backends.apsw.db import connect
-
 
 if __name__ == "__main__":
     connection = connect(":memory:")
     cursor = connection.cursor()
 
-    sql = """
+    SQL = """
 SELECT "Latitude" AS "Latitude",
        "Longitude" AS "Longitude",
        COUNT(*) AS count
@@ -19,5 +21,5 @@ ORDER BY count DESC
 LIMIT 1000
 OFFSET 0;
     """
-    for row in cursor.execute(sql):
+    for row in cursor.execute(SQL):
         print(row)

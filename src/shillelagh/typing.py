@@ -1,16 +1,9 @@
 """Custom types for Shillelagh."""
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Type
-from typing import Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from typing_extensions import Literal
 
-from shillelagh.fields import Field
-from shillelagh.fields import Order
+from shillelagh.fields import Field, Order
 
 # A value corresponding to a constraint is one of:
 #     None

@@ -6,30 +6,29 @@ import itertools
 import dateutil.tz
 import pytest
 
-from shillelagh.adapters.api.gsheets.fields import GSheetsBoolean
-from shillelagh.adapters.api.gsheets.fields import GSheetsDate
-from shillelagh.adapters.api.gsheets.fields import GSheetsDateTime
-from shillelagh.adapters.api.gsheets.fields import GSheetsNumber
-from shillelagh.adapters.api.gsheets.fields import GSheetsString
-from shillelagh.adapters.api.gsheets.fields import GSheetsTime
-from shillelagh.adapters.api.gsheets.lib import format_error_message
-from shillelagh.adapters.api.gsheets.lib import gen_letters
-from shillelagh.adapters.api.gsheets.lib import get_credentials
-from shillelagh.adapters.api.gsheets.lib import get_field
-from shillelagh.adapters.api.gsheets.lib import get_index_from_letters
-from shillelagh.adapters.api.gsheets.lib import get_sync_mode
-from shillelagh.adapters.api.gsheets.lib import get_url
-from shillelagh.adapters.api.gsheets.lib import get_value_from_cell
-from shillelagh.adapters.api.gsheets.lib import get_values_from_row
+from shillelagh.adapters.api.gsheets.fields import (
+    GSheetsBoolean,
+    GSheetsDate,
+    GSheetsDateTime,
+    GSheetsNumber,
+    GSheetsString,
+    GSheetsTime,
+)
+from shillelagh.adapters.api.gsheets.lib import (
+    format_error_message,
+    gen_letters,
+    get_credentials,
+    get_field,
+    get_index_from_letters,
+    get_sync_mode,
+    get_url,
+    get_value_from_cell,
+    get_values_from_row,
+)
 from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
-from shillelagh.filters import Equal
-from shillelagh.filters import IsNotNull
-from shillelagh.filters import IsNull
-from shillelagh.filters import Like
-from shillelagh.filters import NotEqual
-from shillelagh.filters import Range
+from shillelagh.filters import Equal, IsNotNull, IsNull, Like, NotEqual, Range
 
 
 def test_get_field():

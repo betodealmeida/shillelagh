@@ -8,10 +8,10 @@ import requests
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine.url import make_url
 
-from ....fakes import incidents
-from shillelagh.backends.apsw.dialects.gsheets import APSWGSheetsDialect
-from shillelagh.backends.apsw.dialects.gsheets import extract_query
+from shillelagh.backends.apsw.dialects.gsheets import APSWGSheetsDialect, extract_query
 from shillelagh.exceptions import ProgrammingError
+
+from ....fakes import incidents
 
 
 def test_gsheets_dialect():

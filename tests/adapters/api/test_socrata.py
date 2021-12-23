@@ -6,15 +6,13 @@ from datetime import date
 import pytest
 from requests import Session
 
-from ...fakes import cdc_data_response
-from ...fakes import cdc_metadata_response
-from shillelagh.adapters.api.socrata import Number
-from shillelagh.adapters.api.socrata import SocrataAPI
+from shillelagh.adapters.api.socrata import Number, SocrataAPI
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
-from shillelagh.filters import Impossible
-from shillelagh.filters import Operator
+from shillelagh.filters import Impossible, Operator
+
+from ...fakes import cdc_data_response, cdc_metadata_response
 
 
 def test_socrata(mocker, requests_mock):

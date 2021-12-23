@@ -4,37 +4,25 @@ import itertools
 import json
 import math
 import operator
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Type
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type
 
 from pkg_resources import iter_entry_points
 
 from shillelagh.adapters.base import Adapter
-from shillelagh.exceptions import ImpossibleFilterError
-from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Field
-from shillelagh.fields import Float
-from shillelagh.fields import Integer
-from shillelagh.fields import Order
-from shillelagh.fields import String
-from shillelagh.filters import Equal
-from shillelagh.filters import Filter
-from shillelagh.filters import Impossible
-from shillelagh.filters import IsNotNull
-from shillelagh.filters import IsNull
-from shillelagh.filters import Like
-from shillelagh.filters import NotEqual
-from shillelagh.filters import Operator
-from shillelagh.filters import Range
-from shillelagh.typing import RequestedOrder
-from shillelagh.typing import Row
+from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
+from shillelagh.fields import Field, Float, Integer, Order, String
+from shillelagh.filters import (
+    Equal,
+    Filter,
+    Impossible,
+    IsNotNull,
+    IsNull,
+    Like,
+    NotEqual,
+    Operator,
+    Range,
+)
+from shillelagh.typing import RequestedOrder, Row
 
 DELETED = range(-1, 0)
 

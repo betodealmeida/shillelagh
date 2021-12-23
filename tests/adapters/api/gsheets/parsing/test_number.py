@@ -4,24 +4,26 @@ Test number parsing.
 import pytest
 
 from shillelagh.adapters.api.gsheets.parsing.base import tokenize
-from shillelagh.adapters.api.gsheets.parsing.number import AT
-from shillelagh.adapters.api.gsheets.parsing.number import COLOR
-from shillelagh.adapters.api.gsheets.parsing.number import COMMA
-from shillelagh.adapters.api.gsheets.parsing.number import condition_matches
-from shillelagh.adapters.api.gsheets.parsing.number import DIGITS
-from shillelagh.adapters.api.gsheets.parsing.number import E
-from shillelagh.adapters.api.gsheets.parsing.number import fix_periods
-from shillelagh.adapters.api.gsheets.parsing.number import format_number_pattern
-from shillelagh.adapters.api.gsheets.parsing.number import FRACTION
-from shillelagh.adapters.api.gsheets.parsing.number import get_fraction
-from shillelagh.adapters.api.gsheets.parsing.number import has_condition
-from shillelagh.adapters.api.gsheets.parsing.number import InvalidValue
-from shillelagh.adapters.api.gsheets.parsing.number import LITERAL
-from shillelagh.adapters.api.gsheets.parsing.number import parse_number_pattern
-from shillelagh.adapters.api.gsheets.parsing.number import PERCENT
-from shillelagh.adapters.api.gsheets.parsing.number import PERIOD
-from shillelagh.adapters.api.gsheets.parsing.number import STAR
-from shillelagh.adapters.api.gsheets.parsing.number import UNDERSCORE
+from shillelagh.adapters.api.gsheets.parsing.number import (
+    AT,
+    COLOR,
+    COMMA,
+    DIGITS,
+    FRACTION,
+    LITERAL,
+    PERCENT,
+    PERIOD,
+    STAR,
+    UNDERSCORE,
+    E,
+    InvalidValue,
+    condition_matches,
+    fix_periods,
+    format_number_pattern,
+    get_fraction,
+    has_condition,
+    parse_number_pattern,
+)
 
 
 def test_digits_token():

@@ -6,27 +6,16 @@ See https://github.com/giampaolo/psutil for more information.
 """
 import logging
 import urllib.parse
-from datetime import datetime
-from datetime import timezone
-from typing import Any
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from datetime import datetime, timezone
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import psutil
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import DateTime
-from shillelagh.fields import Field
-from shillelagh.fields import Float
-from shillelagh.fields import Order
+from shillelagh.fields import DateTime, Field, Float, Order
 from shillelagh.filters import Filter
-from shillelagh.typing import RequestedOrder
-from shillelagh.typing import Row
+from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
 

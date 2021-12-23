@@ -4,37 +4,25 @@ An adapter for in-memory Pandas dataframes.
 """
 import inspect
 import operator
-from typing import Any
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Type
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Boolean
-from shillelagh.fields import DateTime
-from shillelagh.fields import Field
-from shillelagh.fields import Float
-from shillelagh.fields import Integer
-from shillelagh.fields import Order
-from shillelagh.fields import String
-from shillelagh.filters import Equal
-from shillelagh.filters import Filter
-from shillelagh.filters import Impossible
-from shillelagh.filters import IsNotNull
-from shillelagh.filters import IsNull
-from shillelagh.filters import NotEqual
-from shillelagh.filters import Range
+from shillelagh.fields import Boolean, DateTime, Field, Float, Integer, Order, String
+from shillelagh.filters import (
+    Equal,
+    Filter,
+    Impossible,
+    IsNotNull,
+    IsNull,
+    NotEqual,
+    Range,
+)
 from shillelagh.lib import SimpleCostModel
-from shillelagh.typing import RequestedOrder
-from shillelagh.typing import Row
-
+from shillelagh.typing import RequestedOrder, Row
 
 # this is just a wild guess; used to estimate query cost
 AVERAGE_NUMBER_OF_ROWS = 1000

@@ -4,24 +4,13 @@ Fake objects to simplify testing.
 import json
 import os
 import urllib.parse
-from typing import Any
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 from shillelagh.adapters.base import Adapter
-from shillelagh.fields import Float
-from shillelagh.fields import Integer
-from shillelagh.fields import Order
-from shillelagh.fields import String
-from shillelagh.filters import Equal
-from shillelagh.filters import Filter
-from shillelagh.filters import Range
+from shillelagh.fields import Float, Integer, Order, String
+from shillelagh.filters import Equal, Filter, Range
 from shillelagh.lib import filter_data
-from shillelagh.typing import RequestedOrder
-from shillelagh.typing import Row
+from shillelagh.typing import RequestedOrder, Row
 
 
 class FakeEntryPoint:  # pylint: disable=too-few-public-methods
@@ -91,25 +80,37 @@ class FakeAdapter(Adapter):
 
 
 dirname, filename = os.path.split(os.path.abspath(__file__))
-with open(os.path.join(dirname, "weatherapi_response.json")) as fp:
+with open(os.path.join(dirname, "weatherapi_response.json"), encoding="utf-8") as fp:
     weatherapi_response = json.load(fp)
-with open(os.path.join(dirname, "cdc_metadata_response.json")) as fp:
+with open(os.path.join(dirname, "cdc_metadata_response.json"), encoding="utf-8") as fp:
     cdc_metadata_response = json.load(fp)
-with open(os.path.join(dirname, "cdc_data_response.json")) as fp:
+with open(os.path.join(dirname, "cdc_data_response.json"), encoding="utf-8") as fp:
     cdc_data_response = json.load(fp)
-with open(os.path.join(dirname, "datasette_columns_response.json")) as fp:
+with open(
+    os.path.join(dirname, "datasette_columns_response.json"),
+    encoding="utf-8",
+) as fp:
     datasette_columns_response = json.load(fp)
-with open(os.path.join(dirname, "datasette_data_response_1.json")) as fp:
+with open(
+    os.path.join(dirname, "datasette_data_response_1.json"),
+    encoding="utf-8",
+) as fp:
     datasette_data_response_1 = json.load(fp)
-with open(os.path.join(dirname, "datasette_data_response_2.json")) as fp:
+with open(
+    os.path.join(dirname, "datasette_data_response_2.json"),
+    encoding="utf-8",
+) as fp:
     datasette_data_response_2 = json.load(fp)
-with open(os.path.join(dirname, "datasette_metadata_response.json")) as fp:
+with open(
+    os.path.join(dirname, "datasette_metadata_response.json"),
+    encoding="utf-8",
+) as fp:
     datasette_metadata_response = json.load(fp)
-with open(os.path.join(dirname, "datasette_results.json")) as fp:
+with open(os.path.join(dirname, "datasette_results.json"), encoding="utf-8") as fp:
     datasette_results = [tuple(row) for row in json.load(fp)]
-with open(os.path.join(dirname, "incidents.json")) as fp:
+with open(os.path.join(dirname, "incidents.json"), encoding="utf-8") as fp:
     incidents = json.load(fp)
-with open(os.path.join(dirname, "github_response.json")) as fp:
+with open(os.path.join(dirname, "github_response.json"), encoding="utf-8") as fp:
     github_response = json.load(fp)
-with open(os.path.join(dirname, "github_single_response.json")) as fp:
+with open(os.path.join(dirname, "github_single_response.json"), encoding="utf-8") as fp:
     github_single_response = json.load(fp)

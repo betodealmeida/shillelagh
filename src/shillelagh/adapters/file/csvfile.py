@@ -11,30 +11,22 @@ import csv
 import logging
 import os
 from pathlib import Path
-from typing import Any
-from typing import cast
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple, cast
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
-from shillelagh.filters import Equal
-from shillelagh.filters import Filter
-from shillelagh.filters import IsNotNull
-from shillelagh.filters import IsNull
-from shillelagh.filters import NotEqual
-from shillelagh.filters import Operator
-from shillelagh.filters import Range
-from shillelagh.lib import analyze
-from shillelagh.lib import filter_data
-from shillelagh.lib import RowIDManager
-from shillelagh.lib import update_order
-from shillelagh.typing import RequestedOrder
-from shillelagh.typing import Row
+from shillelagh.filters import (
+    Equal,
+    Filter,
+    IsNotNull,
+    IsNull,
+    NotEqual,
+    Operator,
+    Range,
+)
+from shillelagh.lib import RowIDManager, analyze, filter_data, update_order
+from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
 
@@ -108,7 +100,7 @@ class CSVFile(Adapter):
         self.modified = False
 
         _logger.info("Opening file CSV file %s to load metadata", self.path)
-        with open(self.path) as csvfile:
+        with open(self.path, encoding="utf-8") as csvfile:
             reader = csv.reader(csvfile, quoting=csv.QUOTE_NONNUMERIC)
             try:
                 column_names = next(reader)
@@ -168,7 +160,7 @@ class CSVFile(Adapter):
         order: List[Tuple[str, RequestedOrder]],
     ) -> Iterator[Row]:
         _logger.info("Opening file CSV file %s to load data", self.path)
-        with open(self.path) as csvfile:
+        with open(self.path, encoding="utf-8") as csvfile:
             reader = csv.reader(csvfile, quoting=csv.QUOTE_NONNUMERIC)
 
             try:
@@ -195,7 +187,7 @@ class CSVFile(Adapter):
         column_names = list(self.get_columns().keys())
         _logger.info("Appending row with ID %d to CSV file %s", row_id, self.path)
         _logger.debug(row)
-        with open(self.path, "a") as csvfile:
+        with open(self.path, "a", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile, quoting=csv.QUOTE_NONNUMERIC)
             writer.writerow([row[column_name] for column_name in column_names])
         self.num_rows += 1
@@ -232,12 +224,12 @@ class CSVFile(Adapter):
 
         # garbage collect -- should we sort the data according to the initial sort
         # order when writing to the new file?
-        with open(self.path) as csvfile:
+        with open(self.path, encoding="utf-8") as csvfile:
             reader = csv.reader(csvfile, quoting=csv.QUOTE_NONNUMERIC)
             column_names = next(reader)
             data = (row for i, row in zip(self.row_id_manager, reader) if i != -1)
 
-            with open(self.path.with_suffix(".csv.bak"), "w") as copy:
+            with open(self.path.with_suffix(".csv.bak"), "w", encoding="utf-8") as copy:
                 writer = csv.writer(copy, quoting=csv.QUOTE_NONNUMERIC)
                 writer.writerow(column_names)
                 writer.writerows(data)

@@ -2,20 +2,14 @@
 """
 {{ cookiecutter.description }}
 """
-from typing import Any
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import requests_cache
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.fields import Field
 from shillelagh.filters import Filter
-from shillelagh.typing import RequestedOrder
-from shillelagh.typing import Row
+from shillelagh.typing import RequestedOrder, Row
 
 
 class {{ cookiecutter.adapter_name|replace(' ', '') }}{{ cookiecutter.adapter_type }}(Adapter):
