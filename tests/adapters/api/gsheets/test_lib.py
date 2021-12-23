@@ -77,6 +77,15 @@ def test_get_field():
         Order.ANY,
         True,
     )
+    assert get_field(
+        {"type": "datetime", "pattern": "h:mm:ss am/pm"},
+        None,
+    ) == GSheetsTime(
+        [Range, Equal, NotEqual, IsNull, IsNotNull],
+        Order.ANY,
+        True,
+        "h:mm:ss am/pm",
+    )
     assert get_field({"type": "invalid"}, None) == GSheetsString(
         [Range, Equal, NotEqual, Like, IsNull, IsNotNull],
         Order.ANY,
