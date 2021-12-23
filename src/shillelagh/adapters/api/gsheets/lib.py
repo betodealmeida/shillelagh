@@ -55,6 +55,11 @@ def get_field(
     """
     Return a Shillelagh ``Field`` from a Google Chart API results column.
     """
+    # Fix for GSheets return an incorrect type. We should be able to detect the type based
+    # on the pattern, instead of relying on the return type.
+    if col["type"] == "datetime" and col.get("pattern") == "h:mm:ss am/pm":
+        col["type"] = "timeofday"
+
     type_map: Dict[str, Tuple[Type[GSheetsField], List[Type[Filter]]]] = {
         "string": (GSheetsString, [Range, Equal, NotEqual, Like, IsNull, IsNotNull]),
         "number": (GSheetsNumber, [Range, Equal, NotEqual, IsNull, IsNotNull]),
