@@ -6,12 +6,13 @@ from unittest import mock
 
 import pytest
 from freezegun import freeze_time
+from pytest_mock import MockerFixture
 
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 
 
-def test_system(mocker) -> None:
+def test_system(mocker: MockerFixture) -> None:
     """
     Test a simple query.
     """
@@ -45,7 +46,7 @@ def test_system(mocker) -> None:
     )
 
 
-def test_system_different_interval(mocker) -> None:
+def test_system_different_interval(mocker: MockerFixture) -> None:
     """
     Test a simple query with a custom interval.
     """
@@ -94,7 +95,7 @@ def test_system_invalid_resource() -> None:
     assert str(excinfo.value) == "Unknown resource: memory"
 
 
-def test_system_interrupt(mocker) -> None:
+def test_system_interrupt(mocker: MockerFixture) -> None:
     """
     Test query interrupt.
     """

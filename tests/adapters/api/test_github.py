@@ -5,7 +5,9 @@ Tests for the Datasette adapter.
 import datetime
 
 import pytest
+from pytest_mock import MockerFixture
 from requests import Session
+from requests_mock.mocker import Mocker
 
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
@@ -13,7 +15,7 @@ from shillelagh.exceptions import ProgrammingError
 from ...fakes import github_response, github_single_response
 
 
-def test_github(mocker, requests_mock) -> None:
+def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test a simple request.
     """
@@ -189,7 +191,7 @@ def test_github(mocker, requests_mock) -> None:
     ]
 
 
-def test_github_single_resource(mocker, requests_mock) -> None:
+def test_github_single_resource(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test a request to a single resource.
     """
@@ -229,7 +231,7 @@ def test_github_single_resource(mocker, requests_mock) -> None:
     ]
 
 
-def test_github_rate_limit(mocker, requests_mock) -> None:
+def test_github_rate_limit(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test that the adapter was rate limited by the API.
     """
@@ -271,7 +273,7 @@ def test_github_rate_limit(mocker, requests_mock) -> None:
     )
 
 
-def test_github_auth_token(mocker, requests_mock) -> None:
+def test_github_auth_token(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test a simple request.
     """

@@ -8,6 +8,7 @@ from unittest import mock
 
 import apsw
 import pytest
+from pytest_mock import MockerFixture
 
 from shillelagh.backends.apsw.db import connect, convert_binding
 from shillelagh.exceptions import InterfaceError, NotSupportedError, ProgrammingError
@@ -16,7 +17,7 @@ from shillelagh.fields import Float, Integer, String
 from ...fakes import FakeAdapter, FakeEntryPoint
 
 
-def test_connect(mocker) -> None:
+def test_connect(mocker: MockerFixture) -> None:
     """
     Test ``connect``.
     """
@@ -61,7 +62,7 @@ def test_connect(mocker) -> None:
     assert cursor.rowcount == 2
 
 
-def test_connect_schema_prefix(mocker) -> None:
+def test_connect_schema_prefix(mocker: MockerFixture) -> None:
     """
     Test querying a table with the schema.
     """
@@ -81,7 +82,7 @@ def test_connect_schema_prefix(mocker) -> None:
     assert cursor.rowcount == 2
 
 
-def test_connect_adapter_kwargs(mocker) -> None:
+def test_connect_adapter_kwargs(mocker: MockerFixture) -> None:
     """
     Test that ``adapter_kwargs`` are passed to the adapter.
     """
@@ -106,7 +107,7 @@ def test_connect_adapter_kwargs(mocker) -> None:
     )
 
 
-def test_conect_safe(mocker) -> None:
+def test_conect_safe(mocker: MockerFixture) -> None:
     """
     Test the safe option.
     """
@@ -193,7 +194,7 @@ def test_conect_safe(mocker) -> None:
     assert str(excinfo.value) == "Repeated adapter names found: one"
 
 
-def test_execute_with_native_parameters(mocker) -> None:
+def test_execute_with_native_parameters(mocker: MockerFixture) -> None:
     """
     Test passing native types to the cursor.
     """
@@ -232,7 +233,7 @@ def test_check_closed() -> None:
     assert str(excinfo.value) == "Connection already closed"
 
 
-def test_check_result(mocker) -> None:
+def test_check_result(mocker: MockerFixture) -> None:
     """
     Test exception raised when fetching results before query.
     """
@@ -272,7 +273,7 @@ def test_unsupported_table() -> None:
     assert str(excinfo.value) == "Unsupported table: dummy://"
 
 
-def test_description(mocker) -> None:
+def test_description(mocker: MockerFixture) -> None:
     """
     Test cursor description.
     """
@@ -299,7 +300,7 @@ def test_description(mocker) -> None:
     ]
 
 
-def test_execute_many(mocker) -> None:
+def test_execute_many(mocker: MockerFixture) -> None:
     """
     Test ``execute_many``.
     """
@@ -334,7 +335,7 @@ def test_setsize() -> None:
     cursor.setoutputsizes(100)
 
 
-def test_close_connection(mocker) -> None:
+def test_close_connection(mocker: MockerFixture) -> None:
     """
     Testing closing a connection.
     """
@@ -352,7 +353,7 @@ def test_close_connection(mocker) -> None:
     cursor2.close.assert_called()
 
 
-def test_transaction(mocker) -> None:
+def test_transaction(mocker: MockerFixture) -> None:
     """
     Test transactions.
     """
@@ -446,7 +447,7 @@ def test_connection_context_manager() -> None:
     )
 
 
-def test_connect_safe(mocker) -> None:
+def test_connect_safe(mocker: MockerFixture) -> None:
     """
     Test the safe connection.
     """
@@ -469,7 +470,7 @@ def test_connect_safe(mocker) -> None:
     assert connection._adapters == []
 
 
-def test_connect_unmet_dependency(mocker) -> None:
+def test_connect_unmet_dependency(mocker: MockerFixture) -> None:
     """
     Test that we ignore adapters with unmet dependencies.
     """

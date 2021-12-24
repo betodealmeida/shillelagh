@@ -4,6 +4,7 @@ Tests for shillelagh.backends.apsw.dialects.base.
 from unittest import mock
 
 import pytest
+from pytest_mock import MockerFixture
 from sqlalchemy import MetaData, Table, create_engine, func, select
 
 from shillelagh.backends.apsw.dialects.base import APSWDialect
@@ -12,7 +13,7 @@ from shillelagh.exceptions import ProgrammingError
 from ....fakes import FakeAdapter, FakeEntryPoint
 
 
-def test_create_engine(mocker) -> None:
+def test_create_engine(mocker: MockerFixture) -> None:
     """
     Test ``create_engine``.
     """
@@ -52,7 +53,7 @@ def test_dialect_ping() -> None:
     assert dialect.do_ping(mock_dbapi_connection) is True
 
 
-def test_has_table(mocker) -> None:
+def test_has_table(mocker: MockerFixture) -> None:
     """
     Test ``has_table``.
     """

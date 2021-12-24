@@ -6,6 +6,7 @@ import json
 import apsw
 import pkg_resources
 import pytest
+from pytest_mock import MockerFixture
 
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
@@ -14,7 +15,7 @@ from shillelagh.functions import get_metadata
 from .fakes import FakeAdapter, FakeEntryPoint
 
 
-def test_sleep_from_sql(mocker) -> None:
+def test_sleep_from_sql(mocker: MockerFixture) -> None:
     """
     Test ``sleep``.
     """
@@ -53,7 +54,7 @@ def test_get_metadata() -> None:
     assert str(excinfo.value) == "Unsupported table: invalid://"
 
 
-def test_get_metadata_from_sql(mocker) -> None:
+def test_get_metadata_from_sql(mocker: MockerFixture) -> None:
     """
     Test calling ``get_metadata`` from SQL.
     """

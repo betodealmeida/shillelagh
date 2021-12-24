@@ -5,6 +5,8 @@ from unittest import mock
 
 import pytest
 import requests
+from pytest_mock import MockerFixture
+from requests_mock.mocker import Mocker
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine.url import make_url
 
@@ -89,7 +91,7 @@ def test_gsheets_dialect() -> None:
     assert dialect.get_schema_names(mock_dbapi_connection) == []
 
 
-def test_get_table_names(mocker, requests_mock) -> None:
+def test_get_table_names(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test ``get_table_names``.
     """
@@ -196,7 +198,7 @@ def test_get_table_names(mocker, requests_mock) -> None:
     )
 
 
-def test_drive_api_disabled(mocker, requests_mock) -> None:
+def test_drive_api_disabled(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test error message when the Drive API is disabled.
     """
@@ -277,7 +279,7 @@ def test_extract_query() -> None:
     assert extract_query(make_url("gsheets:///?foo=bar")) == {"foo": "bar"}
 
 
-def test_do_ping(mocker, requests_mock) -> None:
+def test_do_ping(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test ``do_ping``.
     """

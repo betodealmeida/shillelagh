@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import List
 
 import pytest
+from pytest_mock import MockerFixture
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect
@@ -167,7 +168,7 @@ def test_adapter_manipulate_rows() -> None:
     ]
 
 
-def test_type_conversion(mocker) -> None:
+def test_type_conversion(mocker: MockerFixture) -> None:
     """
     Test that native types are converted correctly.
     """

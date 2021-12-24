@@ -7,6 +7,7 @@ Uses a private sheet: https://docs.google.com/spreadsheets/d/
     1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit
 """
 import datetime
+from typing import Any, Dict
 
 import pytest
 from dateutil.tz import tzoffset
@@ -17,7 +18,7 @@ from shillelagh.backends.apsw.db import connect
 
 @pytest.mark.slow_integration_test
 @pytest.mark.parametrize("sync_mode", [SyncMode.BIDIRECTIONAL, SyncMode.BATCH])
-def test_simple_sheet(sync_mode, adapter_kwargs):
+def test_simple_sheet(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> None:
     """
     Test queries against the simple sheet.
 
@@ -104,7 +105,7 @@ def test_simple_sheet(sync_mode, adapter_kwargs):
 
 @pytest.mark.slow_integration_test
 @pytest.mark.parametrize("sync_mode", [SyncMode.BIDIRECTIONAL, SyncMode.BATCH])
-def test_2_header_sheet(sync_mode, adapter_kwargs):
+def test_2_header_sheet(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> None:
     """
     Test a sheet where the column names occupy the first 2 rows.
     """
@@ -126,6 +127,7 @@ def test_2_header_sheet(sync_mode, adapter_kwargs):
         ("ZA", 6.0),
         ("CR", 10.0),
     ]
+    assert cursor.description is not None
     assert [(t[0], t[1].type) for t in cursor.description] == [
         ("country string", "TEXT"),
         ("cnt number", "REAL"),
@@ -184,7 +186,7 @@ def test_2_header_sheet(sync_mode, adapter_kwargs):
 
 @pytest.mark.slow_integration_test
 @pytest.mark.parametrize("sync_mode", [SyncMode.BIDIRECTIONAL, SyncMode.BATCH])
-def test_types_and_nulls(sync_mode, adapter_kwargs):
+def test_types_and_nulls(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> None:
     """
     Test a sheet with all the supported types, including NULLs.
     """
@@ -476,7 +478,7 @@ def test_types_and_nulls(sync_mode, adapter_kwargs):
 
 @pytest.mark.slow_integration_test
 @pytest.mark.parametrize("sync_mode", [SyncMode.BIDIRECTIONAL, SyncMode.BATCH])
-def test_empty_column(sync_mode, adapter_kwargs):
+def test_empty_column(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> None:
     """
     Test queries against a sheet with an empty column in the middle.
 
@@ -503,6 +505,7 @@ def test_empty_column(sync_mode, adapter_kwargs):
         ("test", "test", 1.5, 10.1),
         ("test2", "test3", 0.1, 10.2),
     ]
+    assert cursor.description is not None
     assert [(t[0], t[1].type) for t in cursor.description] == [
         ("one", "TEXT"),
         ("two", "TEXT"),
@@ -531,7 +534,7 @@ def test_empty_column(sync_mode, adapter_kwargs):
 
 
 @pytest.mark.slow_integration_test
-def test_order_by(adapter_kwargs):
+def test_order_by(adapter_kwargs: Dict[str, Any]) -> None:
     """
     Test that ORDER BY works on multiple columns.
     """
@@ -559,7 +562,7 @@ def test_order_by(adapter_kwargs):
 
 
 @pytest.mark.slow_integration_test
-def test_date_time_formats(adapter_kwargs):
+def test_date_time_formats(adapter_kwargs: Dict[str, Any]) -> None:
     """
     Test that we can parse and modify timestamps with different formats.
     """
@@ -677,7 +680,7 @@ def test_date_time_formats(adapter_kwargs):
 
 
 @pytest.mark.slow_integration_test
-def test_number_formats(adapter_kwargs):
+def test_number_formats(adapter_kwargs: Dict[str, Any]) -> None:
     """
     Test reading data from a table with custom number formats.
     """
