@@ -6,11 +6,13 @@ import os.path
 from io import StringIO
 
 import yaml
+from pyfakefs.fake_filesystem import FakeFilesystem
+from pytest_mock import MockerFixture
 
 from shillelagh import console
 
 
-def test_main(mocker) -> None:
+def test_main(mocker: MockerFixture) -> None:
     """
     Test ``main``.
     """
@@ -23,7 +25,7 @@ def test_main(mocker) -> None:
     assert result == "  1\n---\n  1\nGoodBye!\n"
 
 
-def test_exception(mocker) -> None:
+def test_exception(mocker: MockerFixture) -> None:
     """
     Test that exceptions are captured and printed.
     """
@@ -36,7 +38,7 @@ def test_exception(mocker) -> None:
     assert result == 'SQLError: near "SSELECT": syntax error\nGoodBye!\n'
 
 
-def test_ctrl_c(mocker) -> None:
+def test_ctrl_c(mocker: MockerFixture) -> None:
     """
     Test that ``CTRL-C`` exists the REPL.
     """
@@ -53,7 +55,7 @@ def test_ctrl_c(mocker) -> None:
     assert result == "  1\n---\n  1\nGoodBye!\n"
 
 
-def test_configuration(mocker, fs) -> None:
+def test_configuration(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     """
     Test loading the configuration file.
     """
@@ -72,7 +74,7 @@ def test_configuration(mocker, fs) -> None:
     connect.assert_called_with(":memory:", adapter_kwargs={"foo": {"bar": "baz"}})
 
 
-def test_no_configuration(mocker, fs) -> None:
+def test_no_configuration(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     """
     Test no configuration file found.
     """
@@ -89,7 +91,7 @@ def test_no_configuration(mocker, fs) -> None:
     connect.assert_called_with(":memory:", adapter_kwargs={})
 
 
-def test_configuration_invalid(mocker, fs) -> None:
+def test_configuration_invalid(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     """
     Test that an exception is raised if the configuration is invalid.
     """

@@ -3,6 +3,7 @@ Test the Pandas in-memory adapter.
 """
 import pandas as pd
 import pytest
+from pytest_mock import MockerFixture
 
 from shillelagh.adapters.memory.pandas import PandasMemory, find_dataframe
 from shillelagh.backends.apsw.db import connect
@@ -94,7 +95,7 @@ def test_pandas() -> None:
     cursor.execute(sql)
 
 
-def test_adapter(mocker) -> None:
+def test_adapter(mocker: MockerFixture) -> None:
     """
     Test additional operations on the adapter.
     """
@@ -163,7 +164,7 @@ def test_adapter(mocker) -> None:
     assert str(excinfo.value) == "Invalid filter: [1, 2, 3]"
 
 
-def test_adapter_nulls(mocker) -> None:
+def test_adapter_nulls(mocker: MockerFixture) -> None:
     """
     Test operations with nulls on the adapter.
     """
@@ -213,7 +214,7 @@ def test_find_dataframe() -> None:
     assert str(excinfo.value) == "Could not find dataframe"
 
 
-def test_get_cost(mocker) -> None:
+def test_get_cost(mocker: MockerFixture) -> None:
     """
     Test cost estimation.
     """

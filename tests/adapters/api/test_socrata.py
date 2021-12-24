@@ -4,7 +4,9 @@ Tests for the Socrata adapter.
 from datetime import date
 
 import pytest
+from pytest_mock import MockerFixture
 from requests import Session
+from requests_mock.mocker import Mocker
 
 from shillelagh.adapters.api.socrata import Number, SocrataAPI
 from shillelagh.backends.apsw.db import connect
@@ -15,7 +17,7 @@ from shillelagh.filters import Impossible, Operator
 from ...fakes import cdc_data_response, cdc_metadata_response
 
 
-def test_socrata(mocker, requests_mock) -> None:
+def test_socrata(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test a simple query.
     """
@@ -54,7 +56,7 @@ def test_socrata(mocker, requests_mock) -> None:
     ]
 
 
-def test_socrata_app_token_url(mocker, requests_mock) -> None:
+def test_socrata_app_token_url(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test app token being passed via the URL.
     """
@@ -85,7 +87,10 @@ def test_socrata_app_token_url(mocker, requests_mock) -> None:
     assert data.last_request.headers == {"X-App-Token": "XXX"}
 
 
-def test_socrata_app_token_connection(mocker, requests_mock) -> None:
+def test_socrata_app_token_connection(
+    mocker: MockerFixture,
+    requests_mock: Mocker,
+) -> None:
     """
     Test app token being passed via the connection instead of the URL.
     """
@@ -118,7 +123,7 @@ def test_socrata_app_token_connection(mocker, requests_mock) -> None:
     assert data.last_request.headers == {"X-App-Token": "YYY"}
 
 
-def test_socrata_no_data(mocker, requests_mock) -> None:
+def test_socrata_no_data(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test that some queries return no data.
     """
@@ -149,7 +154,7 @@ def test_socrata_no_data(mocker, requests_mock) -> None:
     assert data == []
 
 
-def test_socrata_impossible(mocker, requests_mock) -> None:
+def test_socrata_impossible(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test that impossible queries return no data.
     """
@@ -179,7 +184,7 @@ def test_socrata_impossible(mocker, requests_mock) -> None:
     assert list(adapter.get_data({"location": Impossible()}, [])) == []
 
 
-def test_socrata_invalid_query(mocker, requests_mock) -> None:
+def test_socrata_invalid_query(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test that invalid queries are handled correctly.
     """
@@ -247,7 +252,7 @@ def test_integration(adapter_kwargs) -> None:
     assert cursor.fetchall() == [(67.1,)]
 
 
-def test_get_cost(mocker) -> None:
+def test_get_cost(mocker: MockerFixture) -> None:
     """
     Test ``get_cost``.
     """

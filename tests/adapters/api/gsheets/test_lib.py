@@ -5,6 +5,7 @@ import itertools
 
 import dateutil.tz
 import pytest
+from pytest_mock import MockerFixture
 
 from shillelagh.adapters.api.gsheets.fields import (
     GSheetsBoolean,
@@ -269,7 +270,7 @@ def test_get_values_from_row():
     assert get_values_from_row(row, column_map) == ["BR", "", 10]
 
 
-def test_get_credentials(mocker):
+def test_get_credentials(mocker: MockerFixture):
     """
     Test ``get_credentials``.
     """

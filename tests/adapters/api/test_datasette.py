@@ -3,7 +3,9 @@
 Tests for the Datasette adapter.
 """
 import pytest
+from pytest_mock import MockerFixture
 from requests import Session
+from requests_mock.mocker import Mocker
 
 from shillelagh.adapters.api.datasette import (
     DatasetteAPI,
@@ -24,7 +26,7 @@ from ...fakes import (
 )
 
 
-def test_datasette(mocker, requests_mock) -> None:
+def test_datasette(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test a simple query.
     """
@@ -92,7 +94,7 @@ def test_datasette(mocker, requests_mock) -> None:
     assert data == datasette_results
 
 
-def test_datasette_no_data(mocker) -> None:
+def test_datasette_no_data(mocker: MockerFixture) -> None:
     """
     Test result with no rows.
     """
@@ -109,7 +111,7 @@ def test_datasette_no_data(mocker) -> None:
     assert str(excinfo.value) == 'Table "table" has no data'
 
 
-def test_get_metadata(requests_mock) -> None:
+def test_get_metadata(requests_mock: Mocker) -> None:
     """
     Test ``get_metadata``.
     """
@@ -156,7 +158,7 @@ def test_is_known_domain() -> None:
     assert not is_known_domain("example.com")
 
 
-def test_is_datasette(requests_mock) -> None:
+def test_is_datasette(requests_mock: Mocker) -> None:
     """
     Test ``is_datasette``.
     """
@@ -205,7 +207,7 @@ def test_is_datasette(requests_mock) -> None:
     assert is_datasette("https://example.com/database/table")
 
 
-def test_datasette_error(mocker, requests_mock) -> None:
+def test_datasette_error(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test error handling.
     """

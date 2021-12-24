@@ -4,6 +4,7 @@ Tests for shilellagh.adapters.api.gsheets.adapter.
 """
 import datetime
 import json
+from typing import Any, Iterator, List
 from unittest import mock
 
 import apsw
@@ -11,6 +12,7 @@ import dateutil.tz
 import pytest
 import requests
 import requests_mock
+from pytest_mock import MockerFixture
 
 from shillelagh.adapters.api.gsheets.adapter import GSheetsAPI
 from shillelagh.backends.apsw.db import connect
@@ -22,7 +24,7 @@ from ....fakes import FakeEntryPoint
 
 
 @pytest.fixture
-def simple_sheet_adapter():
+def simple_sheet_adapter() -> Iterator[requests_mock.Adapter]:
     """
     A fixture mocking network requests to a simple sheet.
 
@@ -151,7 +153,7 @@ def simple_sheet_adapter():
     yield adapter
 
 
-def test_credentials(mocker):
+def test_credentials(mocker: MockerFixture) -> None:
     """
     Test ``credentials``.
     """
@@ -198,7 +200,10 @@ def test_credentials(mocker):
     )
 
 
-def test_execute(mocker, simple_sheet_adapter):
+def test_execute(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test ``execute``.
     """
@@ -229,7 +234,10 @@ def test_execute(mocker, simple_sheet_adapter):
     ]
 
 
-def test_execute_with_catalog(mocker, simple_sheet_adapter):
+def test_execute_with_catalog(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test execute when using a catalog.
     """
@@ -270,7 +278,10 @@ def test_execute_with_catalog(mocker, simple_sheet_adapter):
     ]
 
 
-def test_execute_filter(mocker, simple_sheet_adapter):
+def test_execute_filter(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test execute when filtering the data.
     """
@@ -325,7 +336,10 @@ def test_execute_filter(mocker, simple_sheet_adapter):
     ]
 
 
-def test_execute_impossible(mocker, simple_sheet_adapter):
+def test_execute_impossible(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test executing a query with an impossible predicate.
 
@@ -355,7 +369,7 @@ def test_execute_impossible(mocker, simple_sheet_adapter):
     assert data == []
 
 
-def test_convert_rows(mocker):
+def test_convert_rows(mocker: MockerFixture) -> None:
     """
     Test that rows are converted correctly.
     """
@@ -630,7 +644,7 @@ def test_convert_rows(mocker):
     ]
 
 
-def test_get_session(mocker):
+def test_get_session(mocker: MockerFixture) -> None:
     """
     Test ``_get_session``.
     """
@@ -679,7 +693,7 @@ def test_get_session(mocker):
     mock_session.assert_not_called()
 
 
-def test_api_bugs(mocker):
+def test_api_bugs(mocker: MockerFixture) -> None:
     """
     Regression test covering API bugs.
     """
@@ -768,7 +782,10 @@ def test_api_bugs(mocker):
     )
 
 
-def test_execute_json_prefix(mocker, simple_sheet_adapter):
+def test_execute_json_prefix(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test removing the JSON prefix.
     """
@@ -831,7 +848,7 @@ def test_execute_json_prefix(mocker, simple_sheet_adapter):
     ]
 
 
-def test_execute_invalid_json(mocker):
+def test_execute_invalid_json(mocker: MockerFixture) -> None:
     """
     Test non-JSON response.
 
@@ -868,7 +885,7 @@ def test_execute_invalid_json(mocker):
     )
 
 
-def test_execute_error_response(mocker):
+def test_execute_error_response(mocker: MockerFixture) -> None:
     """
     Test error response handling on execute.
     """
@@ -911,7 +928,7 @@ def test_execute_error_response(mocker):
     assert str(excinfo.value) == "Invalid query: NO_COLUMN: C"
 
 
-def test_headers_not_detected(mocker):
+def test_headers_not_detected(mocker: MockerFixture) -> None:
     """
     Regression test for when headers are not identified correctly.
     """
@@ -985,7 +1002,7 @@ def test_headers_not_detected(mocker):
     assert data == [("Bye Combinator", "John Doe", "Avocado & Hummus")]
 
 
-def test_headers_not_detected_no_rows(mocker):
+def test_headers_not_detected_no_rows(mocker: MockerFixture) -> None:
     """
     Regression test for when headers are not identified correctly.
     """
@@ -1052,7 +1069,10 @@ def test_headers_not_detected_no_rows(mocker):
     assert list(gsheets_adapter.columns) == ["A", "B", "C"]
 
 
-def test_set_metadata(mocker, simple_sheet_adapter):
+def test_set_metadata(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test ``_set_metadata``.
     """
@@ -1096,7 +1116,7 @@ def test_set_metadata(mocker, simple_sheet_adapter):
     _logger.warning.assert_called_with("Could not determine sheet name!")
 
 
-def test_set_metadata_error(mocker):
+def test_set_metadata_error(mocker: MockerFixture) -> None:
     """
     Test errors in _set_metadata.
     """
@@ -1135,7 +1155,10 @@ def test_set_metadata_error(mocker):
     assert str(excinfo.value) == "Requested entity was not found."
 
 
-def test_insert_data(mocker, simple_sheet_adapter):
+def test_insert_data(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test ``insert_data``.
     """
@@ -1209,7 +1232,10 @@ def test_insert_data(mocker, simple_sheet_adapter):
     )
 
 
-def test_delete_data(mocker, simple_sheet_adapter):
+def test_delete_data(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test ``delete_data``.
     """
@@ -1304,7 +1330,10 @@ def test_delete_data(mocker, simple_sheet_adapter):
     assert str(excinfo.value) == "Requested entity was not found."
 
 
-def test_update_data(mocker, simple_sheet_adapter):
+def test_update_data(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test ``update_data``.
     """
@@ -1429,7 +1458,10 @@ def test_update_data(mocker, simple_sheet_adapter):
     assert str(excinfo.value) == "Requested entity was not found."
 
 
-def test_batch_sync_mode(mocker, simple_sheet_adapter):
+def test_batch_sync_mode(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test BATCH mode.
     """
@@ -1562,6 +1594,7 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
 
     # test that changes have been pushed
     assert update.call_count == 1
+    assert update.last_request is not None
     assert update.last_request.json() == {
         "range": "Sheet1",
         "majorDimension": "ROWS",
@@ -1620,7 +1653,10 @@ def test_batch_sync_mode(mocker, simple_sheet_adapter):
     gsheets_adapter.modified = False
 
 
-def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
+def test_batch_sync_mode_padding(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test payload padding in BATCH mode.
 
@@ -1711,7 +1747,10 @@ def test_batch_sync_mode_padding(mocker, simple_sheet_adapter):
     }
 
 
-def test_execute_batch(mocker, simple_sheet_adapter):
+def test_execute_batch(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test executing queries in BATCH mode.
     """
@@ -1808,7 +1847,10 @@ def test_execute_batch(mocker, simple_sheet_adapter):
     assert data == [("IN", 5.0), ("ZA", 6.0), ("CR", 10.0)]
 
 
-def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
+def test_unidirectional_sync_mode(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test UNIDIRECTIONAL mode.
     """
@@ -1938,7 +1980,10 @@ def test_unidirectional_sync_mode(mocker, simple_sheet_adapter):
     gsheets_adapter.close()
 
 
-def test_get_metadata(mocker, simple_sheet_adapter):
+def test_get_metadata(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
     """
     Test ``get_metadata``.
     """
@@ -2028,7 +2073,7 @@ def test_get_metadata(mocker, simple_sheet_adapter):
     assert gsheets_adapter.get_metadata() == {}
 
 
-def test_supports():
+def test_supports() -> None:
     """
     Test ``supports``.
 
@@ -2048,7 +2093,7 @@ def test_supports():
     )
 
 
-def test_empty_middle_column(mocker):
+def test_empty_middle_column(mocker: MockerFixture) -> None:
     """
     Test spreadsheets with an empty column in the middle.
     """
@@ -2166,7 +2211,7 @@ def test_empty_middle_column(mocker):
     assert data == [("test", "test", 1.5, 10.1), ("test2", "test3", 0.1, 10.2)]
 
 
-def test_header_rows(mocker):
+def test_header_rows(mocker: MockerFixture) -> None:
     """
     Test sheets with multiple header rows.
 
@@ -2187,7 +2232,7 @@ def test_header_rows(mocker):
     gsheets_adapter.columns = {"this is a string": String(), "this is a float": Float()}
     gsheets_adapter._column_map = {"this is a string": "B", "this is a float": "D"}
 
-    values = [
+    values: List[List[Any]] = [
         [None, "this is", None, "this is"],
         [None, "a string", None, "a float"],
         [None, "test", None, 1.1],
@@ -2203,7 +2248,7 @@ def test_header_rows(mocker):
     assert str(excinfo.value) == "Could not determine number of header rows"
 
 
-def test_get_cost(mocker):
+def test_get_cost(mocker: MockerFixture) -> None:
     """
     Test ``get_cost``.
     """

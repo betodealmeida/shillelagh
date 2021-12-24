@@ -4,6 +4,7 @@ Tests for shillelagh.lib.
 from typing import Any, Dict, Iterator, List, Tuple
 
 import pytest
+from pytest_mock import MockerFixture
 
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
 from shillelagh.fields import Field, Float, Integer, Order, String
@@ -330,7 +331,7 @@ def test_filter_data() -> None:
     assert str(excinfo.value) == "Invalid filter: [1, 2, 3]"
 
 
-def test_get_available_adapters(mocker) -> None:
+def test_get_available_adapters(mocker: MockerFixture) -> None:
     """
     Test ``get_available_adapters``.
     """
@@ -343,7 +344,7 @@ def test_get_available_adapters(mocker) -> None:
     assert get_available_adapters() == {"dummy"}
 
 
-def test_find_adapter(mocker) -> None:
+def test_find_adapter(mocker: MockerFixture) -> None:
     """
     Test ``find_adapter``.
     """

@@ -6,6 +6,8 @@ from unittest.mock import mock_open
 
 import apsw
 import pytest
+from pyfakefs.fake_filesystem import FakeFilesystem
+from pytest_mock import MockerFixture
 
 from shillelagh.adapters.file.csvfile import CSVFile, RowTracker
 from shillelagh.backends.apsw.db import connect
@@ -32,7 +34,7 @@ CONTENTS = """"index","temperature","site"
 """
 
 
-def test_csvfile_get_columns(mocker) -> None:
+def test_csvfile_get_columns(mocker: MockerFixture) -> None:
     """
     Test that columns are returned correctly.
     """
@@ -59,7 +61,7 @@ def test_csvfile_get_columns(mocker) -> None:
     }
 
 
-def test_csvfile_get_cost(mocker) -> None:
+def test_csvfile_get_cost(mocker: MockerFixture) -> None:
     """
     Test cost estimation.
     """
@@ -89,7 +91,7 @@ def test_csvfile_get_cost(mocker) -> None:
     )
 
 
-def test_csvfile_different_types(mocker) -> None:
+def test_csvfile_different_types(mocker: MockerFixture) -> None:
     """
     Test type coercion when a column has different types.
     """
@@ -110,7 +112,7 @@ def test_csvfile_different_types(mocker) -> None:
     }
 
 
-def test_csvfile_empty(mocker) -> None:
+def test_csvfile_empty(mocker: MockerFixture) -> None:
     """
     Test empty file on instantiation.
     """
@@ -121,7 +123,7 @@ def test_csvfile_empty(mocker) -> None:
     assert str(excinfo.value) == "The file has no rows"
 
 
-def test_csvfile_empty_get_data(mocker) -> None:
+def test_csvfile_empty_get_data(mocker: MockerFixture) -> None:
     """
     Test empty file on `get_data`.
 
@@ -142,7 +144,7 @@ def test_csvfile_empty_get_data(mocker) -> None:
     assert str(excinfo.value) == "The file has no rows"
 
 
-def test_csvfile_unordered(mocker) -> None:
+def test_csvfile_unordered(mocker: MockerFixture) -> None:
     """
     Test order return when data is not sorted.
     """
@@ -163,7 +165,7 @@ def test_csvfile_unordered(mocker) -> None:
     }
 
 
-def test_csvfile_single_row_of_data(mocker) -> None:
+def test_csvfile_single_row_of_data(mocker: MockerFixture) -> None:
     """
     Test adapter when we have only 1 row of data.
 
@@ -190,7 +192,7 @@ def test_csvfile_single_row_of_data(mocker) -> None:
     assert list(adapter.get_data({}, [])) == [{"a": 1.0, "b": 2.0, "rowid": 0}]
 
 
-def test_csvfile_get_data(mocker) -> None:
+def test_csvfile_get_data(mocker: MockerFixture) -> None:
     """
     Test ``get_data``.
     """
@@ -229,7 +231,7 @@ def test_csvfile_get_data(mocker) -> None:
     )
 
 
-def test_csvfile_get_data_impossible_filter(mocker) -> None:
+def test_csvfile_get_data_impossible_filter(mocker: MockerFixture) -> None:
     """
     Test that impossible conditions return no data.
     """
@@ -239,7 +241,7 @@ def test_csvfile_get_data_impossible_filter(mocker) -> None:
     assert list(adapter.get_data({"index": Impossible()}, [])) == []
 
 
-def test_csvfile(fs) -> None:
+def test_csvfile(fs: FakeFilesystem) -> None:
     """
     Test the whole workflow.
     """
@@ -290,7 +292,7 @@ def test_csvfile(fs) -> None:
     )
 
 
-def test_dispatch(mocker, fs) -> None:
+def test_dispatch(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     """
     Test the URI dispatcher.
     """

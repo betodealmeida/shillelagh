@@ -7,7 +7,9 @@ from typing import Dict
 
 import apsw
 import pytest
+from pytest_mock import MockerFixture
 from requests import Session
+from requests_mock.mocker import Mocker
 
 from shillelagh.adapters.api.weatherapi import WeatherAPI, combine_time_filters
 from shillelagh.backends.apsw.db import connect
@@ -19,7 +21,7 @@ from shillelagh.filters import Equal, Filter, Impossible, Operator, Range
 from ...fakes import FakeEntryPoint, weatherapi_response
 
 
-def test_weatherapi(mocker, requests_mock) -> None:
+def test_weatherapi(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test the adapter.
     """
@@ -77,7 +79,7 @@ def test_weatherapi(mocker, requests_mock) -> None:
     ]
 
 
-def test_weatherapi_impossible(requests_mock) -> None:
+def test_weatherapi_impossible(requests_mock: Mocker) -> None:
     """
     Test the adapter with impossible filters.
     """
@@ -103,7 +105,7 @@ def test_weatherapi_impossible(requests_mock) -> None:
     assert data == []
 
 
-def test_weatherapi_api_error(mocker, requests_mock) -> None:
+def test_weatherapi_api_error(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test handling errors in the API.
     """
@@ -530,7 +532,7 @@ def test_weatherapi_api_error(mocker, requests_mock) -> None:
     ]
 
 
-def test_dispatch(mocker, requests_mock) -> None:
+def test_dispatch(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test the dispatcher.
     """
@@ -594,7 +596,10 @@ def test_dispatch(mocker, requests_mock) -> None:
     ]
 
 
-def test_dispatch_api_key_connection(mocker, requests_mock) -> None:
+def test_dispatch_api_key_connection(
+    mocker: MockerFixture,
+    requests_mock: Mocker,
+) -> None:
     """
     Test passing the key via the adapter kwargs.
     """
@@ -629,7 +634,7 @@ def test_dispatch_api_key_connection(mocker, requests_mock) -> None:
     assert data.call_count == 1
 
 
-def test_dispatch_impossible(mocker) -> None:
+def test_dispatch_impossible(mocker: MockerFixture) -> None:
     """
     Test that no data is returned on an impossible constraint.
 
@@ -741,7 +746,7 @@ def test_integration(adapter_kwargs) -> None:
     assert len(data[0]) == 31
 
 
-def test_get_cost(mocker) -> None:
+def test_get_cost(mocker: MockerFixture) -> None:
     """
     Test ``get_cost``.
     """
@@ -775,7 +780,7 @@ def test_get_cost(mocker) -> None:
     )
 
 
-def test_window(mocker) -> None:
+def test_window(mocker: MockerFixture) -> None:
     """
     Test the default window size of days to fetch data.
     """
