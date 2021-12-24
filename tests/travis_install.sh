@@ -55,7 +55,7 @@ else
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
-    pip install -U pytest-cov pytest-virtualenv coverage coveralls codecov flake8 pre-commit
+    pip install -U pytest-cov pytest-virtualenv coverage coveralls codecov flake8 pre-commit pylint
 fi
 
 travis-cleanup() {

@@ -94,7 +94,8 @@ coverage_task:
     - test (Linux - 3.9)
   install_script: *debian-install
   pip_install_script:
-    pip install --user --upgrade coverage coveralls pre-commit
+    pip install --user --upgrade coverage coveralls pre-commit pylint
+    pip install '.[testing]'
   precommit_script:
     - pre-commit install
     - pre-commit run --all-files
