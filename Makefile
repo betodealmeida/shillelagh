@@ -22,6 +22,6 @@ clean:
 spellcheck:
 	codespell -S "*.json" src/shillelagh docs/*rst tests templates
 
-requirements.txt: setup.cfg
+requirements.txt: .python-version
 	pip install --upgrade pip
 	pip-compile --no-annotate
