@@ -22,7 +22,7 @@ class Warning(Exception):  # pylint: disable=redefined-builtin
 
     Exception raised for important warnings like data truncations
     while inserting, etc. It must be a subclass of the Python
-    exceptions.StandardError (defined in the module exceptions).
+    StandardError (defined in the module exceptions).
     """
 
 

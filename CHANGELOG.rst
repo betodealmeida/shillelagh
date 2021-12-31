@@ -2,10 +2,11 @@
 Changelog
 =========
 
-Version X.Y.Z - YYYY-MM-DD
+Version 1.0.6 - 2021-12-30
 ==========================
 
 - Add an adapter for system resources (CPU usage for now)
+- Improve PEP 249 compatibility
 
 Version 1.0.5 - 2021-12-02
 ==========================
