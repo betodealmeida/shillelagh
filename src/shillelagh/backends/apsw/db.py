@@ -40,6 +40,20 @@ from shillelagh.exceptions import (
 )
 from shillelagh.fields import Blob, Field
 from shillelagh.lib import combine_args_kwargs, escape, find_adapter, serialize
+from shillelagh.types import (
+    BINARY,
+    DATETIME,
+    NUMBER,
+    ROWID,
+    STRING,
+    Binary,
+    Date,
+    DateFromTicks,
+    Time,
+    TimeFromTicks,
+    Timestamp,
+    TimestampFromTicks,
+)
 from shillelagh.typing import Description, SQLiteValidType
 
 apilevel = "2.0"
@@ -154,7 +168,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
         n = len(results)
         self._results = iter(results)
-        return self._rowcount + n
+        return max(0, self._rowcount) + n
 
     @check_closed
     def close(self) -> None:
@@ -309,6 +323,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         """
         size = size or self.arraysize
         results = list(itertools.islice(self, size))
+
         return results
 
     @check_result
@@ -320,6 +335,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         arraysize attribute can affect the performance of this operation.
         """
         results = list(self)
+
         return results
 
     @check_closed
