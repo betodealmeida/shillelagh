@@ -1,6 +1,7 @@
 [MESSAGES CONTROL]
 disable =
   duplicate-code
+  use-implicit-booleaness-not-comparison
 
 [MASTER]
 ignore=templates,docs
