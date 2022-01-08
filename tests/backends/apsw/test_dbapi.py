@@ -58,6 +58,7 @@ def test_cursor() -> None:
     assert cursor.rowcount == -1
 
     cursor.execute("SELECT 1, 'test'")
+    assert cursor.description
     assert len(cursor.description) == 2
     assert all(len(sequence) == 7 for sequence in cursor.description)
     assert cursor.rowcount == 1

@@ -94,17 +94,7 @@ coverage_task:
     - test (Linux - 3.9)
   install_script: *debian-install
   pip_install_script:
-    pip install --user --upgrade coverage coveralls pre-commit
-  precommit_script:
-    - pre-commit install
-    - pre-commit run --all-files
+    pip install --user --upgrade coverage coveralls
   <<: *REGULAR_TASK_TEMPLATE
   coverage_script:
     - coveralls
-  pre_commit_cache: &pre-commit-cache
-    folder: $PRE_COMMIT_HOME
-    fingerprint_script:
-      - echo $CIRRUS_OS
-      - python --version
-      - pre-commit --version
-      - cat .pre-commit-config.yaml
