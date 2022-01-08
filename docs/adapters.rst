@@ -102,6 +102,7 @@ The dialect also exposes the list of sheets that the user has via the ``get_tabl
 .. code-block:: python
 
     from sqlalchemy.engine import create_engine
+    from sqlalchemy import inspect
 
     engine = create_engine("gsheets://", service_account_file="/path/to/credentials.json")
     inspector = inspect(engine)
