@@ -64,6 +64,15 @@ For domain wide access you need to create a service account. Make sure that the 
 
 You also need to pass a "subject" if you want to impersonate users. If not present the connection will have full access to all spreadsheets in a given project, so be careful.
 
+If running in an environment where Application Default Credentials are available, you can use them by configuring the connection as:
+
+.. code-block:: python
+
+    from shillelagh.backends.apsw.db import connect
+
+    connection = connect(":memory:", adapter_kwargs={"gsheetspi": {"app_default_credentials": True}})
+
+
 Sync modes
 ~~~~~~~~~~
 
