@@ -70,7 +70,7 @@ If running in an environment where Application Default Credentials are available
 
     from shillelagh.backends.apsw.db import connect
 
-    connection = connect(":memory:", adapter_kwargs={"gsheetspi": {"app_default_credentials": True}})
+    connection = connect(":memory:", adapter_kwargs={"gsheetsapi": {"app_default_credentials": True}})
 
 
 Sync modes
