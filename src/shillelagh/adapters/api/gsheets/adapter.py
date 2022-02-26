@@ -97,6 +97,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         service_account_info: Optional[Dict[str, Any]] = None,
         subject: Optional[str] = None,
         catalog: Optional[Dict[str, str]] = None,
+        app_default_credentials: bool = False,
     ):
         super().__init__()
         if catalog and uri in catalog:
@@ -108,6 +109,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             service_account_file,
             service_account_info,
             subject,
+            app_default_credentials,
         )
 
         # Local data. When using DML we switch to the Google Sheets API,

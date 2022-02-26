@@ -280,17 +280,22 @@ def test_get_credentials(mocker: MockerFixture):
     credentials = mocker.patch(
         "shillelagh.adapters.api.gsheets.lib.google.oauth2.credentials.Credentials",
     )
+    app_default_credentials = mocker.patch(
+        "shillelagh.adapters.api.gsheets.lib.google.auth.default",
+    )
 
     # no credentials
     get_credentials(None, None, None, None)
     credentials.assert_not_called()
     service_account.assert_not_called()
+    app_default_credentials.assert_not_called()
 
     # access_token
     get_credentials("token", None, None, None)
     credentials.assert_called_with("token")
     credentials.reset_mock()
     service_account.assert_not_called()
+    app_default_credentials.assert_not_called()
 
     # service_account_file
     get_credentials(None, "credentials.json", None, None)
@@ -304,6 +309,7 @@ def test_get_credentials(mocker: MockerFixture):
         ],
         subject=None,
     )
+    app_default_credentials.assert_not_called()
     service_account.reset_mock()
 
     # service_account_info
@@ -318,6 +324,14 @@ def test_get_credentials(mocker: MockerFixture):
         ],
         subject="user@example.com",
     )
+    app_default_credentials.assert_not_called()
+    service_account.reset_mock()
+
+    # app_default_credentials
+    get_credentials(app_default_credentials=True)
+    credentials.assert_not_called()
+    service_account.assert_not_called()
+    app_default_credentials.assert_called()
 
 
 def test_get_value_from_cell():
