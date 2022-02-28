@@ -40,7 +40,7 @@ Then, pass the token when creating a connection:
 
     from shillelagh.backends.apsw.db import connect
 
-    connection = connect(":memory:", adapter_kwargs={"gsheetspi": {"access_token": "XXX"}})
+    connection = connect(":memory:", adapter_kwargs={"gsheetsapi": {"access_token": "XXX"}})
 
 For domain wide access you need to create a service account. Make sure that the account has domain delegation enabled, and access to the 3 scopes above. Also make sure that "Google Sheets" and "Google Drive" are enabled in the project. You can then download the credentials as JSON, and pass them either as a file location or as a Python dictionary:
 
@@ -51,7 +51,7 @@ For domain wide access you need to create a service account. Make sure that the 
     connection = connect(
         ":memory:",
         adapter_kwargs={
-            "gsheetspi": {
+            "gsheetaspi": {
                 # "service_account_file": "/path/to/credentials.json",
                 "service_account_info": {
                     "type": "service_account",
