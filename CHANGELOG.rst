@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version 1.0.7 - 2022-03-03
+==========================
+
+- Add support for using Google Application Default Credentials for Google Sheets
+- Make package PEP 561 compatible
+- Add ``requests`` as a dependency
+- Documentation fixes
+
 Version 1.0.6 - 2021-12-30
 ==========================
 
