@@ -33,6 +33,7 @@ def test_gsheets_dialect() -> None:
                     "service_account_info": None,
                     "subject": None,
                     "catalog": {},
+                    "app_default_credentials": False,
                 },
             },
             "safe": True,
@@ -56,6 +57,7 @@ def test_gsheets_dialect() -> None:
                     "service_account_info": {"secret": "XXX"},
                     "subject": "user@example.com",
                     "catalog": {},
+                    "app_default_credentials": False,
                 },
             },
             "safe": True,
@@ -80,6 +82,30 @@ def test_gsheets_dialect() -> None:
                     "service_account_info": None,
                     "subject": "user@example.com",
                     "catalog": {"public_sheet": "https://example.com/"},
+                    "app_default_credentials": False,
+                },
+            },
+            "safe": True,
+            "isolation_level": None,
+        },
+    )
+
+    dialect = APSWGSheetsDialect(
+        app_default_credentials=True,
+    )
+    assert dialect.create_connect_args(make_url("gsheets://")) == (
+        (),
+        {
+            "path": ":memory:",
+            "adapters": ["gsheetsapi"],
+            "adapter_kwargs": {
+                "gsheetsapi": {
+                    "access_token": None,
+                    "service_account_file": None,
+                    "service_account_info": None,
+                    "subject": None,
+                    "catalog": {},
+                    "app_default_credentials": True,
                 },
             },
             "safe": True,

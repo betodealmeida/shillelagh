@@ -193,7 +193,42 @@ def test_credentials(mocker: MockerFixture) -> None:
             mock.call(
                 """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" """
                 """USING GSheetsAPI('"https://docs.google.com/spreadsheets/d/1"'"""
-                """, 'null', 'null', '{"secret": "XXX"}', '"user@example.com"', 'null')""",
+                """, 'null', 'null', '{"secret": "XXX"}', '"user@example.com"', 'null', 'false')""",
+            ),
+            mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
+        ],
+    )
+
+    adc_connection = connect(
+        ":memory:",
+        ["gsheetsapi"],
+        adapter_kwargs={
+            "gsheetsapi": {
+                "app_default_credentials": True,
+            },
+        },
+        isolation_level="IMMEDIATE",
+    )
+    adc_cursor = adc_connection.cursor()
+    adc_cursor._cursor = mock.MagicMock()
+    adc_cursor._cursor.execute.side_effect = [
+        "",
+        apsw.SQLError(
+            "SQLError: no such table: https://docs.google.com/spreadsheets/d/1",
+        ),
+        "",
+        "",
+    ]
+
+    adc_cursor.execute('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"')
+    adc_cursor._cursor.execute.assert_has_calls(
+        [
+            mock.call("BEGIN IMMEDIATE"),
+            mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
+            mock.call(
+                """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" """
+                """USING GSheetsAPI('"https://docs.google.com/spreadsheets/d/1"'"""
+                """, 'null', 'null', 'null', 'null', 'null', 'true')""",
             ),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
         ],

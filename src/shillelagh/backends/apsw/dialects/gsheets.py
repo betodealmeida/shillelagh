@@ -57,6 +57,7 @@ class APSWGSheetsDialect(APSWDialect):
         subject: Optional[str] = None,
         catalog: Optional[Dict[str, str]] = None,
         list_all_sheets: bool = False,
+        app_default_credentials: bool = False,
         **kwargs: Any,
     ):
         super().__init__(**kwargs)
@@ -67,6 +68,7 @@ class APSWGSheetsDialect(APSWDialect):
         self.subject = subject
         self.catalog = catalog or {}
         self.list_all_sheets = list_all_sheets
+        self.app_default_credentials = app_default_credentials
 
     def create_connect_args(
         self,
@@ -78,6 +80,7 @@ class APSWGSheetsDialect(APSWDialect):
             "service_account_info": self.service_account_info,
             "subject": self.subject,
             "catalog": self.catalog,
+            "app_default_credentials": self.app_default_credentials,
         }
         # parameters can be overridden via the query in the URL
         adapter_kwargs.update(extract_query(url))
@@ -131,6 +134,7 @@ class APSWGSheetsDialect(APSWDialect):
             query.get("service_account_file", self.service_account_file),
             self.service_account_info,
             query.get("subject", self.subject),
+            query.get("app_default_credentials", self.app_default_credentials),
         )
         if not (credentials and self.list_all_sheets):
             return table_names
