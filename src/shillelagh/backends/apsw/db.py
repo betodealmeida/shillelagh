@@ -506,8 +506,9 @@ def connect(
     for entry_point in iter_entry_points("shillelagh.adapter"):
         try:
             adapter = entry_point.load()
-        except (ImportError, ModuleNotFoundError):
+        except (ImportError, ModuleNotFoundError) as ex:
             _logger.warning("Couldn't load adapter %s", entry_point)
+            _logger.debug(ex)
             continue
         all_adapters.append((entry_point.name, adapter))
 
