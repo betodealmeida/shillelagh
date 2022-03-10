@@ -7,12 +7,13 @@ This dialect was implemented to replace the ``gsheetsdb`` library.
 import logging
 import urllib.parse
 from operator import itemgetter
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import requests
 from google.auth.transport.requests import AuthorizedSession
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
+from typing_extensions import TypedDict
 
 from shillelagh.adapters.api.gsheets.lib import get_credentials
 from shillelagh.backends.apsw.dialects.base import APSWDialect
@@ -21,19 +22,36 @@ from shillelagh.exceptions import ProgrammingError
 _logger = logging.getLogger(__name__)
 
 
-def extract_query(url: URL) -> Dict[str, str]:
+class QueryType(TypedDict, total=False):
+    """
+    Types for parameters in the SQLAlchemy URI query.
+    """
+
+    access_token: str
+    service_account_file: str
+    subject: str
+    app_default_credentials: bool
+
+
+def extract_query(url: URL) -> QueryType:
     """
     Extract the query from the SQLAlchemy URL.
     """
     if url.query:
-        return dict(url.query)
-
+        parameters = dict(url.query)
     # there's a bug in how SQLAlchemy <1.4 handles URLs without hosts,
     # putting the query string as the host; handle that case here
-    if url.host and url.host.startswith("?"):
-        return dict(urllib.parse.parse_qsl(url.host[1:]))  # pragma: no cover
+    elif url.host and url.host.startswith("?"):
+        parameters = dict(urllib.parse.parse_qsl(url.host[1:]))  # pragma: no cover
+    else:
+        parameters = {}
 
-    return {}
+    if "app_default_credentials" in parameters:
+        parameters["app_default_credentials"] = parameters[
+            "app_default_credentials"
+        ].lower() in {"1", "true"}
+
+    return cast(QueryType, parameters)
 
 
 class APSWGSheetsDialect(APSWDialect):

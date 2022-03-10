@@ -5,3 +5,5 @@ disable =
 
 [MASTER]
 ignore=templates,docs
+disable =
+  duplicate-code

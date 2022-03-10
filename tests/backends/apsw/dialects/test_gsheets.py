@@ -303,6 +303,18 @@ def test_extract_query() -> None:
     assert extract_query(make_url("gsheets://host")) == {}
     assert extract_query(make_url("gsheets://?foo=bar")) == {"foo": "bar"}
     assert extract_query(make_url("gsheets:///?foo=bar")) == {"foo": "bar"}
+    assert extract_query(make_url("gsheets://?app_default_credentials=TRUE")) == {
+        "app_default_credentials": True,
+    }
+    assert extract_query(make_url("gsheets://?app_default_credentials=1")) == {
+        "app_default_credentials": True,
+    }
+    assert extract_query(make_url("gsheets://?app_default_credentials=True")) == {
+        "app_default_credentials": True,
+    }
+    assert extract_query(make_url("gsheets://?app_default_credentials=true")) == {
+        "app_default_credentials": True,
+    }
 
 
 def test_do_ping(mocker: MockerFixture, requests_mock: Mocker) -> None:
