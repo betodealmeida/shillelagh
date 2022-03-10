@@ -500,17 +500,20 @@ def connect(
         [(1.0, 2.0), (3.0, 4.0)]
 
     """
+    if adapters is None and safe:
+        adapters = []
     adapter_kwargs = adapter_kwargs or {}
 
     all_adapters = []
     for entry_point in iter_entry_points("shillelagh.adapter"):
-        try:
-            adapter = entry_point.load()
-        except (ImportError, ModuleNotFoundError) as ex:
-            _logger.warning("Couldn't load adapter %s", entry_point)
-            _logger.debug(ex)
-            continue
-        all_adapters.append((entry_point.name, adapter))
+        if adapters is None or entry_point.name in adapters:
+            try:
+                adapter = entry_point.load()
+            except (ImportError, ModuleNotFoundError) as ex:
+                _logger.warning("Couldn't load adapter %s", entry_point.name)
+                _logger.debug(ex)
+                continue
+            all_adapters.append((entry_point.name, adapter))
 
     all_adapters_names = [name for name, adapter in all_adapters]
 
@@ -522,7 +525,8 @@ def connect(
         if repeated:
             raise InterfaceError(f'Repeated adapter names found: {", ".join(repeated)}')
 
-    adapters = adapters or ([] if safe else all_adapters_names)
+    if adapters is None:
+        adapters = all_adapters_names
     enabled_adapters = [
         adapter
         for (name, adapter) in all_adapters

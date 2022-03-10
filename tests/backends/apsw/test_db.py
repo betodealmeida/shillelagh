@@ -3,13 +3,14 @@
 Tests for shillelagh.backends.apsw.db.
 """
 import datetime
-from typing import Any, List, NoReturn, Tuple
+from typing import Any, List, NoReturn, Tuple, Type
 from unittest import mock
 
 import apsw
 import pytest
 from pytest_mock import MockerFixture
 
+from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect, convert_binding
 from shillelagh.exceptions import InterfaceError, NotSupportedError, ProgrammingError
 from shillelagh.fields import Float, Integer, String
@@ -107,7 +108,7 @@ def test_connect_adapter_kwargs(mocker: MockerFixture) -> None:
     )
 
 
-def test_conect_safe(mocker: MockerFixture) -> None:
+def test_connect_safe(mocker: MockerFixture) -> None:
     """
     Test the safe option.
     """
@@ -447,7 +448,7 @@ def test_connection_context_manager() -> None:
     )
 
 
-def test_connect_safe(mocker: MockerFixture) -> None:
+def test_connect_safe_lists_only_safe_adapters(mocker: MockerFixture) -> None:
     """
     Test the safe connection.
     """
@@ -527,3 +528,50 @@ def test_convert_binding() -> None:
     assert convert_binding(True) == 1
     assert convert_binding(False) == 0
     assert convert_binding({}) == "{}"
+
+
+def test_import_warning(mocker: MockerFixture) -> None:
+    """
+    Test that we only try to load requested entry points.
+    """
+
+    class GoodAdapter(FakeAdapter):
+        """
+        An adapter that can be loaded.
+        """
+
+    class BadAdapter(FakeAdapter):
+        """
+        An adapter that can't be loaded.
+        """
+
+    class BadEntryPoint(FakeEntryPoint):
+        """
+        An entry point that raises ``ImportError`` on load.
+        """
+
+        def load(self) -> Type[Adapter]:  # pylint: disable=no-self-use
+            """
+            Raise an exception.
+            """
+            raise ImportError("Oops")
+
+    entry_points = [
+        FakeEntryPoint("good", GoodAdapter),
+        BadEntryPoint("bad", BadAdapter),
+    ]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+    mocker.patch("shillelagh.backends.apsw.db.Connection")
+    _logger = mocker.patch("shillelagh.backends.apsw.db._logger")
+
+    # if we don't specify adapters we should get a warning for BadAdapter
+    connect(":memory:")
+    _logger.warning.assert_called_with("Couldn't load adapter %s", "bad")
+
+    # if we specify only the good adapter we shouldn't get a warning
+    _logger.warning.reset_mock()
+    connect(":memory:", ["good"])
+    _logger.warning.assert_not_called()
