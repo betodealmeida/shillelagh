@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 1.0.8 - 2022-03-11
+==========================
+
+- Do not try to import non-specified adapters
+- Fix for querying datetime/date/time via SQLAlchemy
+
 Version 1.0.7 - 2022-03-03
 ==========================
 
