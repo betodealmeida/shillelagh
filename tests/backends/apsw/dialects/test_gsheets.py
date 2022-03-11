@@ -1,12 +1,16 @@
 """
 Test for shillelagh.backends.apsw.dialects.gsheets.
 """
+import datetime
+from typing import Any, Dict
 from unittest import mock
 
 import pytest
 import requests
+import sqlalchemy
 from pytest_mock import MockerFixture
 from requests_mock.mocker import Mocker
+from sqlalchemy import MetaData, Table
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine.url import make_url
 
@@ -341,3 +345,107 @@ def test_do_ping(mocker: MockerFixture, requests_mock: Mocker) -> None:
         json=[outage],
     )
     assert dialect.do_ping(connection) is False
+
+
+@pytest.mark.slow_integration_test
+def test_types_in_sqlalchemy(adapter_kwargs: Dict[str, Any]) -> None:
+    """
+    Test that the SQLAlchemy dialect returns types correctly.
+
+    The Shillelagh dialect is based on the SQLite dialect, but there's a major difference
+    between them: in SQLite date/time/datetime values are returned as strings, while in
+    Shillelagh they are returned as Python objects.
+    """
+    engine = create_engine("gsheets://", **adapter_kwargs["gsheetsapi"])
+    table = Table(
+        "https://docs.google.com/spreadsheets/d/"
+        "1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=1648320094",
+        MetaData(bind=engine),
+        autoload=True,
+    )
+
+    assert [(column.name, column.type.__class__) for column in table.c] == [
+        ("datetime", sqlalchemy.types.TIMESTAMP),
+        ("number", sqlalchemy.types.REAL),
+        ("boolean", sqlalchemy.types.BOOLEAN),
+        ("date", sqlalchemy.types.DATE),
+        ("timeofday", sqlalchemy.types.TIME),
+        ("string", sqlalchemy.types.TEXT),
+    ]
+
+    connection = engine.connect()
+    results = connection.execute(table.select()).fetchall()
+    assert list(results) == [
+        (
+            datetime.datetime(2018, 9, 1, 7, 0, tzinfo=datetime.timezone.utc),
+            1.0,
+            True,
+            datetime.date(2018, 1, 1),
+            datetime.time(17, 0),
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 2, 7, 0, tzinfo=datetime.timezone.utc),
+            1.0,
+            False,
+            None,
+            None,
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 3, 7, 0, tzinfo=datetime.timezone.utc),
+            2.0,
+            False,
+            None,
+            None,
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 4, 7, 0, tzinfo=datetime.timezone.utc),
+            3.0,
+            False,
+            None,
+            None,
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 5, 7, 0, tzinfo=datetime.timezone.utc),
+            5.0,
+            False,
+            None,
+            None,
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 6, 7, 0, tzinfo=datetime.timezone.utc),
+            8.0,
+            False,
+            None,
+            None,
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 7, 7, 0, tzinfo=datetime.timezone.utc),
+            13.0,
+            False,
+            None,
+            None,
+            None,
+        ),
+        (
+            datetime.datetime(2018, 9, 8, 7, 0, tzinfo=datetime.timezone.utc),
+            None,
+            False,
+            None,
+            None,
+            "test",
+        ),
+        (
+            datetime.datetime(2018, 9, 9, 7, 0, tzinfo=datetime.timezone.utc),
+            34.0,
+            None,
+            None,
+            None,
+            "test",
+        ),
+    ]

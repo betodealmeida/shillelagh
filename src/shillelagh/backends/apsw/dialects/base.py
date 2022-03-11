@@ -6,6 +6,7 @@ import sqlalchemy.types
 from sqlalchemy.dialects.sqlite.base import SQLiteDialect
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
+from sqlalchemy.sql.type_api import TypeEngine
 from sqlalchemy.sql.visitors import VisitableType
 from typing_extensions import TypedDict
 
@@ -39,6 +40,11 @@ class APSWDialect(SQLiteDialect):
 
     name = "shillelagh"
     driver = "apsw"
+
+    # ``SQLiteDialect.colspecs`` has custom representations for objects that SQLite stores
+    # as string (eg, timestamps). Since the Shillelagh DB API driver returns them as
+    # proper objects the custom representations are not needed.
+    colspecs: Dict[TypeEngine, TypeEngine] = {}
 
     @classmethod
     def dbapi(cls):  # pylint: disable=method-hidden
