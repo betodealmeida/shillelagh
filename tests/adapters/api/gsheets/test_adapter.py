@@ -1003,7 +1003,7 @@ def test_headers_not_detected(mocker: MockerFixture) -> None:
     )
     adapter.register_uri(
         "GET",
-        "https://docs.google.com/spreadsheets/d/7/gviz/tq?gid=0&tq=SELECT%20%2A%20OFFSET%201",
+        "https://docs.google.com/spreadsheets/d/7/gviz/tq?headers=1&gid=0&tq=SELECT%20%2A",
         json={
             "version": "0.6",
             "reqId": "0",
@@ -1011,9 +1011,9 @@ def test_headers_not_detected(mocker: MockerFixture) -> None:
             "sig": "1227631590",
             "table": {
                 "cols": [
-                    {"id": "A", "label": "", "type": "string"},
-                    {"id": "B", "label": "", "type": "string"},
-                    {"id": "C", "label": "", "type": "string"},
+                    {"id": "A", "label": "Investor", "type": "string"},
+                    {"id": "B", "label": "InvestorName", "type": "string"},
+                    {"id": "C", "label": "Company", "type": "string"},
                 ],
                 "rows": [
                     {

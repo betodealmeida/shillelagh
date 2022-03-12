@@ -121,10 +121,6 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         self._original_rows = 0
         self.modified = False
 
-        # When the Chart API fails to recognize the headers we need to
-        # keep track of the offset, so we can request data correctly.
-        self._offset: Optional[int] = None
-
         # Extra metadata. Some of this metadata (sheet name and timezone)
         # can only be fetched if the user is authenticated -- that's OK,
         # since they're only used for DML, which requires authentication.
@@ -136,7 +132,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         # Determine columns in the sheet.
         self.columns: Dict[str, Field] = {}
-        self._set_columns()
+        self._set_columns(uri)
 
         # Store row ids for DML. When the first DML command is issued
         # we switch from the Chart API (read-only) to the Sheets API
@@ -265,7 +261,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         return cast(QueryResults, result)
 
-    def _set_columns(self) -> None:
+    def _set_columns(self, uri: str) -> None:
         """
         Download data and extract columns.
 
@@ -281,7 +277,8 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         if all(col["label"] == "" for col in cols):
             _logger.warning("Couldn't extract column labels from sheet")
             if rows:
-                self._offset = 1
+                # update URL with information to skip the first row
+                self.url = get_url(uri, headers=1)
                 for col, cell in zip(cols, rows[0]["c"]):
                     col["label"] = get_value_from_cell(cell)
             else:
@@ -398,7 +395,6 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                     None,
                     self._column_map,
                     None,
-                    self._offset,
                 )
             except ImpossibleFilterError:
                 return
