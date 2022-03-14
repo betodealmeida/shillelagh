@@ -65,6 +65,11 @@ class APSWGSheetsDialect(APSWDialect):
 
     """
 
+    # This is supported in ``SQLiteDialect``, and equally supported here. See
+    # https://docs.sqlalchemy.org/en/14/core/connections.html#caching-for-third-party-dialects
+    # for more context.
+    supports_statement_cache = True
+
     name = "gsheets"
 
     def __init__(  # pylint: disable=too-many-arguments

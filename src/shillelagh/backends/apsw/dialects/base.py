@@ -41,6 +41,11 @@ class APSWDialect(SQLiteDialect):
     name = "shillelagh"
     driver = "apsw"
 
+    # This is supported in ``SQLiteDialect``, and equally supported here. See
+    # https://docs.sqlalchemy.org/en/14/core/connections.html#caching-for-third-party-dialects
+    # for more context.
+    supports_statement_cache = True
+
     # ``SQLiteDialect.colspecs`` has custom representations for objects that SQLite stores
     # as string (eg, timestamps). Since the Shillelagh DB API driver returns them as
     # proper objects the custom representations are not needed.
