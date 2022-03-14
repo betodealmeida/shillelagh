@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 1.0.10 - 2022-03-14
+===========================
+
+- Relax ``requests`` dependency
+- Enable ``supports_statement_cache``.
+
 Version 1.0.9 - 2022-03-12
 ==========================
 
