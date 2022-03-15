@@ -2,7 +2,6 @@
 Custom fields for the GSheets adapter.
 """
 import datetime
-from distutils.util import strtobool
 from typing import Any, List, Optional, Type
 
 from shillelagh.adapters.api.gsheets.parsing.date import (
@@ -13,7 +12,7 @@ from shillelagh.adapters.api.gsheets.parsing.number import (
     format_number_pattern,
     parse_number_pattern,
 )
-from shillelagh.fields import External, Field, Internal, Order
+from shillelagh.fields import External, Field, Internal, Order, StringBoolean
 from shillelagh.filters import Filter
 
 # timestamp format used in SQL queries
@@ -224,7 +223,7 @@ class GSheetsBoolean(GSheetsField[str, bool]):
         if value is None or value == "":
             return None
 
-        return bool(strtobool(value))
+        return StringBoolean.strtobool(value)
 
     def format(self, value: Optional[bool]) -> str:
         if value is None:

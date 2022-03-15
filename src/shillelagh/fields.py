@@ -2,7 +2,6 @@
 Fields representing columns of different types and capabilities.
 """
 import datetime
-from distutils.util import strtobool
 from enum import Enum
 from typing import Any, Generic, List, Optional, Type, TypeVar, cast
 
@@ -575,7 +574,7 @@ class StringBoolean(Field[str, bool]):
     def parse(self, value: Optional[str]) -> Optional[bool]:
         if value is None:
             return None
-        return bool(strtobool(value))
+        return StringBoolean.strtobool(value)
 
     def format(self, value: Optional[bool]) -> Optional[str]:
         if value is None:
@@ -586,6 +585,22 @@ class StringBoolean(Field[str, bool]):
         if value is None:
             return "NULL"
         return value
+
+    @staticmethod
+    def strtobool(val: str) -> bool:
+        """
+        Convert a string representation of truth to a boolean.
+        True values are 'y', 'yes', 't', 'true', 'on', and '1'.
+        False values are 'n', 'no', 'f', 'false', 'off', and '0'.
+        Raises ValueError if 'val' is anything else.
+        """
+        val = val.lower()
+        if val in ('y', 'yes', 't', 'true', 'on', '1'):
+            return True
+        elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+            return False
+        else:
+            raise ValueError("invalid truth value %s" % val)
 
 
 class IntBoolean(Field[int, bool]):
