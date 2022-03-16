@@ -3,6 +3,8 @@ Tests for shillelagh.fields.
 """
 import datetime
 
+import pytest
+
 from shillelagh.backends.apsw.db import connect
 from shillelagh.fields import (
     Blob,
@@ -263,6 +265,9 @@ def test_string_boolean() -> None:
     """
     assert StringBoolean().parse("TRUE") is True
     assert StringBoolean().parse("FALSE") is False
+    with pytest.raises(ValueError) as expected_err:
+        StringBoolean().parse("B")
+    assert str(expected_err.value) == "invalid truth value b"
     assert StringBoolean().parse(None) is None
     assert StringBoolean().format(True) == "TRUE"
     assert StringBoolean().format(False) == "FALSE"
