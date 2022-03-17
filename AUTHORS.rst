@@ -7,3 +7,4 @@ Contributors
 * Abdul muhaimin <muhaimin@b1nslashsh.tech>
 * Marek Suppa <marek@mareksuppa.com>
 * Bob Callaway <bcallaway@google.com>
+* Elias Sebbar <contact@eliassebbar.info>
