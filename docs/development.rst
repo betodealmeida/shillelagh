@@ -361,7 +361,7 @@ Custom fields
 
 In the examples above both adapters return data as native Python objects, eg, ``datetime.datetime`` object for timestamps. Some APIs might return timestamps as ISO strings, forcing the adapter to handle the conversion in the ``get_rows`` data before the rows are returned.
 
-There's a different way of handling data conversion. The adapter can specify a custom ``Field`` for a given column. ``Field`` objects have two methods called ``parse`` and ``format``, responsible for the conversion between the format used by the adapter and native Python types. When using a custom field **the adapter can return the original format before conversion**, but defining the ``get_data`` method instead of ``get_rows``.
+There's a different way of handling data conversion. The adapter can specify a custom ``Field`` for a given column. ``Field`` objects have two methods called ``parse`` and ``format``, responsible for the conversion between the format used by the adapter and native Python types. When using a custom field, **the adapter can return the original format before conversion** by defining the ``get_data`` method instead of ``get_rows``.
 
 For example, if we have timestamps returned by an API as ISO strings we can define an adapter like this:
 
