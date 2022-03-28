@@ -40,7 +40,7 @@ def test_exception(mocker: MockerFixture) -> None:
 
 def test_ctrl_c(mocker: MockerFixture) -> None:
     """
-    Test that ``CTRL-C`` exists the REPL.
+    Test that ``CTRL-C`` does not exit the REPL.
     """
     stdout = mocker.patch("sys.stdout", new_callable=StringIO)
     PromptSession = mocker.patch("shillelagh.console.PromptSession")
