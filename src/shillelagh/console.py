@@ -5,7 +5,7 @@ A simple REPL for Shillelagh.
 To run the REPL, since run ``shillelagh``. Pressing return will execute the
 query immediately, and multi-line queries are currently not supported.
 
-Connection arguments can be passed via a ``~/.shillelagh.yaml`` file, eg::
+Connection arguments can be passed via a ``~/.config/shillelagh/shillelagh.yaml`` file, eg::
 
     gsheestapi:
       service_account_file: /path/to/credentials.json
