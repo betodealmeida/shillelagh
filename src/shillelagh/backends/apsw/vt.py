@@ -61,15 +61,20 @@ operator_map = {
     apsw.SQLITE_INDEX_CONSTRAINT_GT: Operator.GT,
     apsw.SQLITE_INDEX_CONSTRAINT_LE: Operator.LE,
     apsw.SQLITE_INDEX_CONSTRAINT_LT: Operator.LT,
-    # SQLITE_INDEX_CONSTRAINT_LIKE >= 3.10.0
-    65: Operator.LIKE,
-    # SQLITE_INDEX_CONSTRAINT_NE, >= 3.21.0
-    68: Operator.NE,
-    # SQLITE_INDEX_CONSTRAINT_ISNULL, >=3.21.0
-    69: Operator.IS_NULL,
-    # SQLITE_INDEX_CONSTRAINT_ISNOTNULL, >=3.21.0
-    70: Operator.IS_NOT_NULL,
 }
+
+def _add_sqlite_constraint(constant_name: str, operator: Operator) -> None:
+    if hasattr(apsw, constant_name):
+        operator_map[getattr(apsw, constant_name)] = operator
+
+# SQLITE_INDEX_CONSTRAINT_LIKE >= 3.10.0
+_add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_LIKE", Operator.LIKE)
+# SQLITE_INDEX_CONSTRAINT_NE, >= 3.21.0
+_add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_NE", Operator.NE)
+# SQLITE_INDEX_CONSTRAINT_ISNULL, >=3.21.0
+_add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_ISNULL", Operator.IS_NULL)
+# SQLITE_INDEX_CONSTRAINT_ISNOTNULL, >=3.21.0
+_add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_ISNOTNULL", Operator.IS_NOT_NULL)
 
 # map for converting between Python native types (boolean, datetime, etc.)
 # and types understood by SQLite (integers, strings, etc.)
