@@ -289,9 +289,9 @@ def test_integration(adapter_kwargs) -> None:
     sql = """
         SELECT *
         FROM "https://global-power-plants.datasettes.com/global-power-plants/global-power-plants"
-        WHERE wepp_id = ?
+        WHERE wepp_id = ? AND year_of_capacity_data = ?
     """
-    cursor.execute(sql, ("67644",))
+    cursor.execute(sql, ("67644", 2019))
     assert cursor.fetchall() == [
         (
             "USA",
@@ -311,13 +311,24 @@ def test_integration(adapter_kwargs) -> None:
             "http://www.eia.gov/electricity/data/browser/",
             "U.S. Energy Information Administration",
             "67644",
-            2017,
+            2019,
             5.0360000000000005,
             4.524,
             4.8020000000000005,
             5.051,
             4.819,
+            4.626,
+            5.01,
             "U.S. Energy Information Administration",
-            None,
-        ),
+            5.84,
+            5.82,
+            6.06,
+            5.41,
+            5.17,
+            "SOLAR-V1",
+            "SOLAR-V1",
+            "SOLAR-V1",
+            "SOLAR-V1",
+            "SOLAR-V1",
+        )
     ]
