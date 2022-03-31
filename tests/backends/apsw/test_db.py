@@ -300,6 +300,10 @@ def test_description(mocker: MockerFixture) -> None:
         ("pets", Integer, None, None, None, None, True),
     ]
 
+    # Test that description is not None in the case that no rows are returned
+    cursor.execute('SELECT * FROM "dummy://" where age = -23')
+    assert cursor.description is not None
+
 
 def test_execute_many(mocker: MockerFixture) -> None:
     """
