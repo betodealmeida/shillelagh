@@ -155,6 +155,12 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         self._results: Optional[Iterator[Tuple[Any, ...]]] = None
         self._rowcount = -1
 
+        def exectrace(cursor, sql, bindings):
+            self.description = self._cursor.getdescription()
+            return True
+
+        self._cursor.setexectrace(exectrace)
+
     @property  # type: ignore
     @check_closed
     def rowcount(self) -> int:
@@ -267,7 +273,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         try:
             description = self._cursor.getdescription()
         except apsw.ExecutionCompleteError:
-            return None
+            return self.description
 
         return [
             (

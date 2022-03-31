@@ -33,6 +33,24 @@ def test_create_engine(mocker: MockerFixture) -> None:
     assert query.scalar() == 3
 
 
+def test_zero_rows(mocker: MockerFixture) -> None:
+    """
+    Test querying with no rows returned.
+    """
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    engine = create_engine("shillelagh://")
+
+    table = Table("dummy://", MetaData(bind=engine), autoload=True)
+    connection = engine.connect()
+    results = connection.execute(table.select().where(table.columns.pets == -1)).fetchall()
+    assert results == []
+
+
 def test_create_engine_no_adapters() -> None:
     """
     Test ``create_engine`` with invalid adapter.
