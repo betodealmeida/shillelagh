@@ -156,6 +156,8 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         self._rowcount = -1
 
         def exectrace(cursor, sql, bindings):
+            # In the case of an empty sequence, fall back to None,
+            # meaning now rows returned.
             self.description = self._cursor.getdescription() or None
             return True
 
