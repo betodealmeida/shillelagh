@@ -156,7 +156,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         self._rowcount = -1
 
         def exectrace(cursor, sql, bindings):
-            self.description = self._cursor.getdescription()
+            self.description = self._cursor.getdescription() or None
             return True
 
         self._cursor.setexectrace(exectrace)
