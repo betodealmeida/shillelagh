@@ -336,7 +336,7 @@ Here's a simple example that supports these methods:
         ) -> Iterator[Dict[str, Any]]:
             yield from iter(self.data)
 
-        def insert_rows(self, row: Dict[str, Any]) -> int:
+        def insert_row(self, row: Dict[str, Any]) -> int:
             row_id: Optional[int] = row["rowid"]
 
             # add a row ID if none was specified
