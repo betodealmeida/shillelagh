@@ -446,7 +446,7 @@ You can define a method ``get_cost`` on your adapter to help the query planner t
             self,
             filtered_columns: List[Tuple[str, Operator]],
             order: List[Tuple[str, RequestedOrder]],
-        ) -> int:
+        ) -> float:
             return (
                 100
                 + 1000 * len(filtered_columns)

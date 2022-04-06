@@ -276,7 +276,7 @@ class VTTable:
         self,
         constraints: List[Tuple[int, SQLiteConstraint]],
         orderbys: List[Tuple[int, bool]],
-    ) -> Tuple[List[Constraint], int, str, bool, int]:
+    ) -> Tuple[List[Constraint], int, str, bool, float]:
         """
         Build an index for a given set of constraints and order bys.
 
