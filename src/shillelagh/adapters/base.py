@@ -106,7 +106,7 @@ class Adapter:
         self,
         filtered_columns: List[Tuple[str, Operator]],
         order: List[Tuple[str, RequestedOrder]],
-    ) -> int:
+    ) -> float:
         """
         Estimate the query cost.
 

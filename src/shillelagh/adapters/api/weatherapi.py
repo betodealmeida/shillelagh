@@ -155,7 +155,7 @@ class WeatherAPI(Adapter):
         self,
         filtered_columns: List[Tuple[str, Operator]],
         order: List[Tuple[str, RequestedOrder]],
-    ) -> int:
+    ) -> float:
         cost = INITIAL_COST
 
         # if the operator is ``Operator.EQ`` we only need to fetch 1 day of data;

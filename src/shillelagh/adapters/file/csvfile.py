@@ -139,7 +139,7 @@ class CSVFile(Adapter):
         self,
         filtered_columns: List[Tuple[str, Operator]],
         order: List[Tuple[str, RequestedOrder]],
-    ) -> int:
+    ) -> float:
         cost = INITIAL_COST
 
         # filtering the data has constant cost, since ``filter_data`` builds a
