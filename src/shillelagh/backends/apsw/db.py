@@ -154,10 +154,11 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         # this is set to an iterator of rows after a successful query
         self._results: Optional[Iterator[Tuple[Any, ...]]] = None
         self._rowcount = -1
-
+        
+        # Approach from: https://github.com/rogerbinns/apsw/issues/160#issuecomment-33927297
         def exectrace(cursor, sql, bindings):
             # In the case of an empty sequence, fall back to None,
-            # meaning now rows returned.
+            # meaning no rows returned.
             self.description = self._cursor.getdescription() or None
             return True
 
