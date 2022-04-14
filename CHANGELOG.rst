@@ -2,6 +2,15 @@
 Changelog
 =========
 
+Version 1.0.11 - 2022-04-14
+===========================
+
+- Read SQLite constants from ``apsw``
+- Fix description returned in the case of empty set
+- Change cost to be a float
+- Fix GSheets ``do_ping``
+- Small fixes and typos.
+
 Version 1.0.10 - 2022-03-14
 ===========================
 
