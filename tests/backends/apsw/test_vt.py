@@ -7,17 +7,19 @@ from typing import Any, Dict, Iterable
 
 import apsw
 import pytest
+from pytest_mock import MockerFixture
 
 from shillelagh.backends.apsw.vt import (
     VTModule,
     VTTable,
+    _add_sqlite_constraint,
     convert_rows_from_sqlite,
     convert_rows_to_sqlite,
     type_map,
 )
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field, Float, Integer, Order, String
-from shillelagh.filters import Equal
+from shillelagh.filters import Equal, Operator
 
 from ...fakes import FakeAdapter
 
@@ -449,3 +451,17 @@ def test_convert_rows_from_sqlite() -> None:
             "BLOB": None,
         },
     ]
+
+
+def test_add_sqlite_constraint(mocker: MockerFixture) -> None:
+    """
+    Test ``_add_sqlite_constraint``.
+    """
+    operator_map: Dict[int, Operator] = {}
+    mocker.patch("shillelagh.backends.apsw.vt.operator_map", new=operator_map)
+
+    _add_sqlite_constraint("INVALID", Operator.LIKE)
+    assert operator_map == {}
+
+    _add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_EQ", Operator.EQ)
+    assert operator_map == {apsw.SQLITE_INDEX_CONSTRAINT_EQ: Operator.EQ}

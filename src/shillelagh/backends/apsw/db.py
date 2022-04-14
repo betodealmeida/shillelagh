@@ -154,9 +154,14 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         # this is set to an iterator of rows after a successful query
         self._results: Optional[Iterator[Tuple[Any, ...]]] = None
         self._rowcount = -1
-        
+
         # Approach from: https://github.com/rogerbinns/apsw/issues/160#issuecomment-33927297
-        def exectrace(cursor, sql, bindings):
+        # pylint: disable=unused-argument
+        def exectrace(
+            cursor: "apsw.Cursor",
+            sql: str,
+            bindings: Optional[Tuple[Any, ...]],
+        ) -> bool:
             # In the case of an empty sequence, fall back to None,
             # meaning no rows returned.
             self.description = self._cursor.getdescription() or None
@@ -235,7 +240,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         we need to do the conversion here.
         """
         if not self.description:
-            return
+            return  # pragma: no cover
 
         for row in cursor:
             yield tuple(

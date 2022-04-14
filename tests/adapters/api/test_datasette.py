@@ -330,5 +330,5 @@ def test_integration(adapter_kwargs) -> None:
             "SOLAR-V1",
             "SOLAR-V1",
             "SOLAR-V1",
-        )
+        ),
     ]
