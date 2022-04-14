@@ -63,9 +63,11 @@ operator_map = {
     apsw.SQLITE_INDEX_CONSTRAINT_LT: Operator.LT,
 }
 
+
 def _add_sqlite_constraint(constant_name: str, operator: Operator) -> None:
     if hasattr(apsw, constant_name):
         operator_map[getattr(apsw, constant_name)] = operator
+
 
 # SQLITE_INDEX_CONSTRAINT_LIKE >= 3.10.0
 _add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_LIKE", Operator.LIKE)

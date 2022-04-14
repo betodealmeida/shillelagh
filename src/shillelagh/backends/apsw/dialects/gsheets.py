@@ -128,6 +128,9 @@ class APSWGSheetsDialect(APSWDialect):
         updates = [
             update for update in payload if update["service_name"] == "Google Sheets"
         ]
+        if not updates:
+            return True
+
         updates.sort(key=itemgetter("modified"), reverse=True)
         latest_update = updates[0]
         status: str = latest_update["most_recent_update"]["status"]

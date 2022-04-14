@@ -346,6 +346,12 @@ def test_do_ping(mocker: MockerFixture, requests_mock: Mocker) -> None:
     )
     assert dialect.do_ping(connection) is False
 
+    requests_mock.get(
+        "https://www.google.com/appsstatus/dashboard/incidents.json",
+        json=[],
+    )
+    assert dialect.do_ping(connection)
+
 
 @pytest.mark.slow_integration_test
 def test_types_in_sqlalchemy(adapter_kwargs: Dict[str, Any]) -> None:

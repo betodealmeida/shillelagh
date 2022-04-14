@@ -2,10 +2,13 @@
 """
 Tests for shilellagh.adapters.file.csvfile.
 """
+from datetime import datetime, timezone
+from pathlib import Path
 from unittest.mock import mock_open
 
 import apsw
 import pytest
+from freezegun import freeze_time
 from pyfakefs.fake_filesystem import FakeFilesystem
 from pytest_mock import MockerFixture
 
@@ -290,6 +293,30 @@ def test_csvfile(fs: FakeFilesystem) -> None:
 14.0,10.1,"New_Site"
 """
     )
+
+
+def test_csvfile_close_not_modified(fs: FakeFilesystem) -> None:
+    """
+    Test closing the file when it hasn't been modified.
+    """
+    with freeze_time("2022-01-01T00:00:00Z"):
+        with open("test.csv", "w", encoding="utf-8") as fp:
+            fp.write(CONTENTS)
+
+    connection = apsw.Connection(":memory:")
+    cursor = connection.cursor()
+    connection.createmodule("csvfile", VTModule(CSVFile))
+    cursor.execute("""CREATE VIRTUAL TABLE test USING csvfile('"test.csv"')""")
+
+    sql = 'SELECT * FROM test WHERE "index" > 11'
+    data = list(cursor.execute(sql))
+    assert data == [(12.0, 13.3, "Platinum_St"), (13.0, 12.1, "Kodiak_Trail")]
+
+    with freeze_time("2022-01-02T00:00:00Z"):
+        connection.close()
+
+    path = Path("test.csv")
+    assert path.stat().st_mtime == datetime(2022, 1, 1, tzinfo=timezone.utc).timestamp()
 
 
 def test_dispatch(mocker: MockerFixture, fs: FakeFilesystem) -> None:

@@ -25,3 +25,6 @@ spellcheck:
 requirements.txt: .python-version
 	pip install --upgrade pip
 	pip-compile --no-annotate
+
+check:
+	pre-commit run --all-files
