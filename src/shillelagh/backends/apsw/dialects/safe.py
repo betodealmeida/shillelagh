@@ -38,10 +38,7 @@ class APSWSafeDialect(APSWDialect):
         adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
         **kwargs: Any,
     ):
-        super().__init__(**kwargs)
-        self._adapters = adapters
-        self._adapter_kwargs = adapter_kwargs or {}
-        self._safe = True
+        super().__init__(adapters, adapter_kwargs, safe=True, **kwargs)
 
     def create_connect_args(
         self,
