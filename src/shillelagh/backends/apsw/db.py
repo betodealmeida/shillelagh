@@ -402,15 +402,17 @@ class Connection:
 
     """Connection."""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         path: str,
         adapters: List[Type[Adapter]],
         adapter_kwargs: Dict[str, Dict[str, Any]],
         isolation_level: Optional[str] = None,
+        apsw_connection_kwargs: Optional[Dict[str, Any]] = None,
     ):
         # create underlying APSW connection
-        self._connection = apsw.Connection(path)
+        apsw_connection_kwargs = apsw_connection_kwargs or {}
+        self._connection = apsw.Connection(path, **apsw_connection_kwargs)
         self.isolation_level = isolation_level
 
         # register adapters
@@ -492,12 +494,13 @@ class Connection:
         self.close()
 
 
-def connect(
+def connect(  # pylint: disable=too-many-arguments
     path: str,
     adapters: Optional[List[str]] = None,
     adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     safe: bool = False,
     isolation_level: Optional[str] = None,
+    apsw_connection_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Connection:
     r"""
     Constructor for creating a connection to the database.
@@ -560,4 +563,5 @@ def connect(
         enabled_adapters,
         adapter_kwargs,
         isolation_level,
+        apsw_connection_kwargs,
     )

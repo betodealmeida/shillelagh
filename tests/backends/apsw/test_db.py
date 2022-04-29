@@ -105,6 +105,7 @@ def test_connect_adapter_kwargs(mocker: MockerFixture) -> None:
         [FakeAdapter],
         {"fakeadapter": {"foo": "bar"}},
         "IMMEDIATE",
+        None,
     )
 
 
@@ -153,6 +154,7 @@ def test_connect_safe(mocker: MockerFixture) -> None:
         [FakeAdapter1, FakeAdapter2, FakeAdapter3],
         {},
         None,
+        None,
     )
 
     connect(":memory:", ["two"])
@@ -160,6 +162,7 @@ def test_connect_safe(mocker: MockerFixture) -> None:
         ":memory:",
         [FakeAdapter2],
         {},
+        None,
         None,
     )
 
@@ -170,6 +173,7 @@ def test_connect_safe(mocker: MockerFixture) -> None:
         [],
         {},
         None,
+        None,
     )
 
     # in safe mode only safe adapters are returned
@@ -178,6 +182,7 @@ def test_connect_safe(mocker: MockerFixture) -> None:
         ":memory:",
         [FakeAdapter1],
         {},
+        None,
         None,
     )
 
