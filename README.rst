@@ -4,9 +4,6 @@ Shillelagh
 
 .. image:: https://coveralls.io/repos/github/betodealmeida/shillelagh/badge.svg?branch=master
    :target: https://coveralls.io/github/betodealmeida/shillelagh?branch=master
-.. image:: https://img.shields.io/cirrus/github/betodealmeida/shillelagh
-   :target: https://cirrus-ci.com/github/betodealmeida/shillelagh
-   :alt: Cirrus CI - Base Branch Build Status
 .. image:: https://readthedocs.org/projects/shillelagh/badge/?version=latest
    :target: https://shillelagh.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
