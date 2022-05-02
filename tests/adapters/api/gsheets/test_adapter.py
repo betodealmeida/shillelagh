@@ -1,6 +1,6 @@
 # pylint: disable=too-many-lines, protected-access, c-extension-no-member, redefined-outer-name
 """
-Tests for shilellagh.adapters.api.gsheets.adapter.
+Tests for shillelagh.adapters.api.gsheets.adapter.
 """
 import datetime
 import json

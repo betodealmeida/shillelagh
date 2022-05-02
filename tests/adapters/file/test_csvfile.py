@@ -1,6 +1,6 @@
 # pylint: disable=c-extension-no-member, invalid-name, unused-argument
 """
-Tests for shilellagh.adapters.file.csvfile.
+Tests for shillelagh.adapters.file.csvfile.
 """
 from datetime import datetime, timezone
 from pathlib import Path
