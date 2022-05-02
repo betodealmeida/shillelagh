@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.7', '3.8', '3.9']
+        python-version: ['3.8', '3.9']
 
     steps:
     - uses: actions/checkout@v2
@@ -30,4 +30,4 @@ jobs:
         pip install -r requirements/test.txt
     - name: Test with pytest
       run: |
-        pytest --cov-fail-under=100 --cov=src/shilellagh -vv tests/ --doctest-modules src/shilellagh --without-integration --without-slow-integration
+        pytest --cov-fail-under=100 --cov=src/shillelagh -vv tests/ --doctest-modules src/shillelagh --without-integration --without-slow-integration

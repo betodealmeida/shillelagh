@@ -35,4 +35,4 @@ jobs:
       env:
         SHILLELAGH_ADAPTER_KWARGS: ${{ secrets.SHILLELAGH_ADAPTER_KWARGS }}
       run: |
-        pytest --cov-fail-under=100 --cov=src/shilellagh -vv tests/ --doctest-modules src/shilellagh --with-integration --with-slow-integration
+        pytest --cov-fail-under=100 --cov=src/shillelagh -vv tests/ --doctest-modules src/shillelagh --with-integration --with-slow-integration

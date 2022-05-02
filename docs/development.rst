@@ -400,7 +400,7 @@ Or define custom fields for your columns, produce and consume the internal forma
 - ``delete_data``
 - ``update_data``
 
-The ``shilellagh.fields`` module has implementation of common representations. For example, SQLite stores booleans as integers. This is how the custom field looks like:
+The ``shillelagh.fields`` module has implementation of common representations. For example, SQLite stores booleans as integers. This is how the custom field looks like:
 
 .. code-block:: python
 

@@ -1,6 +1,6 @@
 # pylint: disable=invalid-name
 """
-Tests for shilellagh.adapters.api.gsheets.fields.
+Tests for shillelagh.adapters.api.gsheets.fields.
 """
 import datetime
 

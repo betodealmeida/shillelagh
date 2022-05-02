@@ -1,5 +1,5 @@
 """
-Tests for shilellagh.adapters.api.gsheets.lib.
+Tests for shillelagh.adapters.api.gsheets.lib.
 """
 import itertools
 
