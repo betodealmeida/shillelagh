@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 1.0.13 - 2022-05-02
+===========================
+
+- Remove support for Python 3.7
+- Remove upper bounds from dependencies
+
 Version 1.0.12 - 2022-04-28
 ===========================
 
