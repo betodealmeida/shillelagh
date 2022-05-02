@@ -22,9 +22,5 @@ clean:
 spellcheck:
 	codespell -S "*.json" src/shillelagh docs/*rst tests templates
 
-requirements.txt: .python-version
-	pip install --upgrade pip
-	pip-compile --no-annotate
-
 check:
 	pre-commit run --all-files

@@ -1,16 +1,11 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-concurrency:
-  group: integration
-  cancel-in-progress: false
 
-name: Python integration tests
+name: Python package
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  schedule:
+    - cron:  '0 6 * * *'
 
 jobs:
   build:
@@ -19,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.9]
+        python-version: ['3.7', '3.8', '3.9']
 
     steps:
     - uses: actions/checkout@v2
@@ -30,9 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements/test.txt
+        pip install -e '.[testing]'
     - name: Test with pytest
-      env:
-        SHILLELAGH_ADAPTER_KWARGS: ${{ secrets.SHILLELAGH_ADAPTER_KWARGS }}
       run: |
-        pytest --cov-fail-under=100 --cov=src/shilellagh -vv tests/ --doctest-modules src/shilellagh --with-integration --with-slow-integration
+        pytest --cov-fail-under=100 --cov=src/shilellagh -vv tests/ --doctest-modules src/shilellagh --without-integration --without-slow-integration
