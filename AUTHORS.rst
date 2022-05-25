@@ -8,3 +8,4 @@ Contributors
 * Marek Suppa <marek@mareksuppa.com>
 * Bob Callaway <bcallaway@google.com>
 * Elias Sebbar <contact@eliassebbar.info>
+* Arash Afghahi <arash.afghahi@gmail.com>
