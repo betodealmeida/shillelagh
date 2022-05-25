@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 1.0.14 - 2022-05-25
+===========================
+
+- Fix for column names with double quotes
+
 Version 1.0.13 - 2022-05-02
 ===========================
 
