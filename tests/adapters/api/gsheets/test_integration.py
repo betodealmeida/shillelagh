@@ -698,3 +698,22 @@ def test_number_formats(adapter_kwargs: Dict[str, Any]) -> None:
         (1234600000.0, 0.1, 1230000000.0, -123.0, 123.0, 5.125),
         (None, None, None, 123.0, None, None),
     ]
+
+
+@pytest.mark.slow_integration_test
+def test_weird_symbols(adapter_kwargs: Dict[str, Any]) -> None:
+    """
+    Test reading data from a table where the columns have double quotes in their names.
+    """
+    table = (
+        '"https://docs.google.com/spreadsheets/d/'
+        '1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=767615647"'
+    )
+
+    connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
+    cursor = connection.cursor()
+
+    sql = f"SELECT * FROM {table}"
+    cursor.execute(sql)
+    assert cursor.fetchall() == [(1.0, "a", 45.0), (2.0, "b", 1999.0)]
+    assert [column[0] for column in cursor.description] == ['foo"', '"bar', 'a"b']
