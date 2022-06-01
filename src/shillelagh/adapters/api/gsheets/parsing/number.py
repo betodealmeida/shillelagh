@@ -442,7 +442,15 @@ def parse_number_pattern(value: str, pattern: str) -> float:
         except InvalidValue:
             pass
     else:
-        raise Exception(f"Unable to parse value {value} with pattern {pattern}")
+        try:
+            return int(value)
+        except ValueError:
+            try:
+                return float(value)
+            except ValueError as ex:
+                raise Exception(
+                    f"Unable to parse value {value} with pattern {pattern}",
+                ) from ex
 
     # is negative?
     if i == 1 and (len(formats) > 2 or (len(formats) == 2 and "@" not in formats[1])):
