@@ -256,7 +256,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             try:
                 result = response.json()
             except Exception as ex:
-                self._check_permissions()
+                self._check_permissions(ex)
                 raise ProgrammingError(
                     "Response from Google is not valid JSON.",
                 ) from ex
@@ -266,6 +266,30 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             raise ProgrammingError(format_error_message(result["errors"]))
 
         return cast(QueryResults, result)
+
+    def _check_permissions(self, ex: Exception) -> None:
+        """
+        Check if we have permission to access a sheet.
+
+        This is called when the response from an API is not valid JSON, trying to
+        determine why the payload is not as expected.
+        """
+        session = self._get_session()
+        url = (
+            f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
+            f"/developerMetadata/{self._sheet_id}"
+        )
+        response = session.get(url)
+        if not response.ok:
+            payload = response.json()
+            error = payload["error"]
+
+            # custom exception to trigger oauth
+            if error["code"] == 401:
+                raise UnauthenticatedError(error["message"]) from ex
+
+            # something else happened, raise exception with the message
+            raise InterfaceError(error["message"]) from ex
 
     def _set_columns(self, uri: str) -> None:
         """
@@ -467,27 +491,6 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         self.modified = True
 
         return row_id
-
-    def _check_permissions(self) -> None:
-        """
-        Check if we have permission to access a sheet.
-        """
-        session = self._get_session()
-        url = (
-            f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
-            f"/developerMetadata/{self._sheet_id}"
-        )
-        response = session.get(url)
-        if not response.ok:
-            payload = response.json()
-            error = payload["error"]
-
-            # custom exception to trigger oauth
-            if error["code"] == 401:
-                raise UnauthenticatedError(error["message"])
-
-            # something else happened, raise exception with the message
-            raise InterfaceError(error["message"])
 
     def _get_values(self) -> List[List[Any]]:
         """
