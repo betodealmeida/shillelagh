@@ -93,3 +93,4 @@ repos:
     language: system
     types: [python]
     exclude: ^templates/
+    args: [--disable=use-implicit-booleaness-not-comparison]

@@ -121,7 +121,13 @@ class NotSupportedError(DatabaseError):
     """
 
 
-class ImpossibleFilterError(Exception):
+class ImpossibleFilterError(Error):
     """
     Raised when a condition impossible to meet is found (eg, 1=0).
+    """
+
+
+class UnauthenticatedError(InterfaceError):
+    """
+    Custom excepton raised when the user needs to authenticate.
     """

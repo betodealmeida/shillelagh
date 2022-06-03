@@ -716,4 +716,5 @@ def test_weird_symbols(adapter_kwargs: Dict[str, Any]) -> None:
     sql = f"SELECT * FROM {table}"
     cursor.execute(sql)
     assert cursor.fetchall() == [(1.0, "a", 45.0), (2.0, "b", 1999.0)]
+    assert cursor.description is not None
     assert [column[0] for column in cursor.description] == ['foo"', '"bar', 'a"b']
