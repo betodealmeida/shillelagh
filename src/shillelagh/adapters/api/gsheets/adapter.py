@@ -26,7 +26,13 @@ from shillelagh.adapters.api.gsheets.lib import (
 from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.adapters.api.gsheets.typing import QueryResults
 from shillelagh.adapters.base import Adapter
-from shillelagh.exceptions import ImpossibleFilterError, InternalError, ProgrammingError
+from shillelagh.exceptions import (
+    ImpossibleFilterError,
+    InterfaceError,
+    InternalError,
+    ProgrammingError,
+    UnauthenticatedError,
+)
 from shillelagh.fields import Field, Order
 from shillelagh.filters import Filter
 from shillelagh.lib import SimpleCostModel, build_sql
@@ -250,9 +256,9 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             try:
                 result = response.json()
             except Exception as ex:
+                self._check_permissions()
                 raise ProgrammingError(
-                    "Response from Google is not valid JSON. Please verify that you "
-                    "have the proper credentials to access the spreadsheet.",
+                    "Response from Google is not valid JSON.",
                 ) from ex
 
         _logger.debug("Received payload: %s", result)
@@ -461,6 +467,27 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         self.modified = True
 
         return row_id
+
+    def _check_permissions(self) -> None:
+        """
+        Check if we have permission to access a sheet.
+        """
+        session = self._get_session()
+        url = (
+            f"https://sheets.googleapis.com/v4/spreadsheets/{self._spreadsheet_id}"
+            f"/developerMetadata/{self._sheet_id}"
+        )
+        response = session.get(url)
+        if not response.ok:
+            payload = response.json()
+            error = payload["error"]
+
+            # custom exception to trigger oauth
+            if error["code"] == 401:
+                raise UnauthenticatedError(error["message"])
+
+            # something else happened, raise exception with the message
+            raise InterfaceError(error["message"])
 
     def _get_values(self) -> List[List[Any]]:
         """

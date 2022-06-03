@@ -277,7 +277,9 @@ class VTTable:
             raise ProgrammingError(f"Virtual table {tablename} has no columns")
 
         quoted_columns = {k.replace('"', '""'): v for k, v in columns.items()}
-        formatted_columns = ", ".join(f'"{k}" {v.type}' for (k, v) in quoted_columns.items())
+        formatted_columns = ", ".join(
+            f'"{k}" {v.type}' for (k, v) in quoted_columns.items()
+        )
         return f'CREATE TABLE "{tablename}" ({formatted_columns})'
 
     def BestIndex(  # pylint: disable=too-many-locals

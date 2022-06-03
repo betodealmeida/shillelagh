@@ -16,7 +16,12 @@ from pytest_mock import MockerFixture
 
 from shillelagh.adapters.api.gsheets.adapter import GSheetsAPI
 from shillelagh.backends.apsw.db import connect
-from shillelagh.exceptions import InternalError, ProgrammingError
+from shillelagh.exceptions import (
+    InterfaceError,
+    InternalError,
+    ProgrammingError,
+    UnauthenticatedError,
+)
 from shillelagh.fields import Float, Order, String
 from shillelagh.filters import Equal, Operator
 
@@ -907,17 +912,71 @@ def test_execute_invalid_json(mocker: MockerFixture) -> None:
         "https://docs.google.com/spreadsheets/d/5/gviz/tq?gid=0&tq=SELECT%20%2A%20LIMIT%201",
         text="NOT JSON",
     )
+    adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/5/developerMetadata/0",
+        status_code=401,
+        json={
+            "error": {
+                "code": 401,
+                "message": (
+                    "Request is missing required authentication credential. Expected "
+                    "OAuth 2 access token, login cookie or other valid authentication "
+                    "credential. See https://developers.google.com/identity/sign-in"
+                    "/web/devconsole-project."
+                ),
+            },
+        },
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/5/gviz/tq?gid=1&tq=SELECT%20%2A%20LIMIT%201",
+        text="NOT JSON",
+    )
+    adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/5/developerMetadata/1",
+        status_code=400,
+        json={
+            "error": {
+                "code": 400,
+                "message": "An unexpected error occurred",
+            },
+        },
+    )
+    adapter.register_uri(
+        "GET",
+        "https://docs.google.com/spreadsheets/d/5/gviz/tq?gid=2&tq=SELECT%20%2A%20LIMIT%201",
+        text="NOT JSON",
+    )
+    adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/5/developerMetadata/2",
+        status_code=200,
+    )
 
     connection = connect(":memory:", ["gsheetsapi"])
     cursor = connection.cursor()
 
     sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/5/edit#gid=0"'''
-    with pytest.raises(ProgrammingError) as excinfo:
+    with pytest.raises(UnauthenticatedError) as excinfo:
         cursor.execute(sql)
     assert str(excinfo.value) == (
-        "Response from Google is not valid JSON. Please verify that you have "
-        "the proper credentials to access the spreadsheet."
+        "Request is missing required authentication credential. Expected "
+        "OAuth 2 access token, login cookie or other valid authentication "
+        "credential. See https://developers.google.com/identity/sign-in"
+        "/web/devconsole-project."
     )
+
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/5/edit#gid=1"'''
+    with pytest.raises(InterfaceError) as excinfo:
+        cursor.execute(sql)
+    assert str(excinfo.value) == "An unexpected error occurred"
+
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/5/edit#gid=2"'''
+    with pytest.raises(ProgrammingError) as excinfo:
+        cursor.execute(sql)
+    assert str(excinfo.value) == "Response from Google is not valid JSON."
 
 
 def test_execute_error_response(mocker: MockerFixture) -> None:
