@@ -369,13 +369,13 @@ def test_parse_number_pattern_errors() -> None:
     """
     Test errors in ``parse_number_pattern``.
     """
-    with pytest.raises(Exception) as excinfo:
-        parse_number_pattern("80", "##%")
-    assert str(excinfo.value) == "Unable to parse value 80 with pattern ##%"
+    # we fallback to int/float parsing when the format is not correct
+    assert parse_number_pattern("80", "##%") == 80
+    assert parse_number_pattern("1.23", "0.00e+00") == 1.23
 
     with pytest.raises(Exception) as excinfo:
-        parse_number_pattern("1.23", "0.00e+00")
-    assert str(excinfo.value) == "Unable to parse value 1.23 with pattern 0.00e+00"
+        parse_number_pattern("abc", "##%")
+    assert str(excinfo.value) == "Unable to parse value abc with pattern ##%"
 
 
 def test_format_number_pattern() -> None:
