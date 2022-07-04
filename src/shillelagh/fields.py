@@ -301,11 +301,10 @@ class String(Field[str, str]):
     type = "TEXT"
     db_api_type = "STRING"
 
+    def parse(self, value): return value
+
     def quote(self, value: Optional[str]) -> str:
-        if value is None:
-            return "NULL"
-        escaped_value = value.replace("'", "''")
-        return f"'{escaped_value}'"
+        return value
 
 
 class Date(Field[datetime.date, datetime.date]):

@@ -233,7 +233,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
                 # create the virtual table
                 uri = message[len(NO_SUCH_TABLE) :]
-                self._create_table(uri)
+                self._create_table(uri, operation, parameters)
 
         drop_table_match = DROP_TABLE.match(operation)
         if drop_table_match:
@@ -265,17 +265,27 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
                 for col, desc in zip(row, self.description)
             )
 
-    def _create_table(self, uri: str) -> None:
+    def _create_table(self, uri: str, operation: str, parameters: Optional[Tuple[Any, ...]]) -> None:
         """
         Create a virtual table.
 
         This method is called the first time a virtual table is accessed.
         """
+        print("--- create table with ", uri, self._adapter_kwargs)
         prefix = f"{SCHEMA}."
         if uri.startswith(prefix):
             uri = uri[len(prefix) :]
 
-        adapter, args, kwargs = find_adapter(uri, self._adapter_kwargs, self._adapters)
+        # collect arguments from URI and connection and serialize them
+        adapter = find_adapter(uri, self._adapter_kwargs, self._adapters)
+        key = adapter.__name__.lower()
+        args = adapter.parse_uri(uri)
+        kwargs = self._adapter_kwargs.get(key, {})
+        
+        if adapter.need_operation:
+            kwargs["operation"] = operation
+            kwargs["parameters"] = parameters
+
         formatted_args = ", ".join(
             f"'{serialize(arg)}'"
             for arg in combine_args_kwargs(adapter, *args, **kwargs)
@@ -425,7 +435,7 @@ class Connection:
     ):
         # create underlying APSW connection
         apsw_connection_kwargs = apsw_connection_kwargs or {}
-        self._connection = apsw.Connection(path, **apsw_connection_kwargs)
+        self._connection = apsw.Connection(path, statementcachesize=0, **apsw_connection_kwargs)
         self.isolation_level = isolation_level
 
         # register adapters
