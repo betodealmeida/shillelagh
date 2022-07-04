@@ -271,7 +271,6 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
         This method is called the first time a virtual table is accessed.
         """
-        print("--- create table with ", uri, self._adapter_kwargs)
         prefix = f"{SCHEMA}."
         if uri.startswith(prefix):
             uri = uri[len(prefix) :]
