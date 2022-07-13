@@ -32,7 +32,7 @@ class CSVSerializationOptionsType(TypedDict, total=False):
     AllowQuotedRecordDelimiter: bool
     Comments: str
     FieldDelimiter: str
-    FieldHeaderInfo: Literal["USE", "IGNORE", "NONE"]
+    FileHeaderInfo: Literal["USE", "IGNORE", "NONE"]
     QuoteCharacter: str
     QuoteEscapedCharacter: str
     RecordDelimiter: str
@@ -107,7 +107,7 @@ def get_input_serialization(parsed) -> InputSerializationType:
         format_ = suffix[1:].lower()
 
     input_serialization: Dict[str, Any] = {
-        "CompressionType": options.get("CompressionType", "NONE"),
+        "CompressionType": options.get("CompressionType", ["NONE"])[-1],
     }
 
     if format_ == "csv":
@@ -143,7 +143,7 @@ def get_input_serialization(parsed) -> InputSerializationType:
         return cast(ParquetSerializationType, input_serialization)
 
     raise ProgrammingError(
-        f'Invalid format "{format}". Valid values: csv, json, parquet',
+        f'Invalid format "{format_}". Valid values: csv, json, parquet',
     )
 
 
