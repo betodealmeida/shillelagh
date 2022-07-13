@@ -86,7 +86,7 @@ InputSerializationType = Union[
 ]
 
 
-def get_input_serialization(parsed) -> InputSerializationType:
+def get_input_serialization(parsed: urllib.parse.ParseResult) -> InputSerializationType:
     """
     Build the input serialization object.
     """
@@ -206,13 +206,19 @@ class S3SelectAPI(Adapter):
         key = parsed.path.lstrip("/")
         input_serialization = get_input_serialization(parsed)
 
-        return (bucket, key, input_serialization)
+        return (
+            bucket,
+            key,
+            input_serialization,
+        )
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         bucket: str,
         key: str,
         input_serialization: InputSerializationType,
+        aws_access_key_id: Optional[str] = None,
+        aws_secret_access_key: Optional[str] = None,
     ):
         super().__init__()
 
@@ -220,7 +226,11 @@ class S3SelectAPI(Adapter):
         self.key = key
         self.input_serialization = input_serialization
 
-        self.s3_client = boto3.client("s3")
+        self.s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+        )
 
         self._set_columns()
 
