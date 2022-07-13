@@ -258,12 +258,12 @@ def test_cursor() -> None:
     table = VTTable(FakeAdapter())
     cursor = table.Open()
     cursor.Filter(42, "[[], []]", [])
-    assert cursor.current_row == (0, 20, "Alice", 0)
+    assert cursor.current_row == (0, 20, "Alice", "0")
     assert cursor.Rowid() == 0
     assert cursor.Column(0) == 20
 
     cursor.Next()
-    assert cursor.current_row == (1, 23, "Bob", 3)
+    assert cursor.current_row == (1, 23, "Bob", "3")
 
     assert not cursor.Eof()
     cursor.Next()
@@ -278,7 +278,7 @@ def test_cursor_with_constraints() -> None:
     table = VTTable(FakeAdapter())
     cursor = table.Open()
     cursor.Filter(42, f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}]], []]", ["Alice"])
-    assert cursor.current_row == (0, 20, "Alice", 0)
+    assert cursor.current_row == (0, 20, "Alice", "0")
 
     assert not cursor.Eof()
     cursor.Next()
@@ -373,7 +373,7 @@ def test_convert_rows_to_sqlite() -> None:
     columns = {k: v() for k, v in type_map.items()}
     assert list(convert_rows_to_sqlite(columns, iter(rows))) == [
         {
-            "INTEGER": 1,
+            "INTEGER": "1",
             "REAL": 1.0,
             "TEXT": "test",
             "TIMESTAMP": "2021-01-01T00:00:00+00:00",

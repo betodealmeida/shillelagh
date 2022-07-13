@@ -55,7 +55,7 @@ TABLES: Dict[str, Dict[str, List[Column]]] = {
             Column("state", "state", String(filters=[Equal]), Equal("all")),
             Column("title", "title", String()),
             Column("userid", "user.id", Integer()),
-            Column("username", "user.login", Integer()),
+            Column("username", "user.login", String()),
             Column("draft", "draft", Boolean()),
             Column("head", "head.ref", String(filters=[Equal])),  # head.label?
             Column("created_at", "created_at", ISODateTime()),

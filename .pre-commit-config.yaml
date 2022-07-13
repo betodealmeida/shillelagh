@@ -15,8 +15,6 @@ repos:
   - id: debug-statements
     exclude: ^templates/
   - id: end-of-file-fixer
-  - id: requirements-txt-fixer
-    exclude: ^templates/
   - id: mixed-line-ending
     args: ['--fix=auto']  # replace 'auto' with 'lf' to enforce Linux/Mac line endings or 'crlf' for Windows
 
