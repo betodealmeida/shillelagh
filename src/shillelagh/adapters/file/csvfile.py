@@ -87,7 +87,8 @@ class CSVFile(Adapter):
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
-        return Path(uri).suffix == ".csv"
+        path = Path(uri)
+        return path.suffix == ".csv" and path.exists()
 
     @staticmethod
     def parse_uri(uri: str) -> Tuple[str]:

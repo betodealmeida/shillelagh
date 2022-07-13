@@ -13,7 +13,7 @@ from pytest_mock import MockerFixture
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import connect, convert_binding
 from shillelagh.exceptions import InterfaceError, NotSupportedError, ProgrammingError
-from shillelagh.fields import Float, Integer, String
+from shillelagh.fields import Float, String, StringInteger
 
 from ...fakes import FakeAdapter, FakeEntryPoint
 
@@ -302,7 +302,7 @@ def test_description(mocker: MockerFixture) -> None:
     assert cursor.description == [
         ("age", Float, None, None, None, None, True),
         ("name", String, None, None, None, None, True),
-        ("pets", Integer, None, None, None, None, True),
+        ("pets", StringInteger, None, None, None, None, True),
     ]
 
     # Test that description is not None in the case that no rows are returned

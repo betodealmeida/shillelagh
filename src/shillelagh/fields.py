@@ -258,6 +258,24 @@ class Integer(Field[int, int]):
     db_api_type = "NUMBER"
 
 
+class StringInteger(Field[str, int]):
+    """
+    Integers stored as strings.
+
+    SQLite can't handle integers bigger than 2**64 (like Parquet's INT96), so we default
+    to storing them as strings.
+    """
+
+    type = "INTEGER"
+    db_api_type = "NUMBER"
+
+    def parse(self, value: Optional[str]) -> Optional[int]:
+        return value if value is None else int(value)
+
+    def format(self, value: Optional[int]) -> Optional[str]:
+        return value if value is None else str(value)
+
+
 class RowID(Integer):
     """
     Custom field for the row ID.

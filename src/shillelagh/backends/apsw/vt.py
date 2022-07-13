@@ -31,7 +31,6 @@ from shillelagh.fields import (
     Field,
     Float,
     IntBoolean,
-    Integer,
     ISODate,
     ISODateTime,
     ISOTime,
@@ -39,6 +38,7 @@ from shillelagh.fields import (
     RowID,
     String,
     StringDuration,
+    StringInteger,
 )
 from shillelagh.filters import Filter, Operator
 from shillelagh.lib import deserialize
@@ -87,7 +87,7 @@ type_map: Dict[str, Type[Field]] = {
         StringDuration,
         Float,
         IntBoolean,
-        Integer,
+        StringInteger,
         ISODate,
         ISODateTime,
         ISOTime,
