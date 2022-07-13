@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 1.0.15 - 2022-07-13
+===========================
+
+- Represent integers as strings in SQLite to prevent overflow
+- Add S3 Select adapter
+
 Version 1.0.14 - 2022-05-25
 ===========================
 
