@@ -1,7 +1,9 @@
-# pylint: disable=too-many-lines, protected-access, c-extension-no-member, redefined-outer-name
 """
 Tests for shillelagh.adapters.api.gsheets.adapter.
 """
+
+# pylint: disable=too-many-lines, protected-access, c-extension-no-member, redefined-outer-name, line-too-long
+
 import datetime
 import json
 from typing import Any, Iterator, List
@@ -196,9 +198,7 @@ def test_credentials(mocker: MockerFixture) -> None:
             mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
             mock.call(
-                """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" """
-                """USING GSheetsAPI('"https://docs.google.com/spreadsheets/d/1"'"""
-                """, 'null', 'null', '{"secret": "XXX"}', '"user@example.com"', 'null', 'false')""",
+                """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" USING GSheetsAPI('gASVLAAAAAAAAACMKGh0dHBzOi8vZG9jcy5nb29nbGUuY29tL3NwcmVhZHNoZWV0cy9kLzGULg==', 'gAROLg==', 'gAROLg==', 'gASVEwAAAAAAAAB9lIwGc2VjcmV0lIwDWFhYlHMu', 'gASVFAAAAAAAAACMEHVzZXJAZXhhbXBsZS5jb22ULg==', 'gAROLg==', 'gASJLg==')""",
             ),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
         ],
@@ -231,9 +231,7 @@ def test_credentials(mocker: MockerFixture) -> None:
             mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
             mock.call(
-                """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" """
-                """USING GSheetsAPI('"https://docs.google.com/spreadsheets/d/1"'"""
-                """, 'null', 'null', 'null', 'null', 'null', 'true')""",
+                "CREATE VIRTUAL TABLE \"https://docs.google.com/spreadsheets/d/1\" USING GSheetsAPI('gASVLAAAAAAAAACMKGh0dHBzOi8vZG9jcy5nb29nbGUuY29tL3NwcmVhZHNoZWV0cy9kLzGULg==', 'gAROLg==', 'gAROLg==', 'gAROLg==', 'gAROLg==', 'gAROLg==', 'gASILg==')",
             ),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
         ],

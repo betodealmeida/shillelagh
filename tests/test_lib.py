@@ -241,14 +241,14 @@ def test_serialize() -> None:
     """
     Test ``serialize``.
     """
-    assert serialize(["O'Malley's"]) == """'["O''Malley''s"]'"""
+    assert serialize(["O'Malley's"]) == "gASVEQAAAAAAAABdlIwKTydNYWxsZXknc5RhLg=="
 
 
 def test_deserialize() -> None:
     """
     Test ``deserialize``.
     """
-    assert deserialize("""'["O''Malley''s"]'""") == ["O'Malley's"]
+    assert deserialize("gASVEQAAAAAAAABdlIwKTydNYWxsZXknc5RhLg==") == ["O'Malley's"]
 
 
 def test_combine_args_kwargs() -> None:

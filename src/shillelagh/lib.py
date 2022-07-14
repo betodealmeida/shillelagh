@@ -1,9 +1,10 @@
 """Helper functions for Shillelagh."""
+import base64
 import inspect
 import itertools
-import json
 import math
 import operator
+import pickle
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type
 
 from pkg_resources import iter_entry_points
@@ -230,7 +231,7 @@ def serialize(value: Any) -> str:
     This function is used with the SQLite backend, in order to serialize
     the arguments needed to instantiate an adapter via a virtual table.
     """
-    return f"'{escape(json.dumps(value))}'"
+    return escape(base64.b64encode(pickle.dumps(value)).decode())
 
 
 def deserialize(value: str) -> Any:
@@ -240,7 +241,7 @@ def deserialize(value: str) -> Any:
     This function is used by the SQLite backend, in order to deserialize
     the virtual table definition and instantiate an adapter.
     """
-    return json.loads(unescape(value[1:-1]))
+    return pickle.loads(base64.b64decode(unescape(value).encode()))
 
 
 def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-branches
@@ -255,9 +256,9 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-
     """
     Build a SQL query.
 
-    This is used by the GSheets and Socrata adapters, which use a simplified
-    SQL dialect to fetch data. For GSheets a column map is required, since the
-    SQL references columns by label ("A", "B", etc.) instead of name.
+    This is used by adapters which use a simplified SQL dialect to fetch data. For
+    GSheets a column map is required, since the SQL references columns by label
+    ("A", "B", etc.) instead of name.
     """
     sql = "SELECT *"
 
