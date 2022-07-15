@@ -26,6 +26,7 @@ from shillelagh.filters import (
     Operator,
     Range,
 )
+from shillelagh.lib import serialize
 
 from ...fakes import FakeEntryPoint
 
@@ -254,7 +255,9 @@ def test_csvfile(fs: FakeFilesystem) -> None:
     connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
     connection.createmodule("csvfile", VTModule(CSVFile))
-    cursor.execute("""CREATE VIRTUAL TABLE test USING csvfile('"test.csv"')""")
+    cursor.execute(
+        f"""CREATE VIRTUAL TABLE test USING csvfile('{serialize('test.csv')}')""",
+    )
 
     sql = 'SELECT * FROM test WHERE "index" > 11'
     data = list(cursor.execute(sql))
@@ -306,7 +309,9 @@ def test_csvfile_close_not_modified(fs: FakeFilesystem) -> None:
     connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
     connection.createmodule("csvfile", VTModule(CSVFile))
-    cursor.execute("""CREATE VIRTUAL TABLE test USING csvfile('"test.csv"')""")
+    cursor.execute(
+        f"""CREATE VIRTUAL TABLE test USING csvfile('{serialize('test.csv')}')""",
+    )
 
     sql = 'SELECT * FROM test WHERE "index" > 11'
     data = list(cursor.execute(sql))

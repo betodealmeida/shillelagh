@@ -219,6 +219,7 @@ class S3SelectAPI(Adapter):
         input_serialization: InputSerializationType,
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
+        s3_kwargs: Optional[Dict[str, Any]] = None,
     ):
         super().__init__()
 
@@ -231,6 +232,7 @@ class S3SelectAPI(Adapter):
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
         )
+        self.s3_kwargs = s3_kwargs or {}
 
         self._set_columns()
 
@@ -264,6 +266,7 @@ class S3SelectAPI(Adapter):
             Expression=sql,
             InputSerialization=self.input_serialization,
             OutputSerialization={"JSON": {}},
+            **self.s3_kwargs,
         )
 
         # a JSON document might be split across different events

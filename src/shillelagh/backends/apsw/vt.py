@@ -236,7 +236,7 @@ class VTModule:  # pylint: disable=too-few-public-methods
         """
         Called when a table is first created on a connection.
         """
-        deserialized_args = [deserialize(arg) for arg in args]
+        deserialized_args = [deserialize(arg[1:-1]) for arg in args]
         _logger.debug(
             "Instantiating adapter with deserialized arguments: %s",
             deserialized_args,

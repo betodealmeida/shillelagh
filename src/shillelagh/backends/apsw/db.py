@@ -265,7 +265,8 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         args = adapter.parse_uri(uri)
         kwargs = self._adapter_kwargs.get(key, {})
         formatted_args = ", ".join(
-            serialize(arg) for arg in combine_args_kwargs(adapter, *args, **kwargs)
+            f"'{serialize(arg)}'"
+            for arg in combine_args_kwargs(adapter, *args, **kwargs)
         )
         table_name = escape(uri)
         self._cursor.execute(
@@ -502,20 +503,8 @@ def connect(  # pylint: disable=too-many-arguments
     isolation_level: Optional[str] = None,
     apsw_connection_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Connection:
-    r"""
+    """
     Constructor for creating a connection to the database.
-
-        >>> conn = connect("database.sqlite", ["csvfile", "weatherapi"])
-        >>> curs = conn.cursor()
-
-    Let's create a fake CSV file and access it:
-
-        >>> from pyfakefs.fake_filesystem_unittest import Patcher
-        >>> with Patcher() as patcher:
-        ...     fake_file = patcher.fs.create_file('/foo/bar.csv', contents='"a","b"\n1,2\n3,4')
-        ...     list(curs.execute("SELECT * FROM '/foo/bar.csv'"))
-        [(1.0, 2.0), (3.0, 4.0)]
-
     """
     if adapters is None and safe:
         adapters = []
