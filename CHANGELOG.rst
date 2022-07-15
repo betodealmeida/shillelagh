@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 1.0.16 - 2022-07-15
+===========================
+
+- Better serialize/deserialize for virtual table arguments, supporting bytes and other types
+
 Version 1.0.15 - 2022-07-13
 ===========================
 
