@@ -146,12 +146,9 @@ def get_adapter_for_table_name(
     using the connection to properly pass any adapter kwargs.
     """
     raw_connection = cast(db.Connection, connection.engine.raw_connection())
-    adapter = find_adapter(
+    adapter, args, kwargs = find_adapter(
         table_name,
         raw_connection._adapter_kwargs,
         raw_connection._adapters,
     )
-    key = adapter.__name__.lower()
-    args = adapter.parse_uri(table_name)
-    kwargs = raw_connection._adapter_kwargs.get(key, {})
     return adapter(*args, **kwargs)  # type: ignore

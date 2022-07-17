@@ -1,13 +1,13 @@
 pyenv: .python-version
 
-.python-version: setup.cfg
+.python-version: requirements/test.txt
 	if [ -z "`pyenv virtualenvs | grep shillelagh`" ]; then\
 	    pyenv virtualenv shillelagh;\
 	fi
 	if [ ! -f .python-version ]; then\
 	    pyenv local shillelagh;\
 	fi
-	pip install -e '.[testing]'
+	pip install -r requirements/test.txt
 	touch .python-version
 
 test: pyenv

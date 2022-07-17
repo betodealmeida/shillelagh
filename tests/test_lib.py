@@ -349,8 +349,10 @@ def test_find_adapter(mocker: MockerFixture) -> None:
     Test ``find_adapter``.
     """
     adapter1 = mocker.MagicMock()
+    adapter1.parse_uri.return_value = ("1",)
     adapter1.configure_mock(__name__="adapter1")
     adapter2 = mocker.MagicMock()
+    adapter2.parse_uri.return_value = ("2",)
     adapter2.configure_mock(__name__="adapter2")
 
     uri = "https://example.com/"
@@ -362,11 +364,11 @@ def test_find_adapter(mocker: MockerFixture) -> None:
 
     adapter1.supports.return_value = True
     adapter2.supports.side_effect = [None, False]
-    assert find_adapter(uri, adapter_kwargs, adapters) == adapter1
+    assert find_adapter(uri, adapter_kwargs, adapters) == (adapter1, ("1",), {})
 
     adapter1.supports.return_value = False
     adapter2.supports.side_effect = [None, True]
-    assert find_adapter(uri, adapter_kwargs, adapters) == adapter2
+    assert find_adapter(uri, adapter_kwargs, adapters) == (adapter2, ("2",), {})
 
 
 def test_is_null() -> None:

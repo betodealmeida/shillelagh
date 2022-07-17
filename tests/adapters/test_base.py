@@ -74,7 +74,7 @@ def test_adapter_read_only() -> None:
 
     with pytest.raises(NotSupportedError) as excinfo:
         adapter.update_data(1, {"hello": "universe"})
-    assert str(excinfo.value) == "Adapter does not support ``DELETE`` statements"
+    assert str(excinfo.value) == "Adapter does not support ``UPDATE`` statements"
 
 
 def test_adapter_get_data() -> None:

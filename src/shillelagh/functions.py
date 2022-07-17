@@ -48,10 +48,7 @@ def get_metadata(
         }
 
     """
-    adapter = find_adapter(uri, adapter_kwargs, adapters)
-    key = adapter.__name__.lower()
-    args = adapter.parse_uri(uri)
-    kwargs = adapter_kwargs.get(key, {})
+    adapter, args, kwargs = find_adapter(uri, adapter_kwargs, adapters)
     instance = adapter(*args, **kwargs)
 
     return json.dumps(

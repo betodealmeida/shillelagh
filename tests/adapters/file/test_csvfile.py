@@ -221,18 +221,15 @@ def test_csvfile_get_data(mocker: MockerFixture) -> None:
         {"rowid": 1, "index": 11.0, "temperature": 13.1, "site": "Blacktail_Loop"},
     ]
 
-    assert (
-        list(
-            adapter.get_data(
-                {
-                    "index": Range(None, 11, False, True),
-                    "temperature": Range(14, None, False, False),
-                },
-                [],
-            ),
-        )
-        == [{"rowid": 0, "index": 10.0, "temperature": 15.2, "site": "Diamond_St"}]
-    )
+    assert list(
+        adapter.get_data(
+            {
+                "index": Range(None, 11, False, True),
+                "temperature": Range(14, None, False, False),
+            },
+            [],
+        ),
+    ) == [{"rowid": 0, "index": 10.0, "temperature": 15.2, "site": "Diamond_St"}]
 
 
 def test_csvfile_get_data_impossible_filter(mocker: MockerFixture) -> None:
@@ -343,6 +340,27 @@ def test_dispatch(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     sql = """SELECT * FROM "/test.csv" WHERE "index" > 11"""
     data = list(cursor.execute(sql))
     assert data == [(12.0, 13.3, "Platinum_St"), (13.0, 12.1, "Kodiak_Trail")]
+
+
+def test_drop_table(mocker: MockerFixture, fs: FakeFilesystem) -> None:
+    """
+    Test that dropping the table removes the file.
+    """
+    entry_points = [FakeEntryPoint("csvfile", CSVFile)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    with open("test.csv", "w", encoding="utf-8") as fp:
+        fp.write(CONTENTS)
+
+    connection = connect(":memory:", ["csvfile"])
+    cursor = connection.cursor()
+
+    sql = 'DROP TABLE "/test.csv"'
+    cursor.execute(sql)
+    assert not Path("test.csv").exists()
 
 
 def test_row_tracker() -> None:

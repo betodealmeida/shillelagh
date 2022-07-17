@@ -967,12 +967,12 @@ def test_execute_invalid_json(mocker: MockerFixture) -> None:
     )
 
     sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/5/edit#gid=1"'''
-    with pytest.raises(InterfaceError) as excinfo:
+    with pytest.raises(InterfaceError) as excinfo:  # type: ignore
         cursor.execute(sql)
     assert str(excinfo.value) == "An unexpected error occurred"
 
     sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/5/edit#gid=2"'''
-    with pytest.raises(ProgrammingError) as excinfo:
+    with pytest.raises(ProgrammingError) as excinfo:  # type: ignore
         cursor.execute(sql)
     assert str(excinfo.value) == "Response from Google is not valid JSON."
 
@@ -1547,6 +1547,57 @@ def test_update_data(
     )
     with pytest.raises(ProgrammingError) as excinfo:
         gsheets_adapter.update_row(3, {"cnt": "13", "country": "PL"})
+    assert str(excinfo.value) == "Requested entity was not found."
+
+
+def test_drop_table(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
+    """
+    Test ``drop_table``.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
+        return_value="SECRET",
+    )
+
+    session = requests.Session()
+    session.mount("https://", simple_sheet_adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.adapter.GSheetsAPI._get_session",
+        return_value=session,
+    )
+    simple_sheet_adapter.register_uri(
+        "POST",
+        "https://sheets.googleapis.com/v4/spreadsheets/1:batchUpdate",
+        json={
+            "spreadsheetId": "1",
+            "replies": [],
+        },
+    )
+
+    gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit", "XXX")
+    gsheets_adapter.drop_table()
+    assert simple_sheet_adapter.last_request.json() == {
+        "requests": [{"deleteSheet": {"sheetId": 0}}],
+    }
+
+    simple_sheet_adapter.register_uri(
+        "POST",
+        "https://sheets.googleapis.com/v4/spreadsheets/1:batchUpdate",
+        json={
+            "error": {
+                "code": 404,
+                "message": "Requested entity was not found.",
+                "status": "NOT_FOUND",
+            },
+        },
+    )
+
+    gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1/edit", "XXX")
+    with pytest.raises(ProgrammingError) as excinfo:
+        gsheets_adapter.drop_table()
     assert str(excinfo.value) == "Requested entity was not found."
 
 
