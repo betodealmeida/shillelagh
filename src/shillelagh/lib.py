@@ -444,7 +444,7 @@ def find_adapter(
     uri: str,
     adapter_kwargs: Dict[str, Any],
     adapters: List[Type[Adapter]],
-) -> Type[Adapter]:
+) -> Tuple[Type[Adapter], Tuple[Any, ...], Dict[str, Any]]:
     """
     Find an adapter that handles a given URI.
 
@@ -460,7 +460,8 @@ def find_adapter(
         kwargs = adapter_kwargs.get(key, {})
         supported: Optional[bool] = adapter.supports(uri, fast=True, **kwargs)
         if supported:
-            return adapter
+            args = adapter.parse_uri(uri)
+            return adapter, args, kwargs
         if supported is None:
             candidates.add(adapter)
 
@@ -468,6 +469,7 @@ def find_adapter(
         key = adapter.__name__.lower()
         kwargs = adapter_kwargs.get(key, {})
         if adapter.supports(uri, fast=False, **kwargs):
-            return adapter
+            args = adapter.parse_uri(uri)
+            return adapter, args, kwargs
 
     raise ProgrammingError(f"Unsupported table: {uri}")

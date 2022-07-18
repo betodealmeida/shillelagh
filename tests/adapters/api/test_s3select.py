@@ -3,6 +3,8 @@ Tests for the s3select adapter.
 """
 # pylint: disable=unused-argument, redefined-outer-name, use-implicit-booleaness-not-comparison
 
+from typing import cast
+from unittest.mock import MagicMock
 from urllib.parse import urlparse
 
 import pytest
@@ -75,7 +77,7 @@ def test_get_input_serialization() -> None:
 
 
 @pytest.fixture
-def boto3_client(mocker: MockerFixture) -> None:
+def boto3_client(mocker: MockerFixture) -> MagicMock:
     """
     Mock the boto3 client.
     """
@@ -124,9 +126,10 @@ def boto3_client(mocker: MockerFixture) -> None:
             {"End": {}},
         ],
     }
+    return cast(MagicMock, boto3.client())
 
 
-def test_s3select(boto3_client: None) -> None:
+def test_s3select(boto3_client: MagicMock) -> None:
     """
     Test the adapter.
     """
@@ -138,7 +141,19 @@ def test_s3select(boto3_client: None) -> None:
     assert data == [("Sam", "(949) 555-1234", "Irvine", "Solutions Architect")]
 
 
-def test_impossible_condition(boto3_client: None) -> None:
+def test_drop_table(boto3_client: MagicMock) -> None:
+    """
+    Test that dropping the table deletes the object from S3.
+    """
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = 'DROP TABLE "s3://bucket/file.csv"'
+    cursor.execute(sql)
+    boto3_client.delete_object.assert_called_with(Bucket="bucket", Key="file.csv")
+
+
+def test_impossible_condition(boto3_client: MagicMock) -> None:
     """
     Test for apsw 3.36 where an impossible condition is passed.
     """

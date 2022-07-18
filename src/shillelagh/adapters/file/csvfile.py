@@ -237,3 +237,6 @@ class CSVFile(Adapter):
 
         os.replace(self.path.with_suffix(".csv.bak"), self.path)
         self.modified = False
+
+    def drop_table(self) -> None:
+        self.path.unlink()

@@ -40,6 +40,7 @@ class Adapter:
     # explicitly listed:
     #
     #     >>> engine = create_engine("shillelagh+safe://", adapters=["gsheetsapi"])
+    #
     safe = False
 
     def __init__(self, *args: Any, **kwargs: Any):  # pylint: disable=unused-argument
@@ -194,8 +195,13 @@ class Adapter:
         This method by default will call a delete followed by an insert.
         Adapters can implement their own more efficient methods.
         """
-        self.delete_data(row_id)
-        self.insert_data(row)
+        try:
+            self.delete_data(row_id)
+            self.insert_data(row)
+        except NotSupportedError as ex:
+            raise NotSupportedError(
+                "Adapter does not support ``UPDATE`` statements",
+            ) from ex
 
     def update_row(self, row_id: int, row: Row) -> None:
         """
@@ -215,4 +221,9 @@ class Adapter:
 
         Adapters should use this method to perform any pending changes when the
         connection is closed.
+        """
+
+    def drop_table(self) -> None:
+        """
+        Drop a table.
         """

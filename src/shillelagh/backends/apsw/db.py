@@ -5,6 +5,7 @@ A DB API 2.0 wrapper for APSW.
 import datetime
 import itertools
 import logging
+import re
 from collections import Counter
 from functools import partial, wraps
 from typing import (
@@ -65,6 +66,10 @@ sqlite_version_info = tuple(
 
 NO_SUCH_TABLE = "SQLError: no such table: "
 SCHEMA = "main"
+DROP_TABLE = re.compile(
+    rf'^\s*DROP\s+TABLE\s+(IF\s+EXISTS\s+)?({SCHEMA}\.)?(?P<uri>(.*?)|(".*?"))\s*;?\s*$',
+    re.IGNORECASE,
+)
 
 CURSOR_METHOD = TypeVar("CURSOR_METHOD", bound=Callable[..., Any])
 
@@ -230,6 +235,17 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
                 uri = message[len(NO_SUCH_TABLE) :]
                 self._create_table(uri)
 
+        drop_table_match = DROP_TABLE.match(operation)
+        if drop_table_match:
+            uri = drop_table_match.groupdict()["uri"].strip('"')
+            adapter, args, kwargs = find_adapter(
+                uri,
+                self._adapter_kwargs,
+                self._adapters,
+            )
+            instance = adapter(*args, **kwargs)
+            instance.drop_table()
+
         return self
 
     def _convert(self, cursor: "apsw.Cursor") -> Iterator[Tuple[Any, ...]]:
@@ -259,11 +275,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         if uri.startswith(prefix):
             uri = uri[len(prefix) :]
 
-        # collect arguments from URI and connection and serialize them
-        adapter = find_adapter(uri, self._adapter_kwargs, self._adapters)
-        key = adapter.__name__.lower()
-        args = adapter.parse_uri(uri)
-        kwargs = self._adapter_kwargs.get(key, {})
+        adapter, args, kwargs = find_adapter(uri, self._adapter_kwargs, self._adapters)
         formatted_args = ", ".join(
             f"'{serialize(arg)}'"
             for arg in combine_args_kwargs(adapter, *args, **kwargs)

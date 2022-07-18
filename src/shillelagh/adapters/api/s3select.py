@@ -301,3 +301,6 @@ class S3SelectAPI(Adapter):
             row["rowid"] = i
             yield row
             _logger.debug(row)
+
+    def drop_table(self) -> None:
+        self.s3_client.delete_object(Bucket=self.bucket, Key=self.key, **self.s3_kwargs)

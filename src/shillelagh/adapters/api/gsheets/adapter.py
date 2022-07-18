@@ -708,3 +708,32 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         self.modified = False
         _logger.info("Success!")
+
+    def drop_table(self) -> None:
+        """
+        Delete a sheet.
+        """
+        session = self._get_session()
+        body = {
+            "requests": [
+                {
+                    "deleteSheet": {
+                        "sheetId": self._sheet_id,
+                    },
+                },
+            ],
+        }
+        url = (
+            "https://sheets.googleapis.com/v4/spreadsheets/"
+            f"{self._spreadsheet_id}:batchUpdate"
+        )
+        _logger.info("POST %s", url)
+        _logger.debug(body)
+        response = session.post(
+            url,
+            json=body,
+        )
+        payload = response.json()
+        _logger.debug(payload)
+        if "error" in payload:
+            raise ProgrammingError(payload["error"]["message"])

@@ -584,3 +584,21 @@ def test_import_warning(mocker: MockerFixture) -> None:
     _logger.warning.reset_mock()
     connect(":memory:", ["good"])
     _logger.warning.assert_not_called()
+
+
+def test_drop_table(mocker: MockerFixture) -> None:
+    """
+    Test ``drop_table``.
+    """
+    drop_table = mocker.patch.object(FakeAdapter, "drop_table")
+    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
+    mocker.patch(
+        "shillelagh.backends.apsw.db.iter_entry_points",
+        return_value=entry_points,
+    )
+
+    connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
+    cursor = connection.cursor()
+
+    cursor.execute('DROP TABLE "dummy://"')
+    drop_table.assert_called()  # type: ignore
