@@ -221,15 +221,18 @@ def test_csvfile_get_data(mocker: MockerFixture) -> None:
         {"rowid": 1, "index": 11.0, "temperature": 13.1, "site": "Blacktail_Loop"},
     ]
 
-    assert list(
-        adapter.get_data(
-            {
-                "index": Range(None, 11, False, True),
-                "temperature": Range(14, None, False, False),
-            },
-            [],
-        ),
-    ) == [{"rowid": 0, "index": 10.0, "temperature": 15.2, "site": "Diamond_St"}]
+    assert (
+        list(
+            adapter.get_data(
+                {
+                    "index": Range(None, 11, False, True),
+                    "temperature": Range(14, None, False, False),
+                },
+                [],
+            ),
+        )
+        == [{"rowid": 0, "index": 10.0, "temperature": 15.2, "site": "Diamond_St"}]
+    )
 
 
 def test_csvfile_get_data_impossible_filter(mocker: MockerFixture) -> None:

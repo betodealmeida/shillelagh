@@ -1,7 +1,9 @@
-# pylint: disable=invalid-name
 """
 An adapter for in-memory Pandas dataframes.
 """
+
+# pylint: disable=invalid-name
+
 import inspect
 import operator
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
@@ -68,6 +70,50 @@ def find_dataframe(uri: str) -> Optional[pd.DataFrame]:
     return None
 
 
+def get_df_data(
+    df: pd.DataFrame,
+    columns: Dict[str, Field],
+    bounds: Dict[str, Filter],
+    order: List[Tuple[str, RequestedOrder]],
+) -> Iterator[Row]:
+    """
+    Apply the ``get_data`` method on a Pandas dataframe.
+    """
+    column_names = list(columns.keys())
+    df = df[column_names]
+
+    for column_name, filter_ in bounds.items():
+        if isinstance(filter_, Impossible):
+            return
+        if isinstance(filter_, Equal):
+            df = df[df[column_name] == filter_.value]
+        elif isinstance(filter_, NotEqual):
+            df = df[df[column_name] != filter_.value]
+        elif isinstance(filter_, Range):
+            if filter_.start is not None:
+                operator_ = operator.ge if filter_.include_start else operator.gt
+                df = df[operator_(df[column_name], filter_.start)]
+            if filter_.end is not None:
+                operator_ = operator.le if filter_.include_end else operator.lt
+                df = df[operator_(df[column_name], filter_.end)]
+        elif isinstance(filter_, IsNull):
+            df = df[~df[column_name].notnull()]
+        elif isinstance(filter_, IsNotNull):
+            df = df[df[column_name].notnull()]
+        else:
+            raise ProgrammingError(f"Invalid filter: {filter_}")
+
+    if order:
+        by, requested_orders = list(zip(*order))
+        ascending = [
+            requested_order == Order.ASCENDING for requested_order in requested_orders
+        ]
+        df = df.sort_values(by=list(by), ascending=ascending)
+
+    for row in df.itertuples(name=None):
+        yield dict(zip(["rowid", *column_names], row))
+
+
 class PandasMemory(Adapter):
 
     """
@@ -107,40 +153,7 @@ class PandasMemory(Adapter):
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
     ) -> Iterator[Row]:
-        column_names = list(self.columns.keys())
-        df = self.df[column_names]
-
-        for column_name, filter_ in bounds.items():
-            if isinstance(filter_, Impossible):
-                return
-            if isinstance(filter_, Equal):
-                df = df[df[column_name] == filter_.value]
-            elif isinstance(filter_, NotEqual):
-                df = df[df[column_name] != filter_.value]
-            elif isinstance(filter_, Range):
-                if filter_.start is not None:
-                    operator_ = operator.ge if filter_.include_start else operator.gt
-                    df = df[operator_(df[column_name], filter_.start)]
-                if filter_.end is not None:
-                    operator_ = operator.le if filter_.include_end else operator.lt
-                    df = df[operator_(df[column_name], filter_.end)]
-            elif isinstance(filter_, IsNull):
-                df = df[~df[column_name].notnull()]
-            elif isinstance(filter_, IsNotNull):
-                df = df[df[column_name].notnull()]
-            else:
-                raise ProgrammingError(f"Invalid filter: {filter_}")
-
-        if order:
-            by, requested_orders = list(zip(*order))
-            ascending = [
-                requested_order == Order.ASCENDING
-                for requested_order in requested_orders
-            ]
-            df = df.sort_values(by=list(by), ascending=ascending)
-
-        for row in df.itertuples(name=None):
-            yield dict(zip(["rowid", *column_names], row))
+        yield from get_df_data(self.df, self.columns, bounds, order)
 
     def insert_data(self, row: Row) -> int:
         row_id: Optional[int] = row.pop("rowid")

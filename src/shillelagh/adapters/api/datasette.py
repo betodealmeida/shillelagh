@@ -3,6 +3,7 @@ An adapter to Datasette instances.
 
 See https://datasette.io/ for more information.
 """
+
 import logging
 import urllib.parse
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, cast
@@ -42,15 +43,15 @@ def is_datasette(uri: str) -> bool:
     """
     Identify Datasette servers via a HEAD request.
     """
-    parts = list(urllib.parse.urlparse(uri))
+    parsed = urllib.parse.urlparse(uri)
     try:
         # pylint: disable=unused-variable
-        mountpoint, database, table = parts[2].rsplit("/", 2)
+        mountpoint, database, table = parsed.path.rsplit("/", 2)
     except ValueError:
         return False
 
-    parts[2] = f"{mountpoint}/-/versions.json"
-    uri = urllib.parse.urlunparse(parts)
+    parsed = parsed._replace(path=f"{mountpoint}/-/versions.json")
+    uri = urllib.parse.urlunparse(parsed)
 
     session = requests_cache.CachedSession(
         cache_name="datasette_cache",
