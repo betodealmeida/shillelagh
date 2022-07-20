@@ -6,6 +6,7 @@ name: Run tests with latest dependencies
 on:
   schedule:
     - cron:  '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
   build:
