@@ -208,46 +208,6 @@ def get_values_from_row(row: Row, column_map: Dict[str, str]) -> List[Any]:
     return [row.get(column, "") for column in itertools.islice(gen_letters(), n_cols)]
 
 
-def get_credentials(
-    access_token: Optional[str] = None,
-    service_account_file: Optional[str] = None,
-    service_account_info: Optional[Dict[str, Any]] = None,
-    subject: Optional[str] = None,
-    app_default_credentials: Optional[bool] = False,
-) -> Optional[Credentials]:
-    """
-    Return a set of credentials.
-
-    The user can provide either an OAuth token directly, the location of a service
-    account file, or the contents of the service account directly. When passing
-    credentials from a service account the user can also specify a "subject", used
-    to impersonate a given user. Application default credentials can also be used
-    from the environment in lieu of directly specifying a token or service account
-    information.
-    """
-    if access_token:
-        return google.oauth2.credentials.Credentials(access_token)
-
-    if service_account_file:
-        return google.oauth2.service_account.Credentials.from_service_account_file(
-            service_account_file,
-            scopes=SCOPES,
-            subject=subject,
-        )
-
-    if service_account_info:
-        return google.oauth2.service_account.Credentials.from_service_account_info(
-            service_account_info,
-            scopes=SCOPES,
-            subject=subject,
-        )
-
-    if app_default_credentials:
-        return google.auth.default(scopes=SCOPES)[0]
-
-    return None
-
-
 def get_value_from_cell(cell: Optional[QueryResultsCell]) -> Any:
     """
     Return the value from cell.

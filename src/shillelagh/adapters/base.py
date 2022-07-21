@@ -86,6 +86,10 @@ class Adapter:
     def parse_uri(uri: str) -> Tuple[Any, ...]:
         """Parse table name, and return arguments to instantiate adapter."""
         raise NotImplementedError("Subclasses must implement ``parse_uri``")
+    
+    @staticmethod
+    def need_operation():
+        return False
 
     def get_metadata(self) -> Dict[str, Any]:  # pylint: disable=no-self-use
         """Return any extra metadata about the table."""

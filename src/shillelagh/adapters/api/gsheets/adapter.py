@@ -15,14 +15,16 @@ from requests import Session
 from shillelagh.adapters.api.gsheets.lib import (
     format_error_message,
     gen_letters,
-    get_credentials,
     get_field,
     get_index_from_letters,
     get_sync_mode,
     get_url,
     get_value_from_cell,
     get_values_from_row,
+    SCOPES
 )
+from shillelagh.adapters.utils import get_credentials
+
 from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.adapters.api.gsheets.typing import QueryResults
 from shillelagh.adapters.base import Adapter
@@ -116,6 +118,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             service_account_info,
             subject,
             app_default_credentials,
+            SCOPES
         )
 
         # Local data. When using DML we switch to the Google Sheets API,

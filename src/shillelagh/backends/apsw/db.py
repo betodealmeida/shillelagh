@@ -434,7 +434,7 @@ class Connection:
     ):
         # create underlying APSW connection
         apsw_connection_kwargs = apsw_connection_kwargs or {}
-        self._connection = apsw.Connection(path, statementcachesize=0, **apsw_connection_kwargs)
+        self._connection = apsw.Connection(path, **apsw_connection_kwargs)
         self.isolation_level = isolation_level
 
         # register adapters
@@ -527,6 +527,7 @@ def connect(  # pylint: disable=too-many-arguments
     """
     Constructor for creating a connection to the database.
     """
+    print("---loading adapter ")
     if adapters is None and safe:
         adapters = []
     adapter_kwargs = adapter_kwargs or {}
@@ -539,11 +540,11 @@ def connect(  # pylint: disable=too-many-arguments
             except (ImportError, ModuleNotFoundError) as ex:
                 _logger.warning("Couldn't load adapter %s", entry_point.name)
                 _logger.debug(ex)
-                continue
             all_adapters.append((entry_point.name, adapter))
 
     all_adapters_names = [name for name, adapter in all_adapters]
-
+    print("all adapters ", all_adapters_names)
+    
     # check if there are any repeated names, to prevent malicious adapters
     if safe:
         repeated = {
@@ -566,7 +567,12 @@ def connect(  # pylint: disable=too-many-arguments
         for name, adapter in all_adapters
         if adapter in enabled_adapters
     }
+
+    print("mapping ", mapping, adapter_kwargs)
+
     adapter_kwargs = {mapping[k]: v for k, v in adapter_kwargs.items()}
+
+    print("-- db got connection")
 
     return Connection(
         path,

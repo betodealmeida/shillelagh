@@ -304,7 +304,10 @@ class String(Field[str, str]):
     def parse(self, value): return value
 
     def quote(self, value: Optional[str]) -> str:
-        return value
+        if value is None:
+            return "NULL"
+        escaped_value = value.replace("'", "''")
+        return f"'{escaped_value}'"
 
 
 class Date(Field[datetime.date, datetime.date]):
