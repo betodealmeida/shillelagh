@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Next
+====
+
+- Add new adapter for CSV/JSON/Parquet files stored in S3
+- Add new adapter for scraping data from HTML tables
+- Add support for ``DROP TABLE``
+
 Version 1.0.16 - 2022-07-15
 ===========================
 

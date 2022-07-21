@@ -12,7 +12,9 @@ Shillelagh
 .. image:: https://img.shields.io/pypi/pyversions/shillelagh
    :alt: PyPI - Python Version
 
-Shillelagh (ʃɪˈleɪlɪ) is an implementation of the `Python DB API 2.0 <https://www.python.org/dev/peps/pep-0249/>`_ based on `SQLite <https://sqlite.org/index.html>`_ (using the `APSW <https://rogerbinns.github.io/apsw/>`_ library):
+Shillelagh (ʃɪˈleɪlɪ) is a Python library and CLI that allows you to query many resources (APIs, files, in memory objects) using SQL. It's user and developer friendly, making it trivial to access resources and easy to add support for new ones.
+
+The library is an implementation of the `Python DB API 2.0 <https://www.python.org/dev/peps/pep-0249/>`_ based on `SQLite <https://sqlite.org/index.html>`_ (using the `APSW <https://rogerbinns.github.io/apsw/>`_ library):
 
 .. code-block:: python
 
@@ -44,6 +46,18 @@ And a command-line utility:
 
     $ shillelagh
     sql> SELECT * FROM a_table
+
+Why SQL?
+========
+
+Sharks have been around for a long time. They're older than trees and the rings of Saturn, actually! The reason they haven't changed that much in hundreds of millions of years is because they're really good at what they do.
+
+SQL has been around for some 50 years for the same reason: it's really good at what it does.
+
+Why "Shillelagh"?
+=================
+
+Picture a leprechaun hitting APIs with a big stick so that they accept SQL.
 
 Installation
 ============
@@ -87,11 +101,18 @@ Queries like this are supported by `adapters <https://shillelagh.readthedocs.io/
 - Google Spreadsheets
 - `WeatherAPI <https://www.weatherapi.com/>`_
 - `Socrata Open Data API <https://dev.socrata.com/>`_
+- `Datasette tables <https://datasette.io/>`_
+- HTML tables
+- S3 files (Parquet, CSV, JSON)
+- GitHub
 - CSV files
 - Pandas dataframes
-- `Datasette tables <https://datasette.io/>`_
-- GitHub (currently only pull requests, but other endpoints can be easily added)
-- System information (currently only CPU usage, but other resources can be easily added)
+- System information
+
+There are also 3rd-party adapters:
+
+- `Airtable <https://github.com/cancan101/airtable-db-api>`_
+- `GraphQL <https://github.com/cancan101/graphql-db-api>`_
 
 A query can combine data from multiple adapters:
 
