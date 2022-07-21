@@ -114,6 +114,17 @@ def get_df_data(
         yield dict(zip(["rowid", *column_names], row))
 
 
+def get_columns_from_df(df: pd.DataFrame) -> Dict[str, Field]:
+    """
+    Construct adapter columns from a Pandas dataframe.
+    """
+    return {
+        column_name: get_field(dtype)
+        for column_name, dtype in zip(df.columns, df.dtypes)
+        if dtype.kind in type_map
+    }
+
+
 class PandasMemory(Adapter):
 
     """
@@ -137,11 +148,7 @@ class PandasMemory(Adapter):
             raise ProgrammingError("Could not find dataframe")
 
         self.df = df
-        self.columns = {
-            column_name: get_field(dtype)
-            for column_name, dtype in zip(self.df.columns, self.df.dtypes)
-            if dtype.kind in type_map
-        }
+        self.columns = get_columns_from_df(df)
 
     def get_columns(self) -> Dict[str, Field]:
         return self.columns

@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 import pandas as pd
 
 from shillelagh.adapters.base import Adapter
-from shillelagh.adapters.memory.pandas import get_df_data, get_field, type_map
+from shillelagh.adapters.memory.pandas import get_columns_from_df, get_df_data
 from shillelagh.fields import Field
 from shillelagh.filters import Filter
 from shillelagh.lib import SimpleCostModel
@@ -62,11 +62,7 @@ class HTMLTableAPI(Adapter):
         super().__init__()
 
         self.df = pd.read_html(uri, flavor="bs4")[index]
-        self.columns = {
-            column_name: get_field(dtype)
-            for column_name, dtype in zip(self.df.columns, self.df.dtypes)
-            if dtype.kind in type_map
-        }
+        self.columns = get_columns_from_df(self.df)
 
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
