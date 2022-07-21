@@ -7,11 +7,11 @@
 #
 -e file:.
     # via -r requirements/base.in
-apsw==3.9.2.post1
+apsw==3.38.5.post1
     # via shillelagh
-certifi==2021.10.8
+certifi==2022.6.15
     # via requests
-charset-normalizer==2.0.12
+charset-normalizer==2.1.0
     # via requests
 greenlet==1.1.2
     # via sqlalchemy
@@ -19,13 +19,13 @@ idna==3.3
     # via requests
 python-dateutil==2.8.2
     # via shillelagh
-requests==2.27.1
+requests==2.28.1
     # via shillelagh
 six==1.16.0
     # via python-dateutil
-sqlalchemy==1.4.36
+sqlalchemy==1.4.39
     # via shillelagh
-typing-extensions==4.2.0
+typing-extensions==4.3.0
     # via shillelagh
-urllib3==1.26.9
+urllib3==1.26.10
     # via requests
