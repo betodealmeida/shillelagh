@@ -86,6 +86,19 @@ InputSerializationType = Union[
 ]
 
 
+def unescape_backslash(value: str) -> str:
+    r"""
+    Unescape backslashes, converting ``\\n`` into ``\n``.
+
+    For fields like ``RecordDelimiter`` where the user passes a value of "\r\n", the
+    parameter should be convert to actual carriage return and new line so that S3
+    understands it (ie, ``\r\n`` and not ``\\r\\n``).
+
+    Apparently there's no easy way to do that in Python.
+    """
+    return value.encode("raw_unicode_escape").decode("unicode_escape")
+
+
 def get_input_serialization(parsed: urllib.parse.ParseResult) -> InputSerializationType:
     """
     Build the input serialization object.
@@ -112,7 +125,7 @@ def get_input_serialization(parsed: urllib.parse.ParseResult) -> InputSerializat
 
     if format_ == "csv":
         input_serialization["CSV"] = {
-            k: v[-1]
+            k: unescape_backslash(v[-1])
             for k, v in options.items()
             if k
             in CSVSerializationOptionsType.__annotations__  # pylint: disable=no-member

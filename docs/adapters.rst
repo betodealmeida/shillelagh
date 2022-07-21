@@ -158,6 +158,63 @@ You can specify a fixed number of header rows by adding ``headers=N`` to the she
     connection = engine.connect()
     connection.execute("SELECT * FROM simple_sheet")
 
+Deleting sheets
+~~~~~~~~~~~~~~~
+
+You can delete sheets by running ``DROP TABLE`` on them. Be careful.
+
+S3 files
+========
+
+You can query Parquet, CSV, and JSON files stored in S3:
+
+.. code-block:: sql
+
+    SELECT * FROM "s3://bucket/path/to/file.parquet"
+
+The format is determined from the file extension, and should be one of ``.parquet``, ``.csv``, or ``.json``. If the file has no extension or a different extension you can explicitly declare the format:
+
+.. code-block:: sql
+
+    SELECT * FROM "s3://bucket/path/to/file?format=csv"
+
+In addition to ``format``, the following URL parameters are supported:
+
+- ``CompressionType``: one of ``NONE``, ``GZIP``, or ``BZIP2``.
+
+For JSON files only:
+
+- ``Type``: either ``DOCUMENT`` or ``LINES``.
+
+For CSV files only:
+
+- ``AllowQuotedRecordDelimiter``: specifies that CSV field values may contain quoted record delimiters and such records should be allowed. Default value is ``FALSE``. Setting this value to ``TRUE`` may lower performance.
+-  ``Comments``: a single character used to indicate that a row should be ignored when the character is present at the start of that row. You can specify any character to indicate a comment line.
+- ``FieldDelimiter``: a single character used to separate individual fields in a record. You can specify an arbitrary delimiter.
+- ``FileHeaderInfo``: one of ``NONE`` (first line is not a header), ``IGNORE`` (skip first line), or ``USE`` (use first line for column names). Describes the first line of input.
+- ``QuoteCharacter``: a single character used for escaping when the field delimiter is part of the value. For example, if the value is ``a, b``, Amazon S3 wraps this field value in quotation marks, as follows: ``" a , b "``.
+- ``QuoteEscapeCharacter``: a single character used for escaping the quotation mark character inside an already escaped value. For example, the value ``""" a , b """`` is parsed as ``" a , b "``.
+- ``RecordDelimiter``: a single character used to separate individual records in the input. Instead of the default value, you can specify an arbitrary delimiter.
+
+You can find more information `here <https://docs.aws.amazon.com/AmazonS3/latest/API/API_SelectObjectContent.html#API_SelectObjectContent_RequestSyntax>`_.
+
+Note that you might need to set ``RecordDelimiter`` to ``\r\n`` depending on the CSV file. If you see that the last column in your CSV file has an extra ``\r`` at the end then this should be solved by setting the delimiter:
+
+.. code-block:: sql
+
+    SELECT * FROM "s3://bucket/path/to/file.csv?RecordDelimiter=\r\n"
+
+Deleting object
+~~~~~~~~~~~~~~~
+
+You can use ``DROP TABLE`` to delete an object in S3:
+
+.. code-block:: sql
+
+    DROP TABLE "s3://bucket/path/to/file.csv"
+
+This is irreversible, and unless you have backups in S3 the data will be lost forever. Be careful.
+
 CSV files
 =========
 
@@ -167,7 +224,9 @@ CSV (comma separated values) are supported (`an example <https://github.com/beto
 
     SELECT * FROM "/path/to/file.csv";
 
-The adapter supports full DML, so you can also ``INSERT``, ``UPDATE``, or ``DELETE`` rows from the CSV file. Deleted rows are marked for deletion, modified and inserted rows are appended at the end of the file, and garbage collection is applied when the connection is closed.
+The adapter supports full DML, so you can also ``INSERT``, ``UPDATE``, or ``DELETE`` rows from the CSV file. Deleted rows are marked for deletion; modified and inserted rows are appended at the end of the file; and garbage collection is applied when the connection is closed.
+
+You can also delete the file by running ``DROP TABLE``.
 
 
 Socrata
@@ -266,6 +325,27 @@ The GitHub adapter currently allows pull requests to be queried (other endpoints
     WHERE
         state = 'open' AND
         username = 'betodealmeida'
+
+HTML Tables
+===========
+
+Shillelagh can be used to scrape data from HTML tables:
+
+.. code-block:: sql
+
+    SELECT *
+    FROM "https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population"
+    WHERE "UN Region" = 'Oceania'
+    LIMIT 5
+
+By default this will return data from the first HTML ``<table>`` in the page. If you want to query a different table you can pass an index as an anchor:
+
+.. code-block:: sql
+
+    SELECT *
+    FROM "https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population#1"
+
+This will return data from the second (the index is 0-based) table.
 
 System resources
 ================
