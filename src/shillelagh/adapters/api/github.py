@@ -133,6 +133,7 @@ class GitHubAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
     ) -> Iterator[Row]:
         # apply default values
         for column in TABLES[self.base][self.resource]:

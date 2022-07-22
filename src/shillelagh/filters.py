@@ -20,6 +20,8 @@ class Operator(Enum):
     IS_NULL = "IS NULL"
     IS_NOT_NULL = "IS NOT NULL"
     LIKE = "LIKE"
+    LIMIT = "LIMIT"
+    OFFSET = "OFFSET"
 
 
 class Side(Enum):

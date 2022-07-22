@@ -62,6 +62,7 @@ class FakeAdapter(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
     ) -> Iterator[Dict[str, Any]]:
         yield from filter_data(iter(self.data), bounds, order)
 

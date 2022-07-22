@@ -28,6 +28,9 @@ class HTMLTableAPI(Adapter):
 
     safe = True
 
+    supports_limit = True
+    supports_offset = True
+
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         parsed = urllib.parse.urlparse(uri)
@@ -73,5 +76,8 @@ class HTMLTableAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        **kwargs: Any,
     ) -> Iterator[Row]:
-        yield from get_df_data(self.df, self.columns, bounds, order)
+        yield from get_df_data(self.df, self.columns, bounds, order, limit, offset)
