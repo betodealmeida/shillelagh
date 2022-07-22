@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name, no-self-use, fixme
+# pylint: disable=invalid-name, fixme
 """
 Parse and format Google Sheet date/time patterns.
 

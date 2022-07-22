@@ -5,16 +5,16 @@ from datetime import datetime
 from typing import List
 
 import pytest
-from pytest_mock import MockerFixture
 
 from shillelagh.adapters.base import Adapter
+from shillelagh.adapters.registry import AdapterLoader
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.fields import DateTime, Order
 from shillelagh.filters import Equal, Range
 from shillelagh.typing import Row
 
-from ..fakes import FakeAdapter, FakeEntryPoint
+from ..fakes import FakeAdapter
 
 
 class FakeAdapterWithDateTime(FakeAdapter):
@@ -168,15 +168,11 @@ def test_adapter_manipulate_rows() -> None:
     ]
 
 
-def test_type_conversion(mocker: MockerFixture) -> None:
+def test_type_conversion(registry: AdapterLoader) -> None:
     """
     Test that native types are converted correctly.
     """
-    entry_points = [FakeEntryPoint("dummy", FakeAdapterWithDateTime)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapterWithDateTime)
 
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()

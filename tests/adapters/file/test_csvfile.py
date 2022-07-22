@@ -28,8 +28,6 @@ from shillelagh.filters import (
 )
 from shillelagh.lib import serialize
 
-from ...fakes import FakeEntryPoint
-
 CONTENTS = """"index","temperature","site"
 10,15.2,"Diamond_St"
 11,13.1,"Blacktail_Loop"
@@ -324,44 +322,32 @@ def test_csvfile_close_not_modified(fs: FakeFilesystem) -> None:
     assert path.stat().st_mtime == datetime(2022, 1, 1, tzinfo=timezone.utc).timestamp()
 
 
-def test_dispatch(mocker: MockerFixture, fs: FakeFilesystem) -> None:
+def test_dispatch() -> None:
     """
     Test the URI dispatcher.
     """
-    entry_points = [FakeEntryPoint("csvfile", CSVFile)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     with open("test.csv", "w", encoding="utf-8") as fp:
         fp.write(CONTENTS)
 
     connection = connect(":memory:", ["csvfile"])
     cursor = connection.cursor()
 
-    sql = """SELECT * FROM "/test.csv" WHERE "index" > 11"""
+    sql = """SELECT * FROM "test.csv" WHERE "index" > 11"""
     data = list(cursor.execute(sql))
     assert data == [(12.0, 13.3, "Platinum_St"), (13.0, 12.1, "Kodiak_Trail")]
 
 
-def test_drop_table(mocker: MockerFixture, fs: FakeFilesystem) -> None:
+def test_drop_table() -> None:
     """
     Test that dropping the table removes the file.
     """
-    entry_points = [FakeEntryPoint("csvfile", CSVFile)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     with open("test.csv", "w", encoding="utf-8") as fp:
         fp.write(CONTENTS)
 
     connection = connect(":memory:", ["csvfile"])
     cursor = connection.cursor()
 
-    sql = 'DROP TABLE "/test.csv"'
+    sql = 'DROP TABLE "test.csv"'
     cursor.execute(sql)
     assert not Path("test.csv").exists()
 

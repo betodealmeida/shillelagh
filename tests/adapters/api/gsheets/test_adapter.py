@@ -27,8 +27,6 @@ from shillelagh.exceptions import (
 from shillelagh.fields import Float, Order, String
 from shillelagh.filters import Equal, Operator
 
-from ....fakes import FakeEntryPoint
-
 
 @pytest.fixture
 def simple_sheet_adapter() -> Iterator[requests_mock.Adapter]:
@@ -160,16 +158,10 @@ def simple_sheet_adapter() -> Iterator[requests_mock.Adapter]:
     yield adapter
 
 
-def test_credentials(mocker: MockerFixture) -> None:
+def test_credentials() -> None:
     """
     Test ``credentials``.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     connection = connect(
         ":memory:",
         ["gsheetsapi"],
@@ -245,12 +237,6 @@ def test_execute(
     """
     Test ``execute``.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
@@ -279,12 +265,6 @@ def test_execute_with_catalog(
     """
     Test execute when using a catalog.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
@@ -323,12 +303,6 @@ def test_execute_filter(
     """
     Test execute when filtering the data.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
@@ -383,12 +357,6 @@ def test_execute_impossible(
 
     This should return no data without network calls.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
@@ -411,12 +379,6 @@ def test_convert_rows(mocker: MockerFixture) -> None:
     """
     Test that rows are converted correctly.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     adapter = requests_mock.Adapter()
     session = requests.Session()
     session.mount("https://", adapter)
@@ -735,12 +697,6 @@ def test_api_bugs(mocker: MockerFixture) -> None:
     """
     Regression test covering API bugs.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     adapter = requests_mock.Adapter()
     session = requests.Session()
     session.mount("https://", adapter)
@@ -827,12 +783,6 @@ def test_execute_json_prefix(
     """
     Test removing the JSON prefix.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
@@ -892,12 +842,6 @@ def test_execute_invalid_json(mocker: MockerFixture) -> None:
 
     The Google Chart API returns HTML when the user is not authenticated.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     adapter = requests_mock.Adapter()
     session = requests.Session()
     session.mount("https://", adapter)
@@ -981,12 +925,6 @@ def test_execute_error_response(mocker: MockerFixture) -> None:
     """
     Test error response handling on execute.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     adapter = requests_mock.Adapter()
     session = requests.Session()
     session.mount("https://", adapter)
@@ -1024,12 +962,6 @@ def test_headers_not_detected(mocker: MockerFixture) -> None:
     """
     Regression test for when headers are not identified correctly.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     adapter = requests_mock.Adapter()
     session = requests.Session()
     session.mount("https://", adapter)
@@ -1098,12 +1030,6 @@ def test_headers_not_detected_no_rows(mocker: MockerFixture) -> None:
     """
     Regression test for when headers are not identified correctly.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     adapter = requests_mock.Adapter()
     session = requests.Session()
     session.mount("https://", adapter)
@@ -1897,12 +1823,6 @@ def test_execute_batch(
     """
     Test executing queries in BATCH mode.
     """
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     session = requests.Session()
     session.mount("https://", simple_sheet_adapter)
     mocker.patch(
@@ -2331,12 +2251,6 @@ def test_empty_middle_column(mocker: MockerFixture) -> None:
                 "parsedNumHeaders": 1,
             },
         },
-    )
-
-    entry_points = [FakeEntryPoint("gsheetsapi", GSheetsAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
     )
 
     session = requests.Session()
