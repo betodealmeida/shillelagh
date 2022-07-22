@@ -198,7 +198,7 @@ class Field(Generic[Internal, External]):
             and self.exact == other.exact,
         )
 
-    def parse(  # pylint: disable=no-self-use
+    def parse(
         self,
         value: Optional[Internal],
     ) -> Optional[External]:
@@ -222,7 +222,7 @@ class Field(Generic[Internal, External]):
         """
         return cast(Optional[External], value)
 
-    def format(  # pylint: disable=no-self-use
+    def format(
         self,
         value: Optional[External],
     ) -> Optional[Internal]:
@@ -233,7 +233,7 @@ class Field(Generic[Internal, External]):
         """
         return cast(Optional[Internal], value)
 
-    def quote(self, value: Optional[Internal]) -> str:  # pylint: disable=no-self-use
+    def quote(self, value: Optional[Internal]) -> str:
         """
         Quote values.
 

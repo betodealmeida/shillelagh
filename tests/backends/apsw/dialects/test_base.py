@@ -4,24 +4,20 @@ Tests for shillelagh.backends.apsw.dialects.base.
 from unittest import mock
 
 import pytest
-from pytest_mock import MockerFixture
 from sqlalchemy import MetaData, Table, create_engine, func, select
 
+from shillelagh.adapters.registry import AdapterLoader
 from shillelagh.backends.apsw.dialects.base import APSWDialect
 from shillelagh.exceptions import ProgrammingError
 
-from ....fakes import FakeAdapter, FakeEntryPoint
+from ....fakes import FakeAdapter
 
 
-def test_create_engine(mocker: MockerFixture) -> None:
+def test_create_engine(registry: AdapterLoader) -> None:
     """
     Test ``create_engine``.
     """
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapter)
 
     engine = create_engine("shillelagh://")
 
@@ -33,10 +29,11 @@ def test_create_engine(mocker: MockerFixture) -> None:
     assert query.scalar() == 3
 
 
-def test_create_engine_no_adapters() -> None:
+def test_create_engine_no_adapters(registry: AdapterLoader) -> None:
     """
     Test ``create_engine`` with invalid adapter.
     """
+    registry.clear()
     engine = create_engine("shillelagh://")
 
     with pytest.raises(ProgrammingError) as excinfo:
@@ -53,15 +50,11 @@ def test_dialect_ping() -> None:
     assert dialect.do_ping(mock_dbapi_connection) is True
 
 
-def test_has_table(mocker: MockerFixture) -> None:
+def test_has_table(registry: AdapterLoader) -> None:
     """
     Test ``has_table``.
     """
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapter)
 
     engine = create_engine("shillelagh://")
     assert engine.has_table("dummy://a")

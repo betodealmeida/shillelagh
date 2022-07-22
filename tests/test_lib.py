@@ -28,7 +28,6 @@ from shillelagh.lib import (
     escape,
     filter_data,
     find_adapter,
-    get_available_adapters,
     is_not_null,
     is_null,
     serialize,
@@ -36,8 +35,6 @@ from shillelagh.lib import (
     update_order,
 )
 from shillelagh.typing import RequestedOrder
-
-from .fakes import FakeAdapter, FakeEntryPoint
 
 
 def test_row_id_manager_empty_range() -> None:
@@ -329,19 +326,6 @@ def test_filter_data() -> None:
     with pytest.raises(ProgrammingError) as excinfo:
         list(filter_data(iter(data), {"a": [1, 2, 3]}, []))  # type: ignore
     assert str(excinfo.value) == "Invalid filter: [1, 2, 3]"
-
-
-def test_get_available_adapters(mocker: MockerFixture) -> None:
-    """
-    Test ``get_available_adapters``.
-    """
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.lib.iter_entry_points",
-        return_value=entry_points,
-    )
-
-    assert get_available_adapters() == {"dummy"}
 
 
 def test_find_adapter(mocker: MockerFixture) -> None:

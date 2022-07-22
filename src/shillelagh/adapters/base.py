@@ -87,7 +87,7 @@ class Adapter:
         """Parse table name, and return arguments to instantiate adapter."""
         raise NotImplementedError("Subclasses must implement ``parse_uri``")
 
-    def get_metadata(self) -> Dict[str, Any]:  # pylint: disable=no-self-use
+    def get_metadata(self) -> Dict[str, Any]:
         """Return any extra metadata about the table."""
         return {}
 
@@ -103,7 +103,7 @@ class Adapter:
             inspect.getmembers(self, lambda attribute: isinstance(attribute, Field)),
         )
 
-    def get_cost(  # pylint: disable=unused-argument, no-self-use
+    def get_cost(  # pylint: disable=unused-argument
         self,
         filtered_columns: List[Tuple[str, Operator]],
         order: List[Tuple[str, RequestedOrder]],
@@ -152,7 +152,7 @@ class Adapter:
                 for column_name, value in row.items()
             }
 
-    def insert_data(self, row: Row) -> int:  # pylint: disable=no-self-use
+    def insert_data(self, row: Row) -> int:
         """
         Insert a single row with adapter-specific types.
 
@@ -176,7 +176,7 @@ class Adapter:
         }
         return self.insert_data(row)
 
-    def delete_data(self, row_id: int) -> None:  # pylint: disable=no-self-use
+    def delete_data(self, row_id: int) -> None:
         """Delete a row from the table."""
         raise NotSupportedError("Adapter does not support ``DELETE`` statements")
 

@@ -8,23 +8,20 @@ import pkg_resources
 import pytest
 from pytest_mock import MockerFixture
 
+from shillelagh.adapters.registry import AdapterLoader
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.functions import get_metadata
 
-from .fakes import FakeAdapter, FakeEntryPoint
+from .fakes import FakeAdapter
 
 
-def test_sleep_from_sql(mocker: MockerFixture) -> None:
+def test_sleep_from_sql(mocker: MockerFixture, registry: AdapterLoader) -> None:
     """
     Test ``sleep``.
     """
     sleep = mocker.patch("time.sleep")
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapter)
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
     cursor.execute("SELECT sleep(5)")
@@ -54,7 +51,7 @@ def test_get_metadata() -> None:
     assert str(excinfo.value) == "Unsupported table: invalid://"
 
 
-def test_get_metadata_from_sql(mocker: MockerFixture) -> None:
+def test_get_metadata_from_sql(mocker: MockerFixture, registry: AdapterLoader) -> None:
     """
     Test calling ``get_metadata`` from SQL.
     """
@@ -62,11 +59,7 @@ def test_get_metadata_from_sql(mocker: MockerFixture) -> None:
         "shillelagh.functions.get_metadata",
         return_value=json.dumps({"hello": "world"}),
     )
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapter)
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
     cursor.execute('SELECT get_metadata("dummy://")')

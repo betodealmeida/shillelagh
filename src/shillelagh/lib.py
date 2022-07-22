@@ -5,9 +5,7 @@ import itertools
 import math
 import operator
 import pickle
-from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type
-
-from pkg_resources import iter_entry_points
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
@@ -407,13 +405,6 @@ def filter_data(
         data = iter(rows)
 
     yield from data
-
-
-def get_available_adapters() -> Set[str]:
-    """
-    Return the name of the available adapters.
-    """
-    return {entry_point.name for entry_point in iter_entry_points("shillelagh.adapter")}
 
 
 def SimpleCostModel(rows: int, fixed_cost: int = 0):  # pylint: disable=invalid-name
