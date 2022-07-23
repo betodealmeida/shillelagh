@@ -98,6 +98,9 @@ class SocrataAPI(Adapter):
 
     safe = True
 
+    supports_limit = True
+    supports_offset = True
+
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         """https://data.cdc.gov/resource/unsk-b7fc.json"""
@@ -147,10 +150,12 @@ class SocrataAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
         try:
-            sql = build_sql(self.columns, bounds, order)
+            sql = build_sql(self.columns, bounds, order, limit=limit, offset=offset)
         except ImpossibleFilterError:
             return
 
@@ -172,5 +177,5 @@ class SocrataAPI(Adapter):
 
         for i, row in enumerate(payload):
             row["rowid"] = i
-            yield row
             _logger.debug(row)
+            yield row

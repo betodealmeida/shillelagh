@@ -38,7 +38,7 @@ class Column:
     field: Field
 
     # A default value for when the column is not specified. Eg, for ``pulls``
-    # the API defaults to show only PRs with an open state, so we need to
+    # the API defaults to showing only PRs with an open state, so we need to
     # default the column to ``all`` to fetch all PRs when state is not
     # specified in the query.
     default: Optional[Filter] = None
@@ -74,6 +74,9 @@ class GitHubAPI(Adapter):
     """
 
     safe = True
+
+    supports_limit = True
+    supports_offset = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
@@ -133,6 +136,8 @@ class GitHubAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
         # apply default values
@@ -142,14 +147,21 @@ class GitHubAPI(Adapter):
 
         if "number" in bounds:
             number = bounds.pop("number").value  # type: ignore
-            return self._get_single_resource(number)
+            return self._get_single_resource(number, offset)
 
-        return self._get_multiple_resources(bounds)
+        return self._get_multiple_resources(bounds, limit, offset)
 
-    def _get_single_resource(self, number: int) -> Iterator[Row]:
+    def _get_single_resource(
+        self,
+        number: int,
+        offset: Optional[int] = None,
+    ) -> Iterator[Row]:
         """
         Return a specific resource.
         """
+        if offset:
+            return
+
         headers = {"Accept": "application/vnd.github.v3+json"}
         if self.access_token:
             headers["Authorization"] = f"Bearer {self.access_token}"
@@ -171,7 +183,12 @@ class GitHubAPI(Adapter):
         _logger.debug(row)
         yield row
 
-    def _get_multiple_resources(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
+    def _get_multiple_resources(
+        self,
+        bounds: Dict[str, Filter],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> Iterator[Row]:
         """
         Return multiple resources.
         """
@@ -185,7 +202,11 @@ class GitHubAPI(Adapter):
         params = {name: filter_.value for name, filter_ in bounds.items()}  # type: ignore
         params["per_page"] = PAGE_SIZE
 
-        page = 1
+        offset = offset or 0
+        page = (offset // PAGE_SIZE) + 1
+        offset %= PAGE_SIZE
+
+        rowid = 0
         while True:
             _logger.info("GET %s (page %d)", url, page)
             params["page"] = page
@@ -198,13 +219,21 @@ class GitHubAPI(Adapter):
             if not response.ok:
                 raise ProgrammingError(payload["message"])
 
-            for i, resource in enumerate(payload):
+            if offset is not None:
+                payload = payload[offset:]
+                offset = None
+
+            for resource in payload:
+                if limit is not None and rowid == limit:
+                    break
+
                 row = {
                     column.name: JSONPath(column.json_path).parse(resource)[0]
                     for column in TABLES[self.base][self.resource]
                 }
-                row["rowid"] = i + (page - 1) * PAGE_SIZE
+                row["rowid"] = rowid
                 _logger.debug(row)
                 yield row
+                rowid += 1
 
             page += 1

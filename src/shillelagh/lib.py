@@ -349,6 +349,8 @@ def filter_data(
     data: Iterator[Row],
     bounds: Dict[str, Filter],
     order: List[Tuple[str, RequestedOrder]],
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
 ) -> Iterator[Row]:
     """
     Apply filtering and sorting to a stream of rows.
@@ -404,7 +406,24 @@ def filter_data(
             rows.sort(key=operator.itemgetter(column_name), reverse=reverse)
         data = iter(rows)
 
+    data = apply_limit_and_offset(data, limit, offset)
+
     yield from data
+
+
+def apply_limit_and_offset(
+    rows: Iterator[Row],
+    limit: Optional[int],
+    offset: Optional[int],
+) -> Iterator[Row]:
+    """
+    Apply limit/offset to a stream of rows.
+    """
+    if limit is not None or offset is not None:
+        start = offset or 0
+        end = None if limit is None else start + limit
+        rows = itertools.islice(rows, start, end)
+    return rows
 
 
 def SimpleCostModel(rows: int, fixed_cost: int = 0):  # pylint: disable=invalid-name
