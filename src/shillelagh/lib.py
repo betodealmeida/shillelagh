@@ -5,7 +5,7 @@ import itertools
 import math
 import operator
 import pickle
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
@@ -411,11 +411,14 @@ def filter_data(
     yield from data
 
 
+T = TypeVar("T")
+
+
 def apply_limit_and_offset(
-    rows: Iterator[Row],
-    limit: Optional[int],
-    offset: Optional[int],
-) -> Iterator[Row]:
+    rows: Iterator[T],
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+) -> Iterator[T]:
     """
     Apply limit/offset to a stream of rows.
     """

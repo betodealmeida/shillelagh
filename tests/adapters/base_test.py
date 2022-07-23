@@ -168,6 +168,94 @@ def test_adapter_manipulate_rows() -> None:
     ]
 
 
+def test_limit_offset(registry: AdapterLoader) -> None:
+    """
+    Test limit/offset in adapters that implement it and adapters that don't.
+
+    Note that SQLite will always enforce the limit, even the adapter declares that it
+    supports it. For offset, on the other hand, if the adapter declares support for it
+    then SQLite will not apply an offset (since it couldn't know if an offset was
+    applied or not).
+    """
+
+    class CustomFakeAdapter(FakeAdapter):
+
+        """
+        Custom ``FakeAdapter`` with more data.
+        """
+
+        def __init__(self):
+            super().__init__()
+
+            self.data = [
+                {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
+                {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
+                {"rowid": None, "name": "Charlie", "age": 6, "pets": 1},
+            ]
+
+    class FakeAdapterWithLimitOnly(CustomFakeAdapter):
+
+        """
+        An adapter that only supports limit (like ``s3select``)
+        """
+
+        scheme = "limit"
+
+        supports_limit = True
+        supports_offset = False
+
+    class FakeAdapterWithLimitAndOffset(CustomFakeAdapter):
+
+        """
+        An adapter that supports both limit and offset.
+        """
+
+        scheme = "limit+offset"
+
+        supports_limit = True
+        supports_offset = True
+
+    class FakeAdapterWithOffsetOnly(CustomFakeAdapter):
+
+        """
+        An adapter that supports only offset.
+        """
+
+        scheme = "offset"
+
+        supports_limit = False
+        supports_offset = True
+
+    registry.add("dummy", CustomFakeAdapter)
+    registry.add("limit", FakeAdapterWithLimitOnly)
+    registry.add("limit+offset", FakeAdapterWithLimitAndOffset)
+    registry.add("offset", FakeAdapterWithOffsetOnly)
+
+    connection = connect(
+        ":memory:",
+        ["dummy", "limit", "limit+offset", "offset"],
+        isolation_level="IMMEDIATE",
+    )
+    cursor = connection.cursor()
+
+    # adapter returns 3 rows, SQLite applies limit/offset
+    cursor.execute('SELECT * FROM "dummy://" LIMIT 1 OFFSET 1')
+    assert cursor.fetchall() == [(23, "Bob", 3)]
+
+    # adapter returns 3 rows (even though it says it supports ``LIMIT``), SQLite then
+    # applies offset and enforces limit
+    cursor.execute('SELECT * FROM "limit://" LIMIT 1 OFFSET 1')
+    assert cursor.fetchall() == [(23, "Bob", 3)]
+
+    # adapter returns 3 rows, SQLite enforces limit but doesn't apply offset
+    cursor.execute('SELECT * FROM "limit+offset://" LIMIT 1 OFFSET 1')
+    assert cursor.fetchall() == [(20, "Alice", 0)]
+
+    # adapter returns 3 rows, SQLite enforces limit but doesn't apply offset
+    cursor.execute('SELECT * FROM "offset://" LIMIT 1 OFFSET 1')
+    assert cursor.fetchall() == [(20, "Alice", 0)]
+
+
 def test_type_conversion(registry: AdapterLoader) -> None:
     """
     Test that native types are converted correctly.

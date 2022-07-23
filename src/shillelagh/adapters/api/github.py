@@ -147,19 +147,20 @@ class GitHubAPI(Adapter):
 
         if "number" in bounds:
             number = bounds.pop("number").value  # type: ignore
-            return self._get_single_resource(number, offset)
+            return self._get_single_resource(number, limit, offset)
 
         return self._get_multiple_resources(bounds, limit, offset)
 
     def _get_single_resource(
         self,
         number: int,
+        limit: Optional[int] = None,
         offset: Optional[int] = None,
     ) -> Iterator[Row]:
         """
         Return a specific resource.
         """
-        if offset:
+        if offset or (limit is not None and limit < 1):
             return
 
         headers = {"Accept": "application/vnd.github.v3+json"}
@@ -207,7 +208,7 @@ class GitHubAPI(Adapter):
         offset %= PAGE_SIZE
 
         rowid = 0
-        while True:
+        while limit is None or rowid < limit:
             _logger.info("GET %s (page %d)", url, page)
             params["page"] = page
             response = self._session.get(url, headers=headers, params=params)
@@ -225,6 +226,8 @@ class GitHubAPI(Adapter):
 
             for resource in payload:
                 if limit is not None and rowid == limit:
+                    # this never happens because SQLite stops consuming from the generator
+                    # as soon as the limit is hit
                     break
 
                 row = {

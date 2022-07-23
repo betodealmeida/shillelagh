@@ -22,6 +22,7 @@ from shillelagh.lib import (
     DELETED,
     RowIDManager,
     analyze,
+    apply_limit_and_offset,
     build_sql,
     combine_args_kwargs,
     deserialize,
@@ -369,3 +370,20 @@ def test_is_not_null() -> None:
     """
     assert is_not_null(20, 10)
     assert not is_not_null(None, 10)
+
+
+def test_apply_limit_and_offset() -> None:
+    """
+    Test ``apply_limit_and_offset``.
+    """
+    rows = apply_limit_and_offset(iter(range(10)))
+    assert list(rows) == list(range(10))
+
+    rows = apply_limit_and_offset(iter(range(10)), limit=2)
+    assert list(rows) == [0, 1]
+
+    rows = apply_limit_and_offset(iter(range(10)), limit=2, offset=2)
+    assert list(rows) == [2, 3]
+
+    rows = apply_limit_and_offset(iter(range(10)), offset=2)
+    assert list(rows) == [2, 3, 4, 5, 6, 7, 8, 9]

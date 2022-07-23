@@ -85,9 +85,7 @@ class SystemAPI(Adapter):
         **kwargs: Any,
     ) -> Iterator[Row]:
         rowid = 0
-        while True:
-            if limit is not None and rowid == limit:
-                break
+        while limit is None or rowid < limit:
             if offset is not None:
                 time.sleep(self.interval * offset)
 
