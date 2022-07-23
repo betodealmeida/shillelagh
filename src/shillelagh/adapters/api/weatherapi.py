@@ -170,6 +170,7 @@ class WeatherAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
     ) -> Iterator[Row]:
         # combine filters from the two time columns
         try:

@@ -76,6 +76,7 @@ class SystemAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
     ) -> Iterator[Row]:
         i = 0
         while True:

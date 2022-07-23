@@ -147,6 +147,7 @@ class SocrataAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
     ) -> Iterator[Row]:
         try:
             sql = build_sql(self.columns, bounds, order)

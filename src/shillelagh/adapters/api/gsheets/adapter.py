@@ -384,6 +384,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
     ) -> Iterator[Row]:
         """
         Fetch data.

@@ -43,6 +43,11 @@ class Adapter:
     #
     safe = False
 
+    # if true, a corresponding argument will be passed in the kwargs of
+    # ``get_rows`` and ``get_data``
+    supports_limit = False
+    supports_offset = False
+
     def __init__(self, *args: Any, **kwargs: Any):  # pylint: disable=unused-argument
         # ensure ``self.close`` gets called before GC
         atexit.register(self.close)
@@ -120,6 +125,7 @@ class Adapter:
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
     ) -> Iterator[Row]:
         """
         Yield rows as adapter-specific types.
@@ -138,6 +144,7 @@ class Adapter:
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
     ) -> Iterator[Row]:
         """
         Yield rows as native Python types.
@@ -146,7 +153,7 @@ class Adapter:
         parsers = {column_name: field.parse for column_name, field in columns.items()}
         parsers["rowid"] = RowID().parse
 
-        for row in self.get_data(bounds, order):
+        for row in self.get_data(bounds, order, **kwargs):
             yield {
                 column_name: parsers[column_name](value)
                 for column_name, value in row.items()

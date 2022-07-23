@@ -21,3 +21,7 @@ if __name__ == "__main__":
     SQL = "SELECT SUM(a) FROM mydf"
     for row in cursor.execute(SQL):
         print(row)
+
+    SQL = "SELECT * FROM mydf LIMIT 2 OFFSET 1"
+    for row in cursor.execute(SQL):
+        print(row)

@@ -70,11 +70,13 @@ def find_dataframe(uri: str) -> Optional[pd.DataFrame]:
     return None
 
 
-def get_df_data(
+def get_df_data(  # pylint: disable=too-many-arguments
     df: pd.DataFrame,
     columns: Dict[str, Field],
     bounds: Dict[str, Filter],
     order: List[Tuple[str, RequestedOrder]],
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
 ) -> Iterator[Row]:
     """
     Apply the ``get_data`` method on a Pandas dataframe.
@@ -110,6 +112,9 @@ def get_df_data(
         ]
         df = df.sort_values(by=list(by), ascending=ascending)
 
+    df = df[offset:]
+    df = df[:limit]
+
     for row in df.itertuples(name=None):
         yield dict(zip(["rowid", *column_names], row))
 
@@ -132,6 +137,9 @@ class PandasMemory(Adapter):
     """
 
     safe = False
+
+    supports_limit = True
+    supports_offset = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
@@ -159,8 +167,11 @@ class PandasMemory(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        **kwargs: Any,
     ) -> Iterator[Row]:
-        yield from get_df_data(self.df, self.columns, bounds, order)
+        yield from get_df_data(self.df, self.columns, bounds, order, limit, offset)
 
     def insert_data(self, row: Row) -> int:
         row_id: Optional[int] = row.pop("rowid")

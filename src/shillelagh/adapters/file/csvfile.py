@@ -159,6 +159,7 @@ class CSVFile(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
     ) -> Iterator[Row]:
         _logger.info("Opening file CSV file %s to load data", self.path)
         with open(self.path, encoding="utf-8") as csvfile:

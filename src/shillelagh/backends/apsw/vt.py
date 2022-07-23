@@ -69,14 +69,21 @@ def _add_sqlite_constraint(constant_name: str, operator: Operator) -> None:
         operator_map[getattr(apsw, constant_name)] = operator
 
 
-# SQLITE_INDEX_CONSTRAINT_LIKE >= 3.10.0
+# SQLITE_INDEX_CONSTRAINT_LIKE, >=3.10.0
 _add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_LIKE", Operator.LIKE)
-# SQLITE_INDEX_CONSTRAINT_NE, >= 3.21.0
+# SQLITE_INDEX_CONSTRAINT_NE, >=3.21.0
 _add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_NE", Operator.NE)
 # SQLITE_INDEX_CONSTRAINT_ISNULL, >=3.21.0
 _add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_ISNULL", Operator.IS_NULL)
 # SQLITE_INDEX_CONSTRAINT_ISNOTNULL, >=3.21.0
 _add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_ISNOTNULL", Operator.IS_NOT_NULL)
+# SQLITE_INDEX_CONSTRAINT_LIMIT, >=3.38.0
+_add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_LIMIT", Operator.LIMIT)
+# SQLITE_INDEX_CONSTRAINT_OFFSET, >=3.38.0
+_add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_OFFSET", Operator.OFFSET)
+
+# limit and offset are special constraints without an associated column index
+LIMIT_OFFSET_INDEX = -1
 
 # map for converting between Python native types (boolean, datetime, etc.)
 # and types understood by SQLite (integers, strings, etc.)
@@ -163,6 +170,8 @@ def get_all_bounds(
     ):
         if sqlite_index_constraint not in operator_map:
             raise Exception(f"Invalid constraint passed: {sqlite_index_constraint}")
+        if column_index == LIMIT_OFFSET_INDEX:
+            continue
         operator = operator_map[sqlite_index_constraint]
         column_name = column_names[column_index]
         column_type = columns[column_name]
@@ -174,6 +183,32 @@ def get_all_bounds(
         all_bounds[column_name].add((operator, value))
 
     return all_bounds
+
+
+def get_limit_offset(
+    indexes: List[Index],
+    constraintargs: List[Any],
+) -> Tuple[Optional[int], Optional[int]]:
+    """
+    Extract limit and offset.
+    """
+    limit = offset = None
+
+    for (column_index, sqlite_index_constraint), constraint in zip(
+        indexes,
+        constraintargs,
+    ):
+        if sqlite_index_constraint not in operator_map:
+            raise Exception(f"Invalid constraint passed: {sqlite_index_constraint}")
+        if column_index != LIMIT_OFFSET_INDEX:
+            continue
+        operator = operator_map[sqlite_index_constraint]
+        if operator == Operator.LIMIT:
+            limit = constraint
+        elif operator == Operator.OFFSET:
+            offset = constraint
+
+    return limit, offset
 
 
 def get_order(
@@ -317,8 +352,14 @@ class VTTable:
                     indexes.append((column_index, sqlite_index_constraint))
                     break
             else:
-                # no indexes supported in this column
-                constraints_used.append(None)
+                if (operator == Operator.LIMIT and self.adapter.supports_limit) or (
+                    operator == Operator.OFFSET and self.adapter.supports_offset
+                ):
+                    constraints_used.append((filter_index, True))
+                    filter_index += 1
+                    indexes.append((LIMIT_OFFSET_INDEX, sqlite_index_constraint))
+                else:
+                    constraints_used.append(None)
 
         # estimate query cost
         order = get_order(orderbys, column_names)
@@ -415,7 +456,7 @@ class VTCursor:
         self.current_row: Tuple[Any, ...]
         self.eof = False
 
-    def Filter(
+    def Filter(  # pylint: disable=too-many-locals
         self,
         indexnumber: int,  # pylint: disable=unused-argument
         indexname: str,
@@ -437,12 +478,20 @@ class VTCursor:
 
         # compute bounds for each column
         all_bounds = get_all_bounds(indexes, constraintargs, columns)
+        limit, offset = get_limit_offset(indexes, constraintargs)
         bounds = get_bounds(columns, all_bounds)
 
         # compute requested order
         order = get_order(orderbys, column_names)
 
-        rows = self.adapter.get_rows(bounds, order)
+        # limit and offset were introduced in 1.1, and not all adapters support it
+        kwargs = {}
+        if self.adapter.supports_limit:
+            kwargs["limit"] = limit
+        if self.adapter.supports_offset:
+            kwargs["offset"] = offset
+
+        rows = self.adapter.get_rows(bounds, order, **kwargs)
         rows = convert_rows_to_sqlite(columns, rows)
 
         # if a given column is not present, replace it with ``None``
