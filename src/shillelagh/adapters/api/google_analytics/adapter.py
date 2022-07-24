@@ -1,7 +1,7 @@
 from shillelagh.adapters.base import Adapter
 from typing import Tuple, Any, Dict, List, Iterator, Optional
-from shillelagh.filters import Filter
-from shillelagh.fields import Field, String, Integer, Float, Date, Time, DateTime
+from shillelagh.filters import Filter, Range
+from shillelagh.fields import Field, Order, String, Integer, Float, Date, Time, DateTime
 from shillelagh.typing import RequestedOrder, Row
 from apiclient.discovery import build
 from sqlparse import parse
@@ -18,8 +18,7 @@ from shillelagh.adapters.api.google_analytics.constants import ALL_DIMENSIONS, A
 """
 TODO: fill all items in ALL_DIMESIONS and ALL_METRICS in below lists
 
-TODO: currently date ranges for query need to be setup when db is added, modify shillelagh to give adapter a hook to modify query which will remove those ranges from the query but use it when querying GA only.
-        this is required because date ranges on GA are like "7daysAgo", "today" which are not valid in sqlite
+TODO: Get date range from the query
 """
 
 class GoogleAnalytics(Adapter):
@@ -28,7 +27,11 @@ class GoogleAnalytics(Adapter):
     def __init__(
         self,
         uri,
-        service_account_info: str = None,
+        access_token: Optional[str] = None,
+        service_account_file: Optional[str] = None,
+        service_account_info: Optional[Dict[str, Any]] = None,
+        subject: Optional[str] = None,
+        app_default_credentials: bool = False,
         view_id=None,
         operation: str = None,
         parameters=Optional[Tuple[Any, ...]],
@@ -40,12 +43,15 @@ class GoogleAnalytics(Adapter):
         self.parameters = parameters
         self.date_range = date_range
 
-        print("adapter init with ", service_account_info, view_id, date_range, operation)
+        credentials = get_credentials(
+            access_token,
+            service_account_file,
+            service_account_info,
+            subject, 
+            app_default_credentials,
+            SCOPES
+            )
 
-        credentials = ServiceAccountCredentials.from_json_keyfile_dict(
-            service_account_info, SCOPES
-        )
-        credentials = get_credentials(service_account_info=service_account_info, scopes=SCOPES)
         self.analytics_service = build(
             "analyticsreporting", "v4", credentials=credentials
         )
@@ -96,6 +102,9 @@ class GoogleAnalytics(Adapter):
     ) -> Iterator[Row]:
         metrics = []
         dimensions = []
+
+        print("bounds ", bound, "orders" , order)
+
 
         for col in self.columns:
             if list(filter(lambda d: col == d[0], ALL_DIMENSIONS)):
@@ -150,6 +159,7 @@ class GoogleAnalytics(Adapter):
             if list(filter(lambda d: col == d[0], ALL_DIMENSIONS + ALL_METRICS)):
                 data_type = list(filter(lambda d: col == d[0], ALL_DIMENSIONS + ALL_METRICS))[0][1]
                 self.columns[col] = data_type()
+        self.columns["date"] = Date(filters=[Range], order=Order.NONE, exact=True)
 
     def get_columns(self) -> Dict[str, Field]:
         return self.columns

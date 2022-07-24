@@ -276,11 +276,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
             uri = uri[len(prefix) :]
 
         # collect arguments from URI and connection and serialize them
-        adapter = find_adapter(uri, self._adapter_kwargs, self._adapters)
-        key = adapter.__name__.lower()
-        args = adapter.parse_uri(uri)
-        kwargs = self._adapter_kwargs.get(key, {})
-        
+        adapter, args, kwargs = find_adapter(uri, self._adapter_kwargs, self._adapters)
         if adapter.need_operation:
             kwargs["operation"] = operation
             kwargs["parameters"] = parameters

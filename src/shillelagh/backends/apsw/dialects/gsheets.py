@@ -14,10 +14,9 @@ from google.auth.transport.requests import AuthorizedSession
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
 from typing_extensions import TypedDict
-
-from shillelagh.adapters.api.gsheets.lib import get_credentials
 from shillelagh.backends.apsw.dialects.base import APSWDialect
 from shillelagh.exceptions import ProgrammingError
+from shillelagh.adapters.utils import get_credentials
 
 _logger = logging.getLogger(__name__)
 
