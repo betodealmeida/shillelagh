@@ -224,6 +224,7 @@ The last step is defining a method called ``get_rows`` to return rows:
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
     ) -> Iterator[Dict[str, Any]]:
         """
         Yield rows.
@@ -267,6 +268,33 @@ In the code above we use the range to determine the start and end **days** that 
 Each row is represented as a dictionary with column names for keys. The rows have a special column called "rowid". This should be a unique number for each row, and they can vary from call to call. The row ID is only important for adapters that support ``DELETE`` and ``UPDATE``, since those commands reference the rows by their ID.
 
 Take a look at the `WeatherAPI adapter <https://github.com/betodealmeida/shillelagh/blob/main/src/shillelagh/adapters/api/weatherapi.py>`_ to see how everything looks like together.
+
+Supporting limit and offset
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We might want to implement support for ``LIMIT`` and ``OFFSET`` in our adapter, to improve performance; otherwise the adapter might return more data than is needed. To implement the support for ``LIMIT`` and ``OFFSET`` first the adapter must declare it:
+
+.. code-block:: python
+
+    class WeatherAPI(Adapter):
+
+        supports_limit = True
+        supports_offset = True
+
+If an adapter declares support for ``LIMIT`` and ``OFFSET`` a corresponding parameter will be passed to ``get_rows`` (or ``get_data``, as described below), so that the signature should look like this:
+
+.. code-block:: python
+
+    def get_rows(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        **kwargs: Any,
+    ) -> Iterator[Dict[str, Any]]:
+
+Now the adapter can handle ``limit`` and ``offset``, reducing the amount of data that is returned. Note that even if the adapter declares supporting ``LIMIT``, SQLite will still enforce the limit, ie, if for any reason the adapter returns more rows than the limit SQLite will fix the problem. The same is not true for the offset.
 
 A read-write adapter
 ====================
@@ -333,6 +361,7 @@ Here's a simple example that supports these methods:
             self,
             bounds: Dict[str, Filter],
             order: List[Tuple[str, RequestedOrder]],
+            **kwargs: Any,
         ) -> Iterator[Dict[str, Any]]:
             yield from iter(self.data)
 
@@ -378,6 +407,7 @@ For example, if we have timestamps returned by an API as ISO strings we can defi
             self,
             bounds: Dict[str, Filter],
             order: List[Tuple[str, RequestedOrder]],
+            **kwargs: Any,
         ) -> Iterator[Dict[str, Any]]:
             yield {
                 "rowid": 1,
@@ -446,6 +476,7 @@ You can define a method ``get_cost`` on your adapter to help the query planner t
             self,
             filtered_columns: List[Tuple[str, Operator]],
             order: List[Tuple[str, RequestedOrder]],
+            **kwargs: Any,
         ) -> float:
             return (
                 100
