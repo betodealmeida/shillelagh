@@ -5,3 +5,6 @@ disable =
 [MASTER]
 ignore=templates,docs
 disable =
+
+[TYPECHECK]
+ignored-modules=apsw

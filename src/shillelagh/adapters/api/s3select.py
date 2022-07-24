@@ -206,6 +206,9 @@ class S3SelectAPI(Adapter):
 
     safe = True
 
+    supports_limit = True
+    supports_offset = False
+
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         parsed = urllib.parse.urlparse(uri)
@@ -303,18 +306,19 @@ class S3SelectAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
         try:
-            sql = build_sql(self.columns, bounds, order, table="s3object")
+            sql = build_sql(self.columns, bounds, order, table="s3object", limit=limit)
         except ImpossibleFilterError:
             return
 
         rows = self._run_query(sql)
         for i, row in enumerate(rows):
             row["rowid"] = i
-            yield row
             _logger.debug(row)
+            yield row
 
     def drop_table(self) -> None:
         self.s3_client.delete_object(Bucket=self.bucket, Key=self.key, **self.s3_kwargs)

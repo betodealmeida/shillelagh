@@ -8,6 +8,7 @@ import pytest
 from freezegun import freeze_time
 from pytest_mock import MockerFixture
 
+from shillelagh.adapters.api.system import SystemAPI
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 
@@ -118,3 +119,43 @@ def test_system_interrupt(mocker: MockerFixture) -> None:
         (datetime(2021, 1, 1, tzinfo=timezone.utc), 0.01, 0.02, 0.03, 0.04),
         (datetime(2021, 1, 1, tzinfo=timezone.utc), 0.01, 0.02, 0.03, 0.04),
     ]
+
+
+def test_get_data(mocker: MockerFixture) -> None:
+    """
+    Test ``get_data``.
+    """
+    adapter = SystemAPI("cpu")
+
+    psutil = mocker.patch("shillelagh.adapters.api.system.psutil")
+    psutil.cpu_count.return_value = 4
+    psutil.cpu_percent.side_effect = [
+        [1, 2, 3, 4],
+        [1, 2, 3, 4],
+        [1, 2, 3, 4],
+        [1, 2, 3, 4],
+    ]
+    time = mocker.patch("shillelagh.adapters.api.system.time")
+
+    with freeze_time("2021-01-01T00:00:00Z"):
+        data = list(adapter.get_data({}, [], limit=2, offset=1))
+    assert data == [
+        {
+            "rowid": 0,
+            "timestamp": datetime(2021, 1, 1, 0, 0, tzinfo=timezone.utc),
+            "cpu0": 0.01,
+            "cpu1": 0.02,
+            "cpu2": 0.03,
+            "cpu3": 0.04,
+        },
+        {
+            "rowid": 1,
+            "timestamp": datetime(2021, 1, 1, 0, 0, tzinfo=timezone.utc),
+            "cpu0": 0.01,
+            "cpu1": 0.02,
+            "cpu2": 0.03,
+            "cpu3": 0.04,
+        },
+    ]
+
+    time.sleep.assert_called_with(1.0)

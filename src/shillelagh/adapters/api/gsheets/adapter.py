@@ -35,7 +35,7 @@ from shillelagh.exceptions import (
 )
 from shillelagh.fields import Field, Order
 from shillelagh.filters import Filter
-from shillelagh.lib import SimpleCostModel, build_sql
+from shillelagh.lib import SimpleCostModel, apply_limit_and_offset, build_sql
 from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
@@ -79,6 +79,8 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
     """
 
     safe = True
+    supports_limit = True
+    supports_offset = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
@@ -380,10 +382,12 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         return i + 1
 
-    def get_data(
+    def get_data(  # pylint: disable=too-many-locals
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
         """
@@ -406,7 +410,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         }:
             values = self._get_values()
             headers = self._get_header_rows(values)
-            rows = (
+            rows: Iterator[Row] = (
                 {
                     reverse_map[letter]: cell
                     for letter, cell in zip(gen_letters(), row)
@@ -414,6 +418,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                 }
                 for row in values[headers:]
             )
+            rows = apply_limit_and_offset(rows, limit, offset)
 
         # For ``BIDIRECTIONAL`` mode we continue using the Chart API to
         # retrieve data. This will happen before every DML query.
@@ -425,7 +430,8 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                     order,
                     None,
                     self._column_map,
-                    None,
+                    limit,
+                    offset,
                 )
             except ImpossibleFilterError:
                 return
@@ -442,8 +448,9 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             )
 
         for i, row in enumerate(rows):
-            self._row_ids[i] = row
-            row["rowid"] = i
+            rowid = (offset or 0) + i
+            self._row_ids[rowid] = row
+            row["rowid"] = rowid
             _logger.debug(row)
             yield row
 
