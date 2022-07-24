@@ -22,7 +22,10 @@ from shillelagh.fields import (
     String,
     StringBlob,
     StringBoolean,
+    StringDate,
+    StringDateTime,
     StringDuration,
+    StringTime,
     Time,
 )
 from shillelagh.filters import Equal
@@ -102,17 +105,26 @@ def test_isodate() -> None:
     Test ``ISODate``.
     """
     assert ISODate().parse("2020-01-01") == datetime.date(2020, 1, 1)
-    assert ISODate().parse("2020-01-01T00:00+00:00") == datetime.date(
-        2020,
-        1,
-        1,
-    )
     assert ISODate().parse(None) is None
     assert ISODate().parse("invalid") is None
     assert ISODate().format(datetime.date(2020, 1, 1)) == "2020-01-01"
     assert ISODate().format(None) is None
     assert ISODate().quote("2020-01-01") == "'2020-01-01'"
     assert ISODate().quote(None) == "NULL"
+
+
+def test_string_date() -> None:
+    """
+    Test ``StringDate``.
+    """
+    assert StringDate().parse("2020-01-01") == datetime.date(2020, 1, 1)
+    assert StringDate().parse("2020-01-01T00:00+00:00") == datetime.date(
+        2020,
+        1,
+        1,
+    )
+    assert StringDate().parse(None) is None
+    assert StringDate().parse("invalid") is None
 
 
 def test_time() -> None:
@@ -162,6 +174,23 @@ def test_iso_time() -> None:
     assert ISOTime().format(None) is None
     assert ISOTime().quote("12:00:00+00:00") == "'12:00:00+00:00'"
     assert ISOTime().quote(None) == "NULL"
+
+
+def test_string_time() -> None:
+    """
+    Test ``StringTime``.
+    """
+    assert StringTime().parse("12:00+00:00") == datetime.time(
+        12,
+        0,
+        tzinfo=datetime.timezone.utc,
+    )
+    assert StringTime().parse("12:00") == datetime.time(
+        12,
+        0,
+    )
+    assert StringTime().parse(None) is None
+    assert StringTime().parse("invalid") is None
 
 
 def test_datetime() -> None:
@@ -226,6 +255,40 @@ def test_iso_datetime() -> None:
         == "'2020-01-01T12:00:00+00:00'"
     )
     assert ISODateTime().quote(None) == "NULL"
+
+
+def test_string_datetime() -> None:
+    """
+    Test ``StringDateTime``.
+    """
+    assert StringDateTime().parse("2020-01-01T12:00+00:00") == datetime.datetime(
+        2020,
+        1,
+        1,
+        12,
+        0,
+        0,
+        tzinfo=datetime.timezone.utc,
+    )
+    assert StringDateTime().parse("2020-01-01T12:00Z") == datetime.datetime(
+        2020,
+        1,
+        1,
+        12,
+        0,
+        0,
+        tzinfo=datetime.timezone.utc,
+    )
+    assert StringDateTime().parse("2020-01-01T12:00") == datetime.datetime(
+        2020,
+        1,
+        1,
+        12,
+        0,
+        0,
+    )
+    assert StringDateTime().parse(None) is None
+    assert StringDateTime().parse("invalid") is None
 
 
 def test_boolean() -> None:

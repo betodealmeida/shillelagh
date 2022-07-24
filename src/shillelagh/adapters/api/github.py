@@ -11,7 +11,7 @@ from jsonpath import JSONPath
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Boolean, Field, Integer, ISODateTime, String
+from shillelagh.fields import Boolean, Field, Integer, String, StringDateTime
 from shillelagh.filters import Equal, Filter
 from shillelagh.typing import RequestedOrder, Row
 
@@ -58,10 +58,10 @@ TABLES: Dict[str, Dict[str, List[Column]]] = {
             Column("username", "user.login", String()),
             Column("draft", "draft", Boolean()),
             Column("head", "head.ref", String(filters=[Equal])),  # head.label?
-            Column("created_at", "created_at", ISODateTime()),
-            Column("updated_at", "updated_at", ISODateTime()),
-            Column("closed_at", "closed_at", ISODateTime()),
-            Column("merged_at", "merged_at", ISODateTime()),
+            Column("created_at", "created_at", StringDateTime()),
+            Column("updated_at", "updated_at", StringDateTime()),
+            Column("closed_at", "closed_at", StringDateTime()),
+            Column("merged_at", "merged_at", StringDateTime()),
         ],
     },
 }

@@ -361,11 +361,11 @@ class ISODate(Field[str, datetime.date]):
             return None
 
         try:
-            date = dateutil.parser.parse(value)
-        except dateutil.parser.ParserError:
+            date = datetime.date.fromisoformat(value)
+        except ValueError:
             return None
 
-        return date.date()
+        return date
 
     def format(self, value: Optional[datetime.date]) -> Optional[str]:
         if value is None:
@@ -376,6 +376,23 @@ class ISODate(Field[str, datetime.date]):
         if value is None:
             return "NULL"
         return f"'{value}'"
+
+
+class StringDate(ISODate):
+    """
+    A more permissive date format.
+    """
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.date]:
+        if value is None:
+            return None
+
+        try:
+            date = dateutil.parser.parse(value)
+        except dateutil.parser.ParserError:
+            return None
+
+        return date.date()
 
 
 class Time(Field[datetime.time, datetime.time]):
@@ -413,11 +430,11 @@ class ISOTime(Field[str, datetime.time]):
             return None
 
         try:
-            timestamp = dateutil.parser.parse(value)
-        except dateutil.parser.ParserError:
+            timestamp = datetime.time.fromisoformat(value)
+        except ValueError:
             return None
 
-        time = timestamp.time()
+        time = timestamp
 
         # timezone is not preserved
         return time.replace(tzinfo=timestamp.tzinfo)
@@ -431,6 +448,26 @@ class ISOTime(Field[str, datetime.time]):
         if value is None:
             return "NULL"
         return f"'{value}'"
+
+
+class StringTime(ISOTime):
+    """
+    A more permissive time format.
+    """
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.time]:
+        if value is None:
+            return None
+
+        try:
+            timestamp = dateutil.parser.parse(value)
+        except dateutil.parser.ParserError:
+            return None
+
+        time = timestamp.time()
+
+        # timezone is not preserved
+        return time.replace(tzinfo=timestamp.tzinfo)
 
 
 class DateTime(Field[datetime.datetime, datetime.datetime]):
@@ -469,8 +506,8 @@ class ISODateTime(Field[str, datetime.datetime]):
             return None
 
         try:
-            timestamp = dateutil.parser.parse(value)
-        except dateutil.parser.ParserError:
+            timestamp = datetime.datetime.fromisoformat(value)
+        except ValueError:
             return None
 
         # if the timestamp has a timezone change it to UTC, so that
@@ -495,6 +532,28 @@ class ISODateTime(Field[str, datetime.datetime]):
         if value is None:
             return "NULL"
         return f"'{value}'"
+
+
+class StringDateTime(ISODateTime):
+    """
+    A more permissive datetime format.
+    """
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.datetime]:
+        if value is None:
+            return None
+
+        try:
+            timestamp = dateutil.parser.parse(value)
+        except dateutil.parser.ParserError:
+            return None
+
+        # if the timestamp has a timezone change it to UTC, so that
+        # timestamps in different timezones can be compared as strings
+        if timestamp.tzinfo is not None:
+            timestamp = timestamp.astimezone(datetime.timezone.utc)
+
+        return timestamp
 
 
 class StringDuration(Field[str, datetime.timedelta]):
