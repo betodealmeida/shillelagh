@@ -443,7 +443,10 @@ The ``shillelagh.fields`` module has implementation of common representations. F
         represent true and false, respectively.
         """
 
+        # the SQLite text (see https://www.sqlite.org/datatype3.html)
         type = "BOOLEAN"
+
+        # one of the 5 types in https://peps.python.org/pep-0249/#type-objects
         db_api_type = "NUMBER"
 
         def parse(self, value: Optional[int]) -> Optional[bool]:
@@ -456,6 +459,7 @@ The ``shillelagh.fields`` module has implementation of common representations. F
                 return None
             return 1 if value else 0
 
+        # only needed if the adapter uses the ``build_sql`` helper function.
         def quote(self, value: Optional[int]) -> str:
             if value is None:
                 return "NULL"
