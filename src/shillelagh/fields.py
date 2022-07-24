@@ -3,7 +3,7 @@ Fields representing columns of different types and capabilities.
 """
 import datetime
 from enum import Enum
-from typing import Any, Generic, List, Optional, Type, TypeVar, cast
+from typing import Any, Collection, Generic, Optional, Type, TypeVar, cast
 
 import dateutil.parser
 
@@ -189,7 +189,7 @@ class Field(Generic[Internal, External]):
 
     def __init__(
         self,
-        filters: Optional[List[Type[Filter]]] = None,
+        filters: Optional[Collection[Type[Filter]]] = None,
         order: Order = Order.NONE,
         exact: bool = False,
     ):
@@ -208,7 +208,7 @@ class Field(Generic[Internal, External]):
             return NotImplemented
 
         return bool(
-            self.filters == other.filters
+            set(self.filters) == set(other.filters)
             and self.order == other.order
             and self.exact == other.exact,
         )
