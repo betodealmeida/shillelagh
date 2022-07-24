@@ -169,7 +169,22 @@ class Field(Generic[Internal, External]):
 
     """
 
+    # The SQLite text (see https://www.sqlite.org/datatype3.html). Note that SQLite
+    # doesn't really enforce types, so this can be abused -- see the ``StringDuration``
+    # field for an example of a new type being created.
     type = ""
+
+    # PEP 249 (https://peps.python.org/pep-0249/#type-objects-and-constructors) defines a
+    # very small set of types for columns: STRING, BINARY, NUMBER, DATETIME, and ROWID.
+    # These types are exported by the DB API 2.0 module, and can be used to interpret the
+    # ``type_code`` of each column in the cursor description. For example, Shillelagh
+    # might return an ``Integer`` field as the ``type_code`` of a given column; because
+    # the ``Integer`` has ``db_api_type`` set to "NUMBER" the following comparison will
+    # be true:
+    #
+    #     shillelagh.fields.Integer == shillelagh.backends.apsw.db.NUMBER
+    #
+    # Allowing 3rd party libraries to determine that ``Integer`` represents a number.
     db_api_type = "DBAPIType"
 
     def __init__(
@@ -245,6 +260,9 @@ class Field(Generic[Internal, External]):
 
         In order to handle that, the adapter defines its own time fields
         with custom ``quote`` methods.
+
+        This is only needed for adapters that use the ``build_sql`` helper function,
+        where SQL is generated manually and sent to an API endpoint.
         """
         if value is None:
             return "NULL"
