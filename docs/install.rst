@@ -10,10 +10,24 @@ Install Shillelagh with ``pip``:
 
     $ pip install 'shillelagh'
 
-This will install an unofficial APSW package from the `Python package index <https://pypi.org/project/apsw/>`_. It's highly recommend to install a newer version:
+You also need to install optional dependencies, depending on the adapter you want to use:
 
 .. code-block:: bash
 
-    $ pip install https://github.com/rogerbinns/apsw/releases/download/3.36.0-r1/apsw-3.36.0-r1.zip \
-    --global-option=fetch --global-option=--version --global-option=3.36.0 --global-option=--all \
-    --global-option=build --global-option=--enable-all-extensions
+    $ pip install 'shillelagh[console]'       # to use the CLI
+    $ pip install 'shillelagh[datasetteapi]'  # for Datasette
+    $ pip install 'shillelagh[githubapi]'     # for GitHub
+    $ pip install 'shillelagh[gsheetsapi]'    # for GSheets
+    $ pip install 'shillelagh[htmltableapi]'  # for HTML tables
+    $ pip install 'shillelagh[pandasmemory]'  # for Pandas in memory
+    $ pip install 'shillelagh[s3selectapi]'   # for S3 files
+    $ pip install 'shillelagh[socrataapi]'    # for Socrata API
+    $ pip install 'shillelagh[systemapi]'     # for CPU information
+    $ pip install 'shillelagh[weatherapi]'    # for WeatherAPI
+
+Alternatively, you can install everything with:
+
+.. code-block:: bash
+
+    $ pip install 'shillelagh[all]'
+~

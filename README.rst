@@ -12,7 +12,7 @@ Shillelagh
 .. image:: https://img.shields.io/pypi/pyversions/shillelagh
    :alt: PyPI - Python Version
 
-Shillelagh (ʃɪˈleɪlɪ) is a Python library and CLI that allows you to query many resources (APIs, files, in memory objects) using SQL. It's user and developer friendly, making it trivial to access resources and easy to add support for new ones.
+Shillelagh (ʃɪˈleɪlɪ) is a Python library and CLI that allows you to query many resources (APIs, files, in memory objects) using SQL. It's both user and developer friendly, making it trivial to access resources and easy to add support for new ones.
 
 The library is an implementation of the `Python DB API 2.0 <https://www.python.org/dev/peps/pep-0249/>`_ based on `SQLite <https://sqlite.org/index.html>`_ (using the `APSW <https://rogerbinns.github.io/apsw/>`_ library):
 
@@ -59,23 +59,6 @@ Why "Shillelagh"?
 
 Picture a leprechaun hitting APIs with a big stick so that they accept SQL.
 
-Installation
-============
-
-Install Shillelagh with ``pip``:
-
-.. code-block:: bash
-
-    $ pip install 'shillelagh'
-
-This will install an unofficial APSW package from the `Python package index <https://pypi.org/project/apsw/>`_. It's highly recommend to install a newer version:
-
-.. code-block:: bash
-
-    $ pip install https://github.com/rogerbinns/apsw/releases/download/3.38.1-r1/apsw-3.38.1-r1.zip \
-    --global-option=fetch --global-option=--version --global-option=3.38.1 --global-option=--all \
-    --global-option=build --global-option=--enable-all-extensions
-
 How is it different?
 ====================
 
@@ -98,16 +81,22 @@ You can even run ``INSERT``/``DELETE``/``UPDATE`` queries against the spreadshee
 
 Queries like this are supported by `adapters <https://shillelagh.readthedocs.io/en/latest/adapters.html>`_. Currently Shillelagh has the following adapters:
 
-- Google Spreadsheets
-- `WeatherAPI <https://www.weatherapi.com/>`_
-- `Socrata Open Data API <https://dev.socrata.com/>`_
-- `Datasette tables <https://datasette.io/>`_
-- HTML tables
-- S3 files (Parquet, CSV, JSON)
-- GitHub
-- CSV files
-- Pandas dataframes
-- System information
+.. table:: Supported adapters
+   :widths: auto
+
+    ========== ==================== =================================================================== ==============================================================================================
+    Name       Type                 URI pattern                                                         Example URI
+    ========== ==================== =================================================================== ==============================================================================================
+    Datasette  API                  https:// or http://                                                 https://global-power-plants.datasettes.com/global-power-plants/global-power-plants
+    GitHub     API                  https://api.github.com/repos/${owner}/{$repo}/pulls                 https://api.github.com/repos/apache/superset/pulls
+    GSheets    API                  https://docs.google.com/spreadsheets/d/${id}/edit#gid=${sheet_id}   https://docs.google.com/spreadsheets/d/1LcWZMsdCl92g7nA-D6qGRqg1T5TiHyuKJUY1u9XAnsk/edit#gid=0
+    HTML table API                  https:// or http://                                                 https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population
+    Pandas     In memory dataframes Any variable name                                                   my_df
+    S3         API                  s3://bucket/path/to/file                                            s3://shillelagh/sample_data.csv
+    Socrata    API                  https://${domain}/resource/${dataset-id}.json                       https://data.cdc.gov/resource/unsk-b7fc.json
+    System     API                  system://${resource}                                                system://cpu?interval=2
+    WeatherAPI API                  https://api.weatherapi.com/v1/history.json?key=${key}&q=${location} https://api.weatherapi.com/v1/history.json?key=XXX&q=London
+    ========== ==================== =================================================================== ==============================================================================================
 
 There are also 3rd-party adapters:
 
@@ -129,3 +118,33 @@ A query can combine data from multiple adapters:
 The query above reads timestamps from a Google sheet, uses them to filter weather data from `WeatherAPI <https://www.weatherapi.com/>`_, and writes the chance of rain into a (pre-existing) CSV file.
 
 New adapters are relatively easy to implement. There's a `step-by-step tutorial <https://shillelagh.readthedocs.io/en/latest/development.html>`_ that explains how to create a new adapter to an API or filetype.
+
+Installation
+============
+
+Install Shillelagh with ``pip``:
+
+.. code-block:: bash
+
+    $ pip install 'shillelagh'
+
+You also need to install optional dependencies, depending on the adapter you want to use:
+
+.. code-block:: bash
+
+    $ pip install 'shillelagh[console]'       # to use the CLI
+    $ pip install 'shillelagh[datasetteapi]'  # for Datasette
+    $ pip install 'shillelagh[githubapi]'     # for GitHub
+    $ pip install 'shillelagh[gsheetsapi]'    # for GSheets
+    $ pip install 'shillelagh[htmltableapi]'  # for HTML tables 
+    $ pip install 'shillelagh[pandasmemory]'  # for Pandas in memory
+    $ pip install 'shillelagh[s3selectapi]'   # for S3 files
+    $ pip install 'shillelagh[socrataapi]'    # for Socrata API
+    $ pip install 'shillelagh[systemapi]'     # for CPU information
+    $ pip install 'shillelagh[weatherapi]'    # for WeatherAPI
+
+Alternatively, you can install everything with:
+
+.. code-block:: bash
+
+    $ pip install 'shillelagh[all]'

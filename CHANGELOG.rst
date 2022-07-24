@@ -9,6 +9,7 @@ Next
 - Add new adapter for scraping data from HTML tables
 - Add support for ``DROP TABLE``
 - Add registry for adapters
+- Adapters can implement ``LIMIT`` and ``OFSET``
 
 Version 1.0.16 - 2022-07-15
 ===========================

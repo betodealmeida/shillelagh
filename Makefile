@@ -20,7 +20,7 @@ clean:
 	pyenv virtualenv-delete shillelagh
 
 spellcheck:
-	codespell -S "*.json" src/shillelagh docs/*rst tests templates
+	codespell -S "*.json" src/shillelagh docs/*rst tests templates *.rst
 
 check:
 	pre-commit run --all-files
