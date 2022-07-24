@@ -158,7 +158,7 @@ There's another layer of type conversion. SQLite has limited support for types, 
 .. code-block:: python
 
     cursor.execute(
-        "SELECT event_time FROM sometable WHERE event_time > %s", 
+        "SELECT event_time FROM sometable WHERE event_time > %s",
         (datetime.datetime.now() - datetime.timdelta(days=7),),
     )
 

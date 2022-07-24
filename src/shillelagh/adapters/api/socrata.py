@@ -15,7 +15,7 @@ from typing_extensions import TypedDict
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
-from shillelagh.fields import Field, ISODate, Order, String
+from shillelagh.fields import Field, Order, String, StringDate
 from shillelagh.filters import Equal, Filter, IsNotNull, IsNull, Like, NotEqual, Range
 from shillelagh.lib import SimpleCostModel, build_sql
 from shillelagh.typing import RequestedOrder, Row
@@ -69,7 +69,7 @@ class Number(Field[str, float]):
 
 
 type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
-    "calendar_date": (ISODate, [Range, Equal, NotEqual, IsNull, IsNotNull]),
+    "calendar_date": (StringDate, [Range, Equal, NotEqual, IsNull, IsNotNull]),
     "number": (Number, [Range, Equal, NotEqual, IsNull, IsNotNull]),
     "text": (String, [Range, Equal, NotEqual, Like, IsNull, IsNotNull]),
 }
