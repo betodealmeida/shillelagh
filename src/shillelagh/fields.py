@@ -9,18 +9,7 @@ import dateutil.parser
 
 from shillelagh.filters import Filter
 
-Internal = TypeVar(
-    "Internal",
-    float,
-    int,
-    str,
-    bool,
-    datetime.date,
-    datetime.datetime,
-    datetime.time,
-    datetime.timedelta,
-    bytes,
-)
+Internal = TypeVar("Internal")
 
 External = TypeVar(
     "External",

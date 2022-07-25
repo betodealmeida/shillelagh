@@ -11,7 +11,6 @@ from shillelagh.fields import (
     Boolean,
     Date,
     DateTime,
-    Field,
     Float,
     IntBoolean,
     Integer,
@@ -36,9 +35,9 @@ def test_comparison() -> None:
     """
     Test comparing fields.
     """
-    field1 = Field(filters=[Equal], order=Order.ASCENDING, exact=True)
-    field2 = Field(filters=[Equal], order=Order.ASCENDING, exact=True)
-    field3 = Field(filters=[Equal], order=Order.ASCENDING, exact=False)
+    field1 = String(filters=[Equal], order=Order.ASCENDING, exact=True)
+    field2 = String(filters=[Equal], order=Order.ASCENDING, exact=True)
+    field3 = String(filters=[Equal], order=Order.ASCENDING, exact=False)
 
     assert field1 == field2
     assert field1 != field3
