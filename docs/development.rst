@@ -499,3 +499,217 @@ If you want to use the model above you can do this in your adapter
     class MyAdapter:
 
         get_cost = SimpleCostModel(rows=1000, fixed_cost=100)
+
+====================================
+Creating a custom SQLAlchemy dialect
+====================================
+
+There are cases when you might want to write a new SQLAlchemy dialect, instead of (or in addition to) an adapter. This is the case of the `GSheets dialect <https://github.com/betodealmeida/shillelagh/blob/main/src/shillelagh/backends/apsw/dialects/gsheets.py>`_, which implements a ``gsheets://`` dialect, meant as a drop-in replacement for `gsheetsdb <https://pypi.org/project/gsheetsdb/>`_.
+
+As an example, let's create a custom dialect to query S3 files, based on the ``s3select`` adapter. To use the ``s3select`` adapter the user must first create an engine using the ``shillelagh://`` SQLAlchemy URI, and then they can query files using the ``s3://bucket/path/to/file`` pattern, eg:
+
+.. code-block:: python
+
+    from sqlalchemy import create_engine
+
+    engine = create_engine("shillelagh://")
+    connection = engine.connect()
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM "s3://shillelagh/files/sample_data.parquet"')
+
+Imagine instead that we want the user to create an engine passing a bucket name and a default prefix, as well as querying the file without having to specify the suffix, since we only want to support Parquet files:
+
+.. code-block:: python
+
+    from sqlalchemy import create_engine
+
+    engine = create_engine("s3://shillelagh/files")
+    connection = engine.connect()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM sample_data")
+
+The first thing to do is implement our dialect:
+
+.. code-block:: python
+
+    from sqlalchemy.engine.url import URL
+
+    from shillelagh.backends.apsw.dialects.base import APSWDialect
+
+    class S3Dialect(APSWDialect):
+
+        # scheme of the SQLAlchemy URI (s3://)
+        name = "s3"
+
+        # this is supported in the base class, but needs to be explicitly set in children
+        supports_statement_cache = True
+
+        def create_connect_args(self, url: URL) -> Tuple[Tuple[()], Dict[str, Any]]:
+            parsed = urllib.parse.urlparse(url)
+            bucket = parsed.netloc
+            prefix = parsed.path.strip("/") + "/"
+
+            return (), {
+                "path": ":memory:",
+                "adapters": ["custom_s3select"],
+                "adapter_kwargs": {
+                    "custom_s3select": {
+                        "bucket": bucket,
+                        "prefix": prefix,
+                    },
+                },
+                "safe": True,
+                "isolation_level": self.isolation_level,
+            }
+
+The ``create_connect_args`` method will parse the engine URI, ``s3://shillelagh/files``, and pass the bucket name ("shillelagh") and the key prefix ("files") to a custom adapter ("custom_s3select") that we're going to implement. The dialect will use only a single Shillelagh adapter.
+
+The adapter is based on the ``s3select`` adapter:
+
+.. code-block:: python
+
+    from shillelagh.adapters.api.s3select import InputSerializationType, S3SelectAPI
+
+    class CustomS3AdapterAPI(S3SelectAPI):
+
+        def __init__(self, table: str, bucket: str, prefix: str, **kwargs: Any):
+            # build the key based on the prefix/suffix
+            key = f"{prefix}{table}.parquet"
+
+            # the dialect will only support uncompressed Parquet files
+            input_serialization = {"CompressionType": "NONE", "Parquet": {}}
+
+            return super().__init__(bucket, key, input_serialization, **kwargs)
+
+        @staticmethod
+        def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
+            # since there's only one adapter, support all table names
+            return True
+
+        @staticmethod
+        def parse_uri(uri: str) -> Tuple[str]:
+            # simple return the table name
+            return (uri,)
+
+With the adapter above, when the user writes a query like ``SELECT * FROM sample_data`` Shillelagh will iterate over all the registered adapters, which is only "custom_s3select". It will then call the ``supports`` method to see if the adapter can handle ``sample_data``; since there's only a single adapter it can simply return true.
+
+Shillelagh will then call ``parse_uri("sample_data")``, which returns the table name unmodified. It will then instantiate the adapter with the response from ``parse_uri``, together with any additional keyword arguments present in ``adapter_kwargs`` (populated in the dialect's ``create_connect_args``). In this case:
+
+.. code-block:: python
+
+    CustomS3AdapterAPI("sample_data", bucket="shillelagh", prefix="files/")
+
+Then ``CustomS3AdapterAPI`` combines the prefix and the table name into a single key with ``files/sample_data.parquet``, and calls the base class:
+
+.. code-block:: python
+
+    S3SelectAPI(
+        "shilellagh",
+        "files/sample_data.parquet",
+        {"CompressionType": "NONE", "Parquet": {}},
+    )
+
+Everything else is handled by the original ``s3select`` adapter.
+
+In order for this to work we need to register the SQLAlchemy dialect and the Shillelagh adapter. An easy way to do that is by adding entry points in ``setup.py``:
+
+.. code-block:: python
+
+    setup(
+        ...,
+        entry_points={
+            "shillelagh.adapter": ["custom_s3select = path.to:CustomS3AdapterAPI"],
+            "sqlalchemy.dialects": ["s3 = path.to:S3Dialect"],
+        },
+    )
+
+Customizing the dialect
+=======================
+
+Finally, to make our dialect more useful, we can implement a few methods. It's useful to start with ``do_ping``, which is used to determine if the database is online. For our dialect we can simply do a ``HEAD`` request on a file that is known to exist.
+
+Second, we want to implement ``has_table`` and ``get_table_names``. The first is used to determine if a given table name exists. The dialect will have to build the full key based on the table name and do an S3 request to determine if the corresponding file exists. The second is used to retrieve the list of existing tables. The dialect will fetch all the keys for the given bucket/prefix, and format them by stripping the prefix and suffix.
+
+.. code-block:: python
+
+    import boto3
+    from botocore.exceptions import ClientError
+    from sqlalchemy.pool.base import _ConnectionFairy
+
+    HEALTH_BUCKET = "bucket-name"
+    HEALTH_KEY = "health-file"
+
+    class CustomS3AdapterAPI(S3SelectAPI):
+
+        def __init__(self, *args: Any, **kwargs: Any):
+            super().__init__(*args, **kwargs)
+
+            self.s3_client = boto3.client("s3")
+
+            ...
+
+        def do_ping(self, dbapi_connection: _ConnectionFairy) -> bool:
+            """
+            Return true if the database is online.
+
+            To check if S3 is accessible the method will do a ``HEAD`` request on a known file
+            """
+            try:
+                s3_client.head_object(Bucket=HEALTH_BUCKET, Key=HEALTH_KEY)
+                return True
+            except ClientError:
+                return False
+
+        def has_table(
+            self,
+            connection: _ConnectionFairy,
+            table_name: str,
+            schema: Optional[str] = None,
+        ) -> bool:
+            """
+            Return true if a given table exists.
+
+            In order to determine if a table exists the method will build the full key
+            and do a ``HEAD`` request on the resource.
+            """
+            raw_connection = connection.engine.raw_connection()
+            bucket = raw_connection._adapter_kwargs["custom_s3select"]["bucket"]
+            prefix = raw_connection._adapter_kwargs["custom_s3select"]["prefix"]
+            key = f"{prefix}{table_name}.parquet"
+
+            try:
+                s3_client.head_object(Bucket=bucket, Key=key)
+                return True
+            except ClientError:
+                return False
+
+        def get_table_names(  # pylint: disable=unused-argument
+            self,
+            connection: _ConnectionFairy,
+            schema: str = None,
+            **kwargs: Any,
+        ) -> List[str]:
+            """
+            Return a list of table names.
+
+            To build the list of table names the method will retrieve all objects from the
+            prefix, and strip out the prefix and suffix from the key name:
+
+                files/sample_data.parquet => sample_data
+
+            """
+            raw_connection = connection.engine.raw_connection()
+            bucket = raw_connection._adapter_kwargs["custom_s3select"]["bucket"]
+            prefix = raw_connection._adapter_kwargs["custom_s3select"]["prefix"]
+            response = self.s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+
+            # strip the prefix and the suffix from the key to get the table name
+            start = len(prefix)
+            end = -len('.parquet')
+            return [
+                obj["Key"][start:end]
+                for obj in response.get("Contents", [])
+                if obj["Key"].startswith(prefix) and obj["Key"].endswith(SUFFIX)
+            ]
