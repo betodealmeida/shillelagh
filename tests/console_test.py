@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name, unused-argument
 """
 Tests for shillelagh.console.
 """
@@ -110,7 +110,7 @@ def test_configuration_invalid(mocker: MockerFixture, fs: FakeFilesystem) -> Non
     _logger.exception.assert_called_with("Unable to load configuration file")
 
 
-def test_multiline(mocker: MockerFixture, fs:FakeFilesystem) -> None:
+def test_multiline(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     """
     Test a simple multiline query
     """
@@ -123,9 +123,9 @@ def test_multiline(mocker: MockerFixture, fs:FakeFilesystem) -> None:
     assert result == "  1\n---\n  1\nGoodBye!\n"
 
 
-def test_multiline_quoted_semicolon(mocker: MockerFixture, fs:FakeFilesystem) -> None:
+def test_multiline_quoted_semicolon(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     """
-    Test a multiline query that contains quoted semicolons
+    Test a multiline query that contains quoted semicolons.
     """
     stdout = mocker.patch("sys.stdout", new_callable=StringIO)
     PromptSession = mocker.patch("shillelagh.console.PromptSession")
@@ -137,9 +137,12 @@ def test_multiline_quoted_semicolon(mocker: MockerFixture, fs:FakeFilesystem) ->
     assert result == "  ';'=\n   ';'\n------\n     1\nGoodBye!\n"
 
 
-def test_multiline_quoted_semicolon_on_line_end(mocker: MockerFixture, fs:FakeFilesystem) -> None:
+def test_multiline_quoted_semicolon_on_line_end(
+    mocker: MockerFixture,
+    fs: FakeFilesystem,
+) -> None:
     """
-    Test a multiline query that contains quoted semicolons on the line end
+    Test a multiline query that contains quoted semicolons on the line end.
     """
     stdout = mocker.patch("sys.stdout", new_callable=StringIO)
     PromptSession = mocker.patch("shillelagh.console.PromptSession")
@@ -151,15 +154,25 @@ def test_multiline_quoted_semicolon_on_line_end(mocker: MockerFixture, fs:FakeFi
     assert result == "  ';'=';\n       '\n--------\n       0\nGoodBye!\n"
 
 
-def test_multiline_triple_quoted_semicolon_on_line_end(mocker: MockerFixture, fs:FakeFilesystem) -> None:
+def test_multiline_triple_quoted_semicolon_on_line_end(
+    mocker: MockerFixture,
+    fs: FakeFilesystem,
+) -> None:
     """
-    Test a multiline query that contains quoted semicolons on the line end
+    Test a multiline query that contains quoted semicolons on the line end.
     """
     stdout = mocker.patch("sys.stdout", new_callable=StringIO)
     PromptSession = mocker.patch("shillelagh.console.PromptSession")
 
-    PromptSession.return_value.prompt.side_effect = ["SELECT ''';'''=''';", "''';", EOFError()]
+    PromptSession.return_value.prompt.side_effect = [
+        "SELECT ''';'''=''';",
+        "''';",
+        EOFError(),
+    ]
     console.main()
     result = stdout.getvalue()
 
-    assert result == "  ''';'''=''';\n           '''\n--------------\n             0\nGoodBye!\n"
+    assert (
+        result
+        == "  ''';'''=''';\n           '''\n--------------\n             0\nGoodBye!\n"
+    )

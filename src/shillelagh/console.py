@@ -19,8 +19,11 @@ Connection arguments can be passed via a ``~/.config/shillelagh/shillelagh.yaml`
 """
 import logging
 import os.path
+from pathlib import Path
+from typing import List, Tuple
 
 import yaml
+from appdirs import user_config_dir
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
@@ -171,7 +174,7 @@ sql_completer = WordCompleter(
 style = style_from_pygments_cls(get_style_by_name("friendly"))
 
 
-def main():
+def main():  # pylint: disable=too-many-locals
     """
     Run a REPL until the user presses Control-D.
     """
@@ -188,13 +191,10 @@ def main():
     connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
     cursor = connection.cursor()
 
-    history_dir = os.path.expanduser(
-        os.sep.join(("~", ".config", "shillelagh"))
-    )
-    if not os.path.exists(history_dir):
-        os.makedirs(history_dir)
-
-    history_path = os.sep.join((history_dir, "shillelagh.history"))
+    history_dir = Path(user_config_dir("shillelagh"))
+    if not history_dir.exists():
+        history_dir.mkdir(parents=True)
+    history_path = history_dir / "shillelagh.history"
 
     session = PromptSession(
         lexer=PygmentsLexer(SqlLexer),
@@ -203,64 +203,63 @@ def main():
         history=FileHistory(history_path),
     )
 
-    query = ""
-    quote_context = None
+    lines: List[str] = []
+    quote_context = " "
     while True:
+        prompt = "sql> " if not lines else f"  {quote_context}. "
         try:
-            sql = session.prompt(
-                "sql> " if len(query) == 0 else
-                f"  {quote_context if quote_context is not None else ' '}. "
-            ).strip()
+            line = session.prompt(prompt)
         except KeyboardInterrupt:
-            query = ""
-            quote_context = None
+            lines = []
+            quote_context = " "
             continue  # Control-C pressed. Clear and try again.
         except EOFError:
             break  # Control-D pressed.
 
-        if sql:
-            query += f"\n{sql}"
-            is_terminated, quote_context = query_termination(query)
-            if is_terminated:
-                results = None
-                try:
-                    cursor.execute(query)
-                    results = cursor.fetchall()
-                except Error as ex:
-                    print(ex)
-                    continue
-                finally:
-                    query = ""
+        lines.append(line)
+        query = "\n".join(lines)
 
-                headers = [t[0] for t in cursor.description or []]
-                print(tabulate(results, headers=headers))
+        is_terminated, quote_context = get_query_termination(query)
+        if is_terminated:
+            results = None
+            try:
+                cursor.execute(query)
+                results = cursor.fetchall()
+            except Error as ex:
+                print(ex)
+                continue
+            finally:
+                lines = []
+                quote_context = " "
+
+            headers = [t[0] for t in cursor.description or []]
+            print(tabulate(results, headers=headers))
 
     connection.close()
     print("GoodBye!")
 
 
-def query_termination(query: str) -> (bool, str):
+def get_query_termination(query: str) -> Tuple[bool, str]:
     """
-    Check if a query is ended or if a new line should be created
-    by looking for a semicolon at the end and making
-    sure no quotation mark must be closed
+    Check if a query is ended or if a new line should be created.
 
-    Returns a tuple :
-        -True if the query is terminated
-        -A quotation character that appears to need to be closed
+    This function looks for a semicolon at the end, making sure no quotation mark must be
+    closed.
     """
-    quote_context = None
-    quote_chars = ("\"", "\'", "`")
+    quote_context = " "
+    quote_chars = ('"', "'", "`")
 
     for query_char in query:
-        # same quotation mark as the current one : this is a closing mark
         if quote_context == query_char:
-            quote_context = None
+            quote_context = " "
         else:
             for quote in quote_chars:
-                if quote_context is None and quote == query_char:
+                if quote_context == " " and quote == query_char:
                     quote_context = quote
-    return quote_context is None and query.endswith(";"), quote_context
+
+    is_terminated = quote_context == " " and query.endswith(";")
+
+    return is_terminated, quote_context
 
 
 if __name__ == "__main__":
