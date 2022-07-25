@@ -84,6 +84,9 @@ class APSWDialect(SQLiteDialect):
         }
 
     def do_ping(self, dbapi_connection: _ConnectionFairy) -> bool:
+        """
+        Return true if the database is online.
+        """
         return True
 
     def has_table(
