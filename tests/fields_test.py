@@ -2,15 +2,18 @@
 Tests for shillelagh.fields.
 """
 import datetime
+from typing import Union
 
 import pytest
 
+from shillelagh.adapters.registry import registry
 from shillelagh.backends.apsw.db import connect
 from shillelagh.fields import (
     Blob,
     Boolean,
     Date,
     DateTime,
+    Field,
     Float,
     IntBoolean,
     Integer,
@@ -29,6 +32,8 @@ from shillelagh.fields import (
 )
 from shillelagh.filters import Equal
 from shillelagh.types import BINARY, DATETIME, NUMBER, STRING
+
+from .fakes import FakeAdapter
 
 
 def test_comparison() -> None:
@@ -442,3 +447,41 @@ def test_string_duration() -> None:
     sql = "SELECT * FROM test_table"
     cursor.execute(sql)
     assert cursor.fetchall() == [(datetime.timedelta(hours=1),)]
+
+
+def test_polymorphic_field() -> None:
+    """
+    Test for a polymorphic field.
+    """
+
+    class IntegerOrString(Field[Union[int, str], Union[int, str]]):
+        """
+        A column that can be an integer or a string.
+        """
+
+        type = "TEXT"
+        db_api_type = "STRING"
+
+    class CustomFakeAdapter(FakeAdapter):
+
+        """
+        A simple adapter with an ``IntegerOrString`` column.
+        """
+
+        secret = IntegerOrString()
+
+        def __init__(self):
+            super().__init__()
+
+            self.data = [
+                {"rowid": 0, "name": "Alice", "age": 20, "pets": 0, "secret": 42},
+                {"rowid": 1, "name": "Bob", "age": 23, "pets": 3, "secret": "XXX"},
+            ]
+
+    registry.add("dummy", CustomFakeAdapter)
+
+    connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM "dummy://"')
+    assert cursor.fetchall() == [(20, "Alice", 0, 42), (23, "Bob", 3, "XXX")]
