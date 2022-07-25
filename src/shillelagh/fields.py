@@ -3,7 +3,7 @@ Fields representing columns of different types and capabilities.
 """
 import datetime
 from enum import Enum
-from typing import Any, Collection, Generic, Optional, Type, TypeVar, cast
+from typing import Any, Collection, Generic, Optional, Type, TypeVar, Union, cast
 
 import dateutil.parser
 
@@ -13,15 +13,17 @@ Internal = TypeVar("Internal")
 
 External = TypeVar(
     "External",
-    float,
-    int,
-    str,
-    bool,
-    datetime.date,
-    datetime.datetime,
-    datetime.time,
-    datetime.timedelta,
-    bytes,
+    bound=Union[
+        float,
+        int,
+        str,
+        bool,
+        datetime.date,
+        datetime.datetime,
+        datetime.time,
+        datetime.timedelta,
+        bytes,
+    ],
 )
 
 
