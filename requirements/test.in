@@ -1,6 +1,7 @@
 -r base.in
 
 PyYAML>=5.4
+appdirs>=1.4.4
 boto3>=1.24.28
 codespell>=2.1.0
 freezegun>=1.1.0
