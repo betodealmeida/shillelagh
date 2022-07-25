@@ -48,6 +48,9 @@ class Adapter:
     supports_limit = False
     supports_offset = False
 
+    # for adapters that return a buffer to the data, instead of an iterator
+    supports_memoryview = False
+
     def __init__(self, *args: Any, **kwargs: Any):  # pylint: disable=unused-argument
         # ensure ``self.close`` gets called before GC
         atexit.register(self.close)
@@ -139,6 +142,19 @@ class Adapter:
         replaced by ``None`` by the backend.
         """
         raise NotImplementedError("Subclasses must implement ``get_data``")
+
+    def get_memoryview(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
+    ) -> memoryview:
+        """
+        Return a memoryview to the data.
+
+        Used by the Pandas adapter to optimize data transfer.
+        """
+        raise NotImplementedError("Subclasses must implement ``get_memoryview``")
 
     def get_rows(
         self,

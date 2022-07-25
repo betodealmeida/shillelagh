@@ -19,6 +19,7 @@ from typing import (
     Set,
     Tuple,
     Type,
+    Union,
     cast,
 )
 
@@ -115,7 +116,7 @@ def convert_rows_to_sqlite(
     Convert values from native Python types to SQLite types.
 
     Native Python types like ``datetime.datetime`` are not supported by SQLite; instead
-    we need to cast them to strings or numbers. We use the original fields to handle
+    we need to cast them to strings or numbers. We use SQLite friendly fields to handle
     the conversion (not the adapter fields).
     """
     converters = {
@@ -452,9 +453,12 @@ class VTCursor:
     def __init__(self, adapter: Adapter):
         self.adapter = adapter
 
-        self.data: Iterator[Tuple[Any, ...]]
+        self.data: Union[memoryview, Iterator[Tuple[Any, ...]]]
         self.current_row: Tuple[Any, ...]
         self.eof = False
+
+        # for memoryview
+        self.cursor = 0
 
     def Filter(  # pylint: disable=too-many-locals
         self,
@@ -491,13 +495,19 @@ class VTCursor:
         if self.adapter.supports_offset:
             kwargs["offset"] = offset
 
-        rows = self.adapter.get_rows(bounds, order, **kwargs)
-        rows = convert_rows_to_sqlite(columns, rows)
+        if self.adapter.supports_memoryview:
+            self.data = self.adapter.get_memoryview(bounds, order, **kwargs)
+            # XXX convert_rows_to_sqlite
+        else:
+            rows = self.adapter.get_rows(bounds, order, **kwargs)
+            rows = convert_rows_to_sqlite(columns, rows)
 
-        # if a given column is not present, replace it with ``None``
-        self.data = (
-            tuple(row.get(name) for name in ["rowid", *column_names]) for row in rows
-        )
+            # if a given column is not present, replace it with ``None``
+            self.data = (
+                tuple(row.get(name) for name in ["rowid", *column_names])
+                for row in rows
+            )
+
         self.Next()
 
     def Eof(self) -> bool:
@@ -522,11 +532,18 @@ class VTCursor:
         """
         Move the cursor to the next row.
         """
-        try:
-            self.current_row = next(self.data)
-            self.eof = False
-        except StopIteration:
-            self.eof = True
+        if isinstance(self.data, memoryview):
+            if self.cursor < len(self.data):
+                self.current_row = self.data.obj[self.cursor].tolist()
+                self.cursor += 1
+            else:
+                self.eof = True
+        else:
+            try:
+                self.current_row = next(self.data)
+                self.eof = False
+            except StopIteration:
+                self.eof = True
 
     def Close(self) -> None:
         """

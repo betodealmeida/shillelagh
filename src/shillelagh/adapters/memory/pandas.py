@@ -81,12 +81,28 @@ def get_df_data(  # pylint: disable=too-many-arguments
     """
     Apply the ``get_data`` method on a Pandas dataframe.
     """
+    df = get_df(df, columns, bounds, order, limit, offset)
+    for row in df.itertuples(name=None):
+        yield dict(zip(["rowid", *columns.keys()], row))
+
+
+def get_df(  # pylint: disable=too-many-arguments
+    df: pd.DataFrame,
+    columns: Dict[str, Field],
+    bounds: Dict[str, Filter],
+    order: List[Tuple[str, RequestedOrder]],
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+) -> pd.DataFrame:
+    """
+    Return a filter/sorted/limited/offset dataframe.
+    """
     column_names = list(columns.keys())
     df = df[column_names]
 
     for column_name, filter_ in bounds.items():
         if isinstance(filter_, Impossible):
-            return
+            return pd.DataFrame()
         if isinstance(filter_, Equal):
             df = df[df[column_name] == filter_.value]
         elif isinstance(filter_, NotEqual):
@@ -115,8 +131,7 @@ def get_df_data(  # pylint: disable=too-many-arguments
     df = df[offset:]
     df = df[:limit]
 
-    for row in df.itertuples(name=None):
-        yield dict(zip(["rowid", *column_names], row))
+    return df
 
 
 def get_columns_from_df(df: pd.DataFrame) -> Dict[str, Field]:
@@ -140,6 +155,7 @@ class PandasMemory(Adapter):
 
     supports_limit = True
     supports_offset = True
+    supports_memoryview = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
@@ -162,6 +178,19 @@ class PandasMemory(Adapter):
         return self.columns
 
     get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
+
+    def get_memoryview(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        **kwargs: Any,
+    ) -> memoryview:
+        df = get_df(self.df, self.columns, bounds, order, limit, offset)
+        df["rowid"] = df.index
+        df = df[["rowid"] + list(self.columns.keys())]
+        return memoryview(df.values)
 
     def get_data(
         self,
