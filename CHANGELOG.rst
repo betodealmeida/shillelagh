@@ -14,6 +14,7 @@ Next
 - Add support for polymorphic fields (#280)
 - Add docs on architecture (#273), dialects (#278)
 - Improve docs on custom fields (#275)
+- Configuration directory is now system dependent (#283)
 
 Version 1.0.16 - 2022-07-15
 ===========================
