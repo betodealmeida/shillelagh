@@ -7,6 +7,7 @@ from typing import Any, Collection, Generic, Optional, Type, TypeVar, Union, cas
 
 import dateutil.parser
 
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.filters import Filter
 
 Internal = TypeVar("Internal")
@@ -495,8 +496,8 @@ class ISODateTime(Field[str, datetime.datetime]):
             return None
 
         try:
-            timestamp = datetime.datetime.fromisoformat(value)
-        except ValueError:
+            timestamp = dateutil.parser.isoparse(value)
+        except (ValueError, dateutil.parser.ParserError):
             return None
 
         # if the timestamp has a timezone change it to UTC, so that
@@ -521,6 +522,31 @@ class ISODateTime(Field[str, datetime.datetime]):
         if value is None:
             return "NULL"
         return f"'{value}'"
+
+
+class FastISODateTime(ISODateTime):
+    """
+    A faster but not fully compliant ISO timestamp parser.
+
+    This uses Python's native ``datetime.datetime.fromisoformat``, which doesn't support
+    arbitrary ISO 8601 strings. It's used for serializing and deserializing into SQLite.
+    """
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.datetime]:
+        if value is None:
+            return None
+
+        try:
+            timestamp = datetime.datetime.fromisoformat(value)
+        except ValueError as ex:
+            raise ProgrammingError(f'Unable to parse "{value}"') from ex
+
+        # if the timestamp has a timezone change it to UTC, so that
+        # timestamps in different timezones can be compared as strings
+        if timestamp.tzinfo is not None:
+            timestamp = timestamp.astimezone(datetime.timezone.utc)
+
+        return timestamp
 
 
 class StringDateTime(ISODateTime):
