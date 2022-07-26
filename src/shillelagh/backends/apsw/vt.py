@@ -352,8 +352,8 @@ class VTTable:
                     indexes.append((column_index, sqlite_index_constraint))
                     break
             else:
-                if (operator == Operator.LIMIT and self.adapter.supports_limit) or (
-                    operator == Operator.OFFSET and self.adapter.supports_offset
+                if (operator is Operator.LIMIT and self.adapter.supports_limit) or (
+                    operator is Operator.OFFSET and self.adapter.supports_offset
                 ):
                     constraints_used.append((filter_index, True))
                     filter_index += 1

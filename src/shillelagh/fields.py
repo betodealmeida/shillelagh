@@ -421,14 +421,12 @@ class ISOTime(Field[str, datetime.time]):
             return None
 
         try:
-            timestamp = datetime.time.fromisoformat(value)
+            time = datetime.time.fromisoformat(value)
         except ValueError:
             return None
 
-        time = timestamp
-
         # timezone is not preserved
-        return time.replace(tzinfo=timestamp.tzinfo)
+        return time.replace(tzinfo=time.tzinfo)
 
     def format(self, value: Optional[datetime.time]) -> Optional[str]:
         if value is None:
