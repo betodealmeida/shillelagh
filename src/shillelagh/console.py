@@ -5,7 +5,8 @@ A simple REPL for Shillelagh.
 To run the REPL, since run ``shillelagh``. Pressing return will execute the
 query immediately, and multi-line queries are currently not supported.
 
-Connection arguments can be passed via a ``~/.config/shillelagh/shillelagh.yaml`` file, eg::
+Connection arguments can be passed via a ``shillelagh.yaml`` file located in the users
+application directory (see https://pypi.org/project/appdirs/), eg::
 
     gsheestapi:
       service_account_file: /path/to/credentials.json
@@ -179,22 +180,23 @@ def main():  # pylint: disable=too-many-locals
     Run a REPL until the user presses Control-D.
     """
     # read args from config file
-    config = os.path.expanduser("~/.config/shillelagh/shillelagh.yaml")
+    config_dir = Path(user_config_dir("shillelagh"))
+    if not config_dir.exists():
+        config_dir.mkdir(parents=True)
+
+    config_path = config_dir / "shillelagh.yaml"
+    history_path = config_dir / "shillelagh.history"
+
     adapter_kwargs = {}
-    if os.path.exists(config):
+    if os.path.exists(config_path):
         try:
-            with open(config, encoding="utf-8") as stream:
+            with open(config_path, encoding="utf-8") as stream:
                 adapter_kwargs = yaml.load(stream, Loader=yaml.SafeLoader)
         except (PermissionError, yaml.parser.ParserError, yaml.scanner.ScannerError):
             _logger.exception("Unable to load configuration file")
 
     connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
     cursor = connection.cursor()
-
-    history_dir = Path(user_config_dir("shillelagh"))
-    if not history_dir.exists():
-        history_dir.mkdir(parents=True)
-    history_path = history_dir / "shillelagh.history"
 
     session = PromptSession(
         lexer=PygmentsLexer(SqlLexer),

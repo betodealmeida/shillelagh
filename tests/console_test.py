@@ -2,10 +2,11 @@
 """
 Tests for shillelagh.console.
 """
-import os.path
 from io import StringIO
+from pathlib import Path
 
 import yaml
+from appdirs import user_config_dir
 from pyfakefs.fake_filesystem import FakeFilesystem
 from pytest_mock import MockerFixture
 
@@ -59,10 +60,9 @@ def test_configuration(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     """
     Test loading the configuration file.
     """
-    config = os.path.expanduser("~/.config/shillelagh/shillelagh.yaml")
-    fs.create_file(config)
-    with open(config, "w", encoding="utf-8") as fp:
-        yaml.dump({"foo": {"bar": "baz"}}, fp)
+    config_dir = Path(user_config_dir("shillelagh"))
+    config_path = config_dir / "shillelagh.yaml"
+    fs.create_file(config_path, contents=yaml.dump({"foo": {"bar": "baz"}}))
 
     connect = mocker.patch("shillelagh.console.connect")
     mocker.patch("sys.stdout", new_callable=StringIO)
@@ -78,7 +78,7 @@ def test_no_configuration(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     """
     Test no configuration file found.
     """
-    config_dir = os.path.expanduser("~/.config/shillelagh/")
+    config_dir = Path(user_config_dir("shillelagh"))
     fs.create_dir(config_dir)
 
     connect = mocker.patch("shillelagh.console.connect")
@@ -95,10 +95,9 @@ def test_configuration_invalid(mocker: MockerFixture, fs: FakeFilesystem) -> Non
     """
     Test that an exception is raised if the configuration is invalid.
     """
-    config = os.path.expanduser("~/.config/shillelagh/shillelagh.yaml")
-    fs.create_file(config)
-    with open(config, "w", encoding="utf-8") as fp:
-        fp.write("foo: *")
+    config_dir = Path(user_config_dir("shillelagh"))
+    config_path = config_dir / "shillelagh.yaml"
+    fs.create_file(config_path, contents="foo: *")
 
     _logger = mocker.patch("shillelagh.console._logger")
     mocker.patch("sys.stdout", new_callable=StringIO)
