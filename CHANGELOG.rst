@@ -15,6 +15,7 @@ Next
 - Add docs on architecture (#273), dialects (#278)
 - Improve docs on custom fields (#275)
 - Configuration directory is now system dependent (#283)
+- Updates should no longer raise errors in SQLAlchemy (#284)
 
 Version 1.0.16 - 2022-07-15
 ===========================

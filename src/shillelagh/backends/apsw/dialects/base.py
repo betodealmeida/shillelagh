@@ -51,6 +51,8 @@ class APSWDialect(SQLiteDialect):
     # proper objects the custom representations are not needed.
     colspecs: Dict[TypeEngine, TypeEngine] = {}
 
+    supports_sane_rowcount = False
+
     @classmethod
     def dbapi(cls):  # pylint: disable=method-hidden
         """
