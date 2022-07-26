@@ -8,11 +8,13 @@ import pytest
 
 from shillelagh.adapters.registry import registry
 from shillelagh.backends.apsw.db import connect
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import (
     Blob,
     Boolean,
     Date,
     DateTime,
+    FastISODateTime,
     Field,
     Float,
     IntBoolean,
@@ -156,7 +158,7 @@ def test_time() -> None:
     assert Time().quote(None) == "NULL"
 
 
-def test_iso_time() -> None:
+def test_isotime() -> None:
     """
     Test ``ISOTime``.
     """
@@ -224,7 +226,7 @@ def test_datetime() -> None:
     assert DateTime().quote(None) == "NULL"
 
 
-def test_iso_datetime() -> None:
+def test_isodatetime() -> None:
     """
     Test ``ISODateTime``.
     """
@@ -485,3 +487,35 @@ def test_polymorphic_field() -> None:
 
     cursor.execute('SELECT * FROM "dummy://"')
     assert cursor.fetchall() == [(20, "Alice", 0, 42), (23, "Bob", 3, "XXX")]
+
+
+def test_fastisodatetime() -> None:
+    """
+    Test ``FastISODateTime``.
+    """
+    assert FastISODateTime().parse("2020-01-01T12:00+00:00") == datetime.datetime(
+        2020,
+        1,
+        1,
+        12,
+        0,
+        0,
+        tzinfo=datetime.timezone.utc,
+    )
+    assert FastISODateTime().parse(None) is None
+    assert FastISODateTime().parse("2020-01-01T12:00") == datetime.datetime(
+        2020,
+        1,
+        1,
+        12,
+        0,
+        0,
+    )
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        FastISODateTime().parse("2020-01-01T12:00Z")
+    assert str(excinfo.value) == 'Unable to parse "2020-01-01T12:00Z"'
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        FastISODateTime().parse("invalid")
+    assert str(excinfo.value) == 'Unable to parse "invalid"'

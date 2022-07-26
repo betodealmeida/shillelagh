@@ -28,11 +28,11 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import (
     Blob,
+    FastISODateTime,
     Field,
     Float,
     IntBoolean,
     ISODate,
-    ISODateTime,
     ISOTime,
     Order,
     RowID,
@@ -96,7 +96,7 @@ type_map: Dict[str, Type[Field]] = {
         IntBoolean,
         StringInteger,
         ISODate,
-        ISODateTime,
+        FastISODateTime,
         ISOTime,
         String,
     ]
