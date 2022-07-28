@@ -2,8 +2,8 @@
 Changelog
 =========
 
-Next
-====
+Version 1.1.0 - 2022-07-28
+==========================
 
 - CLI now supports multi-line statements (#205)
 - Add new adapter for CSV/JSON/Parquet files stored in S3 (#254)
@@ -15,7 +15,7 @@ Next
 - Add docs on architecture (#273), dialects (#278)
 - Improve docs on custom fields (#275)
 - Configuration directory is now system dependent (#283)
-- Updates should no longer raise errors in SQLAlchemy (#284)
+- Row updates should no longer raise errors in SQLAlchemy (#284)
 
 Version 1.0.16 - 2022-07-15
 ===========================
