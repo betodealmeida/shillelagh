@@ -127,7 +127,7 @@ The dialect also allows users to specify a "catalog" of sheets, so they can be r
 
     engine = create_engine(
         "gsheets://",
-        "catalog": {
+        catalog={
             "simple_sheet": "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=0",
         },
     )
@@ -147,7 +147,7 @@ You can specify a fixed number of header rows by adding ``headers=N`` to the she
 
     engine = create_engine(
         "gsheets://",
-        "catalog": {
+        catalog={
             "simple_sheet": (
                 "https://docs.google.com/spreadsheets/d/1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit?"
                 "headers=1"  # <= here
