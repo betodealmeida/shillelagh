@@ -277,10 +277,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
         # collect arguments from URI and connection and serialize them
         adapter, args, kwargs = find_adapter(uri, self._adapter_kwargs, self._adapters)
-        if adapter.need_operation:
-            kwargs["operation"] = operation
-            kwargs["parameters"] = parameters
-
+        
         formatted_args = ", ".join(
             f"'{serialize(arg)}'"
             for arg in combine_args_kwargs(adapter, *args, **kwargs)
@@ -564,11 +561,7 @@ def connect(  # pylint: disable=too-many-arguments
         if adapter in enabled_adapters
     }
 
-    print("mapping ", mapping, adapter_kwargs)
-
     adapter_kwargs = {mapping[k]: v for k, v in adapter_kwargs.items()}
-
-    print("-- db got connection")
 
     return Connection(
         path,
