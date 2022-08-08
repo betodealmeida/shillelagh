@@ -1,10 +1,7 @@
 from datetime import date
-from pandas import date_range
 from shillelagh.backends.apsw.dialects.base import APSWDialect
 from sqlalchemy.engine.url import URL
 from typing import Tuple, Dict, Any
-from urllib.parse import unquote, unquote_plus
-import json
 
 class APSWGoogleAnalyticsDialect(APSWDialect):
     name = "google_analytics"
