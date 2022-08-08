@@ -94,6 +94,9 @@ class DatasetteAPI(Adapter):
 
     safe = True
 
+    supports_limit = True
+    supports_offset = True
+
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         parsed = urllib.parse.urlparse(uri)
@@ -168,15 +171,24 @@ class DatasetteAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        **kwargs: Any,
     ) -> Iterator[Row]:
-        offset = 0
+        offset = offset or 0
         while True:
+            if limit is None:
+                # request 1 more, so we know if there are more pages to be fetched
+                end = DEFAULT_LIMIT + 1
+            else:
+                end = min(limit, DEFAULT_LIMIT + 1)
+
             sql = build_sql(
                 self.columns,
                 bounds,
                 order,
                 f'"{self.table}"',
-                limit=DEFAULT_LIMIT + 1,
+                limit=end,
                 offset=offset,
             )
             payload = self._run_query(sql)
@@ -198,4 +210,7 @@ class DatasetteAPI(Adapter):
 
             if not payload["truncated"] and len(rows) <= DEFAULT_LIMIT:
                 break
+
             offset += i + 1
+            if limit is not None:
+                limit -= i + 1

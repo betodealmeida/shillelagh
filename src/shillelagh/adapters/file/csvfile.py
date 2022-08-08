@@ -85,6 +85,9 @@ class CSVFile(Adapter):
     # the filesystem, or potentially overwrite existing files
     safe = False
 
+    supports_limit = True
+    supports_offset = True
+
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         path = Path(uri)
@@ -159,6 +162,9 @@ class CSVFile(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        **kwargs: Any,
     ) -> Iterator[Row]:
         _logger.info("Opening file CSV file %s to load data", self.path)
         with open(self.path, encoding="utf-8") as csvfile:
@@ -176,9 +182,9 @@ class CSVFile(Adapter):
             # Filter and sort the data. It would probably be more efficient to simply
             # declare the columns as having no filter and no sort order, and let the
             # backend handle this; but it's nice to have an example of how to do this.
-            for row in filter_data(data, bounds, order):
-                yield row
+            for row in filter_data(data, bounds, order, limit, offset):
                 _logger.debug(row)
+                yield row
 
     def insert_data(self, row: Row) -> int:
         row_id: Optional[int] = row.pop("rowid")

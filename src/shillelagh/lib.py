@@ -5,9 +5,7 @@ import itertools
 import math
 import operator
 import pickle
-from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type
-
-from pkg_resources import iter_entry_points
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
@@ -351,6 +349,8 @@ def filter_data(
     data: Iterator[Row],
     bounds: Dict[str, Filter],
     order: List[Tuple[str, RequestedOrder]],
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
 ) -> Iterator[Row]:
     """
     Apply filtering and sorting to a stream of rows.
@@ -406,14 +406,27 @@ def filter_data(
             rows.sort(key=operator.itemgetter(column_name), reverse=reverse)
         data = iter(rows)
 
+    data = apply_limit_and_offset(data, limit, offset)
+
     yield from data
 
 
-def get_available_adapters() -> Set[str]:
+T = TypeVar("T")
+
+
+def apply_limit_and_offset(
+    rows: Iterator[T],
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+) -> Iterator[T]:
     """
-    Return the name of the available adapters.
+    Apply limit/offset to a stream of rows.
     """
-    return {entry_point.name for entry_point in iter_entry_points("shillelagh.adapter")}
+    if limit is not None or offset is not None:
+        start = offset or 0
+        end = None if limit is None else start + limit
+        rows = itertools.islice(rows, start, end)
+    return rows
 
 
 def SimpleCostModel(rows: int, fixed_cost: int = 0):  # pylint: disable=invalid-name

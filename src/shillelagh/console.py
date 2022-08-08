@@ -5,7 +5,8 @@ A simple REPL for Shillelagh.
 To run the REPL, since run ``shillelagh``. Pressing return will execute the
 query immediately, and multi-line queries are currently not supported.
 
-Connection arguments can be passed via a ``~/.config/shillelagh/shillelagh.yaml`` file, eg::
+Connection arguments can be passed via a ``shillelagh.yaml`` file located in the users
+application directory (see https://pypi.org/project/appdirs/), eg::
 
     gsheestapi:
       service_account_file: /path/to/credentials.json
@@ -19,8 +20,11 @@ Connection arguments can be passed via a ``~/.config/shillelagh/shillelagh.yaml`
 """
 import logging
 import os.path
+from pathlib import Path
+from typing import List, Tuple
 
 import yaml
+from appdirs import user_config_dir
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
@@ -171,16 +175,22 @@ sql_completer = WordCompleter(
 style = style_from_pygments_cls(get_style_by_name("friendly"))
 
 
-def main():
+def main():  # pylint: disable=too-many-locals
     """
     Run a REPL until the user presses Control-D.
     """
     # read args from config file
-    config = os.path.expanduser("~/.config/shillelagh/shillelagh.yaml")
+    config_dir = Path(user_config_dir("shillelagh"))
+    if not config_dir.exists():
+        config_dir.mkdir(parents=True)
+
+    config_path = config_dir / "shillelagh.yaml"
+    history_path = config_dir / "shillelagh.history"
+
     adapter_kwargs = {}
-    if os.path.exists(config):
+    if os.path.exists(config_path):
         try:
-            with open(config, encoding="utf-8") as stream:
+            with open(config_path, encoding="utf-8") as stream:
                 adapter_kwargs = yaml.load(stream, Loader=yaml.SafeLoader)
         except (PermissionError, yaml.parser.ParserError, yaml.scanner.ScannerError):
             _logger.exception("Unable to load configuration file")
@@ -192,32 +202,66 @@ def main():
         lexer=PygmentsLexer(SqlLexer),
         completer=sql_completer,
         style=style,
-        history=FileHistory(
-            os.path.expanduser("~/.config/shillelagh/shillelagh.history"),
-        ),
+        history=FileHistory(history_path),
     )
 
+    lines: List[str] = []
+    quote_context = " "
     while True:
+        prompt = "sql> " if not lines else f"  {quote_context}. "
         try:
-            sql = session.prompt("sql> ")
+            line = session.prompt(prompt)
         except KeyboardInterrupt:
-            continue  # Control-C pressed. Try again.
+            lines = []
+            quote_context = " "
+            continue  # Control-C pressed. Clear and try again.
         except EOFError:
             break  # Control-D pressed.
 
-        if sql.strip():
+        lines.append(line)
+        query = "\n".join(lines)
+
+        is_terminated, quote_context = get_query_termination(query)
+        if is_terminated:
+            results = None
             try:
-                cursor.execute(sql)
+                cursor.execute(query)
                 results = cursor.fetchall()
             except Error as ex:
                 print(ex)
                 continue
+            finally:
+                lines = []
+                quote_context = " "
 
             headers = [t[0] for t in cursor.description or []]
             print(tabulate(results, headers=headers))
 
     connection.close()
     print("GoodBye!")
+
+
+def get_query_termination(query: str) -> Tuple[bool, str]:
+    """
+    Check if a query is ended or if a new line should be created.
+
+    This function looks for a semicolon at the end, making sure no quotation mark must be
+    closed.
+    """
+    quote_context = " "
+    quote_chars = ('"', "'", "`")
+
+    for query_char in query:
+        if quote_context == query_char:
+            quote_context = " "
+        else:
+            for quote in quote_chars:
+                if quote_context == " " and quote == query_char:
+                    quote_context = quote
+
+    is_terminated = quote_context == " " and query.endswith(";")
+
+    return is_terminated, quote_context
 
 
 if __name__ == "__main__":

@@ -3,30 +3,26 @@
 Tests for shillelagh.backends.apsw.db.
 """
 import datetime
-from typing import Any, List, NoReturn, Tuple, Type
+from typing import Any, List, Tuple
 from unittest import mock
 
 import apsw
 import pytest
 from pytest_mock import MockerFixture
 
-from shillelagh.adapters.base import Adapter
+from shillelagh.adapters.registry import AdapterLoader
 from shillelagh.backends.apsw.db import connect, convert_binding
 from shillelagh.exceptions import InterfaceError, NotSupportedError, ProgrammingError
 from shillelagh.fields import Float, String, StringInteger
 
-from ...fakes import FakeAdapter, FakeEntryPoint
+from ...fakes import FakeAdapter
 
 
-def test_connect(mocker: MockerFixture) -> None:
+def test_connect(registry: AdapterLoader) -> None:
     """
     Test ``connect``.
     """
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapter)
 
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
@@ -63,15 +59,11 @@ def test_connect(mocker: MockerFixture) -> None:
     assert cursor.rowcount == 2
 
 
-def test_connect_schema_prefix(mocker: MockerFixture) -> None:
+def test_connect_schema_prefix(registry: AdapterLoader) -> None:
     """
     Test querying a table with the schema.
     """
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapter)
 
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
@@ -83,15 +75,11 @@ def test_connect_schema_prefix(mocker: MockerFixture) -> None:
     assert cursor.rowcount == 2
 
 
-def test_connect_adapter_kwargs(mocker: MockerFixture) -> None:
+def test_connect_adapter_kwargs(mocker: MockerFixture, registry: AdapterLoader) -> None:
     """
     Test that ``adapter_kwargs`` are passed to the adapter.
     """
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapter)
     connection = mocker.patch("shillelagh.backends.apsw.db.Connection")
 
     connect(
@@ -109,7 +97,7 @@ def test_connect_adapter_kwargs(mocker: MockerFixture) -> None:
     )
 
 
-def test_connect_safe(mocker: MockerFixture) -> None:
+def test_connect_safe(mocker: MockerFixture, registry: AdapterLoader) -> None:
     """
     Test the safe option.
     """
@@ -135,15 +123,10 @@ def test_connect_safe(mocker: MockerFixture) -> None:
 
         safe = False
 
-    entry_points = [
-        FakeEntryPoint("one", FakeAdapter1),
-        FakeEntryPoint("two", FakeAdapter2),
-        FakeEntryPoint("three", FakeAdapter3),
-    ]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.clear()
+    registry.add("one", FakeAdapter1)
+    registry.add("two", FakeAdapter2)
+    registry.add("three", FakeAdapter3)
     # pylint: disable=invalid-name
     db_Connection = mocker.patch("shillelagh.backends.apsw.db.Connection")
 
@@ -187,28 +170,19 @@ def test_connect_safe(mocker: MockerFixture) -> None:
     )
 
     # prevent repeated names, in case anyone registers a malicious adapter
-    entry_points = [
-        FakeEntryPoint("one", FakeAdapter1),
-        FakeEntryPoint("one", FakeAdapter2),
-    ]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.clear()
+    registry.add("one", FakeAdapter1)
+    registry.add("one", FakeAdapter2)
     with pytest.raises(InterfaceError) as excinfo:
         connect(":memory:", ["one"], safe=True)
-    assert str(excinfo.value) == "Repeated adapter names found: one"
+    assert str(excinfo.value) == "Multiple adapters found with name one"
 
 
-def test_execute_with_native_parameters(mocker: MockerFixture) -> None:
+def test_execute_with_native_parameters(registry: AdapterLoader) -> None:
     """
     Test passing native types to the cursor.
     """
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapter)
 
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
@@ -239,15 +213,11 @@ def test_check_closed() -> None:
     assert str(excinfo.value) == "Connection already closed"
 
 
-def test_check_result(mocker: MockerFixture) -> None:
+def test_check_result(registry: AdapterLoader) -> None:
     """
     Test exception raised when fetching results before query.
     """
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapter)
 
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
@@ -267,10 +237,11 @@ def test_check_invalid_syntax() -> None:
     assert str(excinfo.value) == 'SQLError: near "SELLLLECT": syntax error'
 
 
-def test_unsupported_table() -> None:
+def test_unsupported_table(registry: AdapterLoader) -> None:
     """
     Test exception raised on unsupported tables.
     """
+    registry.clear()
     connection = connect(":memory:", isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
@@ -279,15 +250,11 @@ def test_unsupported_table() -> None:
     assert str(excinfo.value) == "Unsupported table: dummy://"
 
 
-def test_description(mocker: MockerFixture) -> None:
+def test_description(registry: AdapterLoader) -> None:
     """
     Test cursor description.
     """
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapter)
 
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
@@ -310,15 +277,11 @@ def test_description(mocker: MockerFixture) -> None:
     assert cursor.description is not None
 
 
-def test_execute_many(mocker: MockerFixture) -> None:
+def test_execute_many(registry: AdapterLoader) -> None:
     """
     Test ``execute_many``.
     """
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapter)
 
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
@@ -363,15 +326,11 @@ def test_close_connection(mocker: MockerFixture) -> None:
     cursor2.close.assert_called()
 
 
-def test_transaction(mocker: MockerFixture) -> None:
+def test_transaction(registry: AdapterLoader) -> None:
     """
     Test transactions.
     """
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.add("dummy", FakeAdapter)
 
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
 
@@ -457,7 +416,7 @@ def test_connection_context_manager() -> None:
     )
 
 
-def test_connect_safe_lists_only_safe_adapters(mocker: MockerFixture) -> None:
+def test_connect_safe_lists_only_safe_adapters(registry: AdapterLoader) -> None:
     """
     Test the safe connection.
     """
@@ -470,49 +429,11 @@ def test_connect_safe_lists_only_safe_adapters(mocker: MockerFixture) -> None:
 
         safe = False
 
-    entry_points = [FakeEntryPoint("dummy", UnsafeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
+    registry.clear()
+    registry.add("dummy", UnsafeAdapter)
 
     connection = connect(":memory:", ["dummy"], safe=True, isolation_level="IMMEDIATE")
     assert connection._adapters == []
-
-
-def test_connect_unmet_dependency(mocker: MockerFixture) -> None:
-    """
-    Test that we ignore adapters with unmet dependencies.
-    """
-
-    class ProblematicEntryPoint(FakeEntryPoint):
-        """
-        A problematic entry point.
-        """
-
-        def load(self) -> NoReturn:
-            raise ModuleNotFoundError("Couldn't find some dep")
-
-    class AnotherProblematicEntryPoint(FakeEntryPoint):
-        """
-        Another problematic entry point.
-        """
-
-        def load(self) -> NoReturn:
-            raise ImportError("Couldn't find some dep")
-
-    entry_points = [
-        FakeEntryPoint("dummy", FakeAdapter),
-        ProblematicEntryPoint("trouble", FakeAdapter),
-        AnotherProblematicEntryPoint("more_trouble", FakeAdapter),
-    ]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
-    connection = connect(":memory:")
-    assert connection._adapters == [FakeAdapter]
 
 
 def test_convert_binding() -> None:
@@ -539,63 +460,12 @@ def test_convert_binding() -> None:
     assert convert_binding({}) == "{}"
 
 
-def test_import_warning(mocker: MockerFixture) -> None:
-    """
-    Test that we only try to load requested entry points.
-    """
-
-    class GoodAdapter(FakeAdapter):
-        """
-        An adapter that can be loaded.
-        """
-
-    class BadAdapter(FakeAdapter):
-        """
-        An adapter that can't be loaded.
-        """
-
-    class BadEntryPoint(FakeEntryPoint):
-        """
-        An entry point that raises ``ImportError`` on load.
-        """
-
-        def load(self) -> Type[Adapter]:  # pylint: disable=no-self-use
-            """
-            Raise an exception.
-            """
-            raise ImportError("Oops")
-
-    entry_points = [
-        FakeEntryPoint("good", GoodAdapter),
-        BadEntryPoint("bad", BadAdapter),
-    ]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-    mocker.patch("shillelagh.backends.apsw.db.Connection")
-    _logger = mocker.patch("shillelagh.backends.apsw.db._logger")
-
-    # if we don't specify adapters we should get a warning for BadAdapter
-    connect(":memory:")
-    _logger.warning.assert_called_with("Couldn't load adapter %s", "bad")
-
-    # if we specify only the good adapter we shouldn't get a warning
-    _logger.warning.reset_mock()
-    connect(":memory:", ["good"])
-    _logger.warning.assert_not_called()
-
-
-def test_drop_table(mocker: MockerFixture) -> None:
+def test_drop_table(mocker: MockerFixture, registry: AdapterLoader) -> None:
     """
     Test ``drop_table``.
     """
+    registry.add("dummy", FakeAdapter)
     drop_table = mocker.patch.object(FakeAdapter, "drop_table")
-    entry_points = [FakeEntryPoint("dummy", FakeAdapter)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
 
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()

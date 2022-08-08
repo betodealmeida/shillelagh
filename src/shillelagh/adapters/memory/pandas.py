@@ -70,11 +70,13 @@ def find_dataframe(uri: str) -> Optional[pd.DataFrame]:
     return None
 
 
-def get_df_data(
+def get_df_data(  # pylint: disable=too-many-arguments
     df: pd.DataFrame,
     columns: Dict[str, Field],
     bounds: Dict[str, Filter],
     order: List[Tuple[str, RequestedOrder]],
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
 ) -> Iterator[Row]:
     """
     Apply the ``get_data`` method on a Pandas dataframe.
@@ -110,8 +112,22 @@ def get_df_data(
         ]
         df = df.sort_values(by=list(by), ascending=ascending)
 
+    df = df[offset:]
+    df = df[:limit]
+
     for row in df.itertuples(name=None):
         yield dict(zip(["rowid", *column_names], row))
+
+
+def get_columns_from_df(df: pd.DataFrame) -> Dict[str, Field]:
+    """
+    Construct adapter columns from a Pandas dataframe.
+    """
+    return {
+        column_name: get_field(dtype)
+        for column_name, dtype in zip(df.columns, df.dtypes)
+        if dtype.kind in type_map
+    }
 
 
 class PandasMemory(Adapter):
@@ -121,6 +137,9 @@ class PandasMemory(Adapter):
     """
 
     safe = False
+
+    supports_limit = True
+    supports_offset = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
@@ -137,11 +156,7 @@ class PandasMemory(Adapter):
             raise ProgrammingError("Could not find dataframe")
 
         self.df = df
-        self.columns = {
-            column_name: get_field(dtype)
-            for column_name, dtype in zip(self.df.columns, self.df.dtypes)
-            if dtype.kind in type_map
-        }
+        self.columns = get_columns_from_df(df)
 
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
@@ -152,8 +167,11 @@ class PandasMemory(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        **kwargs: Any,
     ) -> Iterator[Row]:
-        yield from get_df_data(self.df, self.columns, bounds, order)
+        yield from get_df_data(self.df, self.columns, bounds, order, limit, offset)
 
     def insert_data(self, row: Row) -> int:
         row_id: Optional[int] = row.pop("rowid")

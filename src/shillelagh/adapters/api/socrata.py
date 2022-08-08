@@ -15,7 +15,7 @@ from typing_extensions import TypedDict
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
-from shillelagh.fields import Field, ISODate, Order, String
+from shillelagh.fields import Field, Order, String, StringDate
 from shillelagh.filters import Equal, Filter, IsNotNull, IsNull, Like, NotEqual, Range
 from shillelagh.lib import SimpleCostModel, build_sql
 from shillelagh.typing import RequestedOrder, Row
@@ -69,7 +69,7 @@ class Number(Field[str, float]):
 
 
 type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
-    "calendar_date": (ISODate, [Range, Equal, NotEqual, IsNull, IsNotNull]),
+    "calendar_date": (StringDate, [Range, Equal, NotEqual, IsNull, IsNotNull]),
     "number": (Number, [Range, Equal, NotEqual, IsNull, IsNotNull]),
     "text": (String, [Range, Equal, NotEqual, Like, IsNull, IsNotNull]),
 }
@@ -97,6 +97,9 @@ class SocrataAPI(Adapter):
     """
 
     safe = True
+
+    supports_limit = True
+    supports_offset = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
@@ -147,9 +150,12 @@ class SocrataAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        **kwargs: Any,
     ) -> Iterator[Row]:
         try:
-            sql = build_sql(self.columns, bounds, order)
+            sql = build_sql(self.columns, bounds, order, limit=limit, offset=offset)
         except ImpossibleFilterError:
             return
 
@@ -171,5 +177,5 @@ class SocrataAPI(Adapter):
 
         for i, row in enumerate(payload):
             row["rowid"] = i
-            yield row
             _logger.debug(row)
+            yield row

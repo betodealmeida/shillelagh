@@ -35,16 +35,21 @@ class FakeAdapter(Adapter):
     A simple adapter that keeps data in memory.
     """
 
+    scheme = "dummy"
+
     safe = True
+
+    supports_limit = False
+    supports_offset = False
 
     age = Float(filters=[Range], order=Order.ANY, exact=True)
     name = String(filters=[Equal], order=Order.ANY, exact=True)
     pets = Integer(order=Order.ANY)
 
-    @staticmethod
-    def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
+    @classmethod
+    def supports(cls, uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         parsed = urllib.parse.urlparse(uri)
-        return parsed.scheme == "dummy"
+        return parsed.scheme == cls.scheme
 
     @staticmethod
     def parse_uri(uri: str) -> Tuple[()]:
@@ -62,6 +67,7 @@ class FakeAdapter(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
     ) -> Iterator[Dict[str, Any]]:
         yield from filter_data(iter(self.data), bounds, order)
 

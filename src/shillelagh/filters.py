@@ -20,6 +20,8 @@ class Operator(Enum):
     IS_NULL = "IS NULL"
     IS_NOT_NULL = "IS NOT NULL"
     LIKE = "LIKE"
+    LIMIT = "LIMIT"
+    OFFSET = "OFFSET"
 
 
 class Side(Enum):
@@ -82,7 +84,7 @@ class Endpoint:
     def __lt__(self, other: Any) -> bool:
         return not self > other
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         """
         Representation of an endpoint.
 
@@ -172,6 +174,9 @@ class Impossible(Filter):
             return NotImplemented
 
         return True
+
+    def __repr__(self) -> str:
+        return "1 = 0"
 
 
 class IsNull(Filter):
@@ -407,7 +412,7 @@ class Range(Filter):
 
         return True
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         if self.start == self.end and self.include_start and self.include_end:
             return f"=={self.start}"
 

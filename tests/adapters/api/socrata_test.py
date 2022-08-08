@@ -31,7 +31,7 @@ def test_socrata(mocker: MockerFixture, requests_mock: Mocker) -> None:
 
     data_url = (
         "https://data.cdc.gov/resource/unsk-b7fc.json?"
-        "%24query=SELECT+%2A+WHERE+location+%3D+%27US%27+ORDER+BY+date+DESC"
+        "%24query=SELECT+%2A+WHERE+location+%3D+%27US%27+ORDER+BY+date+DESC+LIMIT+7"
     )
     requests_mock.get(data_url, json=cdc_data_response)
 
@@ -70,7 +70,7 @@ def test_socrata_app_token_url(mocker: MockerFixture, requests_mock: Mocker) -> 
 
     data_url = (
         "https://data.cdc.gov/resource/unsk-b7fc.json?"
-        "%24query=SELECT+%2A+WHERE+location+%3D+%27OK%27+ORDER+BY+date+DESC"
+        "%24query=SELECT+%2A+WHERE+location+%3D+%27OK%27+ORDER+BY+date+DESC+LIMIT+7"
     )
     data = requests_mock.get(data_url, json=cdc_data_response)
 
@@ -104,7 +104,7 @@ def test_socrata_app_token_connection(
 
     data_url = (
         "https://data.cdc.gov/resource/unsk-b7fc.json?"
-        "%24query=SELECT+%2A+WHERE+location+%3D+%27NY%27+ORDER+BY+date+DESC"
+        "%24query=SELECT+%2A+WHERE+location+%3D+%27NY%27+ORDER+BY+date+DESC+LIMIT+7"
     )
     data = requests_mock.get(data_url, json=cdc_data_response)
     connection = connect(
@@ -137,7 +137,7 @@ def test_socrata_no_data(mocker: MockerFixture, requests_mock: Mocker) -> None:
 
     data_url = (
         "https://data.cdc.gov/resource/unsk-b7fc.json?"
-        "%24query=SELECT+%2A+WHERE+location+%3D+%27BR%27+ORDER+BY+date+DESC"
+        "%24query=SELECT+%2A+WHERE+location+%3D+%27BR%27+ORDER+BY+date+DESC+LIMIT+7"
     )
     requests_mock.get(data_url, json=[])
 
@@ -198,7 +198,7 @@ def test_socrata_invalid_query(mocker: MockerFixture, requests_mock: Mocker) -> 
 
     data_url = (
         "https://data.cdc.gov/resource/unsk-b7fc.json?"
-        "%24query=SELECT+%2A+WHERE+location+%3D+%27CA%27+ORDER+BY+date+DESC"
+        "%24query=SELECT+%2A+WHERE+location+%3D+%27CA%27+ORDER+BY+date+DESC+LIMIT+7"
     )
     requests_mock.get(
         data_url,

@@ -15,6 +15,8 @@ from shillelagh.backends.apsw.vt import (
     _add_sqlite_constraint,
     convert_rows_from_sqlite,
     convert_rows_to_sqlite,
+    get_all_bounds,
+    get_limit_offset,
     type_map,
 )
 from shillelagh.exceptions import ProgrammingError
@@ -83,21 +85,26 @@ def test_virtual_best_index() -> None:
     """
     Test ``BestIndex``.
     """
-    table = VTTable(FakeAdapter())
+    adapter = FakeAdapter()
+    adapter.supports_limit = True
+
+    table = VTTable(adapter)
     result = table.BestIndex(
         [
             (1, apsw.SQLITE_INDEX_CONSTRAINT_EQ),  # name =
             (2, apsw.SQLITE_INDEX_CONSTRAINT_GT),  # pets >
             (0, apsw.SQLITE_INDEX_CONSTRAINT_LE),  # age <=
+            (-1, 73),  # LIMIT
         ],
         [(1, False)],  # ORDER BY name ASC
     )
     assert result == (
-        [(0, True), None, (1, True)],
+        [(0, True), None, (1, True), (2, True)],
         42,
         (
             f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}], "
-            f"[0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}]], [[1, false]]]"
+            f"[0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}], [-1, 73]], "
+            "[[1, false]]]"
         ),
         True,
         666,
@@ -465,3 +472,45 @@ def test_add_sqlite_constraint(mocker: MockerFixture) -> None:
 
     _add_sqlite_constraint("SQLITE_INDEX_CONSTRAINT_EQ", Operator.EQ)
     assert operator_map == {apsw.SQLITE_INDEX_CONSTRAINT_EQ: Operator.EQ}
+
+
+def test_get_all_bounds() -> None:
+    """
+    Test ``get_all_bounds``.
+    """
+    indexes = [
+        (-1, 73),  # LIMIT
+        (-1, 74),  # OFFSET
+        (0, 2),  # EQ
+    ]
+    constraintargs = [10, 5, "test"]
+    columns: Dict[str, Field] = {"a": String()}
+
+    assert get_all_bounds(indexes, constraintargs, columns) == {
+        "a": {(Operator.EQ, "test")},
+    }
+
+
+def test_get_limit_offset() -> None:
+    """
+    Test ``get_limit_offset``.
+    """
+    indexes = [
+        (-1, 73),  # LIMIT
+        (-1, 74),  # OFFSET
+        (0, 2),  # EQ
+    ]
+    constraintargs = [10, 5, "test"]
+
+    limit, offset = get_limit_offset(indexes, constraintargs)
+    assert limit == 10
+    assert offset == 5
+
+    with pytest.raises(Exception) as excinfo:
+        get_limit_offset([(-1, 666)], [10])
+    assert str(excinfo.value) == "Invalid constraint passed: 666"
+
+    # ``Operator.EQ``, but column index is -1
+    limit, offset = get_limit_offset([(-1, 2)], [10])
+    assert limit is None
+    assert offset is None

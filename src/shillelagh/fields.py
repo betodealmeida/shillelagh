@@ -3,36 +3,28 @@ Fields representing columns of different types and capabilities.
 """
 import datetime
 from enum import Enum
-from typing import Any, Generic, List, Optional, Type, TypeVar, cast
+from typing import Any, Collection, Generic, Optional, Type, TypeVar, Union, cast
 
 import dateutil.parser
 
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.filters import Filter
 
-Internal = TypeVar(
-    "Internal",
-    float,
-    int,
-    str,
-    bool,
-    datetime.date,
-    datetime.datetime,
-    datetime.time,
-    datetime.timedelta,
-    bytes,
-)
+Internal = TypeVar("Internal")
 
 External = TypeVar(
     "External",
-    float,
-    int,
-    str,
-    bool,
-    datetime.date,
-    datetime.datetime,
-    datetime.time,
-    datetime.timedelta,
-    bytes,
+    bound=Union[
+        float,
+        int,
+        str,
+        bool,
+        datetime.date,
+        datetime.datetime,
+        datetime.time,
+        datetime.timedelta,
+        bytes,
+    ],
 )
 
 
@@ -169,12 +161,27 @@ class Field(Generic[Internal, External]):
 
     """
 
+    # The SQLite text (see https://www.sqlite.org/datatype3.html). Note that SQLite
+    # doesn't really enforce types, so this can be abused -- see the ``StringDuration``
+    # field for an example of a new type being created.
     type = ""
+
+    # PEP 249 (https://peps.python.org/pep-0249/#type-objects-and-constructors) defines a
+    # very small set of types for columns: STRING, BINARY, NUMBER, DATETIME, and ROWID.
+    # These types are exported by the DB API 2.0 module, and can be used to interpret the
+    # ``type_code`` of each column in the cursor description. For example, Shillelagh
+    # might return an ``Integer`` field as the ``type_code`` of a given column; because
+    # the ``Integer`` has ``db_api_type`` set to "NUMBER" the following comparison will
+    # be true:
+    #
+    #     shillelagh.fields.Integer == shillelagh.backends.apsw.db.NUMBER
+    #
+    # Allowing 3rd party libraries to determine that ``Integer`` represents a number.
     db_api_type = "DBAPIType"
 
     def __init__(
         self,
-        filters: Optional[List[Type[Filter]]] = None,
+        filters: Optional[Collection[Type[Filter]]] = None,
         order: Order = Order.NONE,
         exact: bool = False,
     ):
@@ -193,12 +200,12 @@ class Field(Generic[Internal, External]):
             return NotImplemented
 
         return bool(
-            self.filters == other.filters
+            set(self.filters) == set(other.filters)
             and self.order == other.order
             and self.exact == other.exact,
         )
 
-    def parse(  # pylint: disable=no-self-use
+    def parse(
         self,
         value: Optional[Internal],
     ) -> Optional[External]:
@@ -222,7 +229,7 @@ class Field(Generic[Internal, External]):
         """
         return cast(Optional[External], value)
 
-    def format(  # pylint: disable=no-self-use
+    def format(
         self,
         value: Optional[External],
     ) -> Optional[Internal]:
@@ -233,7 +240,7 @@ class Field(Generic[Internal, External]):
         """
         return cast(Optional[Internal], value)
 
-    def quote(self, value: Optional[Internal]) -> str:  # pylint: disable=no-self-use
+    def quote(self, value: Optional[Internal]) -> str:
         """
         Quote values.
 
@@ -245,6 +252,9 @@ class Field(Generic[Internal, External]):
 
         In order to handle that, the adapter defines its own time fields
         with custom ``quote`` methods.
+
+        This is only needed for adapters that use the ``build_sql`` helper function,
+        where SQL is generated manually and sent to an API endpoint.
         """
         if value is None:
             return "NULL"
@@ -345,11 +355,11 @@ class ISODate(Field[str, datetime.date]):
             return None
 
         try:
-            date = dateutil.parser.parse(value)
-        except dateutil.parser.ParserError:
+            date = datetime.date.fromisoformat(value)
+        except ValueError:
             return None
 
-        return date.date()
+        return date
 
     def format(self, value: Optional[datetime.date]) -> Optional[str]:
         if value is None:
@@ -360,6 +370,23 @@ class ISODate(Field[str, datetime.date]):
         if value is None:
             return "NULL"
         return f"'{value}'"
+
+
+class StringDate(ISODate):
+    """
+    A more permissive date format.
+    """
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.date]:
+        if value is None:
+            return None
+
+        try:
+            date = dateutil.parser.parse(value)
+        except dateutil.parser.ParserError:
+            return None
+
+        return date.date()
 
 
 class Time(Field[datetime.time, datetime.time]):
@@ -397,14 +424,12 @@ class ISOTime(Field[str, datetime.time]):
             return None
 
         try:
-            timestamp = dateutil.parser.parse(value)
-        except dateutil.parser.ParserError:
+            time = datetime.time.fromisoformat(value)
+        except ValueError:
             return None
 
-        time = timestamp.time()
-
         # timezone is not preserved
-        return time.replace(tzinfo=timestamp.tzinfo)
+        return time.replace(tzinfo=time.tzinfo)
 
     def format(self, value: Optional[datetime.time]) -> Optional[str]:
         if value is None:
@@ -415,6 +440,26 @@ class ISOTime(Field[str, datetime.time]):
         if value is None:
             return "NULL"
         return f"'{value}'"
+
+
+class StringTime(ISOTime):
+    """
+    A more permissive time format.
+    """
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.time]:
+        if value is None:
+            return None
+
+        try:
+            timestamp = dateutil.parser.parse(value)
+        except dateutil.parser.ParserError:
+            return None
+
+        time = timestamp.time()
+
+        # timezone is not preserved
+        return time.replace(tzinfo=timestamp.tzinfo)
 
 
 class DateTime(Field[datetime.datetime, datetime.datetime]):
@@ -453,8 +498,8 @@ class ISODateTime(Field[str, datetime.datetime]):
             return None
 
         try:
-            timestamp = dateutil.parser.parse(value)
-        except dateutil.parser.ParserError:
+            timestamp = dateutil.parser.isoparse(value)
+        except (ValueError, dateutil.parser.ParserError):
             return None
 
         # if the timestamp has a timezone change it to UTC, so that
@@ -479,6 +524,53 @@ class ISODateTime(Field[str, datetime.datetime]):
         if value is None:
             return "NULL"
         return f"'{value}'"
+
+
+class FastISODateTime(ISODateTime):
+    """
+    A faster but not fully compliant ISO timestamp parser.
+
+    This uses Python's native ``datetime.datetime.fromisoformat``, which doesn't support
+    arbitrary ISO 8601 strings. It's used for serializing and deserializing into SQLite.
+    """
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.datetime]:
+        if value is None:
+            return None
+
+        try:
+            timestamp = datetime.datetime.fromisoformat(value)
+        except ValueError as ex:
+            raise ProgrammingError(f'Unable to parse "{value}"') from ex
+
+        # if the timestamp has a timezone change it to UTC, so that
+        # timestamps in different timezones can be compared as strings
+        if timestamp.tzinfo is not None:
+            timestamp = timestamp.astimezone(datetime.timezone.utc)
+
+        return timestamp
+
+
+class StringDateTime(ISODateTime):
+    """
+    A more permissive datetime format.
+    """
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.datetime]:
+        if value is None:
+            return None
+
+        try:
+            timestamp = dateutil.parser.parse(value)
+        except dateutil.parser.ParserError:
+            return None
+
+        # if the timestamp has a timezone change it to UTC, so that
+        # timestamps in different timezones can be compared as strings
+        if timestamp.tzinfo is not None:
+            timestamp = timestamp.astimezone(datetime.timezone.utc)
+
+        return timestamp
 
 
 class StringDuration(Field[str, datetime.timedelta]):

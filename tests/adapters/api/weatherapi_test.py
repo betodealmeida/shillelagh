@@ -16,7 +16,7 @@ from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.fields import Order
 from shillelagh.filters import Equal, Filter, Impossible, Operator, Range
 
-from ...fakes import FakeEntryPoint, weatherapi_response
+from ...fakes import weatherapi_response
 
 
 def test_weatherapi(mocker: MockerFixture, requests_mock: Mocker) -> None:
@@ -535,12 +535,6 @@ def test_dispatch(mocker: MockerFixture, requests_mock: Mocker) -> None:
         return_value=Session(),
     )
 
-    entry_points = [FakeEntryPoint("weatherapi", WeatherAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     url = "https://api.weatherapi.com/v1/history.json?key=XXX&q=iceland&dt=2021-03-17"
     requests_mock.get(url, json=weatherapi_response)
 
@@ -602,12 +596,6 @@ def test_dispatch_api_key_connection(
         return_value=Session(),
     )
 
-    entry_points = [FakeEntryPoint("weatherapi", WeatherAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
-    )
-
     url = "https://api.weatherapi.com/v1/history.json?key=YYY&q=iceland&dt=2021-03-17"
     data = requests_mock.get(url, json=weatherapi_response)
 
@@ -637,12 +625,6 @@ def test_dispatch_impossible(mocker: MockerFixture) -> None:
     """
     session = mocker.patch(
         "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
-    )
-
-    entry_points = [FakeEntryPoint("weatherapi", WeatherAPI)]
-    mocker.patch(
-        "shillelagh.backends.apsw.db.iter_entry_points",
-        return_value=entry_points,
     )
 
     connection = connect(

@@ -48,11 +48,11 @@ By default all available adapters are loaded by Shillelagh. It's possible to lim
 
 .. code-block:: python
 
+    from shillelagh.adapters.registry import registry
     from shillelagh.backends.apsw.db import connect
-    from shillelagh.lib import get_available_adapters
 
     # show names of available adapters
-    print(get_available_adapters())
+    print(registry.loaders.keys())
 
     # enable on the CSV and the WeatherAPI adapters
     connection = connect(":memory:", adapters=["csvfile", "weatherapi"])
@@ -71,16 +71,34 @@ When loading adapters, you can also specify the ``safe`` keyword. When set to tr
 
 .. code-block:: python
 
-    from unittest import mock
+    from shillelagh.adapters.registry import registry
+    from shillelagh.adapters.file.csvfile import CSVFile
     from shillelagh.backends.apsw.db import connect
 
-    # return 2 entry points with the name 'csvfile'
-    entry_point = mock.MagicMock()
-    entry_point.name = 'csvfile'
-    with mock.patch('shillelagh.backends.apsw.db.iter_entry_points', return_value=[entry_point, entry_point]):
-        connect(':memory:', adapters=['csvfile'], safe=True)
+    registry.add('csvfile', CSVFile)
+    registry.add('csvfile', FakeAdapter)
+    connect(':memory:', adapters=['csvfile'], safe=True)
 
-The code above will raise an exception saying "Repeated adapter names found: csvfile". This is needed because adapters can be loaded from third-party libraries via `entry points <https://packaging.python.org/specifications/entry-points/>`_, and not just from the Shillelagh library.
+The code above will raise an exception saying "Multiple adapters found with name csvfile". This is needed because adapters can be loaded from third-party libraries via `entry points <https://packaging.python.org/specifications/entry-points/>`_, and not just from the Shillelagh library.
+
+Registering new adapters
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Shillelagh uses a plugin registry similar to SQLAlchemy's. Adapters that are registered via entry points are registered automatically, but you can manually register adapter classes:
+
+.. code-block:: Python
+
+    from shillelagh.adapters.base import Adapter
+    from shillelagh.adapters.registry import registry
+
+    class CustomAdapter(Adapter):
+        ...
+
+    # add an adapter class directly
+    registry.add('customadapter', CustomAdapter)
+
+    # add an adapter class by passing the module path and class name
+    registry.register('someotheradapter', 'path.to.module', 'ClassName')
 
 SQLAlchemy
 ==========

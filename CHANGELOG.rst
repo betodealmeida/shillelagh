@@ -2,6 +2,21 @@
 Changelog
 =========
 
+Version 1.1.0 - 2022-07-28
+==========================
+
+- CLI now supports multi-line statements (#205)
+- Add new adapter for CSV/JSON/Parquet files stored in S3 (#254)
+- Add support for ``DROP TABLE`` (#258)
+- Add new adapter for scraping data from HTML tables (#259)
+- Add registry for adapters (#268)
+- Adapters can implement ``LIMIT`` and ``OFSET`` (#270)
+- Add support for polymorphic fields (#280)
+- Add docs on architecture (#273), dialects (#278)
+- Improve docs on custom fields (#275)
+- Configuration directory is now system dependent (#283)
+- Row updates should no longer raise errors in SQLAlchemy (#284)
+
 Version 1.0.16 - 2022-07-15
 ===========================
 

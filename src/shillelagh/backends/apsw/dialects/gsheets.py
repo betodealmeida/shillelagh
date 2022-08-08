@@ -92,10 +92,7 @@ class APSWGSheetsDialect(APSWDialect):
         self.list_all_sheets = list_all_sheets
         self.app_default_credentials = app_default_credentials
 
-    def create_connect_args(
-        self,
-        url: URL,
-    ) -> Tuple[Tuple[()], Dict[str, Any]]:
+    def create_connect_args(self, url: URL) -> Tuple[Tuple[()], Dict[str, Any]]:
         adapter_kwargs: Dict[str, Any] = {
             "access_token": self.access_token,
             "service_account_file": self.service_account_file,

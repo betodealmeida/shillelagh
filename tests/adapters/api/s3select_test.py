@@ -31,6 +31,14 @@ def test_get_input_serialization() -> None:
     }
 
     input_serialization = get_input_serialization(
+        urlparse(r"s3://bucket/sample.csv?RecordDelimiter=\r\n"),
+    )
+    assert input_serialization == {
+        "CompressionType": "NONE",
+        "CSV": {"FileHeaderInfo": "USE", "RecordDelimiter": "\r\n"},
+    }
+
+    input_serialization = get_input_serialization(
         urlparse("s3://bucket/sample?format=csv&CompressionType=GZIP"),
     )
     assert input_serialization == {

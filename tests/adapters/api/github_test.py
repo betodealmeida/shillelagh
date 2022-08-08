@@ -9,8 +9,10 @@ from pytest_mock import MockerFixture
 from requests import Session
 from requests_mock.mocker import Mocker
 
+from shillelagh.adapters.api.github import GitHubAPI
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
+from shillelagh.filters import Equal
 
 from ...fakes import github_response, github_single_response
 
@@ -191,6 +193,113 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
     ]
 
 
+def test_github_limit_offset(mocker: MockerFixture, requests_mock: Mocker) -> None:
+    """
+    Test a simple request with limit/offset.
+    """
+    mocker.patch("shillelagh.adapters.api.github.PAGE_SIZE", new=5)
+    mocker.patch(
+        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    page2_url = (
+        "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=2"
+    )
+    requests_mock.get(page2_url, json=github_response[:5])
+    page3_url = (
+        "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=3"
+    )
+    requests_mock.get(page3_url, json=github_response[5:])
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = """
+        SELECT * FROM
+        "https://api.github.com/repos/apache/superset/pulls"
+        LIMIT 5 OFFSET 8
+    """
+    data = list(cursor.execute(sql))
+    assert data == [
+        (
+            "https://github.com/apache/superset/pull/16569",
+            726107410,
+            16569,
+            "open",
+            "docs: versioned _export Stable",
+            47772523,
+            "amitmiran137",
+            False,
+            "version_export_ff_on",
+            datetime.datetime(2021, 9, 2, 16, 52, 34, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2021, 9, 2, 18, 6, 27, tzinfo=datetime.timezone.utc),
+            None,
+            None,
+        ),
+        (
+            "https://github.com/apache/superset/pull/16566",
+            725808286,
+            16566,
+            "open",
+            "fix(docker): add ecpg to docker image",
+            33317356,
+            "villebro",
+            False,
+            "villebro/libecpg",
+            datetime.datetime(2021, 9, 2, 12, 1, 2, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2021, 9, 2, 12, 6, 50, tzinfo=datetime.timezone.utc),
+            None,
+            None,
+        ),
+        (
+            "https://github.com/apache/superset/pull/16564",
+            725669631,
+            16564,
+            "open",
+            "refactor: orderby control refactoring",
+            2016594,
+            "zhaoyongjie",
+            True,
+            "refactor_orderby",
+            datetime.datetime(2021, 9, 2, 9, 45, 40, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2021, 9, 3, 10, 31, 4, tzinfo=datetime.timezone.utc),
+            None,
+            None,
+        ),
+        (
+            "https://github.com/apache/superset/pull/16554",
+            724863880,
+            16554,
+            "open",
+            "refactor: Update async query init to support runtime feature flags",
+            296227,
+            "robdiciuccio",
+            False,
+            "rd/async-query-init-refactor",
+            datetime.datetime(2021, 9, 1, 19, 51, 51, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2021, 9, 1, 22, 29, 46, tzinfo=datetime.timezone.utc),
+            None,
+            None,
+        ),
+        (
+            "https://github.com/apache/superset/pull/16549",
+            724669525,
+            16549,
+            "open",
+            "feat(dashboard): Native filters - add type to native filter configuration",
+            12539911,
+            "m-ajay",
+            False,
+            "feat/migration-add-type-to-native-filter",
+            datetime.datetime(2021, 9, 1, 16, 35, 50, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2021, 9, 3, 17, 33, 42, tzinfo=datetime.timezone.utc),
+            None,
+            None,
+        ),
+    ]
+
+
 def test_github_single_resource(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test a request to a single resource.
@@ -229,6 +338,35 @@ def test_github_single_resource(mocker: MockerFixture, requests_mock: Mocker) ->
             None,
         ),
     ]
+
+
+def test_github_single_resource_with_offset(
+    mocker: MockerFixture,
+    requests_mock: Mocker,
+) -> None:
+    """
+    Test a request to a single resource.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    url = "https://api.github.com/repos/apache/superset/pulls/16581"
+    requests_mock.get(url, json=github_single_response)
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = """
+        SELECT * FROM
+        "https://api.github.com/repos/apache/superset/pulls"
+        WHERE number = 16581
+        LIMIT 1
+        OFFSET 2
+    """
+    data = list(cursor.execute(sql))
+    assert data == []
 
 
 def test_github_rate_limit(mocker: MockerFixture, requests_mock: Mocker) -> None:
@@ -313,3 +451,112 @@ def test_github_auth_token(mocker: MockerFixture, requests_mock: Mocker) -> None
     """
     list(cursor.execute(sql))
     assert multiple_resources_mock.last_request.headers["Authorization"] == "Bearer XXX"
+
+
+def test_get_multiple_resources(mocker: MockerFixture, requests_mock: Mocker) -> None:
+    """
+    Tests for ``_get_multiple_resources``.
+    """
+    mocker.patch("shillelagh.adapters.api.github.PAGE_SIZE", new=5)
+    mocker.patch(
+        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    page2_url = (
+        "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=2"
+    )
+    requests_mock.get(page2_url, json=github_response[:5])
+    page3_url = (
+        "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=3"
+    )
+    requests_mock.get(page3_url, json=github_response[5:])
+
+    adapter = GitHubAPI("repos", "apache", "superset", "pulls")
+    rows = adapter._get_multiple_resources(  # pylint: disable=protected-access
+        {"state": Equal("all")},
+        limit=5,
+        offset=8,
+    )
+    assert list(rows) == [
+        {
+            "url": "https://github.com/apache/superset/pull/16569",
+            "id": 726107410,
+            "number": 16569,
+            "state": "open",
+            "title": "docs: versioned _export Stable",
+            "userid": 47772523,
+            "username": "amitmiran137",
+            "draft": False,
+            "head": "version_export_ff_on",
+            "created_at": "2021-09-02T16:52:34Z",
+            "updated_at": "2021-09-02T18:06:27Z",
+            "closed_at": None,
+            "merged_at": None,
+            "rowid": 0,
+        },
+        {
+            "url": "https://github.com/apache/superset/pull/16566",
+            "id": 725808286,
+            "number": 16566,
+            "state": "open",
+            "title": "fix(docker): add ecpg to docker image",
+            "userid": 33317356,
+            "username": "villebro",
+            "draft": False,
+            "head": "villebro/libecpg",
+            "created_at": "2021-09-02T12:01:02Z",
+            "updated_at": "2021-09-02T12:06:50Z",
+            "closed_at": None,
+            "merged_at": None,
+            "rowid": 1,
+        },
+        {
+            "url": "https://github.com/apache/superset/pull/16564",
+            "id": 725669631,
+            "number": 16564,
+            "state": "open",
+            "title": "refactor: orderby control refactoring",
+            "userid": 2016594,
+            "username": "zhaoyongjie",
+            "draft": True,
+            "head": "refactor_orderby",
+            "created_at": "2021-09-02T09:45:40Z",
+            "updated_at": "2021-09-03T10:31:04Z",
+            "closed_at": None,
+            "merged_at": None,
+            "rowid": 2,
+        },
+        {
+            "url": "https://github.com/apache/superset/pull/16554",
+            "id": 724863880,
+            "number": 16554,
+            "state": "open",
+            "title": "refactor: Update async query init to support runtime feature flags",
+            "userid": 296227,
+            "username": "robdiciuccio",
+            "draft": False,
+            "head": "rd/async-query-init-refactor",
+            "created_at": "2021-09-01T19:51:51Z",
+            "updated_at": "2021-09-01T22:29:46Z",
+            "closed_at": None,
+            "merged_at": None,
+            "rowid": 3,
+        },
+        {
+            "url": "https://github.com/apache/superset/pull/16549",
+            "id": 724669525,
+            "number": 16549,
+            "state": "open",
+            "title": "feat(dashboard): Native filters - add type to native filter configuration",
+            "userid": 12539911,
+            "username": "m-ajay",
+            "draft": False,
+            "head": "feat/migration-add-type-to-native-filter",
+            "created_at": "2021-09-01T16:35:50Z",
+            "updated_at": "2021-09-03T17:33:42Z",
+            "closed_at": None,
+            "merged_at": None,
+            "rowid": 4,
+        },
+    ]

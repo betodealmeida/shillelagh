@@ -51,6 +51,8 @@ class APSWDialect(SQLiteDialect):
     # proper objects the custom representations are not needed.
     colspecs: Dict[TypeEngine, TypeEngine] = {}
 
+    supports_sane_rowcount = False
+
     @classmethod
     def dbapi(cls):  # pylint: disable=method-hidden
         """
@@ -84,6 +86,9 @@ class APSWDialect(SQLiteDialect):
         }
 
     def do_ping(self, dbapi_connection: _ConnectionFairy) -> bool:
+        """
+        Return true if the database is online.
+        """
         return True
 
     def has_table(

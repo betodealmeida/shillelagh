@@ -4,9 +4,12 @@ Fixtures for Shillelagh.
 import json
 import logging
 import os
-from typing import Dict
+from typing import Dict, Iterator
 
 import pytest
+from pytest_mock import MockerFixture
+
+from shillelagh.adapters.registry import AdapterLoader
 
 _logger = logging.getLogger(__name__)
 
@@ -27,3 +30,14 @@ def adapter_kwargs() -> Dict[str, str]:
             _logger.warning('Unable to load "SHILLELAGH_ADAPTER_KWARGS": %s', ex)
 
     return kwargs
+
+
+@pytest.fixture
+def registry(mocker: MockerFixture) -> Iterator[AdapterLoader]:
+    """
+    Create a custom adapter registry.
+    """
+    custom_registry = AdapterLoader()
+    mocker.patch("shillelagh.adapters.registry.registry", new=custom_registry)
+    mocker.patch("shillelagh.backends.apsw.db.registry", new=custom_registry)
+    yield custom_registry

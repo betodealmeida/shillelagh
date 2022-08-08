@@ -5,6 +5,7 @@ memory, disks, network, sensors).
 See https://github.com/giampaolo/psutil for more information.
 """
 import logging
+import time
 import urllib.parse
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
@@ -29,6 +30,9 @@ class SystemAPI(Adapter):
     """
 
     safe = False
+
+    supports_limit = True
+    supports_offset = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
@@ -76,21 +80,27 @@ class SystemAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        **kwargs: Any,
     ) -> Iterator[Row]:
-        i = 0
-        while True:
+        rowid = 0
+        while limit is None or rowid < limit:
+            if offset is not None:
+                time.sleep(self.interval * offset)
+
             try:
                 values = psutil.cpu_percent(interval=self.interval, percpu=True)
             except KeyboardInterrupt:
                 return
 
             row = {
-                "rowid": i,
+                "rowid": rowid,
                 "timestamp": datetime.now(timezone.utc),
             }
             for i, value in enumerate(values):
                 row[f"cpu{i}"] = value / 100.0
 
-            yield row
             _logger.debug(row)
-            i += 1
+            yield row
+            rowid += 1

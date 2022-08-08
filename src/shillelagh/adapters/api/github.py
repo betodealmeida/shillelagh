@@ -11,7 +11,7 @@ from jsonpath import JSONPath
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Boolean, Field, Integer, ISODateTime, String
+from shillelagh.fields import Boolean, Field, Integer, String, StringDateTime
 from shillelagh.filters import Equal, Filter
 from shillelagh.typing import RequestedOrder, Row
 
@@ -38,7 +38,7 @@ class Column:
     field: Field
 
     # A default value for when the column is not specified. Eg, for ``pulls``
-    # the API defaults to show only PRs with an open state, so we need to
+    # the API defaults to showing only PRs with an open state, so we need to
     # default the column to ``all`` to fetch all PRs when state is not
     # specified in the query.
     default: Optional[Filter] = None
@@ -58,10 +58,10 @@ TABLES: Dict[str, Dict[str, List[Column]]] = {
             Column("username", "user.login", String()),
             Column("draft", "draft", Boolean()),
             Column("head", "head.ref", String(filters=[Equal])),  # head.label?
-            Column("created_at", "created_at", ISODateTime()),
-            Column("updated_at", "updated_at", ISODateTime()),
-            Column("closed_at", "closed_at", ISODateTime()),
-            Column("merged_at", "merged_at", ISODateTime()),
+            Column("created_at", "created_at", StringDateTime()),
+            Column("updated_at", "updated_at", StringDateTime()),
+            Column("closed_at", "closed_at", StringDateTime()),
+            Column("merged_at", "merged_at", StringDateTime()),
         ],
     },
 }
@@ -74,6 +74,9 @@ class GitHubAPI(Adapter):
     """
 
     safe = True
+
+    supports_limit = True
+    supports_offset = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
@@ -133,6 +136,9 @@ class GitHubAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        **kwargs: Any,
     ) -> Iterator[Row]:
         # apply default values
         for column in TABLES[self.base][self.resource]:
@@ -141,14 +147,22 @@ class GitHubAPI(Adapter):
 
         if "number" in bounds:
             number = bounds.pop("number").value  # type: ignore
-            return self._get_single_resource(number)
+            return self._get_single_resource(number, limit, offset)
 
-        return self._get_multiple_resources(bounds)
+        return self._get_multiple_resources(bounds, limit, offset)
 
-    def _get_single_resource(self, number: int) -> Iterator[Row]:
+    def _get_single_resource(
+        self,
+        number: int,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> Iterator[Row]:
         """
         Return a specific resource.
         """
+        if offset or (limit is not None and limit < 1):
+            return
+
         headers = {"Accept": "application/vnd.github.v3+json"}
         if self.access_token:
             headers["Authorization"] = f"Bearer {self.access_token}"
@@ -170,7 +184,12 @@ class GitHubAPI(Adapter):
         _logger.debug(row)
         yield row
 
-    def _get_multiple_resources(self, bounds: Dict[str, Filter]) -> Iterator[Row]:
+    def _get_multiple_resources(
+        self,
+        bounds: Dict[str, Filter],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> Iterator[Row]:
         """
         Return multiple resources.
         """
@@ -184,8 +203,12 @@ class GitHubAPI(Adapter):
         params = {name: filter_.value for name, filter_ in bounds.items()}  # type: ignore
         params["per_page"] = PAGE_SIZE
 
-        page = 1
-        while True:
+        offset = offset or 0
+        page = (offset // PAGE_SIZE) + 1
+        offset %= PAGE_SIZE
+
+        rowid = 0
+        while limit is None or rowid < limit:
             _logger.info("GET %s (page %d)", url, page)
             params["page"] = page
             response = self._session.get(url, headers=headers, params=params)
@@ -197,13 +220,23 @@ class GitHubAPI(Adapter):
             if not response.ok:
                 raise ProgrammingError(payload["message"])
 
-            for i, resource in enumerate(payload):
+            if offset is not None:
+                payload = payload[offset:]
+                offset = None
+
+            for resource in payload:
+                if limit is not None and rowid == limit:
+                    # this never happens because SQLite stops consuming from the generator
+                    # as soon as the limit is hit
+                    break
+
                 row = {
                     column.name: JSONPath(column.json_path).parse(resource)[0]
                     for column in TABLES[self.base][self.resource]
                 }
-                row["rowid"] = i + (page - 1) * PAGE_SIZE
+                row["rowid"] = rowid
                 _logger.debug(row)
                 yield row
+                rowid += 1
 
             page += 1

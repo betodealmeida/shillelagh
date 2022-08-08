@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name, c-extension-no-member, no-self-use, unused-import
+# pylint: disable=invalid-name, c-extension-no-member, unused-import
 """
 A DB API 2.0 wrapper for APSW.
 """
@@ -6,7 +6,6 @@ import datetime
 import itertools
 import logging
 import re
-from collections import Counter
 from functools import partial, wraps
 from typing import (
     Any,
@@ -22,10 +21,10 @@ from typing import (
 )
 
 import apsw
-from pkg_resources import iter_entry_points
 
 from shillelagh import functions
 from shillelagh.adapters.base import Adapter
+from shillelagh.adapters.registry import registry
 from shillelagh.backends.apsw.vt import VTModule, type_map
 from shillelagh.exceptions import Warning  # pylint: disable=redefined-builtin
 from shillelagh.exceptions import (
@@ -520,52 +519,19 @@ def connect(  # pylint: disable=too-many-arguments
     """
     Constructor for creating a connection to the database.
     """
-    print("---loading adapter ")
-    if adapters is None and safe:
-        adapters = []
     adapter_kwargs = adapter_kwargs or {}
-
-    all_adapters = []
-    for entry_point in iter_entry_points("shillelagh.adapter"):
-        if adapters is None or entry_point.name in adapters:
-            try:
-                adapter = entry_point.load()
-            except (ImportError, ModuleNotFoundError) as ex:
-                _logger.warning("Couldn't load adapter %s", entry_point.name)
-                _logger.debug(ex)
-            all_adapters.append((entry_point.name, adapter))
-
-    all_adapters_names = [name for name, adapter in all_adapters]
-    print("all adapters ", all_adapters_names)
-    
-    # check if there are any repeated names, to prevent malicious adapters
-    if safe:
-        repeated = {
-            name for name, count in Counter(all_adapters_names).items() if count > 1
-        }
-        if repeated:
-            raise InterfaceError(f'Repeated adapter names found: {", ".join(repeated)}')
-
-    if adapters is None:
-        adapters = all_adapters_names
-    enabled_adapters = [
-        adapter
-        for (name, adapter) in all_adapters
-        if name in adapters and (adapter.safe or not safe)
-    ]
+    enabled_adapters = registry.load_all(adapters, safe)
 
     # replace entry point names with class names
     mapping = {
-        name: adapter.__name__.lower()
-        for name, adapter in all_adapters
-        if adapter in enabled_adapters
+        name: adapter.__name__.lower() for name, adapter in enabled_adapters.items()
     }
 
     adapter_kwargs = {mapping[k]: v for k, v in adapter_kwargs.items()}
 
     return Connection(
         path,
-        enabled_adapters,
+        list(enabled_adapters.values()),
         adapter_kwargs,
         isolation_level,
         apsw_connection_kwargs,

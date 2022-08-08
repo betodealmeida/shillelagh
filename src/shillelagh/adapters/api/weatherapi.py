@@ -76,6 +76,11 @@ class WeatherAPI(Adapter):
 
     safe = True
 
+    # Since the adapter doesn't return exact data (see the time columns below)
+    # implementing limit/offset is not worth the trouble.
+    supports_limit = False
+    supports_offset = False
+
     # These two columns can be used to filter the results from the API. We
     # define them as inexact since we will retrieve data for the whole day,
     # even if specific hours are requested. The post-filtering will be done
@@ -170,6 +175,7 @@ class WeatherAPI(Adapter):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
     ) -> Iterator[Row]:
         # combine filters from the two time columns
         try:
@@ -201,7 +207,7 @@ class WeatherAPI(Adapter):
                         tzinfo=local_timezone,
                     )
                     row["rowid"] = int(row["time_epoch"])
-                    yield row
                     _logger.debug(row)
+                    yield row
 
             start += timedelta(days=1)
