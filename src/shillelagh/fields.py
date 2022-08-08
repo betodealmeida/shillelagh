@@ -126,7 +126,7 @@ class Field(Generic[Internal, External]):
     the adapter understands.
 
     Similarly, the APSW backend only accepts types understood by SQLite:
-    ints, floats, strings, and bytes. This means that the fields need to
+    ints, floats, strings, and bytes. This means that the backend needs to
     convert between, eg, native Python booleans and integers. This is also
     done by using the ``parse`` and ``format`` methods from fields (``IntBoolean``
     in this case).
@@ -584,10 +584,8 @@ class GoogleAnalyticsDate(Field[str, datetime.date]):
     db_api_type = "DATETIME"
 
     def parse(self, value: Optional[str]) -> Optional[datetime.date]:
-
         if value is None:
             return None
-
         try:
             date = datetime.date.fromisoformat(value)
         except ValueError:
@@ -596,7 +594,6 @@ class GoogleAnalyticsDate(Field[str, datetime.date]):
             return None
         return date
 
-    # external -> internal
     def format(self, value: Optional[datetime.date]) -> Optional[str]:
         return value if value is None else str(value)
 
