@@ -7,7 +7,7 @@
 #
 -e file:.
     # via -r requirements/base.in
-apsw==3.38.5.post1
+apsw==3.39.2.0
     # via shillelagh
 certifi==2022.6.15
     # via requests
@@ -27,5 +27,5 @@ sqlalchemy==1.4.39
     # via shillelagh
 typing-extensions==4.3.0
     # via shillelagh
-urllib3==1.26.10
+urllib3==1.26.11
     # via requests

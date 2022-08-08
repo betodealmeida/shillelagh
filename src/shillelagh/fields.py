@@ -126,7 +126,7 @@ class Field(Generic[Internal, External]):
     the adapter understands.
 
     Similarly, the APSW backend only accepts types understood by SQLite:
-    ints, floats, strings, and bytes. This means that the backend needs to
+    ints, floats, strings, and bytes. This means that the fields need to
     convert between, eg, native Python booleans and integers. This is also
     done by using the ``parse`` and ``format`` methods from fields (``IntBoolean``
     in this case).
@@ -311,7 +311,8 @@ class String(Field[str, str]):
     type = "TEXT"
     db_api_type = "STRING"
 
-    def parse(self, value): return value
+    def parse(self, value):
+        return value
 
     def quote(self, value: Optional[str]) -> str:
         if value is None:
@@ -571,6 +572,33 @@ class StringDateTime(ISODateTime):
             timestamp = timestamp.astimezone(datetime.timezone.utc)
 
         return timestamp
+
+
+class GoogleAnalyticsDate(Field[str, datetime.date]):
+    """
+    Google analytics date format
+    Query uses YYYY-MM-DD and reporting api returns YYYYMMDD
+    """
+
+    type = "DATE"
+    db_api_type = "DATETIME"
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.date]:
+
+        if value is None:
+            return None
+
+        try:
+            date = datetime.date.fromisoformat(value)
+        except ValueError:
+            date = dateutil.parser.parse(f"{value[0:4]}-{value[4:6]}-{value[6:8]}")
+        except Exception:  # pylint: disable=broad-except
+            return None
+        return date
+
+    # external -> internal
+    def format(self, value: Optional[datetime.date]) -> Optional[str]:
+        return value if value is None else str(value)
 
 
 class StringDuration(Field[str, datetime.timedelta]):

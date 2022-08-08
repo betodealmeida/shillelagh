@@ -264,7 +264,12 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
                 for col, desc in zip(row, self.description)
             )
 
-    def _create_table(self, uri: str, operation: str, parameters: Optional[Tuple[Any, ...]]) -> None:
+    def _create_table(
+        self,
+        uri: str,
+        operation: str,
+        parameters: Optional[Tuple[Any, ...]],
+    ) -> None:
         """
         Create a virtual table.
 
@@ -276,7 +281,11 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
         # collect arguments from URI and connection and serialize them
         adapter, args, kwargs = find_adapter(uri, self._adapter_kwargs, self._adapters)
-        
+
+        if adapter.need_operation:
+            kwargs["operation"] = operation
+            kwargs["parameters"] = parameters
+
         formatted_args = ", ".join(
             f"'{serialize(arg)}'"
             for arg in combine_args_kwargs(adapter, *args, **kwargs)

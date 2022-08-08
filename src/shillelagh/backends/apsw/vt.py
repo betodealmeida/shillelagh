@@ -31,6 +31,7 @@ from shillelagh.fields import (
     FastISODateTime,
     Field,
     Float,
+    GoogleAnalyticsDate,
     IntBoolean,
     ISODate,
     ISOTime,
@@ -99,6 +100,7 @@ type_map: Dict[str, Type[Field]] = {
         FastISODateTime,
         ISOTime,
         String,
+        GoogleAnalyticsDate,
     ]
 }
 
