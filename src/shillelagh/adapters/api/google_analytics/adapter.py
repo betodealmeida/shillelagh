@@ -22,12 +22,13 @@ from shillelagh.filters import Range
 from shillelagh.typing import RequestedOrder, Row
 
 
-class GoogleAnalytics(Adapter):
+class GoogleAnalyticsAPI(Adapter):
 
     """
     An adapter to Google Analytics
     """
 
+    need_operation = True
     columns: Dict[str, Field] = {}
 
     def __init__(  # pylint: disable=too-many-arguments

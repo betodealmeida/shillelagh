@@ -48,6 +48,9 @@ class Adapter:
     supports_limit = False
     supports_offset = False
 
+    # if true, adapter will receive query and parameters while initializing
+    need_operation = False
+
     def __init__(self, *args: Any, **kwargs: Any):  # pylint: disable=unused-argument
         # ensure ``self.close`` gets called before GC
         atexit.register(self.close)
@@ -91,10 +94,6 @@ class Adapter:
     def parse_uri(uri: str) -> Tuple[Any, ...]:
         """Parse table name, and return arguments to instantiate adapter."""
         raise NotImplementedError("Subclasses must implement ``parse_uri``")
-    
-    @staticmethod
-    def need_operation():
-        return False
 
     def get_metadata(self) -> Dict[str, Any]:
         """Return any extra metadata about the table."""
