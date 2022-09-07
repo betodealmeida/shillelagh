@@ -43,3 +43,6 @@ Description = Optional[
         ]
     ]
 ]
+
+MaybeType = Optional[bool]
+Maybe = None  # pylint: disable=invalid-name
