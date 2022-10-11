@@ -16,6 +16,7 @@ from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.backends.apsw.db import connect
 
 
+@pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 @pytest.mark.parametrize("sync_mode", [SyncMode.BIDIRECTIONAL, SyncMode.BATCH])
 def test_simple_sheet(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> None:
@@ -103,6 +104,7 @@ def test_simple_sheet(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> No
     ]
 
 
+@pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 @pytest.mark.parametrize("sync_mode", [SyncMode.BIDIRECTIONAL, SyncMode.BATCH])
 def test_2_header_sheet(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> None:
@@ -184,6 +186,7 @@ def test_2_header_sheet(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> 
     ]
 
 
+@pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 @pytest.mark.parametrize("sync_mode", [SyncMode.BIDIRECTIONAL, SyncMode.BATCH])
 def test_types_and_nulls(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> None:
@@ -476,6 +479,7 @@ def test_types_and_nulls(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) ->
     ]
 
 
+@pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 @pytest.mark.parametrize("sync_mode", [SyncMode.BIDIRECTIONAL, SyncMode.BATCH])
 def test_empty_column(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> None:
@@ -533,6 +537,7 @@ def test_empty_column(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> No
     ]
 
 
+@pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 def test_order_by(adapter_kwargs: Dict[str, Any]) -> None:
     """
@@ -561,6 +566,7 @@ def test_order_by(adapter_kwargs: Dict[str, Any]) -> None:
     ]
 
 
+@pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 def test_date_time_formats(adapter_kwargs: Dict[str, Any]) -> None:
     """
@@ -679,6 +685,7 @@ def test_date_time_formats(adapter_kwargs: Dict[str, Any]) -> None:
     ]
 
 
+@pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 def test_number_formats(adapter_kwargs: Dict[str, Any]) -> None:
     """
@@ -700,6 +707,7 @@ def test_number_formats(adapter_kwargs: Dict[str, Any]) -> None:
     ]
 
 
+@pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 def test_weird_symbols(adapter_kwargs: Dict[str, Any]) -> None:
     """

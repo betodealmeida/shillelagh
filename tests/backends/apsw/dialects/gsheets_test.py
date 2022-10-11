@@ -353,6 +353,7 @@ def test_do_ping(mocker: MockerFixture, requests_mock: Mocker) -> None:
     assert dialect.do_ping(connection)
 
 
+@pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 def test_types_in_sqlalchemy(adapter_kwargs: Dict[str, Any]) -> None:
     """

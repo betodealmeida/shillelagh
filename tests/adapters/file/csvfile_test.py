@@ -4,13 +4,12 @@ Tests for shillelagh.adapters.file.csvfile.
 """
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import mock_open
 
 import apsw
 import pytest
 from freezegun import freeze_time
 from pyfakefs.fake_filesystem import FakeFilesystem
-from pytest_mock import MockerFixture
+from requests_mock.mocker import Mocker
 
 from shillelagh.adapters.file.csvfile import CSVFile, RowTracker
 from shillelagh.backends.apsw.db import connect
@@ -36,11 +35,11 @@ CONTENTS = """"index","temperature","site"
 """
 
 
-def test_csvfile_get_columns(mocker: MockerFixture) -> None:
+def test_csvfile_get_columns(fs: FakeFilesystem) -> None:
     """
     Test that columns are returned correctly.
     """
-    mocker.patch("builtins.open", mock_open(read_data=CONTENTS))
+    fs.create_file("test.csv", contents=CONTENTS)
 
     adapter = CSVFile("test.csv")
 
@@ -63,11 +62,11 @@ def test_csvfile_get_columns(mocker: MockerFixture) -> None:
     }
 
 
-def test_csvfile_get_cost(mocker: MockerFixture) -> None:
+def test_csvfile_get_cost(fs: FakeFilesystem) -> None:
     """
     Test cost estimation.
     """
-    mocker.patch("builtins.open", mock_open(read_data=CONTENTS))
+    fs.create_file("test.csv", contents=CONTENTS)
 
     adapter = CSVFile("test.csv")
     assert adapter.get_cost([], []) == 0
@@ -93,7 +92,7 @@ def test_csvfile_get_cost(mocker: MockerFixture) -> None:
     )
 
 
-def test_csvfile_different_types(mocker: MockerFixture) -> None:
+def test_csvfile_different_types(fs: FakeFilesystem) -> None:
     """
     Test type coercion when a column has different types.
     """
@@ -101,7 +100,7 @@ def test_csvfile_different_types(mocker: MockerFixture) -> None:
 1
 2.0
 "test"'''
-    mocker.patch("builtins.open", mock_open(read_data=contents))
+    fs.create_file("test.csv", contents=contents)
 
     adapter = CSVFile("test.csv")
 
@@ -114,39 +113,35 @@ def test_csvfile_different_types(mocker: MockerFixture) -> None:
     }
 
 
-def test_csvfile_empty(mocker: MockerFixture) -> None:
+def test_csvfile_empty(fs: FakeFilesystem) -> None:
     """
     Test empty file on instantiation.
     """
-    mocker.patch("builtins.open", mock_open(read_data=""))
+    fs.create_file("test.csv", contents="")
 
     with pytest.raises(ProgrammingError) as excinfo:
         CSVFile("test.csv")
     assert str(excinfo.value) == "The file has no rows"
 
 
-def test_csvfile_empty_get_data(mocker: MockerFixture) -> None:
+def test_csvfile_empty_get_data(fs: FakeFilesystem) -> None:
     """
     Test empty file on `get_data`.
 
     This is unlikely to happen, requiring the file to be modified
     externally during the connection.
     """
-    mock_files = [
-        mock_open(read_data=CONTENTS).return_value,
-        mock_open(read_data="").return_value,
-    ]
-    mock_opener = mock_open()
-    mock_opener.side_effect = mock_files
-    mocker.patch("builtins.open", mock_opener)
+    path = fs.create_file("test.csv", contents=CONTENTS)
 
     adapter = CSVFile("test.csv")
+    path.set_contents("")
+
     with pytest.raises(ProgrammingError) as excinfo:
         list(adapter.get_data({}, []))
     assert str(excinfo.value) == "The file has no rows"
 
 
-def test_csvfile_unordered(mocker: MockerFixture) -> None:
+def test_csvfile_unordered(fs: FakeFilesystem) -> None:
     """
     Test order return when data is not sorted.
     """
@@ -154,7 +149,7 @@ def test_csvfile_unordered(mocker: MockerFixture) -> None:
 1
 2
 1"""
-    mocker.patch("builtins.open", mock_open(read_data=contents))
+    fs.create_file("test.csv", contents=contents)
 
     adapter = CSVFile("test.csv")
 
@@ -167,7 +162,7 @@ def test_csvfile_unordered(mocker: MockerFixture) -> None:
     }
 
 
-def test_csvfile_single_row_of_data(mocker: MockerFixture) -> None:
+def test_csvfile_single_row_of_data(fs: FakeFilesystem) -> None:
     """
     Test adapter when we have only 1 row of data.
 
@@ -175,7 +170,7 @@ def test_csvfile_single_row_of_data(mocker: MockerFixture) -> None:
     """
     contents = """"a","b"
 1,2"""
-    mocker.patch("builtins.open", mock_open(read_data=contents))
+    fs.create_file("test.csv", contents=contents)
 
     adapter = CSVFile("test.csv")
 
@@ -194,11 +189,11 @@ def test_csvfile_single_row_of_data(mocker: MockerFixture) -> None:
     assert list(adapter.get_data({}, [])) == [{"a": 1.0, "b": 2.0, "rowid": 0}]
 
 
-def test_csvfile_get_data(mocker: MockerFixture) -> None:
+def test_csvfile_get_data(fs: FakeFilesystem) -> None:
     """
     Test ``get_data``.
     """
-    mocker.patch("builtins.open", mock_open(read_data=CONTENTS))
+    fs.create_file("test.csv", contents=CONTENTS)
 
     adapter = CSVFile("test.csv")
 
@@ -233,11 +228,11 @@ def test_csvfile_get_data(mocker: MockerFixture) -> None:
     )
 
 
-def test_csvfile_get_data_impossible_filter(mocker: MockerFixture) -> None:
+def test_csvfile_get_data_impossible_filter(fs: FakeFilesystem) -> None:
     """
     Test that impossible conditions return no data.
     """
-    mocker.patch("builtins.open", mock_open(read_data=CONTENTS))
+    fs.create_file("test.csv", contents=CONTENTS)
 
     adapter = CSVFile("test.csv")
     assert list(adapter.get_data({"index": Impossible()}, [])) == []
@@ -247,8 +242,7 @@ def test_csvfile(fs: FakeFilesystem) -> None:
     """
     Test the whole workflow.
     """
-    with open("test.csv", "w", encoding="utf-8") as fp:
-        fp.write(CONTENTS)
+    fs.create_file("test.csv", contents=CONTENTS)
 
     connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
@@ -301,8 +295,7 @@ def test_csvfile_close_not_modified(fs: FakeFilesystem) -> None:
     Test closing the file when it hasn't been modified.
     """
     with freeze_time("2022-01-01T00:00:00Z"):
-        with open("test.csv", "w", encoding="utf-8") as fp:
-            fp.write(CONTENTS)
+        fs.create_file("test.csv", contents=CONTENTS)
 
     connection = apsw.Connection(":memory:")
     cursor = connection.cursor()
@@ -322,12 +315,11 @@ def test_csvfile_close_not_modified(fs: FakeFilesystem) -> None:
     assert path.stat().st_mtime == datetime(2022, 1, 1, tzinfo=timezone.utc).timestamp()
 
 
-def test_dispatch() -> None:
+def test_dispatch(fs: FakeFilesystem) -> None:
     """
     Test the URI dispatcher.
     """
-    with open("test.csv", "w", encoding="utf-8") as fp:
-        fp.write(CONTENTS)
+    fs.create_file("test.csv", contents=CONTENTS)
 
     connection = connect(":memory:", ["csvfile"])
     cursor = connection.cursor()
@@ -337,12 +329,11 @@ def test_dispatch() -> None:
     assert data == [(12.0, 13.3, "Platinum_St"), (13.0, 12.1, "Kodiak_Trail")]
 
 
-def test_drop_table() -> None:
+def test_drop_table(fs: FakeFilesystem) -> None:
     """
     Test that dropping the table removes the file.
     """
-    with open("test.csv", "w", encoding="utf-8") as fp:
-        fp.write(CONTENTS)
+    fs.create_file("test.csv", contents=CONTENTS)
 
     connection = connect(":memory:", ["csvfile"])
     cursor = connection.cursor()
@@ -360,3 +351,67 @@ def test_row_tracker() -> None:
     row_tracker = RowTracker(iter(rows))
     assert next(row_tracker) == {"col0_": 1}
     assert next(row_tracker) == {"col0_": 2}
+
+
+def test_remote_file(fs: FakeFilesystem, requests_mock: Mocker) -> None:
+    """
+    Test reading a remote file via HTTP(S).
+    """
+    requests_mock.get("https://example.com/test.csv", text=CONTENTS)
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = 'SELECT * FROM "https://example.com/test.csv" WHERE "index" > 11'
+    data = list(cursor.execute(sql))
+    assert data == [(12.0, 13.3, "Platinum_St"), (13.0, 12.1, "Kodiak_Trail")]
+
+    sql = """
+        INSERT INTO "https://example.com/test.csv" (
+            "index",
+            temperature,
+            site
+        ) VALUES (
+            14,
+            10.1,
+            'New_Site'
+        )
+    """
+    with pytest.raises(ProgrammingError) as excinfo:
+        cursor.execute(sql)
+    assert str(excinfo.value) == "Cannot apply DML to a remote file"
+
+    sql = """DELETE FROM "https://example.com/test.csv" WHERE site = 'Kodiak_Trail'"""
+    with pytest.raises(ProgrammingError) as excinfo:
+        cursor.execute(sql)
+    assert str(excinfo.value) == "Cannot apply DML to a remote file"
+
+
+def test_cleanup(fs: FakeFilesystem, requests_mock: Mocker) -> None:
+    """
+    Test that local copy is removed when the connection is closed.
+    """
+    requests_mock.get("https://example.com/test.csv", text=CONTENTS)
+
+    adapter = CSVFile("https://example.com/test.csv")
+    assert adapter.path.exists()
+    adapter.close()
+    assert not adapter.path.exists()
+
+
+def test_supports(fs: FakeFilesystem, requests_mock: Mocker) -> None:
+    """
+    Test the ``supports`` method.
+    """
+    fs.create_file("test.csv", contents=CONTENTS)
+    requests_mock.head(
+        "https://example.com/csv/test",
+        headers={"Content-type": "text/csv"},
+    )
+
+    assert CSVFile.supports("test.csv")
+    assert not CSVFile.supports("invalid.csv")
+
+    assert CSVFile.supports("https://example.com/test.csv")
+    assert CSVFile.supports("https://example.com/csv/test") is None
+    assert CSVFile.supports("https://example.com/csv/test", fast=False)
