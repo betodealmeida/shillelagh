@@ -281,14 +281,15 @@ def test_get_fraction() -> None:
     """
     Test ``get_fraction``.
     """
-    assert get_fraction(9) == 0.9
-    assert get_fraction(123) == 0.123
-    assert get_fraction(1) == 0.1
-    assert get_fraction(10) == 0.1
-    assert get_fraction(0) == 0
+    assert get_fraction("9") == 0.9
+    assert get_fraction("123") == 0.123
+    assert get_fraction("1") == 0.1
+    assert get_fraction("001") == 0.001
+    assert get_fraction("10") == 0.1
+    assert get_fraction("0") == 0
 
     with pytest.raises(Exception) as excinfo:
-        get_fraction(-1)
+        get_fraction("-1")
     assert str(excinfo.value) == "Number should be a positive integer"
 
 
@@ -346,6 +347,9 @@ def test_parse_number_pattern() -> None:
     assert parse_number_pattern("dollars: 12.0", "dollars: #.0#") == 12
     assert parse_number_pattern("1.23e-02", "0.00e+00") == 0.0123
     assert parse_number_pattern("0123.45", "#0000.00") == 123.45
+
+    # regressions
+    assert parse_number_pattern("1.001", "#,##0.000") == 1.001
 
     # tests for conditions
     assert (
