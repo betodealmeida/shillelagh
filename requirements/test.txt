@@ -10,15 +10,15 @@
     # via -r requirements/base.in
 appdirs==1.4.4
     # via -r requirements/test.in
-astroid==2.11.7
+astroid==2.12.12
     # via pylint
 attrs==21.4.0
     # via
     #   pytest
     #   requests-cache
-boto3==1.24.35
+boto3==1.25.1
     # via -r requirements/test.in
-botocore==1.27.35
+botocore==1.28.1
     # via
     #   boto3
     #   s3transfer
@@ -30,21 +30,23 @@ cfgv==3.3.1
     # via pre-commit
 click==8.1.3
     # via pip-tools
-codespell==2.1.0
+codespell==2.2.2
     # via -r requirements/test.in
-coverage[toml]==6.4.2
+coverage[toml]==6.5.0
     # via pytest-cov
-dill==0.3.5.1
+dill==0.3.6
     # via pylint
-distlib==0.3.5
+distlib==0.3.6
     # via virtualenv
-filelock==3.7.1
+exceptiongroup==1.0.0rc9
+    # via pytest
+filelock==3.8.0
     # via virtualenv
-freezegun==1.2.1
+freezegun==1.2.2
     # via -r requirements/test.in
-google-auth==2.9.1
+google-auth==2.13.0
     # via -r requirements/test.in
-identify==2.5.2
+identify==2.5.7
     # via pre-commit
 iniconfig==1.1.1
     # via pytest
@@ -64,17 +66,17 @@ mccabe==0.7.0
     # via pylint
 nodeenv==1.7.0
     # via pre-commit
-numpy==1.23.1
+numpy==1.23.4
     # via pandas
 packaging==21.3
     # via
     #   build
     #   pytest
-pandas==1.4.3
+pandas==1.5.1
     # via -r requirements/test.in
-pep517==0.12.0
+pep517==0.13.0
     # via build
-pip-tools==6.8.0
+pip-tools==6.9.0
     # via -r requirements/test.in
 platformdirs==2.5.2
     # via
@@ -84,38 +86,36 @@ pluggy==1.0.0
     # via pytest
 pre-commit==2.20.0
     # via -r requirements/test.in
-prompt-toolkit==3.0.30
+prompt-toolkit==3.0.31
     # via -r requirements/test.in
-psutil==5.9.1
+psutil==5.9.3
     # via -r requirements/test.in
-py==1.11.0
-    # via pytest
 pyasn1==0.4.8
     # via
     #   pyasn1-modules
     #   rsa
 pyasn1-modules==0.2.8
     # via google-auth
-pyfakefs==4.6.3
+pyfakefs==5.0.0
     # via -r requirements/test.in
-pygments==2.12.0
+pygments==2.13.0
     # via -r requirements/test.in
-pylint==2.14.5
+pylint==2.15.5
     # via -r requirements/test.in
 pyparsing==3.0.9
     # via packaging
-pytest==7.1.2
+pytest==7.2.0
     # via
     #   -r requirements/test.in
     #   pytest-cov
     #   pytest-mock
-pytest-cov==3.0.0
+pytest-cov==4.0.0
     # via -r requirements/test.in
 pytest-integration==0.2.2
     # via -r requirements/test.in
-pytest-mock==3.8.2
+pytest-mock==3.10.0
     # via -r requirements/test.in
-pytz==2022.1
+pytz==2022.5
     # via pandas
 pyyaml==6.0
     # via
@@ -124,7 +124,7 @@ pyyaml==6.0
     #   requests-cache
 requests-cache==0.7.1
     # via -r requirements/test.in
-requests-mock==1.9.3
+requests-mock==1.10.0
     # via -r requirements/test.in
 rsa==4.9
     # via google-auth
@@ -140,11 +140,11 @@ tomli==2.0.1
     #   coverage
     #   pylint
     #   pytest
-tomlkit==0.11.1
+tomlkit==0.11.5
     # via pylint
 url-normalize==1.4.3
     # via requests-cache
-virtualenv==20.15.1
+virtualenv==20.16.6
     # via pre-commit
 wcwidth==0.2.5
     # via prompt-toolkit
