@@ -179,7 +179,7 @@ class COMMA(Token):
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         size = len(self.token)
-        return {"operation": lambda number: number * 1000**size}, value
+        return {"operation": lambda number: number * 1000 ** size}, value
 
 
 class E(Token):  # pylint: disable=invalid-name
@@ -229,7 +229,7 @@ class E(Token):  # pylint: disable=invalid-name
         exponent = int(match.group(2))
         size = len(match.group())
 
-        return {"operation": lambda number: number * 10**exponent}, value[size:]
+        return {"operation": lambda number: number * 10 ** exponent}, value[size:]
 
 
 class FRACTION(Token):
@@ -436,7 +436,13 @@ def parse_number_pattern(value: str, pattern: str) -> float:
             number = parse_number_format(value, format_)
             break
         except InvalidValue:
-            pass
+            # weird edge case
+            if value.startswith("-"):
+                try:
+                    number = -parse_number_pattern(value[1:], format_)
+                    break
+                except Exception:  # pylint: disable=broad-except
+                    pass
     else:
         try:
             return int(value)
@@ -450,7 +456,7 @@ def parse_number_pattern(value: str, pattern: str) -> float:
 
     # is negative?
     if i == 1 and (len(formats) > 2 or (len(formats) == 2 and "@" not in formats[1])):
-        return number * -1
+        return -number
 
     return number
 

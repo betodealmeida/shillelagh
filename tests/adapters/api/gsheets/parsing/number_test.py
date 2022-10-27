@@ -368,6 +368,13 @@ def test_parse_number_pattern() -> None:
         == 123
     )
 
+    # corner cases
+    assert parse_number_pattern("$12.2", "$#0.0,,") == 12200000.0
+    assert parse_number_pattern("-$12.2", "$#0.0,,") == -12200000.0
+    with pytest.raises(Exception) as excinfo:
+        assert parse_number_pattern("-$12.2", "#")
+    assert str(excinfo.value) == "Unable to parse value -$12.2 with pattern #"
+
 
 def test_parse_number_pattern_errors() -> None:
     """
