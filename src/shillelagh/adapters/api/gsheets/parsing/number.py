@@ -441,7 +441,7 @@ def parse_number_pattern(value: str, pattern: str) -> float:
                 try:
                     number = -parse_number_pattern(value[1:], format_)
                     break
-                except Exception:  # pylint: disable=broad-except
+                except InvalidValue:
                     pass
     else:
         try:
@@ -450,7 +450,7 @@ def parse_number_pattern(value: str, pattern: str) -> float:
             try:
                 return float(value)
             except ValueError as ex:
-                raise Exception(
+                raise InvalidValue(
                     f"Unable to parse value {value} with pattern {pattern}",
                 ) from ex
 
