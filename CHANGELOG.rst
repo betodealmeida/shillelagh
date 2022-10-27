@@ -2,6 +2,17 @@
 Changelog
 =========
 
+Next
+====
+
+Version 1.1.1 - 2022-10-26
+==========================
+
+- Add support for CSV files over HTTP(S) (#296)
+- Fix for fraction parsing in GSheets (#298)
+- Fix for negative dollar format in GSheets (#299)
+- Other small fixes and typos.
+
 Version 1.1.0 - 2022-07-28
 ==========================
 
