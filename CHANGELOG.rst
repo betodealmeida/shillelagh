@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Fix preventing loading of non-requested adapters (#303)
+
 Version 1.1.1 - 2022-10-26
 ==========================
 
