@@ -88,13 +88,10 @@ class AdapterLoader:
 
         If no adapters are specified, return all.
         """
-        all_adapters = {name: self.load(name, safe=False) for name in self.loaders}
-
-        if adapters is None:
-            return all_adapters
-
         return {
-            name: adapter for name, adapter in all_adapters.items() if name in adapters
+            name: self.load(name, safe=False)
+            for name in self.loaders
+            if adapters is None or name in adapters
         }
 
     def register(self, name: str, modulepath: str, classname: str) -> None:
