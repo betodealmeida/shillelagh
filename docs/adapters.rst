@@ -374,3 +374,44 @@ It's possible to specify a different polling interval by passing the ``interval`
 .. code-block:: sql
 
     SELECT cpu0 FROM "system://cpu?interval=0.1" -- 0.1 seconds
+
+Generic JSON APIs
+=================
+
+Shillelagh has an adapter for generic JSON APIs, that works with any URL that returns ``application/json`` for the content type. Because of its generic nature the adapter performs no server-side filtering, meaning it has to download all the data first and filter it on the client. Nevertheless, it can be useful for small payloads.
+
+To use it, just query a JSON endpoint, eg:
+
+.. code-block:: sql
+
+    SELECT * FROM "https://api.stlouisfed.org/fred/series?series_id=GNPCA&api_key=abcdefghijklmnopqrstuvwxyz123456&file_type=json#$.seriess[*]"
+
+Note that the JSON payload should return the data as a list of dictionaries. In the example above, the payload looks like this:
+
+.. code-block:: json
+
+    {
+      "realtime_start": "2022-11-01",
+      "realtime_end": "2022-11-01",
+      "seriess": [
+        {
+          "id": "GNPCA",
+          "realtime_start": "2022-11-01",
+          "realtime_end": "2022-11-01",
+          "title": "Real Gross National Product",
+          "observation_start": "1929-01-01",
+          "observation_end": "2021-01-01",
+          "frequency": "Annual",
+          "frequency_short": "A",
+          "units": "Billions of Chained 2012 Dollars",
+          "units_short": "Bil. of Chn. 2012 $",
+          "seasonal_adjustment": "Not Seasonally Adjusted",
+          "seasonal_adjustment_short": "NSA",
+          "last_updated": "2022-09-29 07:45:54-05",
+          "popularity": 16,
+          "notes": "BEA Account Code: A001RX\n\n"
+        }
+      ]
+    }
+
+In the payload above the data is stored in the ``seriess`` key. In order to have Shillelagh access the data correctly you should pass a `JSONPath <https://goessner.net/articles/JsonPath/>`_ expression as an achor in the URL. For this payload the expression ``$.seriess[*]`` will return all rows inside the ``seriess`` children.

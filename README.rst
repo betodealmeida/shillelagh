@@ -86,6 +86,7 @@ Queries like this are supported by `adapters <https://shillelagh.readthedocs.io/
 ============ ============ ========================================================================== =====================================================================================================
  CSV          File         ``/path/to/file.csv``                                                      ``/home/user/sample_data.csv``
  Datasette    API          ``http(s)://*``                                                            ``https://global-power-plants.datasettes.com/global-power-plants/global-power-plants``
+ Generic JSON API          ``http(s)://*``                                                            ``https://api.stlouisfed.org/fred/series?series_id=GNPCA&api_key=XXX&file_type=json#$.seriess[*]``
  GitHub       API          ``https://api.github.com/repos/${owner}/{$repo}/pulls``                    ``https://api.github.com/repos/apache/superset/pulls``
  GSheets      API          ``https://docs.google.com/spreadsheets/d/${id}/edit#gid=${sheet_id}``      ``https://docs.google.com/spreadsheets/d/1LcWZMsdCl92g7nA-D6qGRqg1T5TiHyuKJUY1u9XAnsk/edit#gid=0``
  HTML table   API          ``http(s)://*``                                                            ``https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population``
