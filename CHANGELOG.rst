@@ -5,6 +5,9 @@ Changelog
 Next
 ====
 
+Version 1.1.2 - 2022-11-01
+==========================
+
 - Fix preventing loading of non-requested adapters (#303)
 - New generic JSON adapter (#304)
 
