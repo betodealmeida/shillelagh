@@ -6,6 +6,7 @@ Next
 ====
 
 - Fix preventing loading of non-requested adapters (#303)
+- New generic JSON adapter (#304)
 
 Version 1.1.1 - 2022-10-26
 ==========================
