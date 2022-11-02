@@ -4,6 +4,7 @@ An adapter for fetching JSON data.
 
 # pylint: disable=invalid-name
 
+import json
 import urllib.parse
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
@@ -11,6 +12,7 @@ import requests_cache
 from jsonpath import JSONPath
 
 from shillelagh.adapters.base import Adapter
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.filters import Filter
 from shillelagh.lib import SimpleCostModel, analyze
@@ -103,5 +105,12 @@ class GenericJSONAPI(Adapter):
     ) -> Iterator[Row]:
         response = self._session.get(self.uri)
         payload = response.json()
+        if not response.ok:
+            raise ProgrammingError(f'Error: {payload["message"]}')
+
         parser = JSONPath(self.path)
-        yield from parser.parse(payload)
+        for row in parser.parse(payload):
+            yield {
+                k: json.dumps(v) if isinstance(v, (list, dict)) else v
+                for k, v in row.items()
+            }

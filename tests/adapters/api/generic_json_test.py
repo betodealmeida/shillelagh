@@ -1,6 +1,8 @@
 """
 Test the generic JSON adapter.
 """
+
+import pytest
 from pytest_mock import MockerFixture
 from requests import Session
 from requests_mock.mocker import Mocker
@@ -8,6 +10,7 @@ from yarl import URL
 
 from shillelagh.adapters.api.generic_json import GenericJSONAPI
 from shillelagh.backends.apsw.db import connect
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.typing import Maybe
 
 baseurl = URL("https://api.stlouisfed.org/fred/series")
@@ -94,10 +97,22 @@ def test_generic_json(mocker: MockerFixture, requests_mock: Mocker) -> None:
         "https://example.org/data.json",
         headers={"content-type": "application/json"},
     )
-    requests_mock.get("https://example.org/data.json", json=[{"a": 1}, {"a": 2}])
-    sql = 'SELECT a FROM "https://example.org/data.json"'
+    requests_mock.get(
+        "https://example.org/data.json",
+        json=[{"a": 1, "b": [10, 20]}, {"a": 2, "b": [11]}],
+    )
+    sql = 'SELECT a, b FROM "https://example.org/data.json"'
     data = list(cursor.execute(sql))
-    assert data == [(1,), (2,)]
+    assert data == [(1, "[10, 20]"), (2, "[11]")]
+
+    requests_mock.get(
+        "https://example.org/data.json",
+        json={"message": "An error occurred"},
+        status_code=500,
+    )
+    with pytest.raises(ProgrammingError) as excinfo:
+        list(cursor.execute(sql))
+    assert str(excinfo.value) == "Error: An error occurred"
 
 
 def test_supports(requests_mock: Mocker) -> None:
