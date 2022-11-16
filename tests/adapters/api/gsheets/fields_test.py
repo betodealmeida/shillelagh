@@ -69,12 +69,9 @@ def test_GSheetsDateTime_timezone():
     """
     timezone = dateutil.tz.gettz("America/Los_Angeles")
 
-    assert (
-        GSheetsDateTime(pattern="M/d/yyyy H:mm:ss", timezone=timezone).parse(
-            "12/31/2020 12:34:56",
-        )
-        == datetime.datetime(2020, 12, 31, 12, 34, 56, tzinfo=timezone)
-    )
+    assert GSheetsDateTime(pattern="M/d/yyyy H:mm:ss", timezone=timezone).parse(
+        "12/31/2020 12:34:56",
+    ) == datetime.datetime(2020, 12, 31, 12, 34, 56, tzinfo=timezone)
 
     assert (
         GSheetsDateTime(pattern="M/d/yyyy H:mm:ss", timezone=timezone).format(

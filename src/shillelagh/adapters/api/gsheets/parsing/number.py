@@ -179,7 +179,7 @@ class COMMA(Token):
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
         size = len(self.token)
-        return {"operation": lambda number: number * 1000 ** size}, value
+        return {"operation": lambda number: number * 1000**size}, value
 
 
 class E(Token):  # pylint: disable=invalid-name
@@ -229,7 +229,7 @@ class E(Token):  # pylint: disable=invalid-name
         exponent = int(match.group(2))
         size = len(match.group())
 
-        return {"operation": lambda number: number * 10 ** exponent}, value[size:]
+        return {"operation": lambda number: number * 10**exponent}, value[size:]
 
 
 class FRACTION(Token):

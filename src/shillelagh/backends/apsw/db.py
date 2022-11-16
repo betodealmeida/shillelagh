@@ -26,8 +26,7 @@ from shillelagh import functions
 from shillelagh.adapters.base import Adapter
 from shillelagh.adapters.registry import registry
 from shillelagh.backends.apsw.vt import VTModule, type_map
-from shillelagh.exceptions import Warning  # pylint: disable=redefined-builtin
-from shillelagh.exceptions import (
+from shillelagh.exceptions import (  # nopycln: import; pylint: disable=redefined-builtin
     DatabaseError,
     DataError,
     Error,
@@ -37,6 +36,7 @@ from shillelagh.exceptions import (
     NotSupportedError,
     OperationalError,
     ProgrammingError,
+    Warning,
 )
 from shillelagh.fields import Blob, Field
 from shillelagh.lib import combine_args_kwargs, escape, find_adapter, serialize

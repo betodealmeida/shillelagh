@@ -36,4 +36,5 @@ jobs:
           --global-option=build --global-option=--enable-all-extensions
     - name: Test with pytest
       run: |
+        pre-commit run --all-files
         pytest --cov-fail-under=100 --cov=src/shillelagh -vv tests/ --doctest-modules src/shillelagh --without-integration --without-slow-integration
