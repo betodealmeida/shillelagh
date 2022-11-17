@@ -137,19 +137,13 @@ def test_time() -> None:
     """
     Test ``Time``.
     """
-    assert (
-        Time().parse(
-            datetime.time(12, 0, tzinfo=datetime.timezone.utc),
-        )
-        == datetime.time(12, 0, tzinfo=datetime.timezone.utc)
-    )
+    assert Time().parse(
+        datetime.time(12, 0, tzinfo=datetime.timezone.utc),
+    ) == datetime.time(12, 0, tzinfo=datetime.timezone.utc)
     assert Time().parse(None) is None
-    assert (
-        Time().format(
-            datetime.time(12, 0, tzinfo=datetime.timezone.utc),
-        )
-        == datetime.time(12, 0, tzinfo=datetime.timezone.utc)
-    )
+    assert Time().format(
+        datetime.time(12, 0, tzinfo=datetime.timezone.utc),
+    ) == datetime.time(12, 0, tzinfo=datetime.timezone.utc)
     assert Time().format(None) is None
     assert (
         Time().quote(datetime.time(12, 0, tzinfo=datetime.timezone.utc))
@@ -203,19 +197,13 @@ def test_datetime() -> None:
     """
     Test ``DateTime``.
     """
-    assert (
-        DateTime().parse(
-            datetime.datetime(2020, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc),
-        )
-        == datetime.datetime(2020, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc)
-    )
+    assert DateTime().parse(
+        datetime.datetime(2020, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc),
+    ) == datetime.datetime(2020, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc)
     assert DateTime().parse(None) is None
-    assert (
-        DateTime().format(
-            datetime.datetime(2020, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc),
-        )
-        == datetime.datetime(2020, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc)
-    )
+    assert DateTime().format(
+        datetime.datetime(2020, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc),
+    ) == datetime.datetime(2020, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc)
     assert DateTime().format(None) is None
     assert (
         DateTime().quote(

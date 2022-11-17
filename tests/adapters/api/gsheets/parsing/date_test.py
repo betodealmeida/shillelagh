@@ -93,14 +93,11 @@ def test_implementation():
         format_date_time_pattern(timestamp, "dddd, m/d/yy at h:mm")
         == "Tuesday, 4/5/16 at 16:08"
     )
-    assert (
-        parse_date_time_pattern(
-            "Tuesday, 4/5/16 at 16:08",
-            "dddd, m/d/yy at h:mm",
-            datetime,
-        )
-        == datetime(2016, 4, 5, 16, 8)
-    )
+    assert parse_date_time_pattern(
+        "Tuesday, 4/5/16 at 16:08",
+        "dddd, m/d/yy at h:mm",
+        datetime,
+    ) == datetime(2016, 4, 5, 16, 8)
 
     duration = timedelta(hours=3, minutes=13, seconds=41, microseconds=255000)
 
