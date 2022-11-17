@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.1.3 - 2022-11-17
+==========================
+
+- Improve generic JSON adapter to handle nested fields (#309)
+
 Version 1.1.2 - 2022-11-01
 ==========================
 
