@@ -5,6 +5,7 @@ An adapter for fetching JSON data.
 # pylint: disable=invalid-name
 
 import json
+import logging
 import urllib.parse
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
@@ -17,6 +18,8 @@ from shillelagh.fields import Field
 from shillelagh.filters import Filter
 from shillelagh.lib import SimpleCostModel, analyze
 from shillelagh.typing import Maybe, RequestedOrder, Row
+
+_logger = logging.getLogger(__name__)
 
 SUPPORTED_PROTOCOLS = {"http", "https"}
 AVERAGE_NUMBER_OF_ROWS = 100
@@ -88,6 +91,7 @@ class GenericJSONAPI(Adapter):
                 exact=False,
             )
             for column_name in column_names
+            if column_name != "rowid"
         }
 
     def get_columns(self) -> Dict[str, Field]:
@@ -109,7 +113,9 @@ class GenericJSONAPI(Adapter):
             raise ProgrammingError(f'Error: {payload["message"]}')
 
         parser = JSONPath(self.path)
-        for row in parser.parse(payload):
+        for i, row in enumerate(parser.parse(payload)):
+            row["rowid"] = i
+            _logger.debug(row)
             yield {
                 k: json.dumps(v) if isinstance(v, (list, dict)) else v
                 for k, v in row.items()

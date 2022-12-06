@@ -593,7 +593,7 @@ The adapter is based on the ``s3select`` adapter:
             # simple return the table name
             return (uri,)
 
-With the adapter above, when the user writes a query like ``SELECT * FROM sample_data`` Shillelagh will iterate over all the registered adapters, which is only "custom_s3select". It will then call the ``supports`` method to see if the adapter can handle ``sample_data``; since there's only a single adapter it can simply return true.
+With the adapter above, when the user writes a query like ``SELECT * FROM sample_data`` Shillelagh will iterate over all the registered adapters, which is only ``custom_s3select``. It will then call the ``supports`` method to see if the adapter can handle ``sample_data``; since there's only a single adapter it can simply return true.
 
 Shillelagh will then call ``parse_uri("sample_data")``, which returns the table name unmodified. It will then instantiate the adapter with the response from ``parse_uri``, together with any additional keyword arguments present in ``adapter_kwargs`` (populated in the dialect's ``create_connect_args``). In this case:
 

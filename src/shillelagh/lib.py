@@ -161,7 +161,7 @@ def analyze(
             # determine types
             if types.get(column_name) == String:
                 continue
-            if isinstance(value, str):
+            if isinstance(value, (str, list, dict)):
                 types[column_name] = String
             elif types.get(column_name) == Float:
                 continue

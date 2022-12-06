@@ -85,7 +85,7 @@ def test_get_input_serialization() -> None:
 
 
 @pytest.fixture
-def boto3_client(mocker: MockerFixture) -> MagicMock:
+def boto3(mocker: MockerFixture) -> MagicMock:
     """
     Mock the boto3 client.
     """
@@ -134,10 +134,10 @@ def boto3_client(mocker: MockerFixture) -> MagicMock:
             {"End": {}},
         ],
     }
-    return cast(MagicMock, boto3.client())
+    return cast(MagicMock, boto3)
 
 
-def test_s3select(boto3_client: MagicMock) -> None:
+def test_s3select(boto3: MagicMock) -> None:
     """
     Test the adapter.
     """
@@ -149,7 +149,32 @@ def test_s3select(boto3_client: MagicMock) -> None:
     assert data == [("Sam", "(949) 555-1234", "Irvine", "Solutions Architect")]
 
 
-def test_drop_table(boto3_client: MagicMock) -> None:
+def test_s3select_with_auth(boto3: MagicMock) -> None:
+    """
+    Test the adapter.
+    """
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={
+            "s3selectapi": {
+                "aws_access_key_id": "XXX",
+                "aws_secret_access_key": "YYY",
+            },
+        },
+    )
+    cursor = connection.cursor()
+
+    sql = 'SELECT * FROM "s3://bucket/file.csv"'
+    data = list(cursor.execute(sql))
+    assert data == [("Sam", "(949) 555-1234", "Irvine", "Solutions Architect")]
+    assert boto3.client.called_with(
+        "s3",
+        aws_access_key_id="XXX",
+        aws_secret_access_key="YYY",
+    )
+
+
+def test_drop_table(boto3: MagicMock) -> None:
     """
     Test that dropping the table deletes the object from S3.
     """
@@ -158,10 +183,10 @@ def test_drop_table(boto3_client: MagicMock) -> None:
 
     sql = 'DROP TABLE "s3://bucket/file.csv"'
     cursor.execute(sql)
-    boto3_client.delete_object.assert_called_with(Bucket="bucket", Key="file.csv")
+    boto3.client().delete_object.assert_called_with(Bucket="bucket", Key="file.csv")
 
 
-def test_impossible_condition(boto3_client: MagicMock) -> None:
+def test_impossible_condition(boto3: MagicMock) -> None:
     """
     Test for apsw 3.36 where an impossible condition is passed.
     """

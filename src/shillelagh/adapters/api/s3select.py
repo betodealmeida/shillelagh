@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, Union, cast
 
 import boto3
+from botocore import UNSIGNED
+from botocore.config import Config
 from typing_extensions import TypedDict
 
 from shillelagh.adapters.base import Adapter
@@ -243,11 +245,17 @@ class S3SelectAPI(Adapter):
         self.key = key
         self.input_serialization = input_serialization
 
-        self.s3_client = boto3.client(
-            "s3",
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-        )
+        if aws_access_key_id and aws_secret_access_key:
+            self.s3_client = boto3.client(
+                "s3",
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+            )
+        else:
+            self.s3_client = boto3.client(
+                "s3",
+                config=Config(signature_version=UNSIGNED),
+            )
         self.s3_kwargs = s3_kwargs or {}
 
         self._set_columns()
@@ -318,7 +326,10 @@ class S3SelectAPI(Adapter):
         for i, row in enumerate(rows):
             row["rowid"] = i
             _logger.debug(row)
-            yield row
+            yield {
+                k: json.dumps(v) if isinstance(v, (list, dict)) else v
+                for k, v in row.items()
+            }
 
     def drop_table(self) -> None:
         self.s3_client.delete_object(Bucket=self.bucket, Key=self.key, **self.s3_kwargs)
