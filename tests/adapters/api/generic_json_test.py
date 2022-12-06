@@ -115,6 +115,41 @@ def test_generic_json(mocker: MockerFixture, requests_mock: Mocker) -> None:
     assert str(excinfo.value) == "Error: An error occurred"
 
 
+def test_generic_json_complex_type(
+    mocker: MockerFixture,
+    requests_mock: Mocker,
+) -> None:
+    """
+    Test a query where columns are complex.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.generic_json.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    # for datassette and other probing adapters
+    requests_mock.head("https://exmaple.org/-/versions.json", status_code=404)
+
+    url = URL("https://example.org/")
+    requests_mock.head(str(url), headers={"content-type": "application/json"})
+    requests_mock.get(
+        str(url),
+        json=[
+            {
+                "foo": "bar",
+                "baz": ["one", "two"],
+            },
+        ],
+    )
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = f'SELECT * FROM "{url}"'
+    data = list(cursor.execute(sql))
+    assert data == [("bar", '["one", "two"]')]
+
+
 def test_supports(requests_mock: Mocker) -> None:
     """
     Test the ``supports`` method.
