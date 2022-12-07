@@ -4,7 +4,6 @@ An adapter for fetching JSON data.
 
 # pylint: disable=invalid-name
 
-import json
 import logging
 import urllib.parse
 from typing import Any, Dict, Iterator, List, Optional, Tuple
@@ -16,7 +15,7 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.filters import Filter
-from shillelagh.lib import SimpleCostModel, analyze
+from shillelagh.lib import SimpleCostModel, analyze, flatten
 from shillelagh.typing import Maybe, RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
@@ -57,7 +56,7 @@ class GenericJSONAPI(Adapter):
 
         session = get_session()
         response = session.head(uri)
-        return "application/json" in response.headers["content-type"]
+        return "application/json" in response.headers.get("content-type", "")
 
     @staticmethod
     def parse_uri(uri: str) -> Tuple[str, str]:
@@ -116,7 +115,4 @@ class GenericJSONAPI(Adapter):
         for i, row in enumerate(parser.parse(payload)):
             row["rowid"] = i
             _logger.debug(row)
-            yield {
-                k: json.dumps(v) if isinstance(v, (list, dict)) else v
-                for k, v in row.items()
-            }
+            yield flatten(row)

@@ -2,6 +2,7 @@
 import base64
 import inspect
 import itertools
+import json
 import math
 import operator
 import pickle
@@ -503,3 +504,12 @@ def find_adapter(
             return adapter, args, kwargs
 
     raise ProgrammingError(f"Unsupported table: {uri}")
+
+
+def flatten(row: Row) -> Row:
+    """
+    Function that converts JSON to strings, to flatten rows.
+    """
+    return {
+        k: json.dumps(v) if isinstance(v, (list, dict)) else v for k, v in row.items()
+    }

@@ -17,7 +17,7 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
 from shillelagh.fields import Field, Order, String, StringDate
 from shillelagh.filters import Equal, Filter, IsNotNull, IsNull, Like, NotEqual, Range
-from shillelagh.lib import SimpleCostModel, build_sql
+from shillelagh.lib import SimpleCostModel, build_sql, flatten
 from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
@@ -178,4 +178,4 @@ class SocrataAPI(Adapter):
         for i, row in enumerate(payload):
             row["rowid"] = i
             _logger.debug(row)
-            yield row
+            yield flatten(row)

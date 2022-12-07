@@ -17,7 +17,7 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
 from shillelagh.fields import Field, Order
 from shillelagh.filters import Equal, Filter, IsNotNull, IsNull, NotEqual, Range
-from shillelagh.lib import SimpleCostModel, analyze, build_sql
+from shillelagh.lib import SimpleCostModel, analyze, build_sql, flatten
 from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
@@ -337,10 +337,7 @@ class S3SelectAPI(Adapter):
         for i, row in enumerate(rows):
             row["rowid"] = i
             _logger.debug(row)
-            yield {
-                k: json.dumps(v) if isinstance(v, (list, dict)) else v
-                for k, v in row.items()
-            }
+            yield flatten(row)
 
     def drop_table(self) -> None:
         self.s3_client.delete_object(Bucket=self.bucket, Key=self.key, **self.s3_kwargs)
