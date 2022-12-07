@@ -157,6 +157,7 @@ class Adapter:
             yield {
                 column_name: parsers[column_name](value)
                 for column_name, value in row.items()
+                if column_name in parsers
             }
 
     def insert_data(self, row: Row) -> int:

@@ -250,6 +250,7 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-
     column_map: Optional[Dict[str, str]] = None,
     limit: Optional[int] = None,
     offset: Optional[int] = None,
+    alias: Optional[str] = None,
 ) -> str:
     """
     Build a SQL query.
@@ -262,6 +263,8 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-
 
     if table:
         sql = f"{sql} FROM {table}"
+        if alias:
+            sql = f"{sql} AS {alias}"
 
     conditions = []
     for column_name, filter_ in bounds.items():
@@ -277,33 +280,17 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-
 
         field = columns[column_name]
         id_ = column_map[column_name] if column_map else column_name
-        if isinstance(filter_, Impossible):
-            raise ImpossibleFilterError()
-        if isinstance(filter_, Equal):
-            conditions.append(f"{id_} = {field.quote(filter_.value)}")
-        elif isinstance(filter_, NotEqual):
-            conditions.append(f"{id_} != {field.quote(filter_.value)}")
-        elif isinstance(filter_, Range):
-            if filter_.start is not None:
-                operator_ = ">=" if filter_.include_start else ">"
-                conditions.append(f"{id_} {operator_} {field.quote(filter_.start)}")
-            if filter_.end is not None:
-                operator_ = "<=" if filter_.include_end else "<"
-                conditions.append(f"{id_} {operator_} {field.quote(filter_.end)}")
-        elif isinstance(filter_, Like):
-            conditions.append(f"{id_} LIKE {field.quote(filter_.value)}")
-        elif isinstance(filter_, IsNull):
-            conditions.append(f"{id_} IS NULL")
-        elif isinstance(filter_, IsNotNull):
-            conditions.append(f"{id_} IS NOT NULL")
-        else:
-            raise ProgrammingError(f"Invalid filter: {filter_}")
+        if alias:
+            id_ = f"{alias}.{id_}"
+        conditions.extend(get_conditions(id_, field, filter_))
     if conditions:
         sql = f"{sql} WHERE {' AND '.join(conditions)}"
 
     column_order: List[str] = []
     for column_name, requested_order in order:
         id_ = column_map[column_name] if column_map else column_name
+        if alias:
+            id_ = f"{alias}.{id_}"
         desc = " DESC" if requested_order == Order.DESCENDING else ""
         column_order.append(f"{id_}{desc}")
     if column_order:
@@ -314,6 +301,36 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-
         sql = f"{sql} OFFSET {offset}"
 
     return sql
+
+
+def get_conditions(id_: str, field: Field, filter_: Filter) -> List[str]:
+    """
+    Build a SQL condition from a column ID and a filter.
+    """
+    if isinstance(filter_, Impossible):
+        raise ImpossibleFilterError()
+
+    if isinstance(filter_, Equal):
+        return [f"{id_} = {field.quote(filter_.value)}"]
+    if isinstance(filter_, NotEqual):
+        return [f"{id_} != {field.quote(filter_.value)}"]
+    if isinstance(filter_, Range):
+        conditions = []
+        if filter_.start is not None:
+            operator_ = ">=" if filter_.include_start else ">"
+            conditions.append(f"{id_} {operator_} {field.quote(filter_.start)}")
+        if filter_.end is not None:
+            operator_ = "<=" if filter_.include_end else "<"
+            conditions.append(f"{id_} {operator_} {field.quote(filter_.end)}")
+        return conditions
+    if isinstance(filter_, Like):
+        return [f"{id_} LIKE {field.quote(filter_.value)}"]
+    if isinstance(filter_, IsNull):
+        return [f"{id_} IS NULL"]
+    if isinstance(filter_, IsNotNull):
+        return [f"{id_} IS NOT NULL"]
+
+    raise ProgrammingError(f"Invalid filter: {filter_}")
 
 
 def combine_args_kwargs(

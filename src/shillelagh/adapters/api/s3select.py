@@ -217,8 +217,9 @@ class S3SelectAPI(Adapter):
         return parsed.scheme == "s3"
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[str, str, InputSerializationType]:
+    def parse_uri(uri: str) -> Tuple[str, str, InputSerializationType, str]:
         parsed = urllib.parse.urlparse(uri)
+        path = urllib.parse.unquote(parsed.fragment) or "$"
 
         bucket = parsed.netloc
         key = parsed.path.lstrip("/")
@@ -228,6 +229,7 @@ class S3SelectAPI(Adapter):
             bucket,
             key,
             input_serialization,
+            path,
         )
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -235,6 +237,7 @@ class S3SelectAPI(Adapter):
         bucket: str,
         key: str,
         input_serialization: InputSerializationType,
+        path: str = "$",
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
         s3_kwargs: Optional[Dict[str, Any]] = None,
@@ -244,6 +247,7 @@ class S3SelectAPI(Adapter):
         self.bucket = bucket
         self.key = key
         self.input_serialization = input_serialization
+        self.table_name = path.replace("$", "S3Object")
 
         if aws_access_key_id and aws_secret_access_key:
             self.s3_client = boto3.client(
@@ -261,7 +265,7 @@ class S3SelectAPI(Adapter):
         self._set_columns()
 
     def _set_columns(self) -> None:
-        rows = list(self._run_query("SELECT * FROM s3object LIMIT 1"))
+        rows = list(self._run_query(f"SELECT * FROM {self.table_name} LIMIT 1"))
         column_names = list(rows[0].keys()) if rows else []
         types = analyze(iter(rows))[2]
 
@@ -318,7 +322,14 @@ class S3SelectAPI(Adapter):
         **kwargs: Any,
     ) -> Iterator[Row]:
         try:
-            sql = build_sql(self.columns, bounds, order, table="s3object", limit=limit)
+            sql = build_sql(
+                self.columns,
+                bounds,
+                order,
+                table=self.table_name,
+                limit=limit,
+                alias="s",
+            )
         except ImpossibleFilterError:
             return
 
