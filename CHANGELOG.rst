@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Support JSON files in the S3 Select adapter (#314)
+
 Version 1.1.3 - 2022-11-17
 ==========================
 

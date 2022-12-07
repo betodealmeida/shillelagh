@@ -186,6 +186,28 @@ def test_build_sql() -> None:
     assert str(excinfo.value) == "Invalid filter: [1, 2, 3]"
 
 
+def test_build_sql_with_aliases() -> None:
+    """
+    Test ``build_sql`` with aliases tables and columns.
+    """
+    columns: Dict[str, Field[Any, Any]] = {"a": String(), "b": Float()}
+    order: List[Tuple[str, RequestedOrder]] = [
+        ("a", Order.ASCENDING),
+    ]
+    sql = build_sql(
+        columns,
+        {"a": Equal("b"), "b": NotEqual(1.0)},
+        order,
+        "some_table",
+        alias="t",
+    )
+    assert sql == (
+        "SELECT * FROM some_table AS t "
+        "WHERE t.a = 'b' AND t.b != 1.0 "
+        "ORDER BY t.a"
+    )
+
+
 def test_build_sql_with_map() -> None:
     """
     Test ``build_sql`` with a column map.
