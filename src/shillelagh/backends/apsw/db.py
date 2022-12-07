@@ -524,7 +524,7 @@ def connect(  # pylint: disable=too-many-arguments
     mapping = {
         name: adapter.__name__.lower() for name, adapter in enabled_adapters.items()
     }
-    adapter_kwargs = {mapping[k]: v for k, v in adapter_kwargs.items()}
+    adapter_kwargs = {mapping[k]: v for k, v in adapter_kwargs.items() if k in mapping}
 
     return Connection(
         path,
