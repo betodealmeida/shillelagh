@@ -117,7 +117,7 @@ class CSVFile(Adapter):
             return Maybe
 
         response = requests.head(uri)
-        return "text/csv" in response.headers["content-type"]
+        return "text/csv" in response.headers.get("content-type", "")
 
     @staticmethod
     def parse_uri(uri: str) -> Tuple[str]:
