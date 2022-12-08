@@ -7,7 +7,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
-from shillelagh.fields import Field, Float, Integer, Order, String
+from shillelagh.fields import Boolean, Field, Float, Integer, Order, String
 from shillelagh.filters import (
     Equal,
     Filter,
@@ -110,9 +110,30 @@ def test_analyze() -> None:
     """
     data: Iterator[Dict[str, Any]] = iter(
         [
-            {"int": 1, "float": 10.0, "str": "Alice"},
-            {"int": 3, "float": 9.5, "str": "Bob"},
-            {"int": 2, "float": 8.0, "str": "Charlie"},
+            {
+                "int": 1,
+                "float": 10.0,
+                "str": "Alice",
+                "bool": False,
+                "list": [1],
+                "weird": set(),
+            },
+            {
+                "int": 3,
+                "float": 9.5,
+                "str": "Bob",
+                "bool": True,
+                "list": [2],
+                "weird": {1},
+            },
+            {
+                "int": 2,
+                "float": 8.0,
+                "str": "Charlie",
+                "bool": False,
+                "list": [3],
+                "weird": {1, 2},
+            },
         ],
     )
     num_rows, order, types = analyze(data)
@@ -121,8 +142,18 @@ def test_analyze() -> None:
         "int": Order.NONE,
         "float": Order.DESCENDING,
         "str": Order.ASCENDING,
+        "bool": Order.NONE,
+        "list": Order.ASCENDING,
+        "weird": Order.ASCENDING,
     }
-    assert types == {"int": Integer, "float": Float, "str": String}
+    assert types == {
+        "int": Integer,
+        "float": Float,
+        "str": String,
+        "bool": Boolean,
+        "list": String,
+        "weird": String,
+    }
 
 
 def test_update_order() -> None:

@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, T
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
-from shillelagh.fields import Field, Float, Integer, Order, String
+from shillelagh.fields import Boolean, Field, Float, Integer, Order, String
 from shillelagh.filters import (
     Equal,
     Filter,
@@ -135,7 +135,7 @@ class RowIDManager:
         raise Exception(f"Row ID {row_id} not found")
 
 
-def analyze(
+def analyze(  # pylint: disable=too-many-branches
     data: Iterator[Row],
 ) -> Tuple[int, Dict[str, Order], Dict[str, Type[Field]]]:
     """
@@ -170,8 +170,16 @@ def analyze(
                 types[column_name] = Float
             elif types.get(column_name) == Integer:
                 continue
-            else:
+            # ``isintance(True, int) == True`` :(
+            elif isinstance(value, int) and not isinstance(value, bool):
                 types[column_name] = Integer
+            elif types.get(column_name) == Boolean:
+                continue
+            elif isinstance(value, bool):
+                types[column_name] = Boolean
+            else:
+                # something weird, use string
+                types[column_name] = String
 
         previous_row = row
 
