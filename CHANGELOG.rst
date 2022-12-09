@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Support booleans when inferring types from data (#318)
+
 Version 1.1.4 - 2022-12-06
 ==========================
 
