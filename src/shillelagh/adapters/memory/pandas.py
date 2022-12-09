@@ -81,6 +81,9 @@ def get_df_data(  # pylint: disable=too-many-arguments
     """
     Apply the ``get_data`` method on a Pandas dataframe.
     """
+    # ensure column names are strings
+    df = df.rename(columns={k: str(k) for k in df.columns})
+
     column_names = list(columns.keys())
     df = df[column_names]
 
@@ -124,7 +127,8 @@ def get_columns_from_df(df: pd.DataFrame) -> Dict[str, Field]:
     Construct adapter columns from a Pandas dataframe.
     """
     return {
-        column_name: get_field(dtype)
+        # ensure column name is string
+        str(column_name): get_field(dtype)
         for column_name, dtype in zip(df.columns, df.dtypes)
         if dtype.kind in type_map
     }

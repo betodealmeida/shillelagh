@@ -254,3 +254,29 @@ def test_get_cost(mocker: MockerFixture) -> None:
         )
         == 21931
     )
+
+
+def test_integer_column_names() -> None:
+    """
+    Test dataframes with column names that are integers.
+    """
+    mydf = pd.DataFrame(  # noqa: F841  pylint: disable=unused-variable
+        [
+            [10, 15.2, "Diamond_St"],
+            [11, 13.1, "Blacktail_Loop"],
+            [12, 13.3, "Platinum_St"],
+            [13, 12.1, "Kodiak_Trail"],
+        ],
+    )
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = 'SELECT "0", "1", "2" FROM mydf'
+    cursor.execute(sql)
+    assert cursor.fetchall() == [
+        (10, 15.2, "Diamond_St"),
+        (11, 13.1, "Blacktail_Loop"),
+        (12, 13.3, "Platinum_St"),
+        (13, 12.1, "Kodiak_Trail"),
+    ]
