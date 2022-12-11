@@ -292,14 +292,25 @@ def test_serialize() -> None:
     """
     Test ``serialize``.
     """
-    assert serialize(["O'Malley's"]) == "gASVEQAAAAAAAABdlIwKTydNYWxsZXknc5RhLg=="
+    assert serialize(["O'Malley's"]) == "2wEAAAD6Ck8nTWFsbGV5J3M="
+
+    def func():
+        return 42
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        serialize(func)
+    assert str(excinfo.value) == (
+        f"The argument {func} is not serializable because it has type {type(func)}. "
+        "Make sure only basic types (list, dicts, strings, numbers) are passed as "
+        "arguments to adapters."
+    )
 
 
 def test_deserialize() -> None:
     """
     Test ``deserialize``.
     """
-    assert deserialize("gASVEQAAAAAAAABdlIwKTydNYWxsZXknc5RhLg==") == ["O'Malley's"]
+    assert deserialize("2wEAAAD6Ck8nTWFsbGV5J3M=") == ["O'Malley's"]
 
 
 def test_combine_args_kwargs() -> None:

@@ -90,7 +90,7 @@ These arguments will be used by ``apsw`` to instantiate the adapter later, when 
     CREATE VIRTUAL TABLE "https://api.github.com/repos/apache/superset/pulls"
       USING githubapi('repos', 'apache', 'superset', 'pulls');
 
-Except that the parameters are not passed as strings, since they can be of any type. Instead, they are first pickled and then encoded as ``base64``. This is all happens behind the scenes, both for adapter developers as for users.
+Except that the parameters are not passed as strings, since they can be of any type. Instead, they are first marshalled and then encoded as ``base64``. This is all happens behind the scenes, both for adapter developers as for users.
 
 Once the table has been created, Shillelagh will re-execute the query. The whole flow looks like this:
 
