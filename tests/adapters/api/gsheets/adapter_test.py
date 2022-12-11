@@ -190,7 +190,7 @@ def test_credentials() -> None:
             mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
             mock.call(
-                """CREATE VIRTUAL TABLE "https://docs.google.com/spreadsheets/d/1" USING GSheetsAPI('gASVLAAAAAAAAACMKGh0dHBzOi8vZG9jcy5nb29nbGUuY29tL3NwcmVhZHNoZWV0cy9kLzGULg==', 'gAROLg==', 'gAROLg==', 'gASVEwAAAAAAAAB9lIwGc2VjcmV0lIwDWFhYlHMu', 'gASVFAAAAAAAAACMEHVzZXJAZXhhbXBsZS5jb22ULg==', 'gAROLg==', 'gASJLg==')""",
+                "CREATE VIRTUAL TABLE \"https://docs.google.com/spreadsheets/d/1\" USING GSheetsAPI('+ihodHRwczovL2RvY3MuZ29vZ2xlLmNvbS9zcHJlYWRzaGVldHMvZC8x', 'Tg==', 'Tg==', '+9oGc2VjcmV02gNYWFgw', '+hB1c2VyQGV4YW1wbGUuY29t', 'Tg==', 'Rg==')",
             ),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
         ],
@@ -223,7 +223,7 @@ def test_credentials() -> None:
             mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
             mock.call(
-                "CREATE VIRTUAL TABLE \"https://docs.google.com/spreadsheets/d/1\" USING GSheetsAPI('gASVLAAAAAAAAACMKGh0dHBzOi8vZG9jcy5nb29nbGUuY29tL3NwcmVhZHNoZWV0cy9kLzGULg==', 'gAROLg==', 'gAROLg==', 'gAROLg==', 'gAROLg==', 'gAROLg==', 'gASILg==')",
+                "CREATE VIRTUAL TABLE \"https://docs.google.com/spreadsheets/d/1\" USING GSheetsAPI('+ihodHRwczovL2RvY3MuZ29vZ2xlLmNvbS9zcHJlYWRzaGVldHMvZC8x', 'Tg==', 'Tg==', 'Tg==', 'Tg==', 'Tg==', 'VA==')",
             ),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
         ],

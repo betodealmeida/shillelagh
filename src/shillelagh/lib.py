@@ -3,9 +3,9 @@ import base64
 import inspect
 import itertools
 import json
+import marshal
 import math
 import operator
-import pickle
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
 
 from shillelagh.adapters.base import Adapter
@@ -238,7 +238,16 @@ def serialize(value: Any) -> str:
     This function is used with the SQLite backend, in order to serialize
     the arguments needed to instantiate an adapter via a virtual table.
     """
-    return escape(base64.b64encode(pickle.dumps(value)).decode())
+    try:
+        serialized = marshal.dumps(value)
+    except ValueError as ex:
+        raise ProgrammingError(
+            f"The argument {value} is not serializable because it has type "
+            f"{type(value)}. Make sure only basic types (list, dicts, strings, "
+            "numbers) are passed as arguments to adapters.",
+        ) from ex
+
+    return escape(base64.b64encode(serialized).decode())
 
 
 def deserialize(value: str) -> Any:
@@ -248,7 +257,7 @@ def deserialize(value: str) -> Any:
     This function is used by the SQLite backend, in order to deserialize
     the virtual table definition and instantiate an adapter.
     """
-    return pickle.loads(base64.b64decode(unescape(value).encode()))
+    return marshal.loads(base64.b64decode(unescape(value).encode()))
 
 
 def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-branches
