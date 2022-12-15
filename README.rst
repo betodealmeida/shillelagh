@@ -84,7 +84,7 @@ Queries like this are supported by `adapters <https://shillelagh.readthedocs.io/
 ============= ============ ========================================================================== =====================================================================================================
  Name          Type         URI pattern                                                                Example URI
 ============= ============ ========================================================================== =====================================================================================================
- CSV           File         ``/path/to/file.csv``                                                      ``/home/user/sample_data.csv``
+ CSV           File/API     ``/path/to/file.csv``; ``http(s)://*``                                     ``/home/user/sample_data.csv``
  Datasette     API          ``http(s)://*``                                                            ``https://global-power-plants.datasettes.com/global-power-plants/global-power-plants``
  Generic JSON  API          ``http(s)://*``                                                            ``https://api.stlouisfed.org/fred/series?series_id=GNPCA&api_key=XXX&file_type=json#$.seriess[*]``
  GitHub        API          ``https://api.github.com/repos/${owner}/{$repo}/pulls``                    ``https://api.github.com/repos/apache/superset/pulls``
