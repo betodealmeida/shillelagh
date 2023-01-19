@@ -94,6 +94,7 @@ def test_connect_adapter_kwargs(mocker: MockerFixture, registry: AdapterLoader) 
         {"fakeadapter": {"foo": "bar"}},
         "IMMEDIATE",
         None,
+        "main",
     )
 
 
@@ -138,6 +139,7 @@ def test_connect_safe(mocker: MockerFixture, registry: AdapterLoader) -> None:
         {},
         None,
         None,
+        "main",
     )
 
     connect(":memory:", ["two"])
@@ -147,6 +149,7 @@ def test_connect_safe(mocker: MockerFixture, registry: AdapterLoader) -> None:
         {},
         None,
         None,
+        "main",
     )
 
     # in safe mode we need to specify adapters
@@ -157,6 +160,7 @@ def test_connect_safe(mocker: MockerFixture, registry: AdapterLoader) -> None:
         {},
         None,
         None,
+        "main",
     )
 
     # in safe mode only safe adapters are returned
@@ -167,6 +171,7 @@ def test_connect_safe(mocker: MockerFixture, registry: AdapterLoader) -> None:
         {},
         None,
         None,
+        "main",
     )
 
     # prevent repeated names, in case anyone registers a malicious adapter
