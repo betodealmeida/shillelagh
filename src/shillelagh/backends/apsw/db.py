@@ -64,11 +64,7 @@ sqlite_version_info = tuple(
 )
 
 NO_SUCH_TABLE = "SQLError: no such table: "
-SCHEMA = "main"
-DROP_TABLE = re.compile(
-    rf'^\s*DROP\s+TABLE\s+(IF\s+EXISTS\s+)?({SCHEMA}\.)?(?P<uri>(.*?)|(".*?"))\s*;?\s*$',
-    re.IGNORECASE,
-)
+DEFAULT_SCHEMA = "main"
 
 CURSOR_METHOD = TypeVar("CURSOR_METHOD", bound=Callable[..., Any])
 
@@ -131,12 +127,13 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
     Connection cursor.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         cursor: "apsw.Cursor",
         adapters: List[Type[Adapter]],
         adapter_kwargs: Dict[str, Dict[str, Any]],
         isolation_level: Optional[str] = None,
+        schema: str = DEFAULT_SCHEMA,
     ):
         self._cursor = cursor
         self._adapters = adapters
@@ -144,6 +141,8 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
         self.in_transaction = False
         self.isolation_level = isolation_level
+
+        self.schema = schema
 
         # This read/write attribute specifies the number of rows to fetch at a
         # time with .fetchmany(). It defaults to 1 meaning to fetch a single
@@ -234,9 +233,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
                 uri = message[len(NO_SUCH_TABLE) :]
                 self._create_table(uri)
 
-        drop_table_match = DROP_TABLE.match(operation)
-        if drop_table_match:
-            uri = drop_table_match.groupdict()["uri"].strip('"')
+        if uri := self._drop_table_uri(operation):
             adapter, args, kwargs = find_adapter(
                 uri,
                 self._adapter_kwargs,
@@ -246,6 +243,20 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
             instance.drop_table()
 
         return self
+
+    def _drop_table_uri(self, operation: str) -> Optional[str]:
+        """
+        Build a ``DROP TABLE`` regexp.
+        """
+        regexp = re.compile(
+            rf"^\s*DROP\s+TABLE\s+(IF\s+EXISTS\s+)?"
+            rf'({self.schema}\.)?(?P<uri>(.*?)|(".*?"))\s*;?\s*$',
+            re.IGNORECASE,
+        )
+        if match := regexp.match(operation):
+            return match.groupdict()["uri"].strip('"')
+
+        return None
 
     def _convert(self, cursor: "apsw.Cursor") -> Iterator[Tuple[Any, ...]]:
         """
@@ -270,7 +281,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
         This method is called the first time a virtual table is accessed.
         """
-        prefix = f"{SCHEMA}."
+        prefix = self.schema + "."
         if uri.startswith(prefix):
             uri = uri[len(prefix) :]
 
@@ -421,11 +432,13 @@ class Connection:
         adapter_kwargs: Dict[str, Dict[str, Any]],
         isolation_level: Optional[str] = None,
         apsw_connection_kwargs: Optional[Dict[str, Any]] = None,
+        schema: str = DEFAULT_SCHEMA,
     ):
         # create underlying APSW connection
         apsw_connection_kwargs = apsw_connection_kwargs or {}
         self._connection = apsw.Connection(path, **apsw_connection_kwargs)
         self.isolation_level = isolation_level
+        self.schema = schema
 
         # register adapters
         for adapter in adapters:
@@ -481,6 +494,7 @@ class Connection:
             self._adapters,
             self._adapter_kwargs,
             self.isolation_level,
+            self.schema,
         )
         self.cursors.append(cursor)
 
@@ -513,6 +527,7 @@ def connect(  # pylint: disable=too-many-arguments
     safe: bool = False,
     isolation_level: Optional[str] = None,
     apsw_connection_kwargs: Optional[Dict[str, Any]] = None,
+    schema: str = DEFAULT_SCHEMA,
 ) -> Connection:
     """
     Constructor for creating a connection to the database.
@@ -532,4 +547,5 @@ def connect(  # pylint: disable=too-many-arguments
         adapter_kwargs,
         isolation_level,
         apsw_connection_kwargs,
+        schema,
     )
