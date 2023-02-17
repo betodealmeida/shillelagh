@@ -249,12 +249,17 @@ class S3SelectAPI(Adapter):
         self.input_serialization = input_serialization
         self.table_name = path.replace("$", "S3Object")
 
+        # if credentials were passed explicitly, use them
         if aws_access_key_id and aws_secret_access_key:
             self.s3_client = boto3.client(
                 "s3",
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key,
             )
+        # if no credentials were passed, check if they're available
+        elif boto3.session.Session().get_credentials():
+            self.s3_client = boto3.client("s3")
+        # if no credentials were found, use an anonymous client to access public buckets
         else:
             self.s3_client = boto3.client(
                 "s3",
