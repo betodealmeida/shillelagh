@@ -10,7 +10,7 @@ import requests
 import sqlalchemy
 from pytest_mock import MockerFixture
 from requests_mock.mocker import Mocker
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, inspect
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine.url import make_url
 
@@ -204,11 +204,13 @@ def test_get_table_names(mocker: MockerFixture, requests_mock: Mocker) -> None:
     engine = create_engine("gsheets://", list_all_sheets=True)
 
     get_credentials.return_value = None
-    tables = engine.table_names()
+    inspector = inspect(engine)
+    tables = inspector.get_table_names()
     assert tables == []
 
     get_credentials.return_value = "SECRET"
-    tables = engine.table_names()
+    inspector = inspect(engine)
+    tables = inspector.get_table_names()
     assert tables == [
         "https://docs.google.com/spreadsheets/d/1/edit#gid=0",
         "https://docs.google.com/spreadsheets/d/1/edit#gid=1",
@@ -284,8 +286,9 @@ def test_drive_api_disabled(mocker: MockerFixture, requests_mock: Mocker) -> Non
     engine = create_engine("gsheets://", list_all_sheets=True)
 
     get_credentials.return_value = "SECRET"
+    inspector = inspect(engine)
     with pytest.raises(ProgrammingError) as excinfo:
-        engine.table_names()
+        inspector.get_table_names()
 
     assert str(excinfo.value) == (
         "Access Not Configured. Drive API has not been used in project 1034909279888 "
@@ -364,11 +367,13 @@ def test_types_in_sqlalchemy(adapter_kwargs: Dict[str, Any]) -> None:
     Shillelagh they are returned as Python objects.
     """
     engine = create_engine("gsheets://", **adapter_kwargs["gsheetsapi"])
+    metadata = MetaData()
+    metadata.reflect(engine)
     table = Table(
         "https://docs.google.com/spreadsheets/d/"
         "1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit#gid=1648320094",
-        MetaData(bind=engine),
-        autoload=True,
+        metadata,
+        autoload_with=engine,
     )
 
     assert [(column.name, column.type.__class__) for column in table.c] == [

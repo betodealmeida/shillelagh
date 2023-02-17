@@ -139,7 +139,11 @@ class APSWGSheetsDialect(APSWDialect):
         return status != "SERVICE_OUTAGE"
 
     def get_table_names(  # pylint: disable=unused-argument
-        self, connection: _ConnectionFairy, schema: str = None, **kwargs: Any
+        self,
+        connection: _ConnectionFairy,
+        schema: str = None,
+        sqlite_include_internal: bool = False,
+        **kwargs: Any,
     ) -> List[str]:
         """
         Return a list of table names.
