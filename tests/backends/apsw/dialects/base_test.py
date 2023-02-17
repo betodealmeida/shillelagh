@@ -4,7 +4,7 @@ Tests for shillelagh.backends.apsw.dialects.base.
 from unittest import mock
 
 import pytest
-from sqlalchemy import MetaData, Table, create_engine, func, select
+from sqlalchemy import MetaData, Table, create_engine, func, inspect, select
 
 from shillelagh.adapters.registry import AdapterLoader
 from shillelagh.backends.apsw.dialects.base import APSWDialect
@@ -20,13 +20,15 @@ def test_create_engine(registry: AdapterLoader) -> None:
     registry.add("dummy", FakeAdapter)
 
     engine = create_engine("shillelagh://")
+    metadata = MetaData()
+    metadata.reflect(engine)
 
-    table = Table("dummy://", MetaData(bind=engine), autoload=True)
+    table = Table("dummy://", metadata, autoload_with=engine)
     query = select(
-        [func.sum(table.columns.pets)],  # pylint: disable=no-member
-        from_obj=table,
+        func.sum(table.columns.pets),  # pylint: disable=no-member, not-callable
     )
-    assert query.scalar() == 3
+    connection = engine.connect()
+    assert connection.execute(query).scalar() == 3
 
 
 def test_create_engine_no_adapters(registry: AdapterLoader) -> None:
@@ -35,9 +37,11 @@ def test_create_engine_no_adapters(registry: AdapterLoader) -> None:
     """
     registry.clear()
     engine = create_engine("shillelagh://")
+    metadata = MetaData()
+    metadata.reflect(engine)
 
     with pytest.raises(ProgrammingError) as excinfo:
-        Table("dummy://", MetaData(bind=engine), autoload=True)
+        Table("dummy://", metadata, autoload_with=engine)
     assert str(excinfo.value) == "Unsupported table: dummy://"
 
 
@@ -57,6 +61,7 @@ def test_has_table(registry: AdapterLoader) -> None:
     registry.add("dummy", FakeAdapter)
 
     engine = create_engine("shillelagh://")
-    assert engine.has_table("dummy://a")
-    assert engine.has_table("dummy://b")
-    assert not engine.has_table("funny://b")
+    inspector = inspect(engine)
+    assert inspector.has_table("dummy://a")
+    assert inspector.has_table("dummy://b")
+    assert not inspector.has_table("funny://b")

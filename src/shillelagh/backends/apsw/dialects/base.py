@@ -7,7 +7,6 @@ from sqlalchemy.dialects.sqlite.base import SQLiteDialect
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
 from sqlalchemy.sql.type_api import TypeEngine
-from sqlalchemy.sql.visitors import VisitableType
 from typing_extensions import TypedDict
 
 from shillelagh.adapters.base import Adapter
@@ -23,7 +22,7 @@ class SQLAlchemyColumn(TypedDict):
     """
 
     name: str
-    type: VisitableType
+    type: TypeEngine
     nullable: bool
     default: Optional[str]
     autoincrement: str
@@ -91,11 +90,13 @@ class APSWDialect(SQLiteDialect):
         """
         return True
 
-    def has_table(
+    def has_table(  # pylint: disable=unused-argument
         self,
         connection: _ConnectionFairy,
         table_name: str,
         schema: Optional[str] = None,
+        info_cache: Optional[Dict[Any, Any]] = None,
+        **kwargs: Any,
     ) -> bool:
         """
         Return true if a given table exists.
