@@ -8,6 +8,8 @@ from unittest.mock import MagicMock
 from urllib.parse import urlparse
 
 import pytest
+from botocore import UNSIGNED
+from botocore.config import Config
 from pytest_mock import MockerFixture
 
 from shillelagh.adapters.api.s3select import (
@@ -149,9 +151,9 @@ def test_s3select(boto3: MagicMock) -> None:
     assert data == [("Sam", "(949) 555-1234", "Irvine", "Solutions Architect")]
 
 
-def test_s3select_with_auth(boto3: MagicMock) -> None:
+def test_s3select_with_kwargs_auth(boto3: MagicMock) -> None:
     """
-    Test the adapter.
+    Test the adapter when credentials are passed explicitly.
     """
     connection = connect(
         ":memory:",
@@ -172,6 +174,34 @@ def test_s3select_with_auth(boto3: MagicMock) -> None:
         aws_access_key_id="XXX",
         aws_secret_access_key="YYY",
     )
+
+
+def test_s3_select_environment_auth(boto3: MagicMock) -> None:
+    """
+    Test the adapter when credentials are found in the environment or config files.
+    """
+    boto3.session.Session().get_credentials.return_value = "CREDENTIALS"
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = 'SELECT * FROM "s3://bucket/file.csv"'
+    data = list(cursor.execute(sql))
+    assert data == [("Sam", "(949) 555-1234", "Irvine", "Solutions Architect")]
+    assert boto3.client.called_with("s3")
+
+
+def test_s3_select_no_auth(boto3: MagicMock) -> None:
+    """
+    Test the adapter when no credential are passed or found.
+    """
+    boto3.session.Session().get_credentials.return_value = None
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = 'SELECT * FROM "s3://bucket/file.csv"'
+    data = list(cursor.execute(sql))
+    assert data == [("Sam", "(949) 555-1234", "Irvine", "Solutions Architect")]
+    assert boto3.client.called_with("s3", config=Config(signature_version=UNSIGNED))
 
 
 def test_drop_table(boto3: MagicMock) -> None:
