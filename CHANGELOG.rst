@@ -5,6 +5,9 @@ Changelog
 Next
 ====
 
+Version 1.2.0 - 2023-02-17
+==========================
+
 - Use ``marshal`` instead of ``pickle`` for adapter argument serde (#321)
 - Support SQLAlchemy 2.0 (and 1.4) (#331)
 - ``s3_select`` can now use credentials from the environment or config files
