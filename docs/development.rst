@@ -667,6 +667,8 @@ Second, we want to implement ``has_table`` and ``get_table_names``. The first is
             connection: _ConnectionFairy,
             table_name: str,
             schema: Optional[str] = None,
+            info_cache: Optional[Dict[Any, Any]] = None,
+            **kwargs: Any,
         ) -> bool:
             """
             Return true if a given table exists.
@@ -689,6 +691,7 @@ Second, we want to implement ``has_table`` and ``get_table_names``. The first is
             self,
             connection: _ConnectionFairy,
             schema: str = None,
+            sqlite_include_internal: bool = False,
             **kwargs: Any,
         ) -> List[str]:
             """
