@@ -31,9 +31,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools
         pip install -r requirements/test.txt
-        pip install https://github.com/rogerbinns/apsw/releases/download/${VERSION}-${RELEASE}/apsw-${VERSION}-${RELEASE}.zip \
-          --global-option=fetch --global-option=--version --global-option=${VERSION} --global-option=--all \
-          --global-option=build --global-option=--enable-all-extensions
     - name: Test with pytest
       run: |
         pre-commit run --all-files
