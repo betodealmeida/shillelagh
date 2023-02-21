@@ -11,7 +11,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from shillelagh.adapters.registry import AdapterLoader
-from shillelagh.backends.apsw.db import connect, convert_binding
+from shillelagh.backends.apsw.db import Connection, connect, convert_binding
 from shillelagh.exceptions import InterfaceError, NotSupportedError, ProgrammingError
 from shillelagh.fields import Float, String, StringInteger
 
@@ -477,3 +477,30 @@ def test_drop_table(mocker: MockerFixture, registry: AdapterLoader) -> None:
 
     cursor.execute('DROP TABLE "dummy://"')
     drop_table.assert_called()  # type: ignore
+
+
+def test_best_index(mocker: MockerFixture) -> None:
+    """
+    Test that ``use_bestindex_object`` is only passed for apsw >= 3.41.0.0
+    """
+    # pylint: disable=redefined-outer-name, invalid-name
+    apsw = mocker.patch("shillelagh.backends.apsw.db.apsw")
+    VTModule = mocker.patch("shillelagh.backends.apsw.db.VTModule")
+    adapter = mocker.MagicMock()
+    adapter.__name__ = "some_adapter"
+    adapter.supports_bestindex = True
+
+    apsw.apswversion.return_value = "3.41.0.0"
+    Connection(":memory:", [adapter], {})
+    apsw.Connection().createmodule.assert_called_with(
+        "some_adapter",
+        VTModule(adapter),
+        use_bestindex_object=True,
+    )
+
+    apsw.apswversion.return_value = "3.40.1.0"
+    Connection(":memory:", [adapter], {})
+    apsw.Connection().createmodule.assert_called_with(
+        "some_adapter",
+        VTModule(adapter),
+    )

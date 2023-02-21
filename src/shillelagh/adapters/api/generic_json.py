@@ -6,7 +6,7 @@ An adapter for fetching JSON data.
 
 import logging
 import urllib.parse
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
 import requests_cache
 from jsonpath import JSONPath
@@ -49,6 +49,7 @@ class GenericJSONAPI(Adapter):
 
     supports_limit = False
     supports_offset = False
+    supports_bestindex = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
@@ -108,12 +109,13 @@ class GenericJSONAPI(Adapter):
 
     get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
 
-    def get_data(  # pylint: disable=unused-argument
+    def get_data(  # pylint: disable=unused-argument, too-many-arguments
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
+        requested_columns: Optional[Set[str]] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
         response = self._session.get(self.uri)
@@ -123,6 +125,11 @@ class GenericJSONAPI(Adapter):
 
         parser = JSONPath(self.path)
         for i, row in enumerate(parser.parse(payload)):
+            row = {
+                k: v
+                for k, v in row.items()
+                if requested_columns is None or k in requested_columns
+            }
             row["rowid"] = i
             _logger.debug(row)
             yield flatten(row)

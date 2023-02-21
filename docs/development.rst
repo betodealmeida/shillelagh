@@ -296,6 +296,29 @@ If an adapter declares support for ``LIMIT`` and ``OFFSET`` a corresponding para
 
 Now the adapter can handle ``limit`` and ``offset``, reducing the amount of data that is returned. Note that even if the adapter declares supporting ``LIMIT``, SQLite will still enforce the limit, ie, if for any reason the adapter returns more rows than the limit SQLite will fix the problem. The same is not true for the offset.
 
+Returning only the requested columns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default adapters should return all the columns available, since they have no information on which columns are actually needed. Starting with apsw `apsw 3.41.0.0 <https://github.com/rogerbinns/apsw/releases/tag/3.41.0.0>`_ adapters can optionally receive only the requested columns in their ``get_rows`` and ``get_data`` methods. The adapter must declare support for it by setting the attribute ``supports_bestindex`` to true:
+
+.. code-block:: python
+
+    class WeatherAPI(Adapter):
+
+        supports_bestindex = True
+
+Then the ``requested_columns: Optional[Set[str]]`` argument will be passed to ``get_rows`` and ``get_data``:
+
+.. code-block:: python
+
+    def get_rows(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+        requested_columns: Optional[Set[str]] = None,
+        **kwargs: Any,
+    ) -> Iterator[Dict[str, Any]]:
+
 A read-write adapter
 ====================
 

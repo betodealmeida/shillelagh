@@ -89,6 +89,7 @@ packaging==21.3
     # via
     #   build
     #   pytest
+    #   shillelagh
 pandas==1.4.3
     # via shillelagh
 pep517==0.12.0
