@@ -7,7 +7,7 @@ Thanks for wanting to contribute to the project! Here's a quick rundown of how t
 Install ``pyenv``
 =================
 
-You don't *need* ``pyenv``, but development will be easier with it. Follow `these instructions <https://github.com/pyenv/pyenv#installation>`_ to install it, and then create a virtual environment. Shillelagh is tested with Python 3.8-3.10, so make sure to install one of those versions.
+You don't *need* ``pyenv``, but development will be easier with it. Follow `these instructions <https://github.com/pyenv/pyenv#installation>`_ to install it, and then create a virtual environment. Shillelagh is tested with Python 3.8-3.11, so make sure to install one of those versions.
 
 .. code-block:: bash
 
@@ -24,19 +24,6 @@ You want to install the package in developer mode (``-e``) with all the dependen
 .. code-block:: bash
 
     $ pip install -e ".[testing]"
-
-Install the latest ``apsw``
-===========================
-
-``apsw`` (another Python SQLite wrapper) is the Python library that gives Shillelagh its superpowers. The last command will install a version of ``apsw`` that is not official, since the package is not officially published to PyPI. You should compile and install the latest version from source code by running:
-
-.. code-block:: bash
-
-    $ export VERSION=3.38.1
-    $ export RELEASE=r1
-    $ pip install https://github.com/rogerbinns/apsw/releases/download/${VERSION}-${RELEASE}/apsw-${VERSION}-${RELEASE}.zip \
-    > --global-option=fetch --global-option=--version --global-option=${VERSION} --global-option=--all \
-    > --global-option=build --global-option=--enable-all-extensions
 
 Install pre-commit hooks
 ========================
