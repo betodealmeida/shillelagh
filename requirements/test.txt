@@ -11,7 +11,7 @@ appdirs==1.4.4
     # via shillelagh
 apsw==3.38.5.post1
     # via shillelagh
-astroid==2.11.7
+astroid==2.14.2
     # via pylint
 attrs==21.4.0
     # via
@@ -120,7 +120,7 @@ pyfakefs==4.6.3
     # via shillelagh
 pygments==2.12.0
     # via shillelagh
-pylint==2.14.5
+pylint==2.16.2
     # via shillelagh
 pyparsing==3.0.9
     # via packaging
