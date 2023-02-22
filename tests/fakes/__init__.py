@@ -1,6 +1,9 @@
 """
 Fake objects to simplify testing.
 """
+
+# pylint: disable=no-member
+
 import json
 import os
 import urllib.parse
