@@ -4,7 +4,6 @@ Test the generic JSON adapter.
 
 import pytest
 from pytest_mock import MockerFixture
-from requests import Session
 from requests_mock.mocker import Mocker
 from yarl import URL
 
@@ -20,10 +19,7 @@ def test_generic_json(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test a simple query.
     """
-    mocker.patch(
-        "shillelagh.adapters.api.generic_json.requests_cache.CachedSession",
-        return_value=Session(),
-    )
+    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", 0)
 
     # for datassette and other probing adapters
     requests_mock.head(
@@ -72,8 +68,8 @@ def test_generic_json(mocker: MockerFixture, requests_mock: Mocker) -> None:
     cursor = connection.cursor()
 
     sql = f'SELECT * FROM "{url}"'
-    data = list(cursor.execute(sql))
-    assert data == [
+    rows = list(cursor.execute(sql))
+    assert rows == [
         (
             "GNPCA",
             "2022-11-01",
@@ -102,8 +98,8 @@ def test_generic_json(mocker: MockerFixture, requests_mock: Mocker) -> None:
         json=[{"a": 1, "b": [10, 20]}, {"a": 2, "b": [11]}],
     )
     sql = 'SELECT a, b FROM "https://example.org/data.json"'
-    data = list(cursor.execute(sql))
-    assert data == [(1, "[10, 20]"), (2, "[11]")]
+    rows = list(cursor.execute(sql))
+    assert rows == [(1, "[10, 20]"), (2, "[11]")]
 
     requests_mock.get(
         "https://example.org/data.json",
@@ -122,10 +118,7 @@ def test_generic_json_complex_type(
     """
     Test a query where columns are complex.
     """
-    mocker.patch(
-        "shillelagh.adapters.api.generic_json.requests_cache.CachedSession",
-        return_value=Session(),
-    )
+    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", 0)
 
     # for datassette and other probing adapters
     requests_mock.head("https://exmaple.org/-/versions.json", status_code=404)
@@ -146,8 +139,8 @@ def test_generic_json_complex_type(
     cursor = connection.cursor()
 
     sql = f'SELECT * FROM "{url}"'
-    data = list(cursor.execute(sql))
-    assert data == [("bar", '["one", "two"]')]
+    rows = list(cursor.execute(sql))
+    assert rows == [("bar", '["one", "two"]')]
 
 
 def test_supports(requests_mock: Mocker) -> None:
@@ -167,3 +160,48 @@ def test_supports(requests_mock: Mocker) -> None:
     assert GenericJSONAPI.supports("https://example.org/data.html") is Maybe
     assert GenericJSONAPI.supports("https://example.org/data.html", fast=False) is False
     assert GenericJSONAPI.supports("https://example.org/data.json", fast=False) is True
+
+
+def test_request_headers(mocker: MockerFixture, requests_mock: Mocker) -> None:
+    """
+    Test passing requests headers.
+    """
+    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", 0)
+    supports = requests_mock.head(
+        "https://example.org/data.json",
+        headers={"content-type": "application/json"},
+    )
+
+    # for datassette and other probing adapters
+    requests_mock.head("https://exmaple.org/-/versions.json", status_code=404)
+
+    url = URL("https://example.org/")
+    data = requests_mock.head(str(url), headers={"content-type": "application/json"})
+    requests_mock.get(
+        str(url),
+        json=[
+            {
+                "foo": "bar",
+                "baz": ["one", "two"],
+            },
+        ],
+    )
+
+    # test the supports method
+    GenericJSONAPI.supports(
+        "https://example.org/data.json",
+        fast=False,
+        request_headers={"foo": "bar"},
+    )
+    assert supports.last_request.headers["foo"] == "bar"
+
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={"genericjsonapi": {"request_headers": {"foo": "bar"}}},
+    )
+    cursor = connection.cursor()
+
+    sql = f'SELECT * FROM "{url}"'
+    rows = list(cursor.execute(sql))
+    assert rows == [("bar", '["one", "two"]')]
+    assert data.last_request.headers["foo"] == "bar"
