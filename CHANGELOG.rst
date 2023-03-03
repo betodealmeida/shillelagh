@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Allow specifying custom request headers when using the generic JSON adapter (#337)
+
 Version 1.2.0 - 2023-02-17
 ==========================
 
