@@ -51,7 +51,7 @@ For domain wide access you need to create a service account. Make sure that the 
     connection = connect(
         ":memory:",
         adapter_kwargs={
-            "gsheetaspi": {
+            "gsheetsapi": {
                 # "service_account_file": "/path/to/credentials.json",
                 "service_account_info": {
                     "type": "service_account",
