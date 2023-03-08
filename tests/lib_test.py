@@ -26,13 +26,15 @@ from shillelagh.lib import (
     build_sql,
     combine_args_kwargs,
     deserialize,
-    escape,
+    escape_identifier,
+    escape_string,
     filter_data,
     find_adapter,
     is_not_null,
     is_null,
     serialize,
-    unescape,
+    unescape_identifier,
+    unescape_string,
     update_order,
 )
 from shillelagh.typing import RequestedOrder
@@ -272,20 +274,40 @@ def test_build_sql_impossible() -> None:
         build_sql(columns, {"a": Impossible()}, [])
 
 
-def test_escape() -> None:
+def test_escape_string() -> None:
     """
-    Test ``escape``.
+    Test ``escape_string``.
     """
-    assert escape("1") == "1"
-    assert escape("O'Malley's") == "O''Malley''s"
+    assert escape_string("1") == "1"
+    assert escape_string("O'Malley's") == "O''Malley''s"
 
 
-def test_unescape() -> None:
+def test_unescape_string() -> None:
     """
-    Test ``unescape``.
+    Test ``unescape_string``.
     """
-    assert unescape("1") == "1"
-    assert unescape("O''Malley''s") == "O'Malley's"
+    assert unescape_string("1") == "1"
+    assert unescape_string("O''Malley''s") == "O'Malley's"
+
+
+def test_escape_identifier() -> None:
+    """
+    Test ``escape_identifier``.
+    """
+    assert escape_identifier("1") == "1"
+    assert escape_identifier("O'Malley's") == "O'Malley's"
+    assert escape_identifier(
+        'a dove called: "Who? who? who?"') == 'a dove called: ""Who? who? who?""'
+
+
+def test_unescape_identifier() -> None:
+    """
+    Test ``unescape_identifier``.
+    """
+    assert unescape_identifier("1") == "1"
+    assert unescape_identifier("O''Malley''s") == "O''Malley''s"
+    assert unescape_identifier(
+        'a dove called: ""Who? who? who?""') == 'a dove called: "Who? who? who?"'
 
 
 def test_serialize() -> None:
@@ -451,3 +473,4 @@ def test_apply_limit_and_offset() -> None:
 
     rows = apply_limit_and_offset(iter(range(10)), offset=2)
     assert list(rows) == [2, 3, 4, 5, 6, 7, 8, 9]
+

@@ -39,7 +39,7 @@ from shillelagh.exceptions import (  # nopycln: import; pylint: disable=redefine
     Warning,
 )
 from shillelagh.fields import Blob, Field
-from shillelagh.lib import combine_args_kwargs, escape, find_adapter, serialize
+from shillelagh.lib import combine_args_kwargs, escape_identifier, find_adapter, serialize
 from shillelagh.types import (
     BINARY,
     DATETIME,
@@ -290,7 +290,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
             f"'{serialize(arg)}'"
             for arg in combine_args_kwargs(adapter, *args, **kwargs)
         )
-        table_name = escape(uri)
+        table_name = escape_identifier(uri)
         self._cursor.execute(
             f'CREATE VIRTUAL TABLE "{table_name}" USING {adapter.__name__}({formatted_args})',
         )

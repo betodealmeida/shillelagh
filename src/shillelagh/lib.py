@@ -221,14 +221,24 @@ def update_order(
     return current_order
 
 
-def escape(value: str) -> str:
+def escape_string(value: str) -> str:
     """Escape single quotes."""
     return value.replace("'", "''")
 
 
-def unescape(value: str) -> str:
+def unescape_string(value: str) -> str:
     """Unescape single quotes."""
     return value.replace("''", "'")
+
+
+def escape_identifier(value: str) -> str:
+    """Escape double quotes."""
+    return value.replace('"', '""')
+
+
+def unescape_identifier(value: str) -> str:
+    """Unescape double quotes."""
+    return value.replace('""', '"')
 
 
 def serialize(value: Any) -> str:
@@ -247,7 +257,7 @@ def serialize(value: Any) -> str:
             "numbers) are passed as arguments to adapters.",
         ) from ex
 
-    return escape(base64.b64encode(serialized).decode())
+    return escape_string(base64.b64encode(serialized).decode())
 
 
 def deserialize(value: str) -> Any:
@@ -257,7 +267,7 @@ def deserialize(value: str) -> Any:
     This function is used by the SQLite backend, in order to deserialize
     the virtual table definition and instantiate an adapter.
     """
-    return marshal.loads(base64.b64decode(unescape(value).encode()))
+    return marshal.loads(base64.b64decode(unescape_string(value).encode()))
 
 
 def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-branches
