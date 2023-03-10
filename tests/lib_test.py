@@ -296,8 +296,10 @@ def test_escape_identifier() -> None:
     """
     assert escape_identifier("1") == "1"
     assert escape_identifier("O'Malley's") == "O'Malley's"
-    assert escape_identifier(
-        'a dove called: "Who? who? who?"') == 'a dove called: ""Who? who? who?""'
+    assert (
+        escape_identifier('a dove called: "Who? who? who?"')
+        == 'a dove called: ""Who? who? who?""'
+    )
 
 
 def test_unescape_identifier() -> None:
@@ -306,8 +308,10 @@ def test_unescape_identifier() -> None:
     """
     assert unescape_identifier("1") == "1"
     assert unescape_identifier("O''Malley''s") == "O''Malley''s"
-    assert unescape_identifier(
-        'a dove called: ""Who? who? who?""') == 'a dove called: "Who? who? who?"'
+    assert (
+        unescape_identifier('a dove called: ""Who? who? who?""')
+        == 'a dove called: "Who? who? who?"'
+    )
 
 
 def test_serialize() -> None:
@@ -473,4 +477,3 @@ def test_apply_limit_and_offset() -> None:
 
     rows = apply_limit_and_offset(iter(range(10)), offset=2)
     assert list(rows) == [2, 3, 4, 5, 6, 7, 8, 9]
-

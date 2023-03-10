@@ -39,7 +39,12 @@ from shillelagh.exceptions import (  # nopycln: import; pylint: disable=redefine
     Warning,
 )
 from shillelagh.fields import Blob, Field
-from shillelagh.lib import combine_args_kwargs, escape_identifier, find_adapter, serialize
+from shillelagh.lib import (
+    combine_args_kwargs,
+    escape_identifier,
+    find_adapter,
+    serialize,
+)
 from shillelagh.types import (
     BINARY,
     DATETIME,
