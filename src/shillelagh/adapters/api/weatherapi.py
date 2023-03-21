@@ -37,7 +37,7 @@ def combine_time_filters(bounds: Dict[str, Filter]) -> Range:
         raise ImpossibleFilterError()
 
     if not isinstance(time_range, Range) or not isinstance(time_epoch_range, Range):
-        raise Exception("Invalid filter")
+        raise Exception("Invalid filter")  # pylint: disable=broad-exception-raised
 
     # convert time_epoch range to datetime so we can combine it
     # with the time range

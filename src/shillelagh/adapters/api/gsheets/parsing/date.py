@@ -1,9 +1,11 @@
-# pylint: disable=invalid-name, fixme
 """
 Parse and format Google Sheet date/time patterns.
 
 https://developers.google.com/sheets/api/guides/formats?hl=en#date_and_time_format_patterns
 """
+
+# pylint: disable=invalid-name, fixme, broad-exception-raised
+
 import calendar
 import re
 from collections import defaultdict

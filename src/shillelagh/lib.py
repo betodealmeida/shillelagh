@@ -75,6 +75,7 @@ class RowIDManager:
 
     def __init__(self, ranges: List[range]):
         if not ranges:
+            # pylint: disable=broad-exception-raised
             raise Exception("Argument ``ranges`` cannot be empty")
 
         self.ranges = ranges
@@ -94,6 +95,7 @@ class RowIDManager:
         """
         for range_ in self.ranges:
             if range_.start <= row_id < range_.stop:
+                # pylint: disable=broad-exception-raised
                 raise Exception(f"Row ID {row_id} already present")
 
     def insert(self, row_id: Optional[int] = None) -> int:
@@ -132,6 +134,7 @@ class RowIDManager:
 
                 return
 
+        # pylint: disable=broad-exception-raised
         raise Exception(f"Row ID {row_id} not found")
 
 

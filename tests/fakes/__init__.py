@@ -1,6 +1,7 @@
 """
 Fake objects to simplify testing.
 """
+
 import json
 import os
 import urllib.parse

@@ -120,6 +120,7 @@ def get_endpoints_from_operation(
     if operator == Operator.LT:
         return Endpoint(None, True, Side.LEFT), Endpoint(value, False, Side.RIGHT)
 
+    # pylint: disable=broad-exception-raised
     raise Exception(f"Invalid operator: {operator}")
 
 

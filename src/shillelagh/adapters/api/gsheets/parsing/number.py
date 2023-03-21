@@ -3,7 +3,7 @@ Parse and format Google Sheet number formats.
 
 https://developers.google.com/sheets/api/guides/formats#number_format_tokens
 """
-# pylint: disable=c-extension-no-member
+# pylint: disable=c-extension-no-member, broad-exception-raised
 import math
 import operator
 import re

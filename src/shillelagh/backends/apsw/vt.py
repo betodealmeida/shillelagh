@@ -182,6 +182,7 @@ def get_all_bounds(
         constraintargs,
     ):
         if sqlite_index_constraint not in operator_map:
+            # pylint: disable=broad-exception-raised
             raise Exception(f"Invalid constraint passed: {sqlite_index_constraint}")
         if column_index == LIMIT_OFFSET_INDEX:
             continue
@@ -212,6 +213,7 @@ def get_limit_offset(
         constraintargs,
     ):
         if sqlite_index_constraint not in operator_map:
+            # pylint: disable=broad-exception-raised
             raise Exception(f"Invalid constraint passed: {sqlite_index_constraint}")
         if column_index != LIMIT_OFFSET_INDEX:
             continue
@@ -256,6 +258,7 @@ def get_bounds(
                 bounds[column_name] = class_.build(operations)
                 break
         else:
+            # pylint: disable=broad-exception-raised
             raise Exception("No valid filter found")
 
     return bounds
