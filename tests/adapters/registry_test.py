@@ -73,5 +73,6 @@ def test_load_only_requested_adapters(registry: AdapterLoader) -> None:
 
     assert registry.load_all(["valid"]) == {"valid": FakeAdapter}
     with pytest.raises(InterfaceError) as excinfo:
-        registry.load_all()
+        registry.load_all(["valid", "invalid"])
     assert str(excinfo.value) == "Unable to load adapter invalid"
+    assert registry.load_all() == {"valid": FakeAdapter}

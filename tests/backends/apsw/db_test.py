@@ -10,9 +10,9 @@ import apsw
 import pytest
 from pytest_mock import MockerFixture
 
-from shillelagh.adapters.registry import AdapterLoader
+from shillelagh.adapters.registry import AdapterLoader, UnsafeAdaptersError
 from shillelagh.backends.apsw.db import Connection, connect, convert_binding
-from shillelagh.exceptions import InterfaceError, NotSupportedError, ProgrammingError
+from shillelagh.exceptions import NotSupportedError, ProgrammingError
 from shillelagh.fields import Float, String, StringInteger
 
 from ...fakes import FakeAdapter
@@ -178,7 +178,7 @@ def test_connect_safe(mocker: MockerFixture, registry: AdapterLoader) -> None:
     registry.clear()
     registry.add("one", FakeAdapter1)
     registry.add("one", FakeAdapter2)
-    with pytest.raises(InterfaceError) as excinfo:
+    with pytest.raises(UnsafeAdaptersError) as excinfo:
         connect(":memory:", ["one"], safe=True)
     assert str(excinfo.value) == "Multiple adapters found with name one"
 

@@ -10,6 +10,7 @@ Next
 - Support for S3-compatible storage (#343)
 - Adapters can now know which columns were requested (#345)
 - Python 3.11 officially supported (#334)
+- Fix for error when an adapater can't be loaded (#346)
 
 Version 1.2.0 - 2023-02-17
 ==========================
