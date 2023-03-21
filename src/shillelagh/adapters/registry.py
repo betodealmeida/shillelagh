@@ -16,6 +16,12 @@ from shillelagh.exceptions import InterfaceError
 _logger = logging.getLogger(__name__)
 
 
+class UnsafeAdaptersError(InterfaceError):
+    """
+    Raised when multiple adapters have the same name.
+    """
+
+
 class AdapterLoader:
     """
     Adapter registry, allowing new adapters to be registered.
@@ -31,7 +37,7 @@ class AdapterLoader:
         Load a given entry point by its name.
         """
         if safe and len(self.loaders[name]) > 1:
-            raise InterfaceError(f"Multiple adapters found with name {name}")
+            raise UnsafeAdaptersError(f"Multiple adapters found with name {name}")
 
         for load in self.loaders[name]:
             try:
@@ -88,11 +94,17 @@ class AdapterLoader:
 
         If no adapters are specified, return all.
         """
-        return {
-            name: self.load(name, safe=False)
-            for name in self.loaders
-            if adapters is None or name in adapters
-        }
+        loaded_adapters = {}
+        for name in self.loaders:
+            if adapters is None:
+                try:
+                    loaded_adapters[name] = self.load(name, safe=False)
+                except InterfaceError:
+                    pass
+            elif name in adapters:
+                loaded_adapters[name] = self.load(name, safe=False)
+
+        return loaded_adapters
 
     def register(self, name: str, modulepath: str, classname: str) -> None:
         """
