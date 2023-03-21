@@ -547,7 +547,7 @@ class VTCursor:
             kwargs["limit"] = limit
         if self.adapter.supports_offset:
             kwargs["offset"] = offset
-        if self.adapter.supports_bestindex:
+        if self.adapter.supports_requested_columns:
             kwargs["requested_columns"] = self.requested_columns
 
         rows = self.adapter.get_rows(bounds, order, **kwargs)

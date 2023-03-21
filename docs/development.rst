@@ -299,13 +299,13 @@ Now the adapter can handle ``limit`` and ``offset``, reducing the amount of data
 Returning only the requested columns
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default adapters should return all the columns available, since they have no information on which columns are actually needed. Starting with apsw `apsw 3.41.0.0 <https://github.com/rogerbinns/apsw/releases/tag/3.41.0.0>`_ adapters can optionally receive only the requested columns in their ``get_rows`` and ``get_data`` methods. The adapter must declare support for it by setting the attribute ``supports_bestindex`` to true:
+By default adapters should return all the columns available, since they have no information on which columns are actually needed. Starting with apsw `apsw 3.41.0.0 <https://github.com/rogerbinns/apsw/releases/tag/3.41.0.0>`_ adapters can optionally receive only the requested columns in their ``get_rows`` and ``get_data`` methods. The adapter must declare support for it by setting the attribute ``supports_requested_columns`` to true:
 
 .. code-block:: python
 
     class WeatherAPI(Adapter):
 
-        supports_bestindex = True
+        supports_requested_columns = True
 
 Then the ``requested_columns: Optional[Set[str]]`` argument will be passed to ``get_rows`` and ``get_data``:
 
@@ -513,7 +513,7 @@ You can define a method ``get_cost`` on your adapter to help the query planner t
 
 In the example above, we have an initial cost of 100. Each filtering operation costs an additional 1000 units, and each sorting costs 10000. This is a simple representation of filtering 1000 points in O(n), and sorting them in O(n log n) (note that the numbers are unitless). These numbers can be improved if you know the size of the data.
 
-If you want to use the model above you can do this in your adapter
+If you want to use the model above you can do this in your adapter:
 
 .. code-block:: python
 

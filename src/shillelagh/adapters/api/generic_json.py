@@ -49,7 +49,7 @@ class GenericJSONAPI(Adapter):
 
     supports_limit = False
     supports_offset = False
-    supports_bestindex = True
+    supports_requested_columns = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:

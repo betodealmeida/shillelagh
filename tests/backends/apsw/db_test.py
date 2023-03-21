@@ -488,7 +488,7 @@ def test_best_index(mocker: MockerFixture) -> None:
     VTModule = mocker.patch("shillelagh.backends.apsw.db.VTModule")
     adapter = mocker.MagicMock()
     adapter.__name__ = "some_adapter"
-    adapter.supports_bestindex = True
+    adapter.supports_requested_columns = True
 
     apsw.apswversion.return_value = "3.41.0.0"
     Connection(":memory:", [adapter], {})

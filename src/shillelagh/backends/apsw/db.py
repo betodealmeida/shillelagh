@@ -452,7 +452,7 @@ class Connection:
                 self._connection.createmodule(
                     adapter.__name__,
                     VTModule(adapter),
-                    use_bestindex_object=adapter.supports_bestindex,
+                    use_bestindex_object=adapter.supports_requested_columns,
                 )
             else:
                 self._connection.createmodule(adapter.__name__, VTModule(adapter))
