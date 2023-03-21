@@ -190,7 +190,7 @@ class CSVFile(Adapter):
     ) -> float:
         cost = INITIAL_COST
 
-        # filtering the data has constant cost, since ``filter_data`` builds a
+        # filtering the data has linear cost, since ``filter_data`` builds a
         # single filter function applied as the data is streamed
         if filtered_columns:
             cost += FILTERING_COST
