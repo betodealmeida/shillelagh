@@ -21,6 +21,7 @@ from typing import (
 )
 
 import apsw
+from packaging.version import Version
 
 from shillelagh import functions
 from shillelagh.adapters.base import Adapter
@@ -447,7 +448,14 @@ class Connection:
 
         # register adapters
         for adapter in adapters:
-            self._connection.createmodule(adapter.__name__, VTModule(adapter))
+            if Version(apsw.apswversion()) >= Version("3.41.0.0"):
+                self._connection.createmodule(
+                    adapter.__name__,
+                    VTModule(adapter),
+                    use_bestindex_object=adapter.supports_bestindex,
+                )
+            else:
+                self._connection.createmodule(adapter.__name__, VTModule(adapter))
         self._adapters = adapters
         self._adapter_kwargs = adapter_kwargs
 

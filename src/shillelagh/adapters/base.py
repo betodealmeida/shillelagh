@@ -48,6 +48,9 @@ class Adapter:
     supports_limit = False
     supports_offset = False
 
+    # if true, the requested columns will be passed to ``get_rows`` and ``get_data``
+    supports_bestindex = False
+
     def __init__(self, *args: Any, **kwargs: Any):  # pylint: disable=unused-argument
         # ensure ``self.close`` gets called before GC
         atexit.register(self.close)

@@ -8,6 +8,7 @@ Next
 - Allow specifying custom request headers when using the generic JSON adapter (#337)
 - Fix for escaping identifiers correctly (#340)
 - Support for S3-compatible storage (#343)
+- Adapters can now know which columns were requested (#345)
 
 Version 1.2.0 - 2023-02-17
 ==========================

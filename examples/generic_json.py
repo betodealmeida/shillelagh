@@ -49,8 +49,10 @@ if __name__ == "__main__":
     cursor = connection.cursor()
 
     SQL = """
-    SELECT * FROM
+    SELECT domain, isDead FROM
     "https://api.domainsdb.info/v1/domains/search?domain=facebook&zone=com#$.domains[*]"
+    WHERE isDead > 2
+    ORDER BY domain DESC
     LIMIT 2
     """
     for row in cursor.execute(SQL):

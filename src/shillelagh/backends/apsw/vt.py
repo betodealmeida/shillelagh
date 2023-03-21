@@ -23,6 +23,7 @@ from typing import (
 )
 
 import apsw
+from packaging.version import Version
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
@@ -50,6 +51,18 @@ from shillelagh.typing import (
     SQLiteConstraint,
     SQLiteValidType,
 )
+
+if Version(apsw.apswversion()) >= Version("3.41.0.0"):  # pragma: no cover
+    from apsw.ext import index_info_to_dict
+else:  # pragma: no cover
+    apsw.IndexInfo = Any  # for type annotation
+
+    # pylint: disable=unused-argument
+    def index_info_to_dict(index_info: apsw.IndexInfo) -> None:
+        """
+        Dummy function for testing.
+        """
+
 
 _logger = logging.getLogger(__name__)
 
@@ -302,6 +315,7 @@ class VTTable:
 
     def __init__(self, adapter: Adapter):
         self.adapter = adapter
+        self.requested_columns: Optional[Set[str]] = None
 
     def get_create_table(self, tablename: str) -> str:
         """
@@ -342,22 +356,25 @@ class VTTable:
         filtered_columns: List[Tuple[str, Operator]] = []
         for column_index, sqlite_index_constraint in constraints:
             operator = operator_map.get(sqlite_index_constraint)
-            column_name = column_names[column_index]
-            column_type = column_types[column_index]
-            for class_ in column_type.filters:
-                if operator in class_.operators:
-                    filtered_columns.append((column_name, operator))
-                    constraints_used.append((filter_index, column_type.exact))
-                    filter_index += 1
-                    indexes.append((column_index, sqlite_index_constraint))
-                    break
-            else:
-                if (operator is Operator.LIMIT and self.adapter.supports_limit) or (
-                    operator is Operator.OFFSET and self.adapter.supports_offset
-                ):
-                    constraints_used.append((filter_index, True))
-                    filter_index += 1
-                    indexes.append((LIMIT_OFFSET_INDEX, sqlite_index_constraint))
+
+            # LIMIT/OFFSET
+            if (operator is Operator.LIMIT and self.adapter.supports_limit) or (
+                operator is Operator.OFFSET and self.adapter.supports_offset
+            ):
+                constraints_used.append((filter_index, True))
+                filter_index += 1
+                indexes.append((LIMIT_OFFSET_INDEX, sqlite_index_constraint))
+            # column operator
+            elif column_index >= 0:
+                column_name = column_names[column_index]
+                column_type = column_types[column_index]
+                for class_ in column_type.filters:
+                    if operator in class_.operators:
+                        filtered_columns.append((column_name, operator))
+                        constraints_used.append((filter_index, column_type.exact))
+                        filter_index += 1
+                        indexes.append((column_index, sqlite_index_constraint))
+                        break
                 else:
                     constraints_used.append(None)
 
@@ -389,11 +406,47 @@ class VTTable:
             estimated_cost,
         )
 
+    def BestIndexObject(self, index_info: apsw.IndexInfo) -> bool:
+        """
+        Alternative to ``BestIndex`` that allows returning only selected columns.
+        """
+        columns = self.adapter.get_columns()
+        column_names = list(columns.keys())
+        self.requested_columns = {column_names[i] for i in index_info.colUsed}
+
+        index_info_dict = index_info_to_dict(index_info)
+        constraints = [
+            (constraint.get("iColumn", -1), constraint["op"])
+            for constraint in index_info_dict["aConstraint"]
+        ]
+        orderbys = [
+            (orderby["iColumn"], orderby["desc"])
+            for orderby in index_info_dict["aOrderBy"]
+        ]
+        (
+            constraints_used,
+            index_number,
+            index_name,
+            orderby_consumed,
+            estimated_cost,
+        ) = self.BestIndex(constraints, orderbys)
+
+        for i, constraint in enumerate(constraints_used):
+            if isinstance(constraint, tuple):
+                index_info.set_aConstraintUsage_argvIndex(i, constraint[0])
+                index_info.set_aConstraintUsage_omit(i, constraint[1])
+        index_info.idxNum = index_number
+        index_info.idxStr = index_name
+        index_info.orderByConsumed = orderby_consumed
+        index_info.estimatedCost = estimated_cost
+
+        return True
+
     def Open(self) -> "VTCursor":
         """
         Returns a cursor object.
         """
-        return VTCursor(self.adapter)
+        return VTCursor(self.adapter, self.requested_columns)
 
     def Disconnect(self) -> None:
         """
@@ -449,8 +502,9 @@ class VTCursor:
     An object for iterating over a table.
     """
 
-    def __init__(self, adapter: Adapter):
+    def __init__(self, adapter: Adapter, requested_columns: Optional[Set[str]] = None):
         self.adapter = adapter
+        self.requested_columns = requested_columns
 
         self.data: Iterator[Tuple[Any, ...]]
         self.current_row: Tuple[Any, ...]
@@ -485,11 +539,13 @@ class VTCursor:
         order = get_order(orderbys, column_names)
 
         # limit and offset were introduced in 1.1, and not all adapters support it
-        kwargs = {}
+        kwargs: Dict[str, Any] = {}
         if self.adapter.supports_limit:
             kwargs["limit"] = limit
         if self.adapter.supports_offset:
             kwargs["offset"] = offset
+        if self.adapter.supports_bestindex:
+            kwargs["requested_columns"] = self.requested_columns
 
         rows = self.adapter.get_rows(bounds, order, **kwargs)
         rows = convert_rows_to_sqlite(columns, rows)
