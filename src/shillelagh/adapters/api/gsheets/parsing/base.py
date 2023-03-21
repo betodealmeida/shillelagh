@@ -32,6 +32,7 @@ class Token(Generic[Valid]):
         """
         match = re.match(cls.regex, pattern)
         if not match:
+            # pylint: disable=broad-exception-raised
             raise Exception("Token could not find match")
         token = match.group()
         return cls(token), pattern[len(token) :]

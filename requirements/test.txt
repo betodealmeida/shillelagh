@@ -41,8 +41,10 @@ codespell==2.1.0
     # via shillelagh
 coverage[toml]==6.4.2
     # via pytest-cov
-dill==0.3.5.1
-    # via pylint
+dill==0.3.6
+    # via
+    #   pylint
+    #   shillelagh
 distlib==0.3.5
     # via virtualenv
 exceptiongroup==1.0.4

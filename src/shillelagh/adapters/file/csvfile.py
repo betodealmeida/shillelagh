@@ -14,6 +14,7 @@ import logging
 import os
 import tempfile
 import urllib.parse
+from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple, cast
 
@@ -39,6 +40,8 @@ _logger = logging.getLogger(__name__)
 INITIAL_COST = 0
 FILTERING_COST = 1000
 SORTING_COST = 10000
+
+DEFAULT_TIMEOUT = timedelta(minutes=3)
 
 SUPPORTED_PROTOCOLS = {"http", "https"}
 
@@ -116,7 +119,7 @@ class CSVFile(Adapter):
         if fast:
             return Maybe
 
-        response = requests.head(uri)
+        response = requests.head(uri, timeout=DEFAULT_TIMEOUT.total_seconds())
         return "text/csv" in response.headers.get("content-type", "")
 
     @staticmethod
@@ -134,7 +137,10 @@ class CSVFile(Adapter):
 
             # download CSV file
             with tempfile.NamedTemporaryFile(delete=False) as output:
-                response = requests.get(path_or_uri)
+                response = requests.get(
+                    path_or_uri,
+                    timeout=DEFAULT_TIMEOUT.total_seconds(),
+                )
                 output.write(response.content)
             path = Path(output.name)
 
