@@ -141,9 +141,9 @@ def test_virtual_best_index_object(mocker: MockerFixture) -> None:
 
     index_info.set_aConstraintUsage_argvIndex.assert_has_calls(
         [
-            mocker.call(0, 0),
-            mocker.call(2, 1),
-            mocker.call(3, 2),
+            mocker.call(0, 1),
+            mocker.call(2, 2),
+            mocker.call(3, 3),
         ],
     )
     index_info.set_aConstraintUsage_omit.assert_has_calls(

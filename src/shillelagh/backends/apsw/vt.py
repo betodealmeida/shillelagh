@@ -436,7 +436,7 @@ class VTTable:
 
         for i, constraint in enumerate(constraints_used):
             if isinstance(constraint, tuple):
-                index_info.set_aConstraintUsage_argvIndex(i, constraint[0])
+                index_info.set_aConstraintUsage_argvIndex(i, constraint[0] + 1)
                 index_info.set_aConstraintUsage_omit(i, constraint[1])
         index_info.idxNum = index_number
         index_info.idxStr = index_name
