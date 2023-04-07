@@ -280,3 +280,17 @@ def test_integer_column_names() -> None:
         (12, 13.3, "Platinum_St"),
         (13, 12.1, "Kodiak_Trail"),
     ]
+
+
+def test_empty_dataframe() -> None:
+    """
+    Test that empty dataframes work.
+    """
+    emptydf = pd.DataFrame({"a": []})  # noqa: F841  pylint: disable=unused-variable
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = "SELECT * FROM emptydf"
+    cursor.execute(sql)
+    assert cursor.fetchall() == []
