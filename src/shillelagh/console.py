@@ -19,6 +19,7 @@ application directory (see https://pypi.org/project/appdirs/), eg::
 
 """
 import logging
+import sys
 import os.path
 from pathlib import Path
 from typing import List, Tuple
@@ -36,6 +37,8 @@ from tabulate import tabulate
 
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import Error
+
+from sqlalchemy import create_engine
 
 _logger = logging.getLogger(__name__)
 
@@ -195,7 +198,18 @@ def main():  # pylint: disable=too-many-locals
         except (PermissionError, yaml.parser.ParserError, yaml.scanner.ScannerError):
             _logger.exception("Unable to load configuration file")
 
-    connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
+        connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
+
+    elif len(sys.argv) == 2:
+        # assume the first argument is an SQLAlchemy URL
+        url = sys.argv[1]
+        engine = create_engine(url)
+        connection = engine.raw_connection()
+
+    else:
+        print('no connection argument - exit(1)')
+        sys.exit(1)
+
     cursor = connection.cursor()
 
     session = PromptSession(

@@ -84,7 +84,7 @@ Queries like this are supported by `adapters <https://shillelagh.readthedocs.io/
 ============= ============ ========================================================================== =====================================================================================================
  Name          Type         URI pattern                                                                Example URI
 ============= ============ ========================================================================== =====================================================================================================
- CSV           File/API     ``/path/to/file.csv``; ``http(s)://*``                                     ``/home/user/sample_data.csv``
+ CSV           File         ``/path/to/file.csv``                                                      ``/home/user/sample_data.csv``
  Datasette     API          ``http(s)://*``                                                            ``https://global-power-plants.datasettes.com/global-power-plants/global-power-plants``
  Generic JSON  API          ``http(s)://*``                                                            ``https://api.stlouisfed.org/fred/series?series_id=GNPCA&api_key=XXX&file_type=json#$.seriess[*]``
  GitHub        API          ``https://api.github.com/repos/${owner}/{$repo}/pulls``                    ``https://api.github.com/repos/apache/superset/pulls``
@@ -95,6 +95,8 @@ Queries like this are supported by `adapters <https://shillelagh.readthedocs.io/
  Socrata       API          ``https://${domain}/resource/${dataset-id}.json``                          ``https://data.cdc.gov/resource/unsk-b7fc.json``
  System        API          ``system://${resource}``                                                   ``system://cpu?interval=2``
  WeatherAPI    API          ``https://api.weatherapi.com/v1/history.json?key=${key}&q=${location}``    ``https://api.weatherapi.com/v1/history.json?key=XXX&q=London``
+ NglsAPI       API          ``ngls://${host}/reporting?api_key=${key}``                                ``ngls://192.168.64.9/reporting?api_key=XXXX``
+
 ============= ============ ========================================================================== =====================================================================================================
 
 There are also 3rd-party adapters:
@@ -118,33 +120,22 @@ The query above reads timestamps from a Google sheet, uses them to filter weathe
 
 New adapters are relatively easy to implement. There's a `step-by-step tutorial <https://shillelagh.readthedocs.io/en/latest/development.html>`_ that explains how to create a new adapter to an API or filetype.
 
-Installation
-============
+NGLS
+====================
 
-Install Shillelagh with ``pip``:
+Passing query parameters from superset to NGLS
+==============================================
 
-.. code-block:: bash
+To pass parameters from Superset the shillelagh middleware must recognize some fields as "SQL where" clauses that can then be used to pass some parameters to the reporting service using the reporting API.
+A possible SQL command could be for example:
+SELECT * FROM call_summary WHERE interval='month'
 
-    $ pip install 'shillelagh'
+This means that the interval will be caught on shillelagh adapter as a "predicate" and use the value to define the Reporting API interval parameter.
 
-You also need to install optional dependencies, depending on the adapter you want to use:
+To be possible to use a value as a predicate, it is mandatory to:
 
-.. code-block:: bash
+1) the column must be available in the result set from Reporting API. Meaning that it is needed to add a column with the exact value on the reporting YAML definitions and resulting reporting API request.
 
-    $ pip install 'shillelagh[console]'        # to use the CLI
-    $ pip install 'shillelagh[datasetteapi]'   # for Datasette
-    $ pip install 'shillelagh[genericjsonapi]' # for Generic JSON
-    $ pip install 'shillelagh[githubapi]'      # for GitHub
-    $ pip install 'shillelagh[gsheetsapi]'     # for GSheets
-    $ pip install 'shillelagh[htmltableapi]'   # for HTML tables
-    $ pip install 'shillelagh[pandasmemory]'   # for Pandas in memory
-    $ pip install 'shillelagh[s3selectapi]'    # for S3 files
-    $ pip install 'shillelagh[socrataapi]'     # for Socrata API
-    $ pip install 'shillelagh[systemapi]'      # for CPU information
-    $ pip install 'shillelagh[weatherapi]'     # for WeatherAPI
+2) On shillelagh it is needed to add the column WITH filter to become a predicate.
 
-Alternatively, you can install everything with:
-
-.. code-block:: bash
-
-    $ pip install 'shillelagh[all]'
+3) The other columns just need the proper type without filters, so in this case sort and filtering can be enabled directly on superset.
