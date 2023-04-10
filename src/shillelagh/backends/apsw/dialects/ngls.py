@@ -1,4 +1,5 @@
 # pylint: disable=too-many-instance-attributes, logging-fstring-interpolation, broad-except
+# NGLS exclusive
 """A dialect that only connects to GSheets.
 
 This dialect was implemented to replace the ``gsheetsdb`` library.
@@ -11,6 +12,9 @@ import time
 import requests
 import pandas as pd
 from shillelagh.backends.apsw.dialects.base import APSWDialect
+from shillelagh.fields import DateTime, Field, Float, Integer, String
+from shillelagh.filters import Equal, Like, NotEqual, Range
+from shillelagh.typing import Order
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
 
@@ -27,15 +31,25 @@ class NglsReports:
     instance = None
     timestamp = None
 
-    def __init__(self, url):
+    def __init__(self, url: URL):
+        self.url_str = str(url)
         self.host = url.host
         self.port = url.port
         self.database = url.database
         self.api_key = os.getenv('NGLS_API_KEY')
         self.verify = os.getenv('CA_CERT_FILE', '/app/certs/ca.crt')
         self.table_names = []
-        self.columns = []
-        self.table_ids = []
+        self.columns = {}
+        self.columns_dicts = {}
+        self.table_ids = {}
+
+    def _text_to_string_field(self, tablename: str, col_name: str) -> String:
+        if (col_name in ('interval', 'abandoned_tag') or
+                (tablename in ('agent_ready_not_ready') and col_name in ('agency'))):
+            return String(filters=[Equal, Like, NotEqual], order=Order.ANY, exact=True)
+        if tablename in ('busiest_hour') and col_name in ('call_type'):
+            return String(filters=[Equal, Like, NotEqual], order=Order.ANY, exact=True)
+        return String()
 
     def get_table_names(self):
         try:
@@ -56,6 +70,9 @@ class NglsReports:
         self.table_ids = table_ids
         columns = dict(reports_df[['table_name', 'columns']].set_index('table_name').T.to_dict('records')[0])
         self.columns = columns
+        reports_df['columns_dict'] = None
+        columns_dicts = dict(reports_df[['table_name', 'columns_dict']].set_index('table_name').T.to_dict('records')[0])
+        self.columns_dicts = columns_dicts
         _logger.info(f"table_names={self.table_names}")
 
     def has_table_name(self, tablename):
@@ -79,17 +96,30 @@ class NglsReports:
     def get_columns(self, tablename):
         return self.columns[tablename] if self.has_table_name(tablename) else []
 
-    def to_dict(self, obfuscate=False):
-        return {
-            "host": self.host,
-            "port": self.port,
-            "database": self.database,
-            "api_key": "*****" if obfuscate else self.api_key,
-            "verify": self.verify,
-            "table_names": self.table_names,
-            "table_ids": self.table_ids,
-            "columns": self.columns
-        }
+    def get_columns_dict(self, tablename) -> Dict[str, Field]:
+        if not self.has_table_name(tablename):
+            return {}
+        if not self.columns_dicts[tablename]:
+            columns_dict = {}
+            for column in self.columns[tablename]:
+                col_name = column['column_name']
+                col_type = column['type']
+                if col_type == 'TEXT':
+                    columns_dict[col_name] = self._text_to_string_field(tablename, col_name)
+                elif col_type == 'INTEGER':
+                    columns_dict[col_name] = Integer()
+                elif col_type == 'FLOAT':
+                    columns_dict[col_name] = Float()
+                elif col_type == 'TIMESTAMP':
+                    columns_dict[col_name] = DateTime(filters=[Equal, Range], order=Order.ANY, exact=True)
+                else:
+                    _logger.error(f"get_columns - unhandled type: {column['type']}")
+            _logger.info(f"Created columns dictionary for {tablename}")
+            self.columns_dicts[tablename] = columns_dict
+        return self.columns_dicts[tablename]
+
+    def get_url_str(self) -> str:
+        return self.url_str
 
     @staticmethod
     def get_instance(url: URL):
@@ -100,17 +130,6 @@ class NglsReports:
             NglsReports.instance.get_table_names()
             NglsReports.timestamp = timestamp + TTL
         return NglsReports.instance
-
-    @staticmethod
-    def from_dict(obj: dict):
-        ngls_reports = NglsReports.get_instance(
-            URL("ngls", host=obj["host"], port=obj["port"], database=obj["database"]))
-        ngls_reports.api_key = obj["api_key"]
-        ngls_reports.verify = obj["verify"]
-        ngls_reports.table_names = obj["table_names"]
-        ngls_reports.table_ids = obj["table_ids"]
-        ngls_reports.columns = obj["columns"]
-        return ngls_reports
 
 
 class NglsDialect(APSWDialect):
@@ -142,7 +161,7 @@ class NglsDialect(APSWDialect):
             "adapters": ["nglsapi"],
             "adapter_kwargs": {
                 "nglsapi": {
-                    "nglsreports": self.nglsreports.to_dict()
+                    "url": self.nglsreports.get_url_str()
                 },
             },
             "safe": True,
