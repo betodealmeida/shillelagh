@@ -70,7 +70,7 @@ def find_dataframe(uri: str) -> Optional[pd.DataFrame]:
     return None
 
 
-def get_df_data(  # pylint: disable=too-many-arguments
+def get_df_data(  # pylint: disable=too-many-arguments, too-many-branches
     df: pd.DataFrame,
     columns: Dict[str, Field],
     bounds: Dict[str, Filter],
@@ -81,6 +81,9 @@ def get_df_data(  # pylint: disable=too-many-arguments
     """
     Apply the ``get_data`` method on a Pandas dataframe.
     """
+    if df.empty:
+        return
+
     # ensure column names are strings
     df = df.rename(columns={k: str(k) for k in df.columns})
 

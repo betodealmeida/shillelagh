@@ -95,6 +95,7 @@ def test_virtual_best_index() -> None:
             (2, apsw.SQLITE_INDEX_CONSTRAINT_GT),  # pets >
             (0, apsw.SQLITE_INDEX_CONSTRAINT_LE),  # age <=
             (-1, 73),  # LIMIT
+            (-1, apsw.SQLITE_INDEX_CONSTRAINT_LE),  # INVALID, just for coverage
         ],
         [(1, False)],  # ORDER BY name ASC
     )
@@ -109,6 +110,57 @@ def test_virtual_best_index() -> None:
         True,
         666,
     )
+
+
+def test_virtual_best_index_object(mocker: MockerFixture) -> None:
+    """
+    Test ``BestIndexObject``.
+    """
+    index_info = mocker.MagicMock()
+    index_info.colUsed = {0, 2}
+    index_info_to_dict = mocker.patch("shillelagh.backends.apsw.vt.index_info_to_dict")
+    index_info_to_dict.return_value = {
+        "aConstraint": [
+            {"iColumn": 1, "op": apsw.SQLITE_INDEX_CONSTRAINT_EQ},
+            {"iColumn": 2, "op": apsw.SQLITE_INDEX_CONSTRAINT_GT},
+            {"iColumn": 0, "op": apsw.SQLITE_INDEX_CONSTRAINT_LE},
+            {"op": 73},
+        ],
+        "aOrderBy": [{"iColumn": 1, "desc": False}],
+    }
+
+    adapter = FakeAdapter()
+    adapter.supports_limit = True
+
+    table = VTTable(adapter)
+    assert table.requested_columns is None
+
+    result = table.BestIndexObject(index_info)
+    assert result is True
+    assert table.requested_columns == {"age", "pets"}
+
+    index_info.set_aConstraintUsage_argvIndex.assert_has_calls(
+        [
+            mocker.call(0, 1),
+            mocker.call(2, 2),
+            mocker.call(3, 3),
+        ],
+    )
+    index_info.set_aConstraintUsage_omit.assert_has_calls(
+        [
+            mocker.call(0, True),
+            mocker.call(2, True),
+            mocker.call(3, True),
+        ],
+    )
+    assert index_info.idxNum == 42
+    assert index_info.idxStr == (
+        f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}], "
+        f"[0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}], [-1, 73]], "
+        "[[1, false]]]"
+    )
+    assert index_info.orderByConsumed is True
+    assert index_info.estimatedCost == 666
 
 
 def test_virtual_best_index_static_order_not_consumed() -> None:

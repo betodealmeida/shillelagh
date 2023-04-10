@@ -240,6 +240,7 @@ class S3SelectAPI(Adapter):
         path: str = "$",
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
+        s3_endpoint_url: Optional[str] = None,
         s3_kwargs: Optional[Dict[str, Any]] = None,
     ):
         super().__init__()
@@ -255,15 +256,20 @@ class S3SelectAPI(Adapter):
                 "s3",
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key,
+                endpoint_url=s3_endpoint_url,
             )
         # if no credentials were passed, check if they're available
         elif boto3.session.Session().get_credentials():
-            self.s3_client = boto3.client("s3")
+            self.s3_client = boto3.client(
+                "s3",
+                endpoint_url=s3_endpoint_url,
+            )
         # if no credentials were found, use an anonymous client to access public buckets
         else:
             self.s3_client = boto3.client(
                 "s3",
                 config=Config(signature_version=UNSIGNED),
+                endpoint_url=s3_endpoint_url,
             )
         self.s3_kwargs = s3_kwargs or {}
 

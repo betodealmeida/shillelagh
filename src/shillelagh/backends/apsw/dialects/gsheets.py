@@ -6,6 +6,7 @@ This dialect was implemented to replace the ``gsheetsdb`` library.
 """
 import logging
 import urllib.parse
+from datetime import timedelta
 from operator import itemgetter
 from typing import Any, Dict, List, Optional, Tuple, cast
 
@@ -20,6 +21,9 @@ from shillelagh.backends.apsw.dialects.base import APSWDialect
 from shillelagh.exceptions import ProgrammingError
 
 _logger = logging.getLogger(__name__)
+
+
+DEFAULT_TIMEOUT = timedelta(minutes=3)
 
 
 class QueryType(TypedDict, total=False):
@@ -119,6 +123,7 @@ class APSWGSheetsDialect(APSWDialect):
         """
         response = requests.get(
             "https://www.google.com/appsstatus/dashboard/incidents.json",
+            timeout=DEFAULT_TIMEOUT.total_seconds(),
         )
         payload = response.json()
 

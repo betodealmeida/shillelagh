@@ -244,12 +244,12 @@ def test_integration(adapter_kwargs) -> None:
     cursor = connection.cursor()
 
     sql = """
-        SELECT administered_dose1_recip_4
+        SELECT administered
         FROM "https://data.cdc.gov/resource/unsk-b7fc.json"
         WHERE location = ? AND date = ?
     """
-    cursor.execute(sql, ("US", date(2021, 7, 4)))
-    assert cursor.fetchall() == [(67.1,)]
+    cursor.execute(sql, ("US", date(2023, 3, 1)))
+    assert cursor.fetchall() == [(672076105.0,)]
 
 
 def test_get_cost(mocker: MockerFixture) -> None:

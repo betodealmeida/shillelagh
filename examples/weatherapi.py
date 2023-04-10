@@ -11,7 +11,7 @@ if __name__ == "__main__":
     three_days_ago = datetime.now() - timedelta(days=3)
 
     # sign up for an API key at https://www.weatherapi.com/my/
-    api_key = sys.argv[1]
+    api_key = sys.argv[1]  # pylint: disable=invalid-name
 
     connection = connect(":memory:")
     cursor = connection.cursor()

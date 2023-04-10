@@ -2,6 +2,7 @@
 Tests for shillelagh.fields.
 """
 import datetime
+import sys
 from typing import Union
 
 import pytest
@@ -500,9 +501,10 @@ def test_fastisodatetime() -> None:
         0,
     )
 
-    with pytest.raises(ProgrammingError) as excinfo:
-        FastISODateTime().parse("2020-01-01T12:00Z")
-    assert str(excinfo.value) == 'Unable to parse "2020-01-01T12:00Z"'
+    if sys.version_info < (3, 11):
+        with pytest.raises(ProgrammingError) as excinfo:
+            FastISODateTime().parse("2020-01-01T12:00Z")
+        assert str(excinfo.value) == 'Unable to parse "2020-01-01T12:00Z"'
 
     with pytest.raises(ProgrammingError) as excinfo:
         FastISODateTime().parse("invalid")

@@ -51,7 +51,7 @@ For domain wide access you need to create a service account. Make sure that the 
     connection = connect(
         ":memory:",
         adapter_kwargs={
-            "gsheetaspi": {
+            "gsheetsapi": {
                 # "service_account_file": "/path/to/credentials.json",
                 "service_account_info": {
                     "type": "service_account",
@@ -415,3 +415,39 @@ Note that the JSON payload should return the data as a list of dictionaries. In 
     }
 
 In the payload above the data is stored in the ``seriess`` key. In order to have Shillelagh access the data correctly you should pass a `JSONPath <https://goessner.net/articles/JsonPath/>`_ expression as an achor in the URL. For this payload the expression ``$.seriess[*]`` will return all rows inside the ``seriess`` children.
+
+If you need to authenticate you can pass custom request headers via adapter keyword arguments:
+
+.. code-block:: python
+
+    from shillelagh.backends.apsw.db import connect
+
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={
+            "genericjsonapi": {
+                "request_headers": {
+                    "X-Auth-Token": "SECRET",
+                },
+            },
+        },
+    )
+
+Or via SQLAlchemy:
+
+.. code-block:: python
+
+    from sqlalchemy import create_engine
+
+    engine = create_engine(
+        "shilellagh://",
+        connect_args={
+            "adapter_kwargs": {
+                "genericjsonapi": {
+                    "request_headers": {
+                        "X-Auth-Token": "SECRET",
+                    },
+                },
+            },
+        },
+    )

@@ -21,6 +21,7 @@ from typing import (
 )
 
 import apsw
+from packaging.version import Version
 
 from shillelagh import functions
 from shillelagh.adapters.base import Adapter
@@ -39,7 +40,12 @@ from shillelagh.exceptions import (  # nopycln: import; pylint: disable=redefine
     Warning,
 )
 from shillelagh.fields import Blob, Field
-from shillelagh.lib import combine_args_kwargs, escape, find_adapter, serialize
+from shillelagh.lib import (
+    combine_args_kwargs,
+    escape_identifier,
+    find_adapter,
+    serialize,
+)
 from shillelagh.types import (
     BINARY,
     DATETIME,
@@ -290,7 +296,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
             f"'{serialize(arg)}'"
             for arg in combine_args_kwargs(adapter, *args, **kwargs)
         )
-        table_name = escape(uri)
+        table_name = escape_identifier(uri)
         self._cursor.execute(
             f'CREATE VIRTUAL TABLE "{table_name}" USING {adapter.__name__}({formatted_args})',
         )
@@ -442,7 +448,14 @@ class Connection:
 
         # register adapters
         for adapter in adapters:
-            self._connection.createmodule(adapter.__name__, VTModule(adapter))
+            if Version(apsw.apswversion()) >= Version("3.41.0.0"):
+                self._connection.createmodule(
+                    adapter.__name__,
+                    VTModule(adapter),
+                    use_bestindex_object=adapter.supports_requested_columns,
+                )
+            else:
+                self._connection.createmodule(adapter.__name__, VTModule(adapter))
         self._adapters = adapters
         self._adapter_kwargs = adapter_kwargs
 
