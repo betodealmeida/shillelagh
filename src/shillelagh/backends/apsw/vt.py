@@ -191,6 +191,10 @@ def get_all_bounds(
         column_type = columns[column_name]
 
         # convert constraint to native Python type, then to DB specific type
+        if isinstance(constraint, set):
+            # A WHERE x IN (list) clause sends in constraintargs as a set: {item1,...,itemN}
+            # We serialize this to "set([item1,...,itemN])".
+            constraint = Adapter.serialize_set(constraint)
         constraint = type_map[column_type.type]().parse(constraint)
         value = column_type.format(constraint)
 
@@ -438,6 +442,9 @@ class VTTable:
             if isinstance(constraint, tuple):
                 index_info.set_aConstraintUsage_argvIndex(i, constraint[0] + 1)
                 index_info.set_aConstraintUsage_omit(i, constraint[1])
+                if self.adapter.supports_in_statements and index_info.get_aConstraintUsage_in(i):
+                    # Explicit request to pass the IN (list) as a set in the constraintargs.
+                    index_info.set_aConstraintUsage_in(i, True)
         index_info.idxNum = index_number
         index_info.idxStr = index_name
         index_info.orderByConsumed = orderby_consumed

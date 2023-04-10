@@ -1,6 +1,8 @@
 """Base class for adapters."""
 import atexit
 import inspect
+import json
+import re
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 from shillelagh.exceptions import NotSupportedError
@@ -51,9 +53,55 @@ class Adapter:
     # if true, the requested columns will be passed to ``get_rows`` and ``get_data``
     supports_requested_columns = False
 
+    # if true, a set of strings from an in statement will be serialized before being
+    # passed in as bounds to ``get_rows`` and ``get_data``. This requires
+    # supports_requested_columns to be set to True as well.
+    supports_in_statements = False
+
     def __init__(self, *args: Any, **kwargs: Any):  # pylint: disable=unused-argument
         # ensure ``self.close`` gets called before GC
         atexit.register(self.close)
+
+    @staticmethod
+    def serialize_set(a_set: set | None) -> str | None:
+        """Serialize the given set (or string) to a string.
+
+        This will convert a given set {'a', 'b', 'c'} to the string: "set(['a','b','c'])"
+
+        Args:
+            a_set (set): A set (strings).
+
+        Returns:
+            str | None: A string representation of the set.
+        """
+        if a_set is None:
+            return None
+        if not isinstance(a_set, set):
+            raise TypeError("serialize_set(): a_set must be a set")
+        return f"set({json.dumps(list([item for item in a_set]))})"
+
+    def deserialize_set(self, a_set_str: str | None) -> set | None:
+        """Deserialize the given string to a set.
+
+        This will convert a given "set(['a','b','c'])" string to the set {'a', 'b', 'c'}
+        If a string is passed which does not match the /set(.*)/ regular expression, then the
+        string is converted to a set with the string as single element. This
+
+
+        Args:
+            a_set_str (str | None): A serialized string.
+
+        Returns:
+            set | None: The deserialized list as a set.
+        """
+        if a_set_str is None:
+            return None
+        if not isinstance(a_set_str, str):
+            raise TypeError("deserialize_set(): a_set_str must be a string")
+        m = re.match(r"set\((.*)\)", a_set_str)
+        if not m:
+            return a_set_str
+        return set(json.loads(m.group(1)))
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
