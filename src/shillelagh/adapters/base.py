@@ -63,16 +63,19 @@ class Adapter:
         atexit.register(self.close)
 
     @staticmethod
-    def serialize_set(a_set: set | None) -> str | None:
-        """Serialize the given set (or string) to a string.
+    def serialize_set(a_set: Any) -> Any:
+        """Serialize the given set to a string.
 
         This will convert a given set {'a', 'b', 'c'} to the string: "set(['a','b','c'])"
 
         Args:
-            a_set (set): A set (strings).
+            a_set (Any): A set (of strings) or None.
+
+        Raises:
+            TypeError: If anything but a set or None is given to this method.
 
         Returns:
-            str | None: A string representation of the set.
+            Any: A string representation of the set or None.
         """
         if a_set is None:
             return None
@@ -80,19 +83,22 @@ class Adapter:
             raise TypeError("serialize_set(): a_set must be a set")
         return f"set({json.dumps(list([item for item in a_set]))})"
 
-    def deserialize_set(self, a_set_str: str | None) -> set | None:
+    def deserialize_set(self, a_set_str: Any) -> Any:
         """Deserialize the given string to a set.
 
         This will convert a given "set(['a','b','c'])" string to the set {'a', 'b', 'c'}
         If a string is passed which does not match the /set(.*)/ regular expression, then the
-        string is converted to a set with the string as single element. This
-
+        string is simply returned as a string.
 
         Args:
-            a_set_str (str | None): A serialized string.
+            a_set_str (Any): A serialized string or None.
+
+        Raises:
+            TypeError: If anything but a string or None is given to this method.
 
         Returns:
-            set | None: The deserialized list as a set.
+            Any: The deserialized list as a set if the input was a previously serialized set.
+            Otherwise the string (or None) is simply returned.
         """
         if a_set_str is None:
             return None
