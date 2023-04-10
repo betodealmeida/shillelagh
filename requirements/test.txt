@@ -9,7 +9,7 @@
     # via -r requirements/test.in
 appdirs==1.4.4
     # via shillelagh
-apsw==3.38.5.post1
+apsw==3.41.0
     # via shillelagh
 astroid==2.14.2
     # via pylint

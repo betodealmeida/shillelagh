@@ -45,9 +45,8 @@ class NglsReports:
 
     def _text_to_string_field(self, tablename: str, col_name: str) -> String:
         if (col_name in ('interval', 'abandoned_tag') or
-                (tablename in ('agent_ready_not_ready') and col_name in ('agency'))):
-            return String(filters=[Equal, Like, NotEqual], order=Order.ANY, exact=True)
-        if tablename in ('busiest_hour') and col_name in ('call_type'):
+            (tablename in ('agent_ready_not_ready') and col_name in ('agency')) or
+                (tablename in ('busiest_hour') and col_name in ('call_type'))):
             return String(filters=[Equal, Like, NotEqual], order=Order.ANY, exact=True)
         return String()
 

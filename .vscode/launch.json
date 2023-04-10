@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Test NGLS Alchemy Dialect",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test/test_ngls_alchemy_dialect.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true,
+            "env": {
+            }
+        }
+    ]
+}

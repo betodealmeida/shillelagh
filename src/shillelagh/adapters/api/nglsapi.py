@@ -32,7 +32,8 @@ class NglsAPI(Adapter):
     safe = True
     # Since the adapter doesn't return exact data (see the time columns below)
     # implementing limit/offset is not worth the trouble.
-    supports_bestindex = True
+    supports_requested_columns = True
+    supports_in_statements = True
     supports_limit = False
     supports_offset = False
 
@@ -127,5 +128,5 @@ class NglsAPI(Adapter):
         if self.table in ['busiest_hour']:
             call_type_predicate = bounds.get('call_type')
             if call_type_predicate:
-                params['terms'] = json.dumps({"localCallType": call_type_predicate.value.split(",")})
+                params['terms'] = json.dumps({"localCallType": list(self.deserialize_set(call_type_predicate.value))})
         return params
