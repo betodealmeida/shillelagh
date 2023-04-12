@@ -72,6 +72,14 @@ class NglsReports:
         reports_df['columns_dict'] = None
         columns_dicts = dict(reports_df[['table_name', 'columns_dict']].set_index('table_name').T.to_dict('records')[0])
         self.columns_dicts = columns_dicts
+        # add hard-coded table for intervals.
+        self.table_names.append("intervals")
+        self.columns["intervals"] = [{'column_name': 'interval', 'name': 'Interval', 'type': 'TEXT'}]
+        self.columns_dicts["intervals"] = None
+        # add hard-coded table for abandoned tags.
+        self.table_names.append("abandoned_tags")
+        self.columns["abandoned_tags"] = [{'column_name': 'abandoned_tag', 'name': 'Abandoned calls', 'type': 'TEXT'}]
+        self.columns_dicts["abandoned_tags"] = None
         _logger.info(f"table_names={self.table_names}")
 
     def has_table_name(self, tablename):
