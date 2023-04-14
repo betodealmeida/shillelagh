@@ -5,6 +5,9 @@ Changelog
 Next
 ====
 
+Version 1.2.1 - 2023-04-14
+==========================
+
 - Allow specifying custom request headers when using the generic JSON adapter (#337)
 - Fix for escaping identifiers correctly (#340)
 - Support for S3-compatible storage (#343)
