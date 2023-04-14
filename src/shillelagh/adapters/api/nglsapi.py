@@ -126,10 +126,6 @@ class NglsAPI(Adapter):
             abandoned_predicate = bounds.get('abandoned_tag')
             params['abandoned'] = abandoned_predicate.value if abandoned_predicate else 'included'
 
-        if self.table in ['agent_ready_not_ready']:
-            agency_predicate = bounds.get('agency')
-            params['psap'] = agency_predicate.value if agency_predicate else ''
-
         if self.table in ['busiest_hour']:
             call_type_predicate = bounds.get('call_type')
             if call_type_predicate:
