@@ -75,6 +75,8 @@ class NglsAPI(Adapter):
             data = [["hour"], ["day"], ["month"]]
         elif self.table == "abandoned_tags":
             data = [["included"], ["excluded"], ["only"]]
+        elif self.table == "call_types":
+            data = [["911"], ["10-digit"], ["admin"], ["consultation"]]
         else:
             params = self.set_params(bounds)
             result = self.nglsreports.get(self.table, params)
@@ -126,7 +128,7 @@ class NglsAPI(Adapter):
             abandoned_predicate = bounds.get('abandoned_tag')
             params['abandoned'] = abandoned_predicate.value if abandoned_predicate else 'included'
 
-        if self.table in ['busiest_hour']:
+        if self.table in ['busiest_hour', 'call_duration']:
             call_type_predicate = bounds.get('call_type')
             if call_type_predicate:
                 params['terms'] = json.dumps({"localCallType": list(self.deserialize_set(call_type_predicate.value))})

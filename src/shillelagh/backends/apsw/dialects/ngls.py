@@ -45,7 +45,7 @@ class NglsReports:
 
     def _text_to_string_field(self, tablename: str, col_name: str) -> String:
         if (col_name in ('interval', 'abandoned_tag') or
-                (tablename in ('busiest_hour') and col_name in ('call_type'))):
+                (tablename in ('busiest_hour', 'call_duration') and col_name in ('call_type'))):
             return String(filters=[Equal, Like, NotEqual], order=Order.ANY, exact=True)
         return String()
 
@@ -79,6 +79,10 @@ class NglsReports:
         self.table_names.append("abandoned_tags")
         self.columns["abandoned_tags"] = [{'column_name': 'abandoned_tag', 'name': 'Abandoned calls', 'type': 'TEXT'}]
         self.columns_dicts["abandoned_tags"] = None
+        # add hard-coded table for call types.
+        self.table_names.append("call_types")
+        self.columns["call_types"] = [{'column_name': 'call_type', 'name': 'Call Types', 'type': 'TEXT'}]
+        self.columns_dicts["call_types"] = None
         _logger.info(f"table_names={self.table_names}")
 
     def has_table_name(self, tablename):
