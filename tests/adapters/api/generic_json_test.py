@@ -205,3 +205,44 @@ def test_request_headers(mocker: MockerFixture, requests_mock: Mocker) -> None:
     rows = list(cursor.execute(sql))
     assert rows == [("bar", '["one", "two"]')]
     assert data.last_request.headers["foo"] == "bar"
+
+
+def test_request_headers_in_url(mocker: MockerFixture, requests_mock: Mocker) -> None:
+    """
+    Test passing requests headers.
+    """
+    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", 0)
+    supports = requests_mock.head(
+        "https://example.org/data.json",
+        headers={"content-type": "application/json"},
+    )
+
+    # for datassette and other probing adapters
+    requests_mock.head("https://exmaple.org/-/versions.json", status_code=404)
+
+    url = URL("https://example.org/")
+    data = requests_mock.head(str(url), headers={"content-type": "application/json"})
+    requests_mock.get(
+        str(url),
+        json=[
+            {
+                "foo": "bar",
+                "baz": ["one", "two"],
+            },
+        ],
+    )
+
+    # test the supports method
+    GenericJSONAPI.supports(
+        "https://example.org/data.json?_s_headers=(foo:bar)",
+        fast=False,
+    )
+    assert supports.last_request.headers["foo"] == "bar"
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = 'SELECT * FROM "https://example.org/?_s_headers=(foo:bar)"'
+    rows = list(cursor.execute(sql))
+    assert rows == [("bar", '["one", "two"]')]
+    assert data.last_request.headers["foo"] == "bar"
