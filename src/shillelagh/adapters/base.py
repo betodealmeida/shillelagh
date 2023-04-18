@@ -88,7 +88,7 @@ class Adapter:
 
         This will convert a given "set(['a','b','c'])" string to the set {'a', 'b', 'c'}
         If a string is passed which does not match the /set(.*)/ regular expression, then the
-        string is simply returned as a string.
+        string is simply returned in a set with that string as single entry.
 
         Args:
             a_set_str (Any): A serialized string or None.
@@ -106,7 +106,7 @@ class Adapter:
             raise TypeError("deserialize_set(): a_set_str must be a string")
         m = re.match(r"set\((.*)\)", a_set_str)
         if not m:
-            return a_set_str
+            return set([a_set_str])
         return set(json.loads(m.group(1)))
 
     @staticmethod
