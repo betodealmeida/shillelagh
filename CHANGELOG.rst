@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.2.2 - 2023-04-17
+==========================
+
+- Allow passing request headers to the generic JSON adapter via query arguments (#354)
+
 Version 1.2.1 - 2023-04-14
 ==========================
 

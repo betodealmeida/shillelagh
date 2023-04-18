@@ -108,6 +108,8 @@ pluggy==1.0.0
     # via pytest
 pre-commit==2.20.0
     # via shillelagh
+prison==0.2.1
+    # via shillelagh
 prompt-toolkit==3.0.30
     # via shillelagh
 psutil==5.9.1
@@ -167,6 +169,7 @@ six==1.16.0
     # via
     #   google-auth
     #   html5lib
+    #   prison
     #   python-dateutil
     #   requests-mock
     #   url-normalize

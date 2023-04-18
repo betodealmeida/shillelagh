@@ -5,11 +5,12 @@ An adapter for fetching JSON data.
 # pylint: disable=invalid-name
 
 import logging
-import urllib.parse
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Union
 
+import prison
 import requests_cache
 from jsonpath import JSONPath
+from yarl import URL
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
@@ -23,6 +24,7 @@ _logger = logging.getLogger(__name__)
 SUPPORTED_PROTOCOLS = {"http", "https"}
 AVERAGE_NUMBER_OF_ROWS = 100
 CACHE_EXPIRATION = 180
+REQUEST_HEADERS_KEY = "_s_headers"
 
 
 def get_session(request_headers: Dict[str, str]) -> requests_cache.CachedSession:
@@ -53,25 +55,39 @@ class GenericJSONAPI(Adapter):
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
-        parsed = urllib.parse.urlparse(uri)
+        parsed = URL(uri)
         if parsed.scheme not in SUPPORTED_PROTOCOLS:
             return False
         if fast:
             return Maybe
 
-        request_headers = kwargs.get("request_headers", {})
+        if REQUEST_HEADERS_KEY in parsed.query:
+            request_headers = prison.loads(parsed.query[REQUEST_HEADERS_KEY])
+            parsed = parsed.with_query(
+                {k: v for k, v in parsed.query.items() if k != REQUEST_HEADERS_KEY},
+            )
+        else:
+            request_headers = kwargs.get("request_headers", {})
+
         session = get_session(request_headers)
-        response = session.head(uri)
+        response = session.head(str(parsed))
         return "application/json" in response.headers.get("content-type", "")
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[str, str]:
-        parsed = urllib.parse.urlparse(uri)
+    def parse_uri(uri: str) -> Union[Tuple[str, str], Tuple[str, str, Dict[str, str]]]:
+        parsed = URL(uri)
 
-        path = urllib.parse.unquote(parsed.fragment) or "$[*]"
-        uri = urllib.parse.urlunparse(parsed._replace(fragment=""))
+        path = parsed.fragment or "$[*]"
+        parsed = parsed.with_fragment("")
 
-        return uri, path
+        if REQUEST_HEADERS_KEY in parsed.query:
+            request_headers = prison.loads(parsed.query[REQUEST_HEADERS_KEY])
+            parsed = parsed.with_query(
+                {k: v for k, v in parsed.query.items() if k != REQUEST_HEADERS_KEY},
+            )
+            return str(parsed), path, request_headers
+
+        return str(parsed), path
 
     def __init__(
         self,
