@@ -18,6 +18,20 @@ from shillelagh.typing import Order
 from sqlalchemy.engine.url import URL
 from sqlalchemy.pool.base import _ConnectionFairy
 
+# Field Class from interface to Field class name
+CLASS_NAME_TO_CLASS = {
+    "DateTime": DateTime,
+    "Float": Float,
+    "Integer": Integer,
+    "String": String
+}
+# Filter name from interface to Filter class name
+FILTER_NAME_TO_FILTER = {
+    "Equal": Equal,
+    "Like": Like,
+    "NotEqual": NotEqual,
+    "Range": Range
+}
 # Default timeout for reporting API requests (in seconds)
 TIMEOUT = 30
 # Default time for an NglsReports instance before fetching again from NGLS
@@ -42,12 +56,6 @@ class NglsReports:
         self.columns = {}
         self.columns_dicts = {}
         self.table_ids = {}
-
-    def _text_to_string_field(self, tablename: str, col_name: str) -> String:
-        if (col_name in ('interval', 'abandoned_tag') or
-                (tablename in ('busiest_hour', 'call_duration') and col_name in ('call_type'))):
-            return String(filters=[Equal, Like, NotEqual], order=Order.ANY, exact=True)
-        return String()
 
     def get_table_names(self):
         try:
@@ -112,18 +120,15 @@ class NglsReports:
         if not self.columns_dicts[tablename]:
             columns_dict = {}
             for column in self.columns[tablename]:
-                col_name = column['column_name']
-                col_type = column['type']
-                if col_type == 'TEXT':
-                    columns_dict[col_name] = self._text_to_string_field(tablename, col_name)
-                elif col_type == 'INTEGER':
-                    columns_dict[col_name] = Integer()
-                elif col_type == 'FLOAT':
-                    columns_dict[col_name] = Float()
-                elif col_type == 'TIMESTAMP':
-                    columns_dict[col_name] = DateTime(filters=[Equal, Range], order=Order.ANY, exact=True)
-                else:
-                    _logger.error(f"get_columns - unhandled type: {column['type']}")
+                field = column.get('field', {})
+                class_name = field.get('class')
+                filters = field.get('filters', [])
+                filters = [FILTER_NAME_TO_FILTER[x] for x in filters] if filters else None
+                columns_dict[column['column_name']] = CLASS_NAME_TO_CLASS[class_name](
+                    filters=filters,
+                    order=field.get("order", Order.NONE),
+                    exact=field.get("exact", False)
+                )
             _logger.info(f"Created columns dictionary for {tablename}")
             self.columns_dicts[tablename] = columns_dict
         return self.columns_dicts[tablename]

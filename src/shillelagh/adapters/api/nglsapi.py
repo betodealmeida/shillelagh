@@ -22,6 +22,7 @@ from sqlalchemy.engine.url import URL
 
 _logger = logging.getLogger(__name__)
 AVERAGE_NUMBER_OF_ROWS = 1000
+ISO_FORMAT_TIMESTAMP = "%Y-%m-%dT%H:%M:%SZ"
 
 
 class NglsAPI(Adapter):
@@ -110,26 +111,28 @@ class NglsAPI(Adapter):
         return '<pre>' + formatted_xml_string + '</pre>'
 
     def set_params(self, bounds) -> dict:
-        params = {'format': 'json'}
-
-        date_time_predicate = bounds.get('date_time')
-        if date_time_predicate:
-            params['from'] = pytz.utc.localize(date_time_predicate.start).strftime('%Y-%m-%dT%H:%M:%SZ')
-            params['to'] = pytz.utc.localize(date_time_predicate.end).strftime('%Y-%m-%dT%H:%M:%SZ')
-        else:
-            # Get latest 60 days of data.
-            params['for'] = '86400m'
-
-        if self.table not in ['agent_activity', 'text_to_911', 'location_discrepancy', 'location_queries_and_results']:
-            interval_predicate = bounds.get('interval')
-            params['interval'] = interval_predicate.value if interval_predicate else 'hour'
-
-        if self.table in ['psap_ring_time', 'psap_queue_time', 'busiest_hour', 'call_summary']:
-            abandoned_predicate = bounds.get('abandoned_tag')
-            params['abandoned'] = abandoned_predicate.value if abandoned_predicate else 'included'
-
-        if self.table in ['busiest_hour', 'call_duration']:
-            call_type_predicate = bounds.get('call_type')
-            if call_type_predicate:
-                params['terms'] = json.dumps({"localCallType": list(self.deserialize_set(call_type_predicate.value))})
-        return params
+        out_params = {'format': 'json'}
+        for (col_name, col_type, params, default) in [
+            (
+                x.get('column_name'),
+                x.get('type'),
+                x.get("predicate").get("params", {}),
+                x.get("predicate").get("default", {})
+            )
+            for x in self.nglsreports.get_columns(self.table)
+            if x.get("predicate")
+        ]:
+            predicate = bounds.get(col_name)
+            if predicate and params:
+                for param, key in params.items():
+                    if col_type == "TIMESTAMP":
+                        out_params[param] = pytz.utc.localize(eval(f"predicate.{key}")).strftime(ISO_FORMAT_TIMESTAMP)
+                    elif param == "terms":
+                        out_params[param] = json.dumps({f"{key}": list(self.deserialize_set(predicate.value))})
+                    else:
+                        out_params[param] = predicate.value
+            elif not predicate and default:
+                for param, value in default.items():
+                    out_params[param] = value
+        _logger.info(f"set_params({bounds}) result: {out_params}")
+        return out_params
