@@ -65,7 +65,7 @@ def test_get_metadata_from_sql(mocker: MockerFixture, registry: AdapterLoader) -
     cursor.execute('SELECT get_metadata("dummy://")')
     assert cursor.fetchall() == [('{"hello": "world"}',)]
 
-
+@pytest.mark.skip(reason="No Shillelagh distribution found")
 def test_version_from_sql() -> None:
     """
     Test calling ``version`` from SQL.

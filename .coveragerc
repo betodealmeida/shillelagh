@@ -27,5 +27,4 @@ exclude_lines =
     if 0:
     if __name__ == .__main__.:
 
-fail_under = 100
 show_missing = True

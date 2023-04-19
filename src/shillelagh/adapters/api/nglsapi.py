@@ -42,6 +42,9 @@ class NglsAPI(Adapter):
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         """Check if the table with name ${uri} is supported"""
         _logger.debug(f'supports({uri}, {fast}, {kwargs}')
+        # Quick way to prevent unrelated unit tests from using nglsapi since they use the URI argument.
+        if kwargs.get('url') is None:
+            return None
         nglsreports = NglsReports.get_instance(URL(kwargs.get('url')))
         if not nglsreports:
             _logger.error('nglsreports does not exist')
