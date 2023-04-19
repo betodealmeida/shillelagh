@@ -38,7 +38,16 @@ print(inspector.get_table_names())
 
 print("get data")
 with engine.connect() as connection:
-    result = connection.execute(text("SELECT * FROM busiest_hour WHERE call_type IN ('911', 'admin')"))
+    result = connection.execute(text("SELECT * FROM abandoned_tags"))
+    for row in result:
+        print(row)
+    result = connection.execute(text("SELECT * FROM call_types"))
+    for row in result:
+        print(row)
+    result = connection.execute(text("SELECT * FROM intervals"))
+    for row in result:
+        print(row)
+    result = connection.execute(text("SELECT * FROM disconnect_time WHERE date_time >= '2023-04-18 00:00:00.000000' AND date_time < '2023-04-18 23:59:59.000000'"))
     for row in result:
         print(row)
 

@@ -81,15 +81,15 @@ class NglsReports:
         self.columns_dicts = columns_dicts
         # add hard-coded table for intervals.
         self.table_names.append("intervals")
-        self.columns["intervals"] = [{'column_name': 'interval', 'name': 'Interval', 'type': 'TEXT'}]
+        self.columns["intervals"] = [{'column_name': 'interval', 'name': 'Interval', 'type': 'TEXT', 'field': {'class': 'String'}}]
         self.columns_dicts["intervals"] = None
         # add hard-coded table for abandoned tags.
         self.table_names.append("abandoned_tags")
-        self.columns["abandoned_tags"] = [{'column_name': 'abandoned_tag', 'name': 'Abandoned calls', 'type': 'TEXT'}]
+        self.columns["abandoned_tags"] = [{'column_name': 'abandoned_tag', 'name': 'Abandoned calls', 'type': 'TEXT', 'field': {'class': 'String'}}]
         self.columns_dicts["abandoned_tags"] = None
         # add hard-coded table for call types.
         self.table_names.append("call_types")
-        self.columns["call_types"] = [{'column_name': 'call_type', 'name': 'Call Types', 'type': 'TEXT'}]
+        self.columns["call_types"] = [{'column_name': 'call_type', 'name': 'Call Types', 'type': 'TEXT', 'field': {'class': 'String'}}]
         self.columns_dicts["call_types"] = None
         _logger.info(f"table_names={self.table_names}")
 
