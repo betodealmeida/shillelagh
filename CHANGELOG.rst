@@ -6,6 +6,7 @@ Next
 ====
 
 - Add ``yarl`` dependency to the generic JSON adapter (#355)
+- Only warn of errors when loading adapters if they are explicitly requested (#360)
 
 Version 1.2.2 - 2023-04-17
 ==========================
