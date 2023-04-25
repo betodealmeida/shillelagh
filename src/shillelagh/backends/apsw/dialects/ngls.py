@@ -85,7 +85,7 @@ class NglsReports:
         self.columns_dicts["intervals"] = None
         # add hard-coded table for abandoned tags.
         self.table_names.append("abandoned_tags")
-        self.columns["abandoned_tags"] = [{'column_name': 'abandoned_tag', 'name': 'Abandoned calls', 'type': 'TEXT', 'field': {'class': 'String'}}]
+        self.columns["abandoned_tags"] = [{'column_name': 'abandoned', 'name': 'Abandoned calls', 'type': 'TEXT', 'field': {'class': 'String'}}]
         self.columns_dicts["abandoned_tags"] = None
         # add hard-coded table for call types.
         self.table_names.append("call_types")
