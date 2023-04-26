@@ -442,7 +442,10 @@ class VTTable:
             if isinstance(constraint, tuple):
                 index_info.set_aConstraintUsage_argvIndex(i, constraint[0] + 1)
                 index_info.set_aConstraintUsage_omit(i, constraint[1])
-                if self.adapter.supports_in_statements and index_info.get_aConstraintUsage_in(i):
+                if (
+                    self.adapter.supports_in_statements
+                    and index_info.get_aConstraintUsage_in(i)
+                ):
                     # Explicit request to pass the IN (list) as a set in the constraintargs.
                     index_info.set_aConstraintUsage_in(i, True)
         index_info.idxNum = index_number

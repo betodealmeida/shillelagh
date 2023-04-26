@@ -210,7 +210,9 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         """
         Execute a query using the cursor.
         """
-        _logger.info(f"Execute {operation} with parameters {parameters}")
+        _logger.info(  # pylint: disable=logging-fstring-interpolation
+            f"Execute {operation} with parameters {parameters}",
+        )
         if not self.in_transaction and self.isolation_level:
             self._cursor.execute(f"BEGIN {self.isolation_level}")
             self.in_transaction = True

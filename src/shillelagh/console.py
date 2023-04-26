@@ -19,8 +19,8 @@ application directory (see https://pypi.org/project/appdirs/), eg::
 
 """
 import logging
-import sys
 import os.path
+import sys
 from pathlib import Path
 from typing import List, Tuple
 
@@ -33,12 +33,11 @@ from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles.pygments import style_from_pygments_cls
 from pygments.lexers.sql import SqlLexer
 from pygments.styles import get_style_by_name
+from sqlalchemy import create_engine
 from tabulate import tabulate
 
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import Error
-
-from sqlalchemy import create_engine
 
 _logger = logging.getLogger(__name__)
 
@@ -178,7 +177,7 @@ sql_completer = WordCompleter(
 style = style_from_pygments_cls(get_style_by_name("friendly"))
 
 
-def main():  # pylint: disable=too-many-locals
+def main():  # pylint: disable=too-many-locals,too-many-statements
     """
     Run a REPL until the user presses Control-D.
     """
@@ -207,7 +206,7 @@ def main():  # pylint: disable=too-many-locals
         connection = engine.raw_connection()
 
     else:
-        print('no connection argument - exit(1)')
+        print("no connection argument - exit(1)")
         sys.exit(1)
 
     cursor = connection.cursor()

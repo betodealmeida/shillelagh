@@ -13,6 +13,7 @@ from pytest_mock import MockerFixture
 
 from shillelagh import console
 
+
 @pytest.mark.skip(reason="Console exits 1 immediately")
 def test_main(mocker: MockerFixture) -> None:
     """
@@ -26,6 +27,7 @@ def test_main(mocker: MockerFixture) -> None:
     result = stdout.getvalue()
     assert result == "  1\n---\n  1\nGoodBye!\n"
 
+
 @pytest.mark.skip(reason="Console exits 1 immediately")
 def test_exception(mocker: MockerFixture) -> None:
     """
@@ -38,6 +40,7 @@ def test_exception(mocker: MockerFixture) -> None:
     console.main()
     result = stdout.getvalue()
     assert result == 'SQLError: near "SSELECT": syntax error\nGoodBye!\n'
+
 
 @pytest.mark.skip(reason="Console exits 1 immediately")
 def test_ctrl_c(mocker: MockerFixture) -> None:
@@ -74,6 +77,7 @@ def test_configuration(mocker: MockerFixture, fs: FakeFilesystem) -> None:
 
     connect.assert_called_with(":memory:", adapter_kwargs={"foo": {"bar": "baz"}})
 
+
 @pytest.mark.skip(reason="Console exits 1 immediately")
 def test_no_configuration(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     """
@@ -109,6 +113,7 @@ def test_configuration_invalid(mocker: MockerFixture, fs: FakeFilesystem) -> Non
 
     _logger.exception.assert_called_with("Unable to load configuration file")
 
+
 @pytest.mark.skip(reason="Console exits 1 immediately")
 def test_multiline(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     """
@@ -121,6 +126,7 @@ def test_multiline(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     console.main()
     result = stdout.getvalue()
     assert result == "  1\n---\n  1\nGoodBye!\n"
+
 
 @pytest.mark.skip(reason="Console exits 1 immediately")
 def test_multiline_quoted_semicolon(mocker: MockerFixture, fs: FakeFilesystem) -> None:
@@ -135,6 +141,7 @@ def test_multiline_quoted_semicolon(mocker: MockerFixture, fs: FakeFilesystem) -
     result = stdout.getvalue()
 
     assert result == "  ';'=\n   ';'\n------\n     1\nGoodBye!\n"
+
 
 @pytest.mark.skip(reason="Console exits 1 immediately")
 def test_multiline_quoted_semicolon_on_line_end(
@@ -152,6 +159,7 @@ def test_multiline_quoted_semicolon_on_line_end(
     result = stdout.getvalue()
 
     assert result == "  ';'=';\n       '\n--------\n       0\nGoodBye!\n"
+
 
 @pytest.mark.skip(reason="Console exits 1 immediately")
 def test_multiline_triple_quoted_semicolon_on_line_end(
