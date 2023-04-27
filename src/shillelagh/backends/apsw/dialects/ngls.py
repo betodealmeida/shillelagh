@@ -136,6 +136,10 @@ class NglsReports:
             },
         ]
         self.columns_dicts["call_types"] = None
+        # add hard-coded table for sequence numbers.
+        self.table_names.append("seq_nrs")
+        self.columns["seq_nrs"] = [{'column_name': 'seq_str', 'name': 'Sequence Number Strings', 'type': 'TEXT', 'field': {'class': 'String'}}]
+        self.columns_dicts["seq_nrs"] = None
         _logger.info(f"table_names={self.table_names}")
 
     def has_table_name(self, tablename) -> bool:
