@@ -55,8 +55,8 @@ class NglsAPI(Adapter):
         return nglsreports.has_table_name(uri)
 
     @staticmethod
-    def parse_uri(uri: str) -> str:
-        return uri
+    def parse_uri(uri: str) -> Tuple[str, str]:
+        return (uri,)
 
     def __init__(
         self, table: str, url: str, **kwargs: Any  # pylint: disable=unused-argument
