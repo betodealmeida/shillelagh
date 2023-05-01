@@ -147,6 +147,17 @@ class NglsReports:
             },
         ]
         self.columns_dicts["seq_nrs"] = None
+        # add table for agencies.
+        self.table_names.append("agencies")
+        self.columns["agencies"] = [
+            {
+                "column_name": "agency",
+                "name": "Agency",
+                "type": "TEXT",
+                "field": {"class": "String"},
+            },
+        ]
+        self.columns_dicts["agencies"] = None
         _logger.info(f"table_names={self.table_names}")
 
     def has_table_name(self, tablename) -> bool:
@@ -163,6 +174,27 @@ class NglsReports:
         """Perform a GET request to the reporting service."""
         headers = {"X-NGLS-API-Key": self.api_key}
         url = self.url(tablename)
+        _logger.info(f"Get report from NGLS: GET {url} {json.dumps(params)}")
+        response = requests.get(
+            url,
+            params=params,
+            headers=headers,
+            verify=self.verify,
+            timeout=TIMEOUT,
+        )
+        if response.status_code != 200:
+            _logger.warning(f"ngls response code: {response.status_code}")
+            return None
+        return response.json()
+
+    def get_agencies(self):
+        """Perform a GET request to the reporting service."""
+        headers = {"X-NGLS-API-Key": self.api_key}
+        params = {
+            "elementType": "PSAP",
+            "gemma": True
+        }
+        url = f"https://{self.host}:{self.port}/{self.database}/v1/elements"
         _logger.info(f"Get report from NGLS: GET {url} {json.dumps(params)}")
         response = requests.get(
             url,

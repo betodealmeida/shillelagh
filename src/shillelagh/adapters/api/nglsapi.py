@@ -86,6 +86,13 @@ class NglsAPI(Adapter):
             data = [["911"], ["10-digit"], ["admin"], ["consultation"]]
         elif self.table == "seq_nrs":
             data = [[str(x).zfill(4)] for x in range(1, 1001)]
+        elif self.table == "agencies":
+            result = self.nglsreports.get_agencies()
+            if result is None:
+                raise InternalError(
+                    "Error while getting data from ngls-reporting service",
+                )
+            data = [[x.get("id")] for x in result]
         else:
             params = self.set_params(bounds)
             result = self.nglsreports.get(self.table, params)

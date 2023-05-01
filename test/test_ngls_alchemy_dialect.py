@@ -41,15 +41,23 @@ print(inspector.get_table_names())
 
 print("get data")
 with engine.connect() as connection:
+    print("Abandoned tags")
     result = connection.execute(text("SELECT * FROM abandoned_tags"))
     for row in result:
         print(row)
+    print("Agencies")
+    result = connection.execute(text("SELECT * FROM agencies"))
+    for row in result:
+        print(row)
+    print("Call Types")
     result = connection.execute(text("SELECT * FROM call_types"))
     for row in result:
         print(row)
+    print("Intervals")
     result = connection.execute(text("SELECT * FROM intervals"))
     for row in result:
         print(row)
+    print("Test disconnect_time")
     result = connection.execute(
         text(
             "SELECT * FROM disconnect_time WHERE date_time >= '2023-04-18 00:00:00.000000' AND date_time < '2023-04-18 23:59:59.000000'",  # pylint: disable=line-too-long
