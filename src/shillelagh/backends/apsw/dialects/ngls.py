@@ -190,10 +190,7 @@ class NglsReports:
     def get_agencies(self):
         """Perform a GET request to the reporting service."""
         headers = {"X-NGLS-API-Key": self.api_key}
-        params = {
-            "elementType": "PSAP",
-            "gemma": True
-        }
+        params = {"elementType": "PSAP", "gemma": True}
         url = f"https://{self.host}:{self.port}/{self.database}/v1/elements"
         _logger.info(f"Get report from NGLS: GET {url} {json.dumps(params)}")
         response = requests.get(
