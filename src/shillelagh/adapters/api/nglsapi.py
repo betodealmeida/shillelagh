@@ -64,6 +64,12 @@ class NglsAPI(Adapter):
         super().__init__()
         self.table = table
         self.nglsreports = NglsReports.get_instance(URL(url))
+        self.get_static_data_table = {
+            "intervals": [["hour"], ["day"], ["month"]],
+            "abandoned_tags": [["included"], ["excluded"], ["only"]],
+            "call_types": [["911"], ["10-digit"], ["admin"], ["consultation"]],
+            "seq_nrs": [[str(x).zfill(4)] for x in range(1, 1001)],
+        }
 
     def get_columns(self) -> Dict[str, Field]:
         return self.nglsreports.get_columns_dict(self.table)
@@ -78,14 +84,8 @@ class NglsAPI(Adapter):
     ) -> Iterator[Row]:
         # https://shillelagh.readthedocs.io/en/latest/development.html#creating-a-custom-sqlalchemy-dialect
         _logger.info(f"get_data for {self.table}: ({bounds}, {order}, {kwargs})")
-        if self.table == "intervals":
-            data = [["hour"], ["day"], ["month"]]
-        elif self.table == "abandoned_tags":
-            data = [["included"], ["excluded"], ["only"]]
-        elif self.table == "call_types":
-            data = [["911"], ["10-digit"], ["admin"], ["consultation"]]
-        elif self.table == "seq_nrs":
-            data = [[str(x).zfill(4)] for x in range(1, 1001)]
+        if self.table in self.get_static_data_table:
+            data = self.get_static_data_table[self.table]
         elif self.table == "agencies":
             result = self.nglsreports.get_agencies()
             if result is None:
