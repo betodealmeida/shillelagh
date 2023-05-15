@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.2.4 - 2023-05-15
+==========================
+
+- Relax dependency for ``requests-cache`` correctly (#362)
+
 Version 1.2.3 - 2023-05-15
 ==========================
 
