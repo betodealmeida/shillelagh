@@ -4,6 +4,7 @@ Test the generic JSON adapter.
 
 import pytest
 from pytest_mock import MockerFixture
+from requests_cache import DO_NOT_CACHE
 from requests_mock.mocker import Mocker
 from yarl import URL
 
@@ -19,7 +20,7 @@ def test_generic_json(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test a simple query.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", 0)
+    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
 
     # for datassette and other probing adapters
     requests_mock.head(
@@ -118,7 +119,7 @@ def test_generic_json_complex_type(
     """
     Test a query where columns are complex.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", 0)
+    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
 
     # for datassette and other probing adapters
     requests_mock.head("https://exmaple.org/-/versions.json", status_code=404)
@@ -166,7 +167,7 @@ def test_request_headers(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test passing requests headers.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", 0)
+    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
     supports = requests_mock.head(
         "https://example.org/data.json",
         headers={"content-type": "application/json"},
@@ -211,7 +212,7 @@ def test_request_headers_in_url(mocker: MockerFixture, requests_mock: Mocker) ->
     """
     Test passing requests headers.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", 0)
+    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
     supports = requests_mock.head(
         "https://example.org/data.json",
         headers={"content-type": "application/json"},
