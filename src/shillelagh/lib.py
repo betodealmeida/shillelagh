@@ -8,6 +8,9 @@ import math
 import operator
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
 
+import apsw
+from packaging.version import Version
+
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
 from shillelagh.fields import Boolean, Field, Float, Integer, Order, String
@@ -543,3 +546,10 @@ def flatten(row: Row) -> Row:
     return {
         k: json.dumps(v) if isinstance(v, (list, dict)) else v for k, v in row.items()
     }
+
+
+def best_index_object_available() -> bool:
+    """
+    Check if support for best index object is available.
+    """
+    return bool(Version(apsw.apswversion()) >= Version("3.41.0.0"))

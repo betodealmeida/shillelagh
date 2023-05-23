@@ -23,7 +23,6 @@ from typing import (
 )
 
 import apsw
-from packaging.version import Version
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
@@ -42,7 +41,7 @@ from shillelagh.fields import (
     StringInteger,
 )
 from shillelagh.filters import Filter, Operator
-from shillelagh.lib import deserialize
+from shillelagh.lib import best_index_object_available, deserialize
 from shillelagh.typing import (
     Constraint,
     Index,
@@ -52,7 +51,7 @@ from shillelagh.typing import (
     SQLiteValidType,
 )
 
-if Version(apsw.apswversion()) >= Version("3.41.0.0"):  # pragma: no cover
+if best_index_object_available():
     from apsw.ext import index_info_to_dict
 else:  # pragma: no cover
     apsw.IndexInfo = Any  # for type annotation
@@ -583,7 +582,7 @@ class VTCursor:
             kwargs["limit"] = limit
         if self.adapter.supports_offset:
             kwargs["offset"] = offset
-        if self.adapter.supports_requested_columns and len(index) == 3:
+        if best_index_object_available() and self.adapter.supports_requested_columns:
             kwargs["requested_columns"] = set(index[2])
 
         rows = self.adapter.get_rows(bounds, order, **kwargs)

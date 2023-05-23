@@ -490,7 +490,10 @@ def test_best_index(mocker: MockerFixture) -> None:
     adapter.__name__ = "some_adapter"
     adapter.supports_requested_columns = True
 
-    apsw.apswversion.return_value = "3.41.0.0"
+    mocker.patch(
+        "shillelagh.backends.apsw.db.best_index_object_available",
+        return_value=True,
+    )
     Connection(":memory:", [adapter], {})
     apsw.Connection().createmodule.assert_called_with(
         "some_adapter",
@@ -498,7 +501,10 @@ def test_best_index(mocker: MockerFixture) -> None:
         use_bestindex_object=True,
     )
 
-    apsw.apswversion.return_value = "3.40.1.0"
+    mocker.patch(
+        "shillelagh.backends.apsw.db.best_index_object_available",
+        return_value=False,
+    )
     Connection(":memory:", [adapter], {})
     apsw.Connection().createmodule.assert_called_with(
         "some_adapter",
