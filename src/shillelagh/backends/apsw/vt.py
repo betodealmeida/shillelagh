@@ -340,7 +340,8 @@ class VTTable:
     ) -> Tuple[
         List[Constraint],
         int,
-        Tuple[List[Index], List[Tuple[int, bool]]],
+        List[Index],
+        List[Tuple[int, bool]],
         bool,
         float,
     ]:
@@ -400,12 +401,11 @@ class VTTable:
                 orderby_consumed = False
                 break
 
-        index = (indexes, orderbys_to_process)
-
         return (
             constraints_used,
             index_number,
-            index,
+            indexes,
+            orderbys_to_process,
             orderby_consumed,
             estimated_cost,
         )
@@ -424,12 +424,13 @@ class VTTable:
         (
             constraints_used,
             index_number,
-            index,
+            indexes,
+            orderbys_to_process,
             orderby_consumed,
             estimated_cost,
         ) = self._build_index(constraints, orderbys)
 
-        index_name = json.dumps(index)
+        index_name = json.dumps([indexes, orderbys_to_process])
 
         return (
             constraints_used,
@@ -461,13 +462,14 @@ class VTTable:
         (
             constraints_used,
             index_number,
-            index,
+            indexes,
+            orderbys_to_process,
             orderby_consumed,
             estimated_cost,
         ) = self._build_index(constraints, orderbys)
 
         requested_columns = sorted({column_names[i] for i in index_info.colUsed})
-        index_name = json.dumps(index + (requested_columns,))
+        index_name = json.dumps([indexes, orderbys_to_process, requested_columns])
 
         for i, constraint in enumerate(constraints_used):
             if isinstance(constraint, tuple):
