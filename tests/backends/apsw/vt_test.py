@@ -133,11 +133,9 @@ def test_virtual_best_index_object(mocker: MockerFixture) -> None:
     adapter.supports_limit = True
 
     table = VTTable(adapter)
-    assert table.requested_columns is None
 
     result = table.BestIndexObject(index_info)
     assert result is True
-    assert table.requested_columns == {"age", "pets"}
 
     index_info.set_aConstraintUsage_argvIndex.assert_has_calls(
         [
@@ -157,7 +155,8 @@ def test_virtual_best_index_object(mocker: MockerFixture) -> None:
     assert index_info.idxStr == (
         f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}], "
         f"[0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}], [-1, 73]], "
-        "[[1, false]]]"
+        "[[1, false]], "
+        '["age", "pets"]]'
     )
     assert index_info.orderByConsumed is True
     assert index_info.estimatedCost == 666
