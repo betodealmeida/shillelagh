@@ -1,8 +1,6 @@
 """Base class for adapters."""
 import atexit
 import inspect
-import json
-import re
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 from shillelagh.exceptions import NotSupportedError
