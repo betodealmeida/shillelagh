@@ -211,7 +211,7 @@ class Test:
 
     def test_set_params_terms(self):
         """Tests set_params that uses the busiest hour table."""
-        bounds = {"call_type": types.SimpleNamespace(value='set(["a","b","c"])')}
+        bounds = {"call_type": types.SimpleNamespace(value='["a","b","c"]')}
 
         expected_params = {
             "format": "json",
