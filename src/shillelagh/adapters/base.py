@@ -66,7 +66,9 @@ class Adapter:
     def serialize_set(a_set: Any) -> Any:
         """Serialize the given set to a string.
 
-        This will convert a given set {'a', 'b', 'c'} to the string: "set(['a','b','c'])"
+        This will convert a given set {'a', 'b', 'c'} to the string: "set(['a','b','c'])".
+        This custom serialization is required to differentiate strings from sets in the
+        get_data() or get_rows() methods.
 
         Args:
             a_set (Any): A set (of strings) or None.
@@ -86,7 +88,7 @@ class Adapter:
     def deserialize_set(self, a_set_str: Any) -> Any:
         """Deserialize the given string to a set.
 
-        This will convert a given "set(['a','b','c'])" string to the set {'a', 'b', 'c'}
+        This will convert a given "set(['a','b','c'])" string to the set {'a', 'b', 'c'}.
         If a string is passed which does not match the /set(.*)/ regular expression, then the
         string is simply returned in a set with that string as single entry.
 
