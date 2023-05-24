@@ -57,6 +57,22 @@ with engine.connect() as connection:
     result = connection.execute(text("SELECT * FROM intervals"))
     for row in result:
         print(row)
+    print("Test busiest_hour: 1/2")
+    result = connection.execute(
+        text(
+            "SELECT * FROM busiest_hour WHERE date_time >= '2023-04-18 00:00:00.000000' AND date_time < '2023-04-18 23:59:59.000000' AND interval IN ('hour') and call_type IN ('911')",  # pylint: disable=line-too-long
+        ),
+    )
+    for row in result:
+        print(row)
+    print("Test busiest_hour: 2/2")
+    result = connection.execute(
+        text(
+            "SELECT * FROM busiest_hour WHERE date_time >= '2023-04-18 00:00:00.000000' AND date_time < '2023-04-18 23:59:59.000000' AND interval IN ('hour') and call_type IN ('911','10-digit')",  # pylint: disable=line-too-long
+        ),
+    )
+    for row in result:
+        print(row)
     print("Test disconnect_time")
     result = connection.execute(
         text(

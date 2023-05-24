@@ -156,9 +156,14 @@ class NglsAPI(Adapter):
                             eval(f"predicate.{key}"),  # pylint: disable=eval-used
                         ).strftime(ISO_FORMAT_TIMESTAMP)
                     elif param == "terms":
-                        out_params[param] = json.dumps(
-                            {f"{key}": list(self.deserialize_set(predicate.value))},
-                        )
+                        try:
+                            out_params[param] = json.dumps(
+                                {f"{key}": list(json.loads(predicate.value))},
+                            )
+                        except TypeError:
+                            out_params[param] = json.dumps(
+                                {f"{key}": [predicate.value]},
+                            )
                     else:
                         out_params[param] = predicate.value
             elif not predicate and default:
