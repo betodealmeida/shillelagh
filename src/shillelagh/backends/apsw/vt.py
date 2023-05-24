@@ -192,8 +192,8 @@ def get_all_bounds(
 
         # convert constraint to native Python type, then to DB specific type
         if isinstance(constraint, set):
-            # A WHERE x IN (list) clause sends in constraintargs as a set when N>1: {item1,...,itemN}.
-            # We serialize this set to a string '["item1",...,"itemN"]'.
+            # A WHERE x IN (list) clause sends in constraintargs as a set when N>1:
+            # {item1,...,itemN}. We serialize this set to a string '["item1",...,"itemN"]'.
             constraint = json.dumps(list(constraint))
         constraint = type_map[column_type.type]().parse(constraint)
         value = column_type.format(constraint)
