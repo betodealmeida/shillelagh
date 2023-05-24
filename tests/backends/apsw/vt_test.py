@@ -3,6 +3,7 @@
 Tests for shillelagh.backends.apsw.vt.
 """
 import datetime
+import json
 from typing import Any, Dict, Iterable
 
 import apsw
@@ -102,11 +103,7 @@ def test_virtual_best_index() -> None:
     assert result == (
         [(0, True), None, (1, True), (2, True)],
         42,
-        (
-            f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}], "
-            f"[0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}], [-1, 73]], "
-            "[[1, false]]]"
-        ),
+        '{"indexes": [[1, 2], [0, 8], [-1, 73]], "orderbys_to_process": [[1, false]]}',
         True,
         666,
     )
@@ -152,11 +149,12 @@ def test_virtual_best_index_object(mocker: MockerFixture) -> None:
         ],
     )
     assert index_info.idxNum == 42
-    assert index_info.idxStr == (
-        f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}], "
-        f"[0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}], [-1, 73]], "
-        "[[1, false]], "
-        '["age", "pets"]]'
+    assert index_info.idxStr == json.dumps(
+        {
+            "indexes": [[1, 2], [0, 8], [-1, 73]],
+            "orderbys_to_process": [[1, False]],
+            "requested_columns": ["age", "pets"],
+        },
     )
     assert index_info.orderByConsumed is True
     assert index_info.estimatedCost == 666
@@ -178,7 +176,7 @@ def test_virtual_best_index_static_order_not_consumed() -> None:
     assert result == (
         [(0, False), None, None],
         42,
-        f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}]], []]",
+        '{"indexes": [[1, 2]], "orderbys_to_process": []}',
         True,
         666,
     )
@@ -200,7 +198,7 @@ def test_virtual_best_index_static_order_not_consumed_descending() -> None:
     assert result == (
         [(0, False), None, None],
         42,
-        f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}]], []]",
+        '{"indexes": [[1, 2]], "orderbys_to_process": []}',
         False,
         666,
     )
@@ -215,7 +213,13 @@ def test_virtual_best_index_operator_not_supported() -> None:
         [(1, apsw.SQLITE_INDEX_CONSTRAINT_MATCH)],  # name LIKE?
         [(1, False)],  # ORDER BY name ASC
     )
-    assert result == ([None], 42, "[[], [[1, false]]]", True, 666)
+    assert result == (
+        [None],
+        42,
+        '{"indexes": [], "orderbys_to_process": [[1, false]]}',
+        True,
+        666,
+    )
 
 
 def test_virtual_best_index_order_consumed() -> None:
@@ -234,10 +238,7 @@ def test_virtual_best_index_order_consumed() -> None:
     assert result == (
         [(0, True), None, (1, True)],
         42,
-        (
-            f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}], "
-            f"[0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}]], [[0, true]]]"
-        ),
+        '{"indexes": [[1, 2], [0, 8]], "orderbys_to_process": [[0, true]]}',
         True,
         666,
     )
@@ -315,7 +316,7 @@ def test_cursor() -> None:
     """
     table = VTTable(FakeAdapter())
     cursor = table.Open()
-    cursor.Filter(42, "[[], []]", [])
+    cursor.Filter(42, '{"indexes": [], "orderbys_to_process": []}', [])
     assert cursor.current_row == (0, 20, "Alice", "0")
     assert cursor.Rowid() == 0
     assert cursor.Column(0) == 20
@@ -335,7 +336,7 @@ def test_cursor_with_constraints() -> None:
     """
     table = VTTable(FakeAdapter())
     cursor = table.Open()
-    cursor.Filter(42, f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}]], []]", ["Alice"])
+    cursor.Filter(42, '{"indexes": [[1, 2]], "orderbys_to_process": []}', ["Alice"])
     assert cursor.current_row == (0, 20, "Alice", "0")
 
     assert not cursor.Eof()
@@ -353,7 +354,7 @@ def test_cursor_with_constraints_invalid_filter() -> None:
     with pytest.raises(Exception) as excinfo:
         cursor.Filter(
             42,
-            f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_MATCH}]], []]",
+            '{"indexes": [[1, 64]], "orderbys_to_process": []}',
             ["Alice"],
         )
 
@@ -367,7 +368,7 @@ def test_cursor_with_constraints_no_filters() -> None:
     table = VTTable(FakeAdapterNoFilters())
     cursor = table.Open()
     with pytest.raises(Exception) as excinfo:
-        cursor.Filter(42, f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}]], []]", ["Alice"])
+        cursor.Filter(42, '{"indexes": [[1, 2]], "orderbys_to_process": []}', ["Alice"])
 
     assert str(excinfo.value) == "No valid filter found"
 
@@ -379,7 +380,11 @@ def test_cursor_with_constraints_only_equal() -> None:
     table = VTTable(FakeAdapterOnlyEqual())
     cursor = table.Open()
     with pytest.raises(Exception) as excinfo:
-        cursor.Filter(42, f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_GE}]], []]", ["Alice"])
+        cursor.Filter(
+            42,
+            '{"indexes": [[1, 32]], "orderbys_to_process": []}',
+            ["Alice"],
+        )
 
     assert str(excinfo.value) == "No valid filter found"
 

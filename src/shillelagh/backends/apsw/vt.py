@@ -429,7 +429,9 @@ class VTTable:
             estimated_cost,
         ) = self._build_index(constraints, orderbys)
 
-        index_name = json.dumps([indexes, orderbys_to_process])
+        index_name = json.dumps(
+            {"indexes": indexes, "orderbys_to_process": orderbys_to_process},
+        )
 
         return (
             constraints_used,
@@ -468,7 +470,13 @@ class VTTable:
         ) = self._build_index(constraints, orderbys)
 
         requested_columns = sorted({column_names[i] for i in index_info.colUsed})
-        index_name = json.dumps([indexes, orderbys_to_process, requested_columns])
+        index_name = json.dumps(
+            {
+                "indexes": indexes,
+                "orderbys_to_process": orderbys_to_process,
+                "requested_columns": requested_columns,
+            },
+        )
 
         for i, constraint in enumerate(constraints_used):
             if isinstance(constraint, tuple):
@@ -565,8 +573,8 @@ class VTCursor:
         columns: Dict[str, Field] = self.adapter.get_columns()
         column_names: List[str] = list(columns.keys())
         index = json.loads(indexname)
-        indexes: List[Index] = index[0]
-        orderbys: List[Tuple[int, bool]] = index[1]
+        indexes: List[Index] = index["indexes"]
+        orderbys: List[Tuple[int, bool]] = index["orderbys_to_process"]
 
         # compute bounds for each column
         all_bounds = get_all_bounds(indexes, constraintargs, columns)
@@ -582,8 +590,8 @@ class VTCursor:
             kwargs["limit"] = limit
         if self.adapter.supports_offset:
             kwargs["offset"] = offset
-        if best_index_object_available() and self.adapter.supports_requested_columns:
-            kwargs["requested_columns"] = set(index[2])
+        if "requested_columns" in index:
+            kwargs["requested_columns"] = set(index["requested_columns"])
 
         rows = self.adapter.get_rows(bounds, order, **kwargs)
         rows = convert_rows_to_sqlite(columns, rows)
