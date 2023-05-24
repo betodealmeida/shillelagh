@@ -81,7 +81,7 @@ class Adapter:
             return None
         if not isinstance(a_set, set):
             raise TypeError("serialize_set(): a_set must be a set")
-        return f"set({json.dumps(list([item for item in a_set]))})"
+        return f"set({json.dumps(list(a_set))})"
 
     def deserialize_set(self, a_set_str: Any) -> Any:
         """Deserialize the given string to a set.
@@ -104,10 +104,10 @@ class Adapter:
             return None
         if not isinstance(a_set_str, str):
             raise TypeError("deserialize_set(): a_set_str must be a string")
-        m = re.match(r"set\((.*)\)", a_set_str)
-        if not m:
+        match = re.match(r"set\((.*)\)", a_set_str)
+        if not match:
             return set([a_set_str])
-        return set(json.loads(m.group(1)))
+        return set(json.loads(match.group(1)))
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
