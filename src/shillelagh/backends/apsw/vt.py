@@ -45,13 +45,14 @@ from shillelagh.lib import best_index_object_available, deserialize
 from shillelagh.typing import (
     Constraint,
     Index,
+    OrderBy,
     RequestedOrder,
     Row,
     SQLiteConstraint,
     SQLiteValidType,
 )
 
-if best_index_object_available():
+if best_index_object_available():  # pragma: no cover
     from apsw.ext import index_info_to_dict
 else:  # pragma: no cover
     apsw.IndexInfo = Any  # for type annotation
@@ -226,7 +227,7 @@ def get_limit_offset(
 
 
 def get_order(
-    orderbys: List[Tuple[int, bool]],
+    orderbys: List[OrderBy],
     column_names: List[str],
 ) -> List[Tuple[str, RequestedOrder]]:
     """
@@ -335,15 +336,8 @@ class VTTable:
     def _build_index(  # pylint: disable=too-many-locals
         self,
         constraints: List[Tuple[int, SQLiteConstraint]],
-        orderbys: List[Tuple[int, bool]],
-    ) -> Tuple[
-        List[Constraint],
-        int,
-        List[Index],
-        List[Tuple[int, bool]],
-        bool,
-        float,
-    ]:
+        orderbys: List[OrderBy],
+    ) -> Tuple[List[Constraint], int, List[Index], List[OrderBy], bool, float]:
         """
         Helper function to build index.
         """
@@ -390,7 +384,7 @@ class VTTable:
         # is the data being returned in the requested order? if not, SQLite will have
         # to sort it
         orderby_consumed = True
-        orderbys_to_process: List[Tuple[int, bool]] = []
+        orderbys_to_process: List[OrderBy] = []
         for column_index, descending in orderbys:
             requested_order = Order.DESCENDING if descending else Order.ASCENDING
             column_type = column_types[column_index]
@@ -412,7 +406,7 @@ class VTTable:
     def BestIndex(  # pylint: disable=too-many-locals
         self,
         constraints: List[Tuple[int, SQLiteConstraint]],
-        orderbys: List[Tuple[int, bool]],
+        orderbys: List[OrderBy],
     ) -> Tuple[List[Constraint], int, str, bool, float]:
         """
         Build an index for a given set of constraints and order bys.
@@ -574,7 +568,7 @@ class VTCursor:
         column_names: List[str] = list(columns.keys())
         index = json.loads(indexname)
         indexes: List[Index] = index["indexes"]
-        orderbys: List[Tuple[int, bool]] = index["orderbys_to_process"]
+        orderbys: List[OrderBy] = index["orderbys_to_process"]
 
         # compute bounds for each column
         all_bounds = get_all_bounds(indexes, constraintargs, columns)

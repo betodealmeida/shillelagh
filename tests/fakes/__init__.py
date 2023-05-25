@@ -5,7 +5,7 @@ Fake objects to simplify testing.
 import json
 import os
 import urllib.parse
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Type
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.fields import Float, Integer, Order, String
@@ -40,8 +40,9 @@ class FakeAdapter(Adapter):
 
     safe = True
 
-    supports_limit = False
-    supports_offset = False
+    supports_limit = True
+    supports_offset = True
+    supports_requested_columns = True
 
     age = Float(filters=[Range], order=Order.ANY, exact=True)
     name = String(filters=[Equal], order=Order.ANY, exact=True)
@@ -64,13 +65,23 @@ class FakeAdapter(Adapter):
             {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
         ]
 
-    def get_data(
+    def get_data(  # pylint: disable=too-many-arguments
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        requested_columns: Optional[Set[str]] = None,
         **kwargs: Any,
-    ) -> Iterator[Dict[str, Any]]:
-        yield from filter_data(iter(self.data), bounds, order)
+    ) -> Iterator[Row]:
+        yield from filter_data(
+            iter(self.data),
+            bounds,
+            order,
+            limit,
+            offset,
+            requested_columns,
+        )
 
     def insert_data(self, row: Row) -> int:
         row_id: Optional[int] = row["rowid"]

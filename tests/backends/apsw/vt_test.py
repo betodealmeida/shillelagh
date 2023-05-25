@@ -103,7 +103,12 @@ def test_virtual_best_index() -> None:
     assert result == (
         [(0, True), None, (1, True), (2, True)],
         42,
-        '{"indexes": [[1, 2], [0, 8], [-1, 73]], "orderbys_to_process": [[1, false]]}',
+        json.dumps(
+            {
+                "indexes": [[1, 2], [0, 8], [-1, 73]],
+                "orderbys_to_process": [[1, False]],
+            },
+        ),
         True,
         666,
     )
@@ -176,7 +181,7 @@ def test_virtual_best_index_static_order_not_consumed() -> None:
     assert result == (
         [(0, False), None, None],
         42,
-        '{"indexes": [[1, 2]], "orderbys_to_process": []}',
+        json.dumps({"indexes": [[1, 2]], "orderbys_to_process": []}),
         True,
         666,
     )
@@ -198,7 +203,7 @@ def test_virtual_best_index_static_order_not_consumed_descending() -> None:
     assert result == (
         [(0, False), None, None],
         42,
-        '{"indexes": [[1, 2]], "orderbys_to_process": []}',
+        json.dumps({"indexes": [[1, 2]], "orderbys_to_process": []}),
         False,
         666,
     )
@@ -216,7 +221,7 @@ def test_virtual_best_index_operator_not_supported() -> None:
     assert result == (
         [None],
         42,
-        '{"indexes": [], "orderbys_to_process": [[1, false]]}',
+        json.dumps({"indexes": [], "orderbys_to_process": [[1, False]]}),
         True,
         666,
     )
@@ -238,7 +243,7 @@ def test_virtual_best_index_order_consumed() -> None:
     assert result == (
         [(0, True), None, (1, True)],
         42,
-        '{"indexes": [[1, 2], [0, 8]], "orderbys_to_process": [[0, true]]}',
+        json.dumps({"indexes": [[1, 2], [0, 8]], "orderbys_to_process": [[0, True]]}),
         True,
         666,
     )
@@ -316,7 +321,7 @@ def test_cursor() -> None:
     """
     table = VTTable(FakeAdapter())
     cursor = table.Open()
-    cursor.Filter(42, '{"indexes": [], "orderbys_to_process": []}', [])
+    cursor.Filter(42, json.dumps({"indexes": [], "orderbys_to_process": []}), [])
     assert cursor.current_row == (0, 20, "Alice", "0")
     assert cursor.Rowid() == 0
     assert cursor.Column(0) == 20
@@ -336,8 +341,36 @@ def test_cursor_with_constraints() -> None:
     """
     table = VTTable(FakeAdapter())
     cursor = table.Open()
-    cursor.Filter(42, '{"indexes": [[1, 2]], "orderbys_to_process": []}', ["Alice"])
+    cursor.Filter(
+        42,
+        json.dumps({"indexes": [[1, 2]], "orderbys_to_process": []}),
+        ["Alice"],
+    )
     assert cursor.current_row == (0, 20, "Alice", "0")
+
+    assert not cursor.Eof()
+    cursor.Next()
+    assert cursor.Eof()
+
+
+def test_cursor_with_constraints_with_requested_columns() -> None:
+    """
+    Test filtering a cursor with requested_columns.
+    """
+    table = VTTable(FakeAdapter())
+    cursor = table.Open()
+    cursor.Filter(
+        42,
+        json.dumps(
+            {
+                "indexes": [[1, 2]],
+                "orderbys_to_process": [],
+                "requested_columns": ["name"],
+            },
+        ),
+        ["Alice"],
+    )
+    assert cursor.current_row == (None, None, "Alice", None)
 
     assert not cursor.Eof()
     cursor.Next()
@@ -354,7 +387,7 @@ def test_cursor_with_constraints_invalid_filter() -> None:
     with pytest.raises(Exception) as excinfo:
         cursor.Filter(
             42,
-            '{"indexes": [[1, 64]], "orderbys_to_process": []}',
+            json.dumps({"indexes": [[1, 64]], "orderbys_to_process": []}),
             ["Alice"],
         )
 
@@ -368,7 +401,11 @@ def test_cursor_with_constraints_no_filters() -> None:
     table = VTTable(FakeAdapterNoFilters())
     cursor = table.Open()
     with pytest.raises(Exception) as excinfo:
-        cursor.Filter(42, '{"indexes": [[1, 2]], "orderbys_to_process": []}', ["Alice"])
+        cursor.Filter(
+            42,
+            json.dumps({"indexes": [[1, 2]], "orderbys_to_process": []}),
+            ["Alice"],
+        )
 
     assert str(excinfo.value) == "No valid filter found"
 
@@ -382,7 +419,7 @@ def test_cursor_with_constraints_only_equal() -> None:
     with pytest.raises(Exception) as excinfo:
         cursor.Filter(
             42,
-            '{"indexes": [[1, 32]], "orderbys_to_process": []}',
+            json.dumps({"indexes": [[1, 32]], "orderbys_to_process": []}),
             ["Alice"],
         )
 

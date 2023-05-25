@@ -24,6 +24,7 @@ Row = Dict[str, Any]
 # An index is a tuple with a column index and an operator to filter it
 Index = Tuple[int, SQLiteConstraint]
 
+OrderBy = Tuple[int, bool]
 RequestedOrder = Union[Literal[Order.ASCENDING], Literal[Order.DESCENDING]]
 
 SQLiteValidType = Union[None, int, float, str, bytes]
