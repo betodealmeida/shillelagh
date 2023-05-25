@@ -190,13 +190,15 @@ def get_all_bounds(
         column_name = column_names[column_index]
         column_type = columns[column_name]
 
-        # convert constraint to native Python type, then to DB specific type
-        if isinstance(constraint, set):
-            # A WHERE x IN (list) clause sends in constraintargs as a set when N>1:
-            # {item1,...,itemN}. We serialize this set to a string '["item1",...,"itemN"]'.
-            constraint = json.dumps(list(constraint))
-        constraint = type_map[column_type.type]().parse(constraint)
-        value = column_type.format(constraint)
+        if isinstance(constraint, set) and operator == Operator.EQ:
+            # See also https://rogerbinns.github.io/apsw/vtable.html#apsw.VTCursor.Filter
+            constraint = [type_map[column_type.type]().parse(c) for c in constraint]
+            value = tuple([column_type.format(c) for c in constraint])
+            operator = Operator.IN
+        else:
+            # convert constraint to native Python type, then to DB specific type
+            constraint = type_map[column_type.type]().parse(constraint)
+            value = column_type.format(constraint)
 
         all_bounds[column_name].add((operator, value))
 
