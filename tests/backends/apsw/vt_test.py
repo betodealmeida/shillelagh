@@ -640,9 +640,11 @@ def test_get_all_bounds_in_statements() -> None:
     constraintargs = [10, 5, {"test1", "test2"}]
     columns: Dict[str, Field] = {"a": String()}
 
-    assert get_all_bounds(indexes, constraintargs, columns) == {
+    assert get_all_bounds(indexes, constraintargs, columns) in [{
         "a": {(Operator.IN, ('test2', 'test1'))},
-    }
+    }, {
+        "a": {(Operator.IN, ('test1', 'test2'))},
+    },]
 
 
 def test_get_limit_offset() -> None:
