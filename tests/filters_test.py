@@ -387,6 +387,7 @@ def test_is_not_null() -> None:
     assert IsNotNull().check(None) is False
     assert IsNotNull() != 0
 
+
 def test_in_numbers() -> None:
     """
     Test ``In``.
@@ -396,20 +397,22 @@ def test_in_numbers() -> None:
     assert isinstance(filter_, In)
     assert str(filter_) == "IN(0, 1, 5)"
 
+
 def test_in_check_strings() -> None:
     """
     Test ``In``.
     """
-    operations = {(Operator.IN, tuple({'b', 'a'}))}
+    operations = {(Operator.IN, tuple({"b", "a"}))}
     filter_ = In.build(operations)
     assert isinstance(filter_, In)
-    assert filter_.check('a')
-    assert filter_.check('b')
-    assert not filter_.check('c')
+    assert filter_.check("a")
+    assert filter_.check("b")
+    assert not filter_.check("c")
     assert str(filter_) in [
         "IN('b', 'a')",
         "IN('a', 'b')",
     ]
+
 
 def test_in_multiple_value_impossible() -> None:
     """

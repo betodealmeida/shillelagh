@@ -193,14 +193,13 @@ def get_all_bounds(
         if isinstance(constraint, set) and operator == Operator.EQ:
             # See also https://rogerbinns.github.io/apsw/vtable.html#apsw.VTCursor.Filter
             constraint = [type_map[column_type.type]().parse(c) for c in constraint]
-            value = tuple([column_type.format(c) for c in constraint])
-            operator = Operator.IN
+            tuple_value = tuple(column_type.format(c) for c in constraint)
+            all_bounds[column_name].add((Operator.IN, tuple_value))
         else:
             # convert constraint to native Python type, then to DB specific type
             constraint = type_map[column_type.type]().parse(constraint)
             value = column_type.format(constraint)
-
-        all_bounds[column_name].add((operator, value))
+            all_bounds[column_name].add((operator, value))
 
     return all_bounds
 
@@ -445,9 +444,10 @@ class VTTable:
                 index_info.set_aConstraintUsage_argvIndex(i, constraint[0] + 1)
                 index_info.set_aConstraintUsage_omit(i, constraint[1])
                 if (
-                    self.adapter.supports_in_statements and
-                    index_info.get_aConstraint_op(i) == apsw.SQLITE_INDEX_CONSTRAINT_EQ and
-                    index_info.get_aConstraintUsage_in(i)
+                    self.adapter.supports_in_statements
+                    and index_info.get_aConstraint_op(i)
+                    == apsw.SQLITE_INDEX_CONSTRAINT_EQ
+                    and index_info.get_aConstraintUsage_in(i)
                 ):
                     # Explicit request to pass the IN (list) as a set in the constraintargs.
                     index_info.set_aConstraintUsage_in(i, True)
