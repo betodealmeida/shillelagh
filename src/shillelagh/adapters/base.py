@@ -51,9 +51,9 @@ class Adapter:
     # if true, the requested columns will be passed to ``get_rows`` and ``get_data``
     supports_requested_columns = False
 
-    # if true, a set of strings from an in statement will be serialized before being
-    # passed in as bounds to ``get_rows`` and ``get_data``. This requires
-    # supports_requested_columns to be set to True as well.
+    # if true, a set from an IN statement will be assigned the new IN operator and
+    # passed in as a tuple to bounds in ``get_rows`` and ``get_data``. This requires
+    # supports_requested_columns to be set to true as well.
     supports_in_statements = False
 
     def __init__(self, *args: Any, **kwargs: Any):  # pylint: disable=unused-argument
