@@ -406,7 +406,7 @@ def test_in_check_strings() -> None:
     assert filter_.check('a')
     assert filter_.check('b')
     assert not filter_.check('c')
-    assert str(filter_) == "IN('a', 'b')"
+    assert str(filter_) == "IN('b', 'a')"
 
 def test_in_multiple_value_impossible() -> None:
     """

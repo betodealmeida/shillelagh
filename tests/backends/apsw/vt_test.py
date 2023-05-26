@@ -207,7 +207,10 @@ def test_virtual_best_index_object_with_in_statement(mocker: MockerFixture) -> N
     }
     def get_a_constraint_usage_in(i):
         return index_info_to_dict.return_value["aConstraintUsage"][i]["in"]
+    def get_a_constraint_op(i):
+        return index_info_to_dict.return_value["aConstraint"][i]["op"]
     index_info.get_aConstraintUsage_in = get_a_constraint_usage_in
+    index_info.get_aConstraint_op = get_a_constraint_op
 
     adapter = FakeAdapterInStatements()
 
@@ -638,7 +641,7 @@ def test_get_all_bounds_in_statements() -> None:
     columns: Dict[str, Field] = {"a": String()}
 
     assert get_all_bounds(indexes, constraintargs, columns) == {
-        "a": {(Operator.IN, ('test1', 'test2'))},
+        "a": {(Operator.IN, ('test2', 'test1'))},
     }
 
 
