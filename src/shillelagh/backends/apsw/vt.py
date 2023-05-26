@@ -23,7 +23,6 @@ from typing import (
 )
 
 import apsw
-from packaging.version import Version
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
@@ -42,17 +41,18 @@ from shillelagh.fields import (
     StringInteger,
 )
 from shillelagh.filters import Filter, Operator
-from shillelagh.lib import deserialize
+from shillelagh.lib import best_index_object_available, deserialize
 from shillelagh.typing import (
     Constraint,
     Index,
+    OrderBy,
     RequestedOrder,
     Row,
     SQLiteConstraint,
     SQLiteValidType,
 )
 
-if Version(apsw.apswversion()) >= Version("3.41.0.0"):  # pragma: no cover
+if best_index_object_available():  # pragma: no cover
     from apsw.ext import index_info_to_dict
 else:  # pragma: no cover
     apsw.IndexInfo = Any  # for type annotation
@@ -227,7 +227,7 @@ def get_limit_offset(
 
 
 def get_order(
-    orderbys: List[Tuple[int, bool]],
+    orderbys: List[OrderBy],
     column_names: List[str],
 ) -> List[Tuple[str, RequestedOrder]]:
     """
@@ -318,7 +318,6 @@ class VTTable:
 
     def __init__(self, adapter: Adapter):
         self.adapter = adapter
-        self.requested_columns: Optional[Set[str]] = None
 
     def get_create_table(self, tablename: str) -> str:
         """
@@ -334,16 +333,13 @@ class VTTable:
         )
         return f'CREATE TABLE "{tablename}" ({formatted_columns})'
 
-    def BestIndex(  # pylint: disable=too-many-locals
+    def _build_index(  # pylint: disable=too-many-locals
         self,
         constraints: List[Tuple[int, SQLiteConstraint]],
-        orderbys: List[Tuple[int, bool]],
-    ) -> Tuple[List[Constraint], int, str, bool, float]:
+        orderbys: List[OrderBy],
+    ) -> Tuple[List[Constraint], int, List[Index], List[OrderBy], bool, float]:
         """
-        Build an index for a given set of constraints and order bys.
-
-        The purpose of this method is to ask if you have the ability to determine if
-        a row meets certain constraints that doesn’t involve visiting every row.
+        Helper function to build index.
         """
         columns = self.adapter.get_columns()
         column_names = list(columns.keys())
@@ -388,7 +384,7 @@ class VTTable:
         # is the data being returned in the requested order? if not, SQLite will have
         # to sort it
         orderby_consumed = True
-        orderbys_to_process: List[Tuple[int, bool]] = []
+        orderbys_to_process: List[OrderBy] = []
         for column_index, descending in orderbys:
             requested_order = Order.DESCENDING if descending else Order.ASCENDING
             column_type = column_types[column_index]
@@ -398,8 +394,38 @@ class VTTable:
                 orderby_consumed = False
                 break
 
-        # serialize the indexes to str so it can be used later when filtering the data
-        index_name = json.dumps([indexes, orderbys_to_process])
+        return (
+            constraints_used,
+            index_number,
+            indexes,
+            orderbys_to_process,
+            orderby_consumed,
+            estimated_cost,
+        )
+
+    def BestIndex(  # pylint: disable=too-many-locals
+        self,
+        constraints: List[Tuple[int, SQLiteConstraint]],
+        orderbys: List[OrderBy],
+    ) -> Tuple[List[Constraint], int, str, bool, float]:
+        """
+        Build an index for a given set of constraints and order bys.
+
+        The purpose of this method is to ask if you have the ability to determine if
+        a row meets certain constraints that doesn’t involve visiting every row.
+        """
+        (
+            constraints_used,
+            index_number,
+            indexes,
+            orderbys_to_process,
+            orderby_consumed,
+            estimated_cost,
+        ) = self._build_index(constraints, orderbys)
+
+        index_name = json.dumps(
+            {"indexes": indexes, "orderbys_to_process": orderbys_to_process},
+        )
 
         return (
             constraints_used,
@@ -409,13 +435,15 @@ class VTTable:
             estimated_cost,
         )
 
-    def BestIndexObject(self, index_info: apsw.IndexInfo) -> bool:
+    def BestIndexObject(  # pylint: disable=too-many-locals
+        self,
+        index_info: apsw.IndexInfo,
+    ) -> bool:
         """
         Alternative to ``BestIndex`` that allows returning only selected columns.
         """
         columns = self.adapter.get_columns()
         column_names = list(columns.keys())
-        self.requested_columns = {column_names[i] for i in index_info.colUsed}
 
         index_info_dict = index_info_to_dict(index_info)
         constraints = [
@@ -429,10 +457,20 @@ class VTTable:
         (
             constraints_used,
             index_number,
-            index_name,
+            indexes,
+            orderbys_to_process,
             orderby_consumed,
             estimated_cost,
-        ) = self.BestIndex(constraints, orderbys)
+        ) = self._build_index(constraints, orderbys)
+
+        requested_columns = sorted({column_names[i] for i in index_info.colUsed})
+        index_name = json.dumps(
+            {
+                "indexes": indexes,
+                "orderbys_to_process": orderbys_to_process,
+                "requested_columns": requested_columns,
+            },
+        )
 
         for i, constraint in enumerate(constraints_used):
             if isinstance(constraint, tuple):
@@ -449,7 +487,7 @@ class VTTable:
         """
         Returns a cursor object.
         """
-        return VTCursor(self.adapter, self.requested_columns)
+        return VTCursor(self.adapter)
 
     def Disconnect(self) -> None:
         """
@@ -505,9 +543,8 @@ class VTCursor:
     An object for iterating over a table.
     """
 
-    def __init__(self, adapter: Adapter, requested_columns: Optional[Set[str]] = None):
+    def __init__(self, adapter: Adapter):
         self.adapter = adapter
-        self.requested_columns = requested_columns
 
         self.data: Iterator[Tuple[Any, ...]]
         self.current_row: Tuple[Any, ...]
@@ -530,8 +567,8 @@ class VTCursor:
         columns: Dict[str, Field] = self.adapter.get_columns()
         column_names: List[str] = list(columns.keys())
         index = json.loads(indexname)
-        indexes: List[Index] = index[0]
-        orderbys: List[Tuple[int, bool]] = index[1]
+        indexes: List[Index] = index["indexes"]
+        orderbys: List[OrderBy] = index["orderbys_to_process"]
 
         # compute bounds for each column
         all_bounds = get_all_bounds(indexes, constraintargs, columns)
@@ -547,8 +584,8 @@ class VTCursor:
             kwargs["limit"] = limit
         if self.adapter.supports_offset:
             kwargs["offset"] = offset
-        if self.adapter.supports_requested_columns:
-            kwargs["requested_columns"] = self.requested_columns
+        if "requested_columns" in index:
+            kwargs["requested_columns"] = set(index["requested_columns"])
 
         rows = self.adapter.get_rows(bounds, order, **kwargs)
         rows = convert_rows_to_sqlite(columns, rows)

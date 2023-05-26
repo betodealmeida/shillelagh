@@ -2,7 +2,7 @@
 Test for shillelagh.adapter.base.
 """
 from datetime import datetime
-from typing import List
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
 import pytest
 
@@ -11,8 +11,8 @@ from shillelagh.adapters.registry import AdapterLoader
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.fields import DateTime, Order
-from shillelagh.filters import Equal, Range
-from shillelagh.typing import Row
+from shillelagh.filters import Equal, Filter, Range
+from shillelagh.typing import RequestedOrder, Row
 
 from ..fakes import FakeAdapter
 
@@ -184,6 +184,9 @@ def test_limit_offset(registry: AdapterLoader) -> None:
         Custom ``FakeAdapter`` with more data.
         """
 
+        supports_limit = False
+        supports_offset = False
+
         def __init__(self):
             super().__init__()
 
@@ -192,6 +195,20 @@ def test_limit_offset(registry: AdapterLoader) -> None:
                 {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
                 {"rowid": None, "name": "Charlie", "age": 6, "pets": 1},
             ]
+
+        def get_data(  # pylint: disable=too-many-arguments
+            self,
+            bounds: Dict[str, Filter],
+            order: List[Tuple[str, RequestedOrder]],
+            limit: Optional[int] = None,
+            offset: Optional[int] = None,
+            requested_columns: Optional[Set[str]] = None,
+            **kwargs: Any
+        ) -> Iterator[Row]:
+            """
+            Return all data.
+            """
+            return iter(self.data)
 
     class FakeAdapterWithLimitOnly(CustomFakeAdapter):
 

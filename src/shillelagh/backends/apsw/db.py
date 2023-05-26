@@ -21,7 +21,6 @@ from typing import (
 )
 
 import apsw
-from packaging.version import Version
 
 from shillelagh import functions
 from shillelagh.adapters.base import Adapter
@@ -41,6 +40,7 @@ from shillelagh.exceptions import (  # nopycln: import; pylint: disable=redefine
 )
 from shillelagh.fields import Blob, Field
 from shillelagh.lib import (
+    best_index_object_available,
     combine_args_kwargs,
     escape_identifier,
     find_adapter,
@@ -448,7 +448,7 @@ class Connection:
 
         # register adapters
         for adapter in adapters:
-            if Version(apsw.apswversion()) >= Version("3.41.0.0"):
+            if best_index_object_available():
                 self._connection.createmodule(
                     adapter.__name__,
                     VTModule(adapter),

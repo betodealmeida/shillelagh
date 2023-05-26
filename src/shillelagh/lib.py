@@ -6,7 +6,21 @@ import json
 import marshal
 import math
 import operator
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+)
+
+import apsw
+from packaging.version import Version
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
@@ -393,12 +407,13 @@ def is_not_null(column: Any, _: Any) -> bool:
     return column is not None
 
 
-def filter_data(
+def filter_data(  # pylint: disable=too-many-arguments
     data: Iterator[Row],
     bounds: Dict[str, Filter],
     order: List[Tuple[str, RequestedOrder]],
     limit: Optional[int] = None,
     offset: Optional[int] = None,
+    requested_columns: Optional[Set[str]] = None,
 ) -> Iterator[Row]:
     """
     Apply filtering and sorting to a stream of rows.
@@ -407,6 +422,15 @@ def filter_data(
     simply declare fields without any filtering/sorting and let the backend
     (SQLite, eg) handle it.
     """
+    data = (
+        {
+            k: v
+            for k, v in row.items()
+            if requested_columns is None or k in requested_columns
+        }
+        for row in data
+    )
+
     for column_name, filter_ in bounds.items():
 
         def apply_filter(
@@ -543,3 +567,10 @@ def flatten(row: Row) -> Row:
     return {
         k: json.dumps(v) if isinstance(v, (list, dict)) else v for k, v in row.items()
     }
+
+
+def best_index_object_available() -> bool:
+    """
+    Check if support for best index object is available.
+    """
+    return bool(Version(apsw.apswversion()) >= Version("3.41.0.0"))
