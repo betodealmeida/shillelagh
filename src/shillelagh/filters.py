@@ -430,7 +430,9 @@ class Range(Filter):
 
 class In(Filter):
     """
-    Substring searches.
+    Filter for a list of choice items.
+
+    The value is a tuple of items, one of which must match to pass.
     """
 
     operators: Set[Operator] = {
@@ -447,15 +449,10 @@ class In(Filter):
         if len(values) != 1:
             return Impossible()
 
-        # we only accept tuples
-        value = values.pop()
-        if not isinstance(value, tuple):
-            return Impossible()
-
-        return cls(value)
+        return cls(values.pop())
 
     def check(self, value: Any) -> bool:
-        return bool(value in self.value)
+        return value in self.value
 
     def __repr__(self) -> str:
         return f"IN{self.value}"

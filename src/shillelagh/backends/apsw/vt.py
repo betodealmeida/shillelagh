@@ -190,16 +190,18 @@ def get_all_bounds(
         column_name = column_names[column_index]
         column_type = columns[column_name]
 
-        if isinstance(constraint, set) and operator == Operator.EQ:
+        value: Any
+        if isinstance(constraint, set) and operator is Operator.EQ:
             # See also https://rogerbinns.github.io/apsw/vtable.html#apsw.VTCursor.Filter
             constraint = [type_map[column_type.type]().parse(c) for c in constraint]
-            tuple_value = tuple(column_type.format(c) for c in constraint)
-            all_bounds[column_name].add((Operator.IN, tuple_value))
+            value = tuple(column_type.format(c) for c in constraint)
+            operator = Operator.IN
         else:
             # convert constraint to native Python type, then to DB specific type
             constraint = type_map[column_type.type]().parse(constraint)
             value = column_type.format(constraint)
-            all_bounds[column_name].add((operator, value))
+
+        all_bounds[column_name].add((operator, value))
 
     return all_bounds
 
