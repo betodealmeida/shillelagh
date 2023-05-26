@@ -75,6 +75,7 @@ class FakeAdapterInStatements(FakeAdapter):
     """
     An adapter with In filter suppoort.
     """
+
     supports_requested_columns = True
     supports_in_statements = True
     supports_limit = False
@@ -141,14 +142,16 @@ def test_virtual_best_index_object(mocker: MockerFixture) -> None:
             {"op": 73},
         ],
         "aConstraintUsage": [
-            {'argvIndex': 0, 'omit': False, 'in': True},
-            {'argvIndex': 0, 'omit': False, 'in': False},
-            {'argvIndex': 0, 'omit': False, 'in': False},
+            {"argvIndex": 0, "omit": False, "in": True},
+            {"argvIndex": 0, "omit": False, "in": False},
+            {"argvIndex": 0, "omit": False, "in": False},
         ],
         "aOrderBy": [{"iColumn": 1, "desc": False}],
     }
+
     def get_a_constraint_usage_in(i):
         return index_info_to_dict.return_value["aConstraintUsage"][i]["in"]
+
     index_info.get_aConstraintUsage_in = get_a_constraint_usage_in
 
     adapter = FakeAdapter()
@@ -201,16 +204,19 @@ def test_virtual_best_index_object_with_in_statement(mocker: MockerFixture) -> N
             {"op": 73},
         ],
         "aConstraintUsage": [
-            {'argvIndex': 0, 'omit': False, 'in': True},
-            {'argvIndex': 0, 'omit': False, 'in': False},
-            {'argvIndex': 0, 'omit': False, 'in': False},
+            {"argvIndex": 0, "omit": False, "in": True},
+            {"argvIndex": 0, "omit": False, "in": False},
+            {"argvIndex": 0, "omit": False, "in": False},
         ],
         "aOrderBy": [{"iColumn": 1, "desc": False}],
     }
+
     def get_a_constraint_usage_in(i):
         return index_info_to_dict.return_value["aConstraintUsage"][i]["in"]
+
     def get_a_constraint_op(i):
         return index_info_to_dict.return_value["aConstraint"][i]["op"]
+
     index_info.get_aConstraintUsage_in = get_a_constraint_usage_in
     index_info.get_aConstraint_op = get_a_constraint_op
 
@@ -681,11 +687,14 @@ def test_get_all_bounds_in_statements() -> None:
     constraintargs = [10, 5, {"test1", "test2"}]
     columns: Dict[str, Field] = {"a": String()}
 
-    assert get_all_bounds(indexes, constraintargs, columns) in [{
-        "a": {(Operator.IN, ('test2', 'test1'))},
-    }, {
-        "a": {(Operator.IN, ('test1', 'test2'))},
-    },]
+    assert get_all_bounds(indexes, constraintargs, columns) in [
+        {
+            "a": {(Operator.IN, ("test2", "test1"))},
+        },
+        {
+            "a": {(Operator.IN, ("test1", "test2"))},
+        },
+    ]
 
 
 def test_get_limit_offset() -> None:
