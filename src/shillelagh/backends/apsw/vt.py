@@ -190,15 +190,16 @@ def get_all_bounds(
         column_name = column_names[column_index]
         column_type = columns[column_name]
 
-        # convert constraint to native Python type, then to DB specific type
-        if isinstance(constraint, set):
-            # A WHERE x IN (list) clause sends in constraintargs as a set when N>1:
-            # {item1,...,itemN}. We serialize this set to a string '["item1",...,"itemN"]'.
-            constraint = json.dumps(list(constraint))
-        constraint = type_map[column_type.type]().parse(constraint)
-        value = column_type.format(constraint)
-
-        all_bounds[column_name].add((operator, value))
+        if isinstance(constraint, set) and operator == Operator.EQ:
+            # See also https://rogerbinns.github.io/apsw/vtable.html#apsw.VTCursor.Filter
+            constraint = [type_map[column_type.type]().parse(c) for c in constraint]
+            tuple_value = tuple(column_type.format(c) for c in constraint)
+            all_bounds[column_name].add((Operator.IN, tuple_value))
+        else:
+            # convert constraint to native Python type, then to DB specific type
+            constraint = type_map[column_type.type]().parse(constraint)
+            value = column_type.format(constraint)
+            all_bounds[column_name].add((operator, value))
 
     return all_bounds
 
@@ -444,6 +445,8 @@ class VTTable:
                 index_info.set_aConstraintUsage_omit(i, constraint[1])
                 if (
                     self.adapter.supports_in_statements
+                    and index_info.get_aConstraint_op(i)
+                    == apsw.SQLITE_INDEX_CONSTRAINT_EQ
                     and index_info.get_aConstraintUsage_in(i)
                 ):
                     # Explicit request to pass the IN (list) as a set in the constraintargs.

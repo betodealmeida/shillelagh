@@ -21,7 +21,7 @@ from shillelagh.backends.apsw.vt import (
 )
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field, Float, Integer, Order, String
-from shillelagh.filters import Equal, Operator
+from shillelagh.filters import Equal, In, Operator
 
 from ...fakes import FakeAdapter
 
@@ -67,6 +67,19 @@ class FakeAdapterNoColumns(FakeAdapter):
 
     def get_columns(self) -> Dict[str, Field]:
         return {}
+
+
+class FakeAdapterInStatements(FakeAdapter):
+
+    """
+    An adapter with In filter suppoort.
+    """
+
+    supports_requested_columns = True
+    supports_in_statements = True
+    supports_limit = False
+    supports_offset = False
+    name = String(filters=[Equal, In], order=Order.ANY, exact=True)
 
 
 def test_vt_module() -> None:
@@ -126,8 +139,18 @@ def test_virtual_best_index_object(mocker: MockerFixture) -> None:
             {"iColumn": 0, "op": apsw.SQLITE_INDEX_CONSTRAINT_LE},
             {"op": 73},
         ],
+        "aConstraintUsage": [
+            {"argvIndex": 0, "omit": False, "in": True},
+            {"argvIndex": 0, "omit": False, "in": False},
+            {"argvIndex": 0, "omit": False, "in": False},
+        ],
         "aOrderBy": [{"iColumn": 1, "desc": False}],
     }
+
+    def get_a_constraint_usage_in(i):
+        return index_info_to_dict.return_value["aConstraintUsage"][i]["in"]
+
+    index_info.get_aConstraintUsage_in = get_a_constraint_usage_in
 
     adapter = FakeAdapter()
     adapter.supports_limit = True
@@ -153,10 +176,78 @@ def test_virtual_best_index_object(mocker: MockerFixture) -> None:
             mocker.call(3, True),
         ],
     )
+    assert len(index_info.method_calls) == 6
     assert index_info.idxNum == 42
     assert index_info.idxStr == (
         f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}], "
         f"[0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}], [-1, 73]], "
+        "[[1, false]]]"
+    )
+    assert index_info.orderByConsumed is True
+    assert index_info.estimatedCost == 666
+
+
+def test_virtual_best_index_object_with_in_statement(mocker: MockerFixture) -> None:
+    """
+    Test ``BestIndexObject``.
+    """
+    index_info = mocker.MagicMock()
+    index_info.colUsed = {0, 2}
+    index_info_to_dict = mocker.patch("shillelagh.backends.apsw.vt.index_info_to_dict")
+    index_info_to_dict.return_value = {
+        "aConstraint": [
+            {"iColumn": 1, "op": apsw.SQLITE_INDEX_CONSTRAINT_EQ},
+            {"iColumn": 2, "op": apsw.SQLITE_INDEX_CONSTRAINT_GT},
+            {"iColumn": 0, "op": apsw.SQLITE_INDEX_CONSTRAINT_LE},
+            {"op": 73},
+        ],
+        "aConstraintUsage": [
+            {"argvIndex": 0, "omit": False, "in": True},
+            {"argvIndex": 0, "omit": False, "in": False},
+            {"argvIndex": 0, "omit": False, "in": False},
+        ],
+        "aOrderBy": [{"iColumn": 1, "desc": False}],
+    }
+
+    def get_a_constraint_usage_in(i):
+        return index_info_to_dict.return_value["aConstraintUsage"][i]["in"]
+
+    def get_a_constraint_op(i):
+        return index_info_to_dict.return_value["aConstraint"][i]["op"]
+
+    index_info.get_aConstraintUsage_in = get_a_constraint_usage_in
+    index_info.get_aConstraint_op = get_a_constraint_op
+
+    adapter = FakeAdapterInStatements()
+
+    table = VTTable(adapter)
+    assert table.requested_columns is None
+
+    result = table.BestIndexObject(index_info)
+    assert result is True
+    assert table.requested_columns == {"age", "pets"}
+
+    index_info.set_aConstraintUsage_argvIndex.assert_has_calls(
+        [
+            mocker.call(0, 1),
+            mocker.call(2, 2),
+        ],
+    )
+    index_info.set_aConstraintUsage_omit.assert_has_calls(
+        [
+            mocker.call(0, True),
+            mocker.call(2, True),
+        ],
+    )
+    index_info.set_aConstraintUsage_in.assert_has_calls(
+        [
+            mocker.call(0, True),
+        ],
+    )
+    assert index_info.idxNum == 42
+    assert index_info.idxStr == (
+        f"[[[1, {apsw.SQLITE_INDEX_CONSTRAINT_EQ}], "
+        f"[0, {apsw.SQLITE_INDEX_CONSTRAINT_LE}]], "
         "[[1, false]]]"
     )
     assert index_info.orderByConsumed is True
@@ -541,6 +632,28 @@ def test_get_all_bounds() -> None:
     assert get_all_bounds(indexes, constraintargs, columns) == {
         "a": {(Operator.EQ, "test")},
     }
+
+
+def test_get_all_bounds_in_statements() -> None:
+    """
+    Test ``get_all_bounds`` for IN statements.
+    """
+    indexes = [
+        (-1, 73),  # LIMIT
+        (-1, 74),  # OFFSET
+        (0, 2),  # EQ
+    ]
+    constraintargs = [10, 5, {"test1", "test2"}]
+    columns: Dict[str, Field] = {"a": String()}
+
+    assert get_all_bounds(indexes, constraintargs, columns) in [
+        {
+            "a": {(Operator.IN, ("test2", "test1"))},
+        },
+        {
+            "a": {(Operator.IN, ("test1", "test2"))},
+        },
+    ]
 
 
 def test_get_limit_offset() -> None:

@@ -8,7 +8,7 @@
             "program": "${workspaceFolder}/test/test_ngls_alchemy_dialect.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "justMyCode": true,
+            "justMyCode": false,
             "env": {
             }
         }

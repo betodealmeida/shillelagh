@@ -1,0 +1,9 @@
+{
+    "python.testing.pytestArgs": [
+        "--pdb",
+        "--no-cov"
+    ],
+    "python.testing.unittestEnabled": true,
+    "python.testing.pytestEnabled": true,
+    "git.ignoreLimitWarning": false
+}
