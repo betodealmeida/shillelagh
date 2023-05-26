@@ -5,6 +5,26 @@ Changelog
 Next
 ====
 
+Version 1.2.4 - 2023-05-15
+==========================
+
+- Relax dependency for ``requests-cache`` correctly (#362)
+
+Version 1.2.3 - 2023-05-15
+==========================
+
+- Add ``yarl`` dependency to the generic JSON adapter (#355)
+- Only warn of errors when loading adapters if they are explicitly requested (#360)
+- Relax dependency for ``requests-cache`` (#361)
+
+Version 1.2.2 - 2023-04-17
+==========================
+
+- Allow passing request headers to the generic JSON adapter via query arguments (#354)
+
+Version 1.2.1 - 2023-04-14
+==========================
+
 - Allow specifying custom request headers when using the generic JSON adapter (#337)
 - Fix for escaping identifiers correctly (#340)
 - Support for S3-compatible storage (#343)

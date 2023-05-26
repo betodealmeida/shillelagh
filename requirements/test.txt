@@ -15,6 +15,7 @@ astroid==2.14.2
     # via pylint
 attrs==21.4.0
     # via
+    #   cattrs
     #   pytest
     #   requests-cache
 beautifulsoup4==4.11.1
@@ -29,6 +30,8 @@ build==0.8.0
     # via pip-tools
 cachetools==5.2.0
     # via google-auth
+cattrs==22.2.0
+    # via requests-cache
 certifi==2022.6.15
     # via requests
 cfgv==3.3.1
@@ -48,7 +51,9 @@ dill==0.3.6
 distlib==0.3.5
     # via virtualenv
 exceptiongroup==1.0.4
-    # via pytest
+    # via
+    #   cattrs
+    #   pytest
 filelock==3.7.1
     # via virtualenv
 freezegun==1.2.1
@@ -71,8 +76,6 @@ iniconfig==1.1.1
     # via pytest
 isort==5.10.1
     # via pylint
-itsdangerous==2.1.2
-    # via requests-cache
 jmespath==1.0.1
     # via
     #   boto3
@@ -103,10 +106,13 @@ pip-tools==6.8.0
 platformdirs==2.5.2
     # via
     #   pylint
+    #   requests-cache
     #   virtualenv
 pluggy==1.0.0
     # via pytest
 pre-commit==2.20.0
+    # via shillelagh
+prison==0.2.1
     # via shillelagh
 prompt-toolkit==3.0.30
     # via shillelagh
@@ -148,14 +154,13 @@ pytz==2022.1
 pyyaml==6.0
     # via
     #   pre-commit
-    #   requests-cache
     #   shillelagh
 requests==2.28.1
     # via
     #   requests-cache
     #   requests-mock
     #   shillelagh
-requests-cache==0.7.1
+requests-cache==1.0.1
     # via shillelagh
 requests-mock==1.9.3
     # via shillelagh
@@ -167,6 +172,7 @@ six==1.16.0
     # via
     #   google-auth
     #   html5lib
+    #   prison
     #   python-dateutil
     #   requests-mock
     #   url-normalize
@@ -198,6 +204,7 @@ urllib3==1.26.10
     # via
     #   botocore
     #   requests
+    #   requests-cache
 virtualenv==20.15.1
     # via pre-commit
 wcwidth==0.2.5

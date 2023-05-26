@@ -32,7 +32,7 @@ class AdapterLoader:
         for entry_point in iter_entry_points("shillelagh.adapter"):
             self.loaders[entry_point.name].append(entry_point.load)
 
-    def load(self, name: str, safe: bool = False) -> Type[Adapter]:
+    def load(self, name: str, safe: bool = False, warn: bool = False) -> Type[Adapter]:
         """
         Load a given entry point by its name.
         """
@@ -43,7 +43,8 @@ class AdapterLoader:
             try:
                 return cast(Type[Adapter], load())
             except (ImportError, ModuleNotFoundError) as ex:
-                _logger.warning("Couldn't load adapter %s", name)
+                if warn:
+                    _logger.warning("Couldn't load adapter %s", name)
                 _logger.debug(ex)
                 continue
 
@@ -76,7 +77,7 @@ class AdapterLoader:
             return {}
 
         loaded_adapters = {
-            name: self.load(name, safe=True)
+            name: self.load(name, safe=True, warn=True)
             for name in self.loaders
             if name in adapters
         }

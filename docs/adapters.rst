@@ -451,3 +451,11 @@ Or via SQLAlchemy:
             },
         },
     )
+
+Or via query parameters:
+
+.. code-block:: sql
+
+   SELECT * FROM "https://api.example.com/?_s_headers=(X-Auth-Token:SECRET)"
+
+Note that if passing the headers via query parameters the dictionary should be serialized using `RISON <https://pypi.org/project/prison/>`_.
