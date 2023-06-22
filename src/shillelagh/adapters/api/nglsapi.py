@@ -23,7 +23,8 @@ from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
 AVERAGE_NUMBER_OF_ROWS = 1000
-ISO_FORMAT_TIMESTAMP = "%Y-%m-%dT%H:%M:%SZ"
+UTC_ISO_FORMAT_TIMESTAMP = "%Y-%m-%dT%H:%M:%SZ"
+ISO_FORMAT_TIMESTAMP = "%Y-%m-%dT%H:%M:%S"
 
 
 class NglsAPI(Adapter):
@@ -152,9 +153,13 @@ class NglsAPI(Adapter):
             if predicate and params:
                 for param, key in params.items():
                     if col_type == "TIMESTAMP":
-                        out_params[param] = pytz.utc.localize(
-                            eval(f"predicate.{key}"),  # pylint: disable=eval-used
-                        ).strftime(ISO_FORMAT_TIMESTAMP)
+                        timestamp = getattr(predicate, key)
+                        if timestamp.tzinfo:
+                            out_params[param] = pytz.utc.localize(timestamp).strftime(
+                                UTC_ISO_FORMAT_TIMESTAMP,
+                            )
+                        else:
+                            out_params[param] = timestamp.strftime(ISO_FORMAT_TIMESTAMP)
                     elif param == "terms":
                         if isinstance(predicate.value, str):
                             out_params[param] = json.dumps(
