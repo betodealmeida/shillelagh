@@ -201,8 +201,8 @@ class Test:
 
         expected_params = {
             "format": "json",
-            "from": "2023-04-05T00:00:00Z",
-            "to": "2023-04-06T00:00:00Z",
+            "from": "2023-04-05T00:00:00",
+            "to": "2023-04-06T00:00:00",
         }
 
         ngls_api = NglsAPI(table="table", url="some.reporting.url")
