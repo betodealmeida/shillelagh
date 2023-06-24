@@ -80,3 +80,10 @@ repos:
     types: [python]
     exclude: ^templates/
     args: [--disable=use-implicit-booleaness-not-comparison]
+  - id: pytest
+    name: pytest
+    entry:  pytest --cov=src/shillelagh -vv tests/adapters/api/nglsapi_test.py --doctest-modules src/shillelagh --without-integration --without-slow-integration
+    language: system
+    types: [python]
+    exclude: ^templates/
+    args: []
