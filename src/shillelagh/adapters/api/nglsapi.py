@@ -49,7 +49,7 @@ class NglsAPI(Adapter):
         # since they use the URI argument.
         if kwargs.get("url") is None:
             return False
-        nglsreports = NglsReports.get_instance(URL(kwargs.get("url")))
+        nglsreports = NglsReports.get_instance(URL.create(kwargs.get("url")))
         if not nglsreports:
             _logger.error("nglsreports does not exist")
             return True
@@ -64,7 +64,7 @@ class NglsAPI(Adapter):
     ):
         super().__init__()
         self.table = table
-        self.nglsreports = NglsReports.get_instance(URL(url))
+        self.nglsreports = NglsReports.get_instance(URL.create(url))
         self.get_static_data_table = {
             "intervals": [["hour"], ["day"], ["month"]],
             "abandoned_tags": [["included"], ["excluded"], ["only"]],
