@@ -4,8 +4,8 @@ Tests for shillelagh.functions.
 import json
 
 import apsw
-import pkg_resources
 import pytest
+from importlib_metadata import distribution
 from pytest_mock import MockerFixture
 
 from shillelagh.adapters.registry import AdapterLoader
@@ -73,7 +73,7 @@ def test_version_from_sql() -> None:
     connection = connect(":memory:")
     cursor = connection.cursor()
     cursor.execute("SELECT version()")
-    shillelagh_version = pkg_resources.get_distribution("shillelagh").version
+    shillelagh_version = distribution("shillelagh").version
     apsw_version = apsw.apswversion()  # pylint: disable=c-extension-no-member
     version = f"{shillelagh_version} (apsw {apsw_version})"
     assert cursor.fetchall() == [(version,)]

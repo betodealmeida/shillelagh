@@ -5,7 +5,7 @@ import json
 import time
 from typing import Any, Dict, List, Type
 
-import pkg_resources
+from importlib_metadata import distribution
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.lib import find_adapter
@@ -71,4 +71,4 @@ def version() -> str:
         0.7.4
 
     """
-    return pkg_resources.get_distribution("shillelagh").version
+    return str(distribution("shillelagh").version)

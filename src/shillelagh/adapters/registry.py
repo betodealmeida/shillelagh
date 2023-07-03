@@ -8,7 +8,7 @@ import logging
 from collections import defaultdict
 from typing import Dict, List, Optional, Type, cast
 
-from pkg_resources import iter_entry_points
+from importlib_metadata import entry_points
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import InterfaceError
@@ -29,7 +29,7 @@ class AdapterLoader:
 
     def __init__(self):
         self.loaders = defaultdict(list)
-        for entry_point in iter_entry_points("shillelagh.adapter"):
+        for entry_point in entry_points(group="shillelagh.adapter"):
             self.loaders[entry_point.name].append(entry_point.load)
 
     def load(self, name: str, safe: bool = False, warn: bool = False) -> Type[Adapter]:
