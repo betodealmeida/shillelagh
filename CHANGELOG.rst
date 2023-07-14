@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.2.5 - 2023-07-14
+==========================
+
+- System adapter now supports memory (virtual/swap) queries (#369 and #372)
+
 Version 1.2.4 - 2023-05-15
 ==========================
 
