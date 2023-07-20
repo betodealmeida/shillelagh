@@ -206,6 +206,43 @@ class GSheetsTime(GSheetsField[str, datetime.time]):
         return f"timeofday '{value}'"
 
 
+class GSheetsDuration(GSheetsField[str, datetime.timedelta]):
+    """
+    A GSheets duration.
+    """
+
+    type = "DURATION"
+    db_api_type = "DATETIME"
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.timedelta]:
+        if self.pattern is None or value is None or value == "":
+            return None
+
+        return parse_date_time_pattern(value, self.pattern, datetime.timedelta)
+
+    def format(self, value: Optional[datetime.timedelta]) -> str:
+        # This method is used only when inserting or updating rows, so we
+        # encode NULLs as an empty string to match the Google Sheets API.
+        if self.pattern is None or value is None:
+            return ""
+
+        return format_date_time_pattern(value, self.pattern)
+
+    def quote(self, value: Optional[str]) -> str:
+        if self.pattern is None or value == "" or value is None:
+            return "null"
+
+        # On SQL queries the timestamp should be prefix by "duration"
+        value = self.format(
+            parse_date_time_pattern(
+                value,
+                self.pattern,
+                datetime.timedelta,
+            ),
+        )
+        return f"duration '{value}'"
+
+
 class GSheetsBoolean(GSheetsField[str, bool]):
     """
     A GSheets boolean.

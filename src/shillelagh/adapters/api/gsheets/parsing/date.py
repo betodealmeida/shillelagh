@@ -532,6 +532,53 @@ class AMPM(AP):
         return {"meridiem": meridiem}, value[2:]
 
 
+def infer_column_type(pattern: str) -> str:
+    """
+    Infer the correct date-related type.
+
+    GSheets returns ``datetime`` as the type for timestamps, but also for time of day and
+    durations. We need to parse the pattern to figure out the exact type.
+    """
+    classes = [
+        # durations should come first because they need to be modified
+        # after the first capture
+        HPlusDuration,
+        MPlusDuration,
+        SPlusDuration,
+        # then the rest
+        H,
+        HHPlus,
+        M,
+        MM,
+        MMM,
+        MMMM,
+        MMMMM,
+        S,
+        SS,
+        D,
+        DD,
+        DDD,
+        DDDDPlus,
+        YY,
+        YYYY,
+        AP,
+        AMPM,
+        ZERO,
+        LITERAL,
+    ]
+
+    tokens = list(tokenize(pattern, classes))
+
+    if any(isinstance(token, DurationToken) for token in tokens):
+        return "duration"
+
+    datetime_tokens = (D, DD, DDD, DDDDPlus, YY, YYYY)
+    if any(isinstance(token, datetime_tokens) for token in tokens):
+        return "datetime"
+
+    return "timeofday"
+
+
 def parse_date_time_pattern(
     value: str,
     pattern: str,
@@ -604,6 +651,12 @@ def format_date_time_pattern(value: DateTime, pattern: str) -> str:
     See https://developers.google.com/sheets/api/guides/formats?hl=en.
     """
     classes = [
+        # durations should come first because they need to be modified
+        # after the first capture
+        HPlusDuration,
+        MPlusDuration,
+        SPlusDuration,
+        # then the rest
         H,
         HHPlus,
         M,
@@ -613,9 +666,6 @@ def format_date_time_pattern(value: DateTime, pattern: str) -> str:
         MMMMM,
         S,
         SS,
-        HPlusDuration,
-        MPlusDuration,
-        SPlusDuration,
         D,
         DD,
         DDD,
