@@ -26,10 +26,10 @@ def test_literal_token():
         LITERAL,
     ]
 
-    assert LITERAL.match(r"\d")
-    assert LITERAL.match('"dd/mm/yy"')
+    assert LITERAL.match(r"\d", [])
+    assert LITERAL.match('"dd/mm/yy"', [])
     # matches eveything
-    assert LITERAL.match("d")
+    assert LITERAL.match("d", [])
 
     token = LITERAL("@")
     tokens = list(tokenize("@", classes))

@@ -246,29 +246,85 @@ class SS(S):
         return {"second": int(value[:2])}, value[2:]
 
 
-class HPlusDuration(Token):
+class DurationToken(Token):  # pylint: disable=abstract-method
+    """
+    A token for durations.
+
+    Durations are special because often only the first token is annotated. For example:
+
+        - [h]:mm:ss
+        - [ss].000
+
+    But apparently it is valid to annotate subsequent tokens:
+
+        - [hh]:[mm]:[ss].000
+
+    Who knows?
+
+    Because of this, their regexes are dynamic, and depend on the token history.
+    """
+
+    is_duration = True
+    regexes: Tuple[str, str]
+
+    @classmethod
+    def match(
+        cls,
+        pattern: str,
+        history: List[Token],
+    ) -> bool:
+        if any(isinstance(token, DurationToken) for token in history):
+            regex = cls.regexes[1]
+        else:
+            regex = cls.regexes[0]
+
+        return bool(re.match(regex, pattern))
+
+    @classmethod
+    def consume(
+        cls,
+        pattern: str,
+        history: List[Token],
+    ) -> Tuple[Token, str]:
+        if any(isinstance(token, DurationToken) for token in history):
+            regex = cls.regexes[1]
+        else:
+            regex = cls.regexes[0]
+
+        match = re.match(regex, pattern)
+        if not match:
+            # pylint: disable=broad-exception-raised
+            raise Exception("Token could not find match")
+        token = match.group()
+        return cls(token), pattern[len(token) :]
+
+
+class HPlusDuration(DurationToken):
     """
     Number of elapsed hours in a time duration. Number of letters indicates
     minimum number of digits (adds leading 0s).
     """
 
-    regex = r"\[h+\]"
+    regexes = (r"\[h+\]", r"(h+)|(\[h+\])")
 
     def format(self, value: Union[timedelta], tokens: List[Token]) -> str:
         return str(int(value.total_seconds() // 3600)).zfill(len(self.token) - 2)
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
-        size = len(self.token) - 2
+        match = re.match(r"\d+", value)
+        if not match:
+            raise Exception(f"Cannot parse value: {value}")
+        size = len(match.group())
         return {"hours": int(value[:size])}, value[size:]
 
 
-class MPlusDuration(Token):
+class MPlusDuration(DurationToken):
     """
     Number of elapsed minutes in a time duration. Number of letters indicates
     minimum number of digits (adds leading 0s).
     """
 
-    regex = r"\[m+\]"
+    regexes = (r"\[m+\]", r"(m+)|(\[m+\])")
 
     def format(self, value: Union[timedelta], tokens: List[Token]) -> str:
         seconds = value.total_seconds()
@@ -280,17 +336,20 @@ class MPlusDuration(Token):
         return str(int(seconds // 60)).zfill(len(self.token) - 2)
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
-        size = len(self.token) - 2
+        match = re.match(r"\d+", value)
+        if not match:
+            raise Exception(f"Cannot parse value: {value}")
+        size = len(match.group())
         return {"minutes": int(value[:size])}, value[size:]
 
 
-class SPlusDuration(Token):
+class SPlusDuration(DurationToken):
     """
     Number of elapsed seconds in a time duration. Number of letters indicates
     minimum number of digits (adds leading 0s).
     """
 
-    regex = r"\[s+\]"
+    regexes = (r"\[s+\]", r"(s+)|(\[s+\])")
 
     def format(self, value: Union[timedelta], tokens: List[Token]) -> str:
         seconds = value.total_seconds()
@@ -306,7 +365,10 @@ class SPlusDuration(Token):
         return str(int(seconds)).zfill(len(self.token) - 2)
 
     def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
-        size = len(self.token) - 2
+        match = re.match(r"\d+", value)
+        if not match:
+            raise Exception(f"Cannot parse value: {value}")
+        size = len(match.group())
         return {"seconds": int(value[:size])}, value[size:]
 
 
@@ -481,6 +543,12 @@ def parse_date_time_pattern(
     See https://developers.google.com/sheets/api/guides/formats?hl=en.
     """
     classes = [
+        # durations should come first because they need to be modified
+        # after the first capture
+        HPlusDuration,
+        MPlusDuration,
+        SPlusDuration,
+        # then the rest
         H,
         HHPlus,
         M,
@@ -490,9 +558,6 @@ def parse_date_time_pattern(
         MMMMM,
         S,
         SS,
-        HPlusDuration,
-        MPlusDuration,
-        SPlusDuration,
         D,
         DD,
         DDD,
