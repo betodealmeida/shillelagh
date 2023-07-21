@@ -320,7 +320,7 @@ def test_serialize() -> None:
     """
     assert serialize(["O'Malley's"]) == "2wEAAAD6Ck8nTWFsbGV5J3M="
 
-    def func():
+    def func() -> int:
         return 42
 
     with pytest.raises(ProgrammingError) as excinfo:
@@ -343,6 +343,7 @@ def test_combine_args_kwargs() -> None:
     """
     Test ``combine_args_kwargs``.
     """
+
     # pylint: disable=unused-argument, invalid-name
     def func(a: int = 0, b: str = "test", c: float = 10.0) -> None:
         pass

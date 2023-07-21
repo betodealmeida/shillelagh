@@ -15,7 +15,7 @@ from shillelagh.adapters.api.gsheets.parsing.base import (
 from shillelagh.adapters.api.gsheets.parsing.date import DD, MM, YYYY
 
 
-def test_literal_token():
+def test_literal_token() -> None:
     """
     Test the literal token.
     """
@@ -61,7 +61,7 @@ def test_literal_token():
     assert str(excinfo.value) == "B"
 
 
-def test_tokenize():
+def test_tokenize() -> None:
     """
     Test the tokenize function.
     """
@@ -84,7 +84,7 @@ def test_tokenize():
     ]
 
 
-def test_is_unescaped_literal():
+def test_is_unescaped_literal() -> None:
     """
     Test the is_unescaped_literal function.
     """

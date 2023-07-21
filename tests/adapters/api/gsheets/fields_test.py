@@ -10,6 +10,7 @@ from shillelagh.adapters.api.gsheets.fields import (
     GSheetsBoolean,
     GSheetsDate,
     GSheetsDateTime,
+    GSheetsDuration,
     GSheetsNumber,
     GSheetsString,
     GSheetsTime,
@@ -17,7 +18,7 @@ from shillelagh.adapters.api.gsheets.fields import (
 from shillelagh.fields import ISODateTime, Order
 
 
-def test_comparison():
+def test_comparison() -> None:
     """
     Test that a GSheets field is different from a standard field.
     """
@@ -29,7 +30,7 @@ def test_comparison():
     )
 
 
-def test_GSheetsDateTime():
+def test_GSheetsDateTime() -> None:
     """
     Test ``GSheetsDateTime``.
     """
@@ -63,7 +64,7 @@ def test_GSheetsDateTime():
     )
 
 
-def test_GSheetsDateTime_timezone():
+def test_GSheetsDateTime_timezone() -> None:
     """
     Test GSheetsDateTime when timezone is set.
     """
@@ -81,7 +82,7 @@ def test_GSheetsDateTime_timezone():
     )
 
 
-def test_GSheetsDate():
+def test_GSheetsDate() -> None:
     """
     Test ``GSheetsDate``.
     """
@@ -105,7 +106,7 @@ def test_GSheetsDate():
     assert GSheetsDate(pattern="M/d/yyyy").quote("12/31/2020") == "date '2020-12-31'"
 
 
-def test_GSheetsTime():
+def test_GSheetsTime() -> None:
     """
     Test ``GSheetsTime``.
     """
@@ -132,7 +133,36 @@ def test_GSheetsTime():
     )
 
 
-def test_GSheetsBoolean():
+def test_GSheetsDuration() -> None:
+    """
+    Test ``GSheetsDuration``.
+    """
+    assert GSheetsDuration().parse(None) is None
+    assert GSheetsDuration().parse("") is None
+
+    assert GSheetsDuration(pattern="[h]:mm:ss").parse("12:34:56") == datetime.timedelta(
+        hours=12,
+        minutes=34,
+        seconds=56,
+    )
+
+    assert GSheetsDuration().format(None) == ""
+    assert (
+        GSheetsDuration(pattern="[h]:mm:ss").format(
+            datetime.timedelta(hours=12, minutes=34, seconds=56),
+        )
+        == "12:34:56"
+    )
+
+    assert GSheetsDuration().quote(None) == "null"
+    assert GSheetsDuration().quote("") == "null"
+    assert (
+        GSheetsDuration(pattern="[h]:mm:ss").quote("12:34:56")
+        == "datetime '1899-12-30 12:34:56'"
+    )
+
+
+def test_GSheetsBoolean() -> None:
     """
     Test ``GSheetsBoolean``.
     """
@@ -151,7 +181,7 @@ def test_GSheetsBoolean():
     assert GSheetsBoolean().quote("FALSE") == "false"
 
 
-def test_GSheetsNumber():
+def test_GSheetsNumber() -> None:
     """
     Test ``GSheetsNumber``.
     """
@@ -175,7 +205,7 @@ def test_GSheetsNumber():
     assert GSheetsNumber().quote(1.0) == "1.0"
 
 
-def test_GSheetsString():
+def test_GSheetsString() -> None:
     """
     Test ``GSheetsString``.
     """

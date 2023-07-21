@@ -26,7 +26,7 @@ from shillelagh.adapters.api.gsheets.parsing.number import (
 )
 
 
-def test_digits_token():
+def test_digits_token() -> None:
     """
     Test the digits token.
     """
@@ -84,7 +84,7 @@ def test_digits_token():
     assert rest == ""
 
 
-def test_digits_errors():
+def test_digits_errors() -> None:
     """
     Test errors with the digits token.
     """
@@ -104,7 +104,7 @@ def test_digits_errors():
     assert str(excinfo.value) == "Invalid token: i"
 
 
-def test_period_token():
+def test_period_token() -> None:
     """
     Test the period token.
     """
@@ -119,7 +119,7 @@ def test_period_token():
     assert str(excinfo.value) == "invalid"
 
 
-def test_multiple_periods():
+def test_multiple_periods() -> None:
     """
     Test that only the first period is tokenized to a ``PERIOD``.
     """
@@ -134,7 +134,7 @@ def test_multiple_periods():
     ]
 
 
-def test_percent_token():
+def test_percent_token() -> None:
     """
     Test the percent token.
     """
@@ -149,7 +149,7 @@ def test_percent_token():
     assert str(excinfo.value) == "invalid"
 
 
-def test_comma_token():
+def test_comma_token() -> None:
     """
     Test the comma token.
     """
@@ -160,7 +160,7 @@ def test_comma_token():
     assert rest == ""
 
 
-def test_e_token():
+def test_e_token() -> None:
     """
     Test the scientific notation token.
     """
@@ -192,7 +192,7 @@ def test_e_token():
     assert str(excinfo.value) == "You are likely to be eaten by a grue."
 
 
-def test_fraction_token():
+def test_fraction_token() -> None:
     """
     Test the fraction token.
     """
@@ -218,7 +218,7 @@ def test_fraction_token():
     assert str(excinfo.value) == "You are likely to be eaten by a grue."
 
 
-def test_star_token():
+def test_star_token() -> None:
     """
     Test the star token.
     """
@@ -229,7 +229,7 @@ def test_star_token():
     assert rest == "1"
 
 
-def test_underscore_token():
+def test_underscore_token() -> None:
     """
     Test the underscore token.
     """
@@ -245,7 +245,7 @@ def test_underscore_token():
     assert str(excinfo.value) == "A"
 
 
-def test_at_token():
+def test_at_token() -> None:
     """
     Test the at token.
     """
@@ -266,7 +266,7 @@ def test_at_token():
     assert str(excinfo.value) == "123$"
 
 
-def test_color_token():
+def test_color_token() -> None:
     """
     Test the color token.
     """

@@ -32,7 +32,7 @@ from shillelagh.fields import Order
 from shillelagh.filters import Equal, IsNotNull, IsNull, Like, NotEqual, Range
 
 
-def test_get_field():
+def test_get_field() -> None:
     """
     Test ``get_field``.
     """
@@ -93,7 +93,7 @@ def test_get_field():
     )
 
 
-def test_format_error_message():
+def test_format_error_message() -> None:
     """
     Test ``format_error_message``.
     """
@@ -113,7 +113,7 @@ def test_format_error_message():
     assert format_error_message(response["errors"]) == "Invalid query: NO_COLUMN: C"
 
 
-def test_get_url():
+def test_get_url() -> None:
     """
     Test ``get_url``.
     """
@@ -146,7 +146,7 @@ def test_get_url():
     )
 
 
-def test_get_sync_mode():
+def test_get_sync_mode() -> None:
     """
     Test ``get_sync_mode``.
     """
@@ -181,7 +181,7 @@ def test_get_sync_mode():
     assert str(excinfo.value) == "Invalid sync mode: INVALID"
 
 
-def test_gen_letters():
+def test_gen_letters() -> None:
     """
     Test ``gen_letters``.
     """
@@ -250,7 +250,7 @@ def test_gen_letters():
     ]
 
 
-def test_get_index_from_letters():
+def test_get_index_from_letters() -> None:
     """
     Test ``get_index_from_letters``.
     """
@@ -261,7 +261,7 @@ def test_get_index_from_letters():
     assert get_index_from_letters("AAA") == 702
 
 
-def test_get_values_from_row():
+def test_get_values_from_row() -> None:
     """
     Test ``get_values_from_row``.
     """
@@ -334,7 +334,7 @@ def test_get_credentials(mocker: MockerFixture):
     app_default_credentials.assert_called()
 
 
-def test_get_value_from_cell():
+def test_get_value_from_cell() -> None:
     """
     Test ``get_value_from_cell``.
     """

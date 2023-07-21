@@ -50,7 +50,7 @@ def get_field(
     """
     # GSheets returns type ``datetime`` for timestamps, but also for time of day and
     # durations. We need to tokenize the pattern in order to figure out the correct type.
-    if col["type"] == "datetime":
+    if col["type"] == "datetime" and "pattern" in col:
         col["type"] = infer_column_type(col["pattern"])
 
     type_map: Dict[str, Tuple[Type[GSheetsField], List[Type[Filter]]]] = {

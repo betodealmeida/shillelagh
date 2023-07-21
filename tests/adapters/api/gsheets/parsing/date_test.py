@@ -31,6 +31,7 @@ from shillelagh.adapters.api.gsheets.parsing.date import (
     S,
     SPlusDuration,
     format_date_time_pattern,
+    infer_column_type,
     parse_date_time_pattern,
     tokenize,
 )
@@ -61,7 +62,7 @@ classes = [
 ]
 
 
-def test_implementation():
+def test_implementation() -> None:
     """
     Test the examples from the reference.
 
@@ -113,7 +114,7 @@ def test_implementation():
     )
 
 
-def test_token():
+def test_token() -> None:
     """
     General tests for tokens.
     """
@@ -121,7 +122,7 @@ def test_token():
     assert H("h") != M("m")
 
 
-def test_h_token():
+def test_h_token() -> None:
     """
     Test the h token.
     """
@@ -152,7 +153,7 @@ def test_h_token():
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
 
-def test_hhplus_token():
+def test_hhplus_token() -> None:
     """
     Test the hhh+ token.
     """
@@ -173,7 +174,7 @@ def test_hhplus_token():
     assert token.parse("303", tokens) == ({"hour": 30}, "3")
 
 
-def test_m_token():
+def test_m_token() -> None:
     """
     Test the m token.
     """
@@ -222,7 +223,7 @@ def test_m_token():
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
 
-def test_mm_token():
+def test_mm_token() -> None:
     """
     Test the mm token.
     """
@@ -239,7 +240,7 @@ def test_mm_token():
     assert token.parse("123", tokens) == ({"month": 12}, "3")
 
 
-def test_mmm_token():
+def test_mmm_token() -> None:
     """
     Test the mmm token.
     """
@@ -255,7 +256,7 @@ def test_mmm_token():
     assert token.parse("Mar 1st", tokens) == ({"month": 3}, " 1st")
 
 
-def test_mmmm_token():
+def test_mmmm_token() -> None:
     """
     Test the mmm token.
     """
@@ -271,7 +272,7 @@ def test_mmmm_token():
     assert token.parse("March 1st", tokens) == ({"month": 3}, " 1st")
 
 
-def test_mmmmm_token():
+def test_mmmmm_token() -> None:
     """
     Test the mmmmm token.
     """
@@ -293,7 +294,7 @@ def test_mmmmm_token():
     assert str(excinfo.value) == "Unable to parse month letter unambiguously: M"
 
 
-def test_s_token():
+def test_s_token() -> None:
     """
     Test the s token.
     """
@@ -317,7 +318,7 @@ def test_s_token():
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
 
-def test_ss_token():
+def test_ss_token() -> None:
     """
     Test the ss token.
     """
@@ -334,7 +335,7 @@ def test_ss_token():
     assert token.parse("59.123", tokens) == ({"second": 59}, ".123")
 
 
-def test_hplusduration_token():
+def test_hplusduration_token() -> None:
     """
     Test the [h+] token.
     """
@@ -372,7 +373,7 @@ def test_hplusduration_token():
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
 
-def test_mplusduration_token():
+def test_mplusduration_token() -> None:
     """
     Test the [m+] token.
     """
@@ -416,7 +417,7 @@ def test_mplusduration_token():
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
 
-def test_splusduration_token():
+def test_splusduration_token() -> None:
     """
     Test the [s+] token.
     """
@@ -463,7 +464,7 @@ def test_splusduration_token():
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
 
-def test_d_token():
+def test_d_token() -> None:
     """
     Test the d token.
     """
@@ -483,7 +484,7 @@ def test_d_token():
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
 
-def test_dd_token():
+def test_dd_token() -> None:
     """
     Test the dd token.
     """
@@ -501,7 +502,7 @@ def test_dd_token():
     assert token.parse("12/11/2021", tokens) == ({"day": 12}, "/11/2021")
 
 
-def test_ddd_token():
+def test_ddd_token() -> None:
     """
     Test the ddd token.
     """
@@ -518,7 +519,7 @@ def test_ddd_token():
     assert token.parse("Fri, 12/11/2021", tokens) == ({"weekday": 0}, ", 12/11/2021")
 
 
-def test_ddddplus_token():
+def test_ddddplus_token() -> None:
     """
     Test the dddd+ token.
     """
@@ -535,7 +536,7 @@ def test_ddddplus_token():
     assert token.parse("Friday, 12/11/2021", tokens) == ({"weekday": 0}, ", 12/11/2021")
 
 
-def test_yy_token():
+def test_yy_token() -> None:
     """
     Test the yy token.
     """
@@ -552,7 +553,7 @@ def test_yy_token():
     assert token.parse("21/11/12", tokens) == ({"year": 2021}, "/11/12")
 
 
-def test_yyyy_token():
+def test_yyyy_token() -> None:
     """
     Test the yyyy token.
     """
@@ -569,7 +570,7 @@ def test_yyyy_token():
     assert token.parse("2021/11/12", tokens) == ({"year": 2021}, "/11/12")
 
 
-def test_zero_token():
+def test_zero_token() -> None:
     """
     Test the 00 token.
     """
@@ -591,7 +592,7 @@ def test_zero_token():
     assert token.parse("123", tokens) == ({"microsecond": 123000}, "")
 
 
-def test_ap_token():
+def test_ap_token() -> None:
     """
     Test the a/p token.
     """
@@ -615,7 +616,7 @@ def test_ap_token():
     assert token.parse("A 09:00", tokens) == ({"meridiem": Meridiem.AM}, " 09:00")
 
 
-def test_ampm_token():
+def test_ampm_token() -> None:
     """
     Test the am/pm token.
     """
@@ -635,7 +636,7 @@ def test_ampm_token():
     assert token.parse("AM 09:00", tokens) == ({"meridiem": Meridiem.AM}, " 09:00")
 
 
-def test_parse_date_time_pattern():
+def test_parse_date_time_pattern() -> None:
     """
     Test the parse_date_time_pattern function.
     """
@@ -672,7 +673,7 @@ def test_parse_date_time_pattern():
     assert str(excinfo.value) == "Unsupported format"
 
 
-def test_format_date_time_pattern():
+def test_format_date_time_pattern() -> None:
     """
     Test the format_date_time_pattern function.
     """
@@ -685,7 +686,7 @@ def test_format_date_time_pattern():
     )
 
 
-def test_parse_date_time_pattern_with_quotes():
+def test_parse_date_time_pattern_with_quotes() -> None:
     """
     Test parsing a timestamp with quotes.
     """
@@ -697,7 +698,7 @@ def test_parse_date_time_pattern_with_quotes():
     assert parsed == date(2021, 1, 1)
 
 
-def test_parse_date_time_with_meridiem():
+def test_parse_date_time_with_meridiem() -> None:
     """
     Test parsing a timestamp with AM/PM in the hour.
     """
@@ -716,7 +717,7 @@ def test_parse_date_time_with_meridiem():
     assert parsed == time(12, 34, 56)
 
 
-def test_parse_date_time_without_meridiem():
+def test_parse_date_time_without_meridiem() -> None:
     """
     Test parsing a timestamp without AM/PM in the hour.
     """
@@ -728,7 +729,7 @@ def test_parse_date_time_without_meridiem():
     assert parsed == datetime(2020, 12, 31, 12, 34, 56)
 
 
-def test_format_date_time_with_meridiem():
+def test_format_date_time_with_meridiem() -> None:
     """
     Test formatting a timestamp with AM/pM in the hour.
     """
@@ -739,3 +740,11 @@ def test_format_date_time_with_meridiem():
         )
         == "12:34:56 PM"
     )
+
+
+def test_infer_column_type() -> None:
+    """
+    Test type inferring via patterns.
+    """
+    assert infer_column_type("h:mm:ss am/pm") == "timeofday"
+    assert infer_column_type("[h]:mm:ss") == "duration"

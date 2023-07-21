@@ -47,7 +47,6 @@ AVERAGE_NUMBER_OF_ROWS = 1000
 
 
 class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
-
     r"""
     A Google Sheets adapter.
 

@@ -20,6 +20,10 @@ DATETIME_SQL_QUOTE = "%Y-%m-%d %H:%M:%S"
 DATE_SQL_QUOTE = "%Y-%m-%d"
 TIME_SQL_QUOTE = "%H:%M:%S"
 
+# When filtering a sheet based on a duration we need to convert it into a datetime
+# starting at 1899-12-30, for some reason. That is not documented anywhere, obviously.
+DURATION_OFFSET = datetime.datetime(1899, 12, 30)
+
 
 class GSheetsField(Field[Internal, External]):
     """
@@ -232,15 +236,12 @@ class GSheetsDuration(GSheetsField[str, datetime.timedelta]):
         if self.pattern is None or value == "" or value is None:
             return "null"
 
-        # On SQL queries the timestamp should be prefix by "duration"
-        value = self.format(
-            parse_date_time_pattern(
-                value,
-                self.pattern,
-                datetime.timedelta,
-            ),
+        timestamp = DURATION_OFFSET + parse_date_time_pattern(
+            value,
+            self.pattern,
+            datetime.timedelta,
         )
-        return f"duration '{value}'"
+        return f"datetime '{timestamp}'"
 
 
 class GSheetsBoolean(GSheetsField[str, bool]):
