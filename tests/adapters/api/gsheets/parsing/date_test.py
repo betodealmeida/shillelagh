@@ -3,10 +3,11 @@ Test the date/time pattern handling (parsing and formatting).
 """
 # pylint: disable=protected-access
 from datetime import date, datetime, time, timedelta
+from typing import cast
 
 import pytest
 
-from shillelagh.adapters.api.gsheets.parsing.base import LITERAL
+from shillelagh.adapters.api.gsheets.parsing.base import LITERAL, Token
 from shillelagh.adapters.api.gsheets.parsing.date import (
     AMPM,
     AP,
@@ -31,6 +32,7 @@ from shillelagh.adapters.api.gsheets.parsing.date import (
     S,
     SPlusDuration,
     format_date_time_pattern,
+    infer_column_type,
     parse_date_time_pattern,
     tokenize,
 )
@@ -61,7 +63,7 @@ classes = [
 ]
 
 
-def test_implementation():
+def test_implementation() -> None:
     """
     Test the examples from the reference.
 
@@ -113,7 +115,7 @@ def test_implementation():
     )
 
 
-def test_token():
+def test_token() -> None:
     """
     General tests for tokens.
     """
@@ -121,19 +123,19 @@ def test_token():
     assert H("h") != M("m")
 
 
-def test_h_token():
+def test_h_token() -> None:
     """
     Test the h token.
     """
     token = H("h")
 
-    assert H.match("h:mm:ss")
-    assert not H.match("hh:mm:ss")
-    assert not H.match("s")
+    assert H.match("h:mm:ss", [])
+    assert not H.match("hh:mm:ss", [])
+    assert not H.match("s", [])
 
-    assert H.consume("h:mm:ss") == (token, ":mm:ss")
+    assert H.consume("h:mm:ss", []) == (token, ":mm:ss")
     with pytest.raises(Exception) as excinfo:
-        H.consume("hh:mm:ss")
+        H.consume("hh:mm:ss", [])
     assert str(excinfo.value) == "Token could not find match"
 
     tokens = list(tokenize("h:mm:ss", classes))
@@ -152,15 +154,15 @@ def test_h_token():
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
 
-def test_hhplus_token():
+def test_hhplus_token() -> None:
     """
     Test the hhh+ token.
     """
     token = HHPlus("hhh")
 
-    assert HHPlus.match("hhh:mm:ss")
-    assert HHPlus.match("hhhh:mm:ss")
-    assert not HHPlus.match("h:mm:ss")
+    assert HHPlus.match("hhh:mm:ss", [])
+    assert HHPlus.match("hhhh:mm:ss", [])
+    assert not HHPlus.match("h:mm:ss", [])
 
     tokens = list(tokenize("hhh:mm:ss", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "13"
@@ -173,26 +175,26 @@ def test_hhplus_token():
     assert token.parse("303", tokens) == ({"hour": 30}, "3")
 
 
-def test_m_token():
+def test_m_token() -> None:
     """
     Test the m token.
     """
-    token = M("m")
+    token: Token = M("m")
 
-    assert M.match("m/d/y")
-    assert not M.match("mm/dd/yyyy")
-    assert not M.match("M/d/y")
+    assert M.match("m/d/y", [])
+    assert not M.match("mm/dd/yyyy", [])
+    assert not M.match("M/d/y", [])
 
-    assert M.consume("m/d/y") == (token, "/d/y")
+    assert M.consume("m/d/y", []) == (token, "/d/y")
 
     tokens = list(tokenize("m/d/y", classes))
-    token = tokens[0]
+    token = cast(M, tokens[0])
     assert token._is_minute(tokens) is False
     tokens = list(tokenize("h//m", classes))
-    token = tokens[2]
+    token = cast(M, tokens[2])
     assert token._is_minute(tokens) is True
     tokens = list(tokenize("m//s", classes))
-    token = tokens[0]
+    token = cast(M, tokens[0])
     assert token._is_minute(tokens) is True
 
     tokens = list(tokenize("m/d/y", classes))
@@ -222,16 +224,16 @@ def test_m_token():
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
 
-def test_mm_token():
+def test_mm_token() -> None:
     """
     Test the mm token.
     """
-    token = MM("mm")
+    token: Token = MM("mm")
 
-    assert MM.match("mm/dd/yyy")
-    assert not MM.match("mmm/dd/yyy")
+    assert MM.match("mm/dd/yyy", [])
+    assert not MM.match("mmm/dd/yyy", [])
 
-    assert MM.consume("mm/dd/yyyy") == (token, "/dd/yyyy")
+    assert MM.consume("mm/dd/yyyy", []) == (token, "/dd/yyyy")
 
     tokens = list(tokenize("mm/dd/yyy", classes))
     token = tokens[0]
@@ -239,52 +241,52 @@ def test_mm_token():
     assert token.parse("123", tokens) == ({"month": 12}, "3")
 
 
-def test_mmm_token():
+def test_mmm_token() -> None:
     """
     Test the mmm token.
     """
     token = MMM("mmm")
 
-    assert MMM.match("mmm/dd/yyy")
-    assert not MMM.match("mm/dd/yyy")
+    assert MMM.match("mmm/dd/yyy", [])
+    assert not MMM.match("mm/dd/yyy", [])
 
-    assert MMM.consume("mmm/dd/yyyy") == (token, "/dd/yyyy")
+    assert MMM.consume("mmm/dd/yyyy", []) == (token, "/dd/yyyy")
 
     tokens = list(tokenize("mmm/dd/yyy", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "Nov"
     assert token.parse("Mar 1st", tokens) == ({"month": 3}, " 1st")
 
 
-def test_mmmm_token():
+def test_mmmm_token() -> None:
     """
     Test the mmm token.
     """
     token = MMMM("mmmm")
 
-    assert MMMM.match("mmmm/dd/yyy")
-    assert not MMMM.match("mmm/dd/yyy")
+    assert MMMM.match("mmmm/dd/yyy", [])
+    assert not MMMM.match("mmm/dd/yyy", [])
 
-    assert MMMM.consume("mmmm/dd/yyyy") == (token, "/dd/yyyy")
+    assert MMMM.consume("mmmm/dd/yyyy", []) == (token, "/dd/yyyy")
 
     tokens = list(tokenize("mmmm/dd/yyy", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "November"
     assert token.parse("March 1st", tokens) == ({"month": 3}, " 1st")
 
 
-def test_mmmmm_token():
+def test_mmmmm_token() -> None:
     """
     Test the mmmmm token.
     """
     token = MMMMM("mmmmm")
 
-    assert MMMMM.match("mmmmm/dd/yyy")
-    assert not MMMMM.match("mmm/dd/yyy")
+    assert MMMMM.match("mmmmm/dd/yyy", [])
+    assert not MMMMM.match("mmm/dd/yyy", [])
 
-    assert MMMMM.consume("mmmmm/dd/yyyy") == (token, "/dd/yyyy")
+    assert MMMMM.consume("mmmmm/dd/yyyy", []) == (token, "/dd/yyyy")
 
     tokens = list(tokenize("mmmmm/dd/yyy", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "N"
-    assert token.parse("F 1st", token) == ({"month": 2}, " 1st")
+    assert token.parse("F 1st", tokens) == ({"month": 2}, " 1st")
     with pytest.raises(Exception) as excinfo:
         token.parse("Z 1st", tokens)
     assert str(excinfo.value) == "Unable to find month letter: Z"
@@ -293,16 +295,16 @@ def test_mmmmm_token():
     assert str(excinfo.value) == "Unable to parse month letter unambiguously: M"
 
 
-def test_s_token():
+def test_s_token() -> None:
     """
     Test the s token.
     """
     token = S("s")
 
-    assert S.match("s.00")
-    assert not S.match("ss.00")
+    assert S.match("s.00", [])
+    assert not S.match("ss.00", [])
 
-    assert S.consume("s.00") == (token, ".00")
+    assert S.consume("s.00", []) == (token, ".00")
 
     tokens = list(tokenize("h:m:s", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 5, 16), tokens) == "5"
@@ -317,16 +319,16 @@ def test_s_token():
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
 
-def test_ss_token():
+def test_ss_token() -> None:
     """
     Test the ss token.
     """
     token = SS("ss")
 
-    assert SS.match("ss.00")
-    assert not SS.match("s.00")
+    assert SS.match("ss.00", [])
+    assert not SS.match("s.00", [])
 
-    assert SS.consume("ss.00") == (token, ".00")
+    assert SS.consume("ss.00", []) == (token, ".00")
 
     tokens = list(tokenize("hh:mm:ss", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "15"
@@ -334,17 +336,17 @@ def test_ss_token():
     assert token.parse("59.123", tokens) == ({"second": 59}, ".123")
 
 
-def test_hplusduration_token():
+def test_hplusduration_token() -> None:
     """
     Test the [h+] token.
     """
     token = HPlusDuration("[hh]")
 
-    assert HPlusDuration.match("[h]")
-    assert HPlusDuration.match("[hh]")
-    assert not HPlusDuration.match("hh")
+    assert HPlusDuration.match("[h]", [])
+    assert HPlusDuration.match("[hh]", [])
+    assert not HPlusDuration.match("hh", [])
 
-    assert HPlusDuration.consume("[hh]:[mm]:[ss].000") == (token, ":[mm]:[ss].000")
+    assert HPlusDuration.consume("[hh]:[mm]:[ss].000", []) == (token, ":[mm]:[ss].000")
 
     tokens = list(tokenize("[hh]:[mm]:[ss].000", classes))
     assert (
@@ -361,23 +363,28 @@ def test_hplusduration_token():
         )
         == "02"
     )
-    assert token.parse("26:03:04.500", "[hh]:[mm]:[ss].000") == (
+    assert token.parse("26:03:04.500", []) == (
         {"hours": 26},
         ":03:04.500",
     )
 
+    # should never happen
+    with pytest.raises(Exception) as excinfo:
+        token.parse("invalid", [])
+    assert str(excinfo.value) == "Cannot parse value: invalid"
 
-def test_mplusduration_token():
+
+def test_mplusduration_token() -> None:
     """
     Test the [m+] token.
     """
     token = MPlusDuration("[mm]")
 
-    assert MPlusDuration.match("[m]")
-    assert MPlusDuration.match("[mm]")
-    assert not MPlusDuration.match("mm")
+    assert MPlusDuration.match("[m]", [])
+    assert MPlusDuration.match("[mm]", [])
+    assert not MPlusDuration.match("mm", [])
 
-    assert MPlusDuration.consume("[mm]:[ss].000") == (token, ":[ss].000")
+    assert MPlusDuration.consume("[mm]:[ss].000", []) == (token, ":[ss].000")
 
     tokens = list(tokenize("[hh]:[mm]:[ss].000", classes))
     assert (
@@ -400,23 +407,33 @@ def test_mplusduration_token():
 
     token = MPlusDuration("[mm]")
     tokens = list(tokenize("[hh]:[mm]:[ss].000", classes))
-    assert token.parse("03:04.500", "[hh]:[mm]:[ss].000") == (
+    assert token.parse("03:04.500", []) == (
         {"minutes": 3},
         ":04.500",
     )
 
+    # should never happen
+    with pytest.raises(Exception) as excinfo:
+        token.parse("invalid", [])
+    assert str(excinfo.value) == "Cannot parse value: invalid"
 
-def test_splusduration_token():
+
+def test_splusduration_token() -> None:
     """
     Test the [s+] token.
     """
     token = SPlusDuration("[ss]")
 
-    assert SPlusDuration.match("[s]")
-    assert SPlusDuration.match("[ss]")
-    assert not SPlusDuration.match("ss")
+    assert SPlusDuration.match("[s]", [])
+    assert SPlusDuration.match("[ss]", [])
+    assert not SPlusDuration.match("ss", [])
 
-    assert SPlusDuration.consume("[ss].000") == (token, ".000")
+    assert SPlusDuration.consume("[ss].000", []) == (token, ".000")
+
+    # should never happen
+    with pytest.raises(Exception) as excinfo:
+        SPlusDuration.consume("invalid", [])
+    assert str(excinfo.value) == "Token could not find match"
 
     tokens = list(tokenize("[hh]:[mm]:[ss].000", classes))
     assert (
@@ -437,22 +454,27 @@ def test_splusduration_token():
     )
 
     tokens = list(tokenize("[hh]:[mm]:[ss].000", classes))
-    assert token.parse("04.500", "[hh]:[mm]:[ss].000") == (
+    assert token.parse("04.500", []) == (
         {"seconds": 4},
         ".500",
     )
 
+    # should never happen
+    with pytest.raises(Exception) as excinfo:
+        token.parse("invalid", [])
+    assert str(excinfo.value) == "Cannot parse value: invalid"
 
-def test_d_token():
+
+def test_d_token() -> None:
     """
     Test the d token.
     """
     token = D("d")
 
-    assert D.match("d")
-    assert not D.match("dd")
+    assert D.match("d", [])
+    assert not D.match("dd", [])
 
-    assert D.consume("d/m/y") == (token, "/m/y")
+    assert D.consume("d/m/y", []) == (token, "/m/y")
 
     tokens = list(tokenize("d/m/y", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "12"
@@ -463,17 +485,17 @@ def test_d_token():
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
 
-def test_dd_token():
+def test_dd_token() -> None:
     """
     Test the dd token.
     """
     token = DD("dd")
 
-    assert DD.match("dd")
-    assert not DD.match("d")
-    assert not DD.match("ddd")
+    assert DD.match("dd", [])
+    assert not DD.match("d", [])
+    assert not DD.match("ddd", [])
 
-    assert DD.consume("dd/mm/yyyy") == (token, "/mm/yyyy")
+    assert DD.consume("dd/mm/yyyy", []) == (token, "/mm/yyyy")
 
     tokens = list(tokenize("dd/mm/yyyy", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "12"
@@ -481,86 +503,86 @@ def test_dd_token():
     assert token.parse("12/11/2021", tokens) == ({"day": 12}, "/11/2021")
 
 
-def test_ddd_token():
+def test_ddd_token() -> None:
     """
     Test the ddd token.
     """
     token = DDD("ddd")
 
-    assert DDD.match("ddd")
-    assert not DDD.match("dd")
-    assert not DDD.match("dddd")
+    assert DDD.match("ddd", [])
+    assert not DDD.match("dd", [])
+    assert not DDD.match("dddd", [])
 
-    assert DDD.consume("ddd, dd/mm/yyyy") == (token, ", dd/mm/yyyy")
+    assert DDD.consume("ddd, dd/mm/yyyy", []) == (token, ", dd/mm/yyyy")
 
     tokens = list(tokenize("ddd, dd/mm/yyyy", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "Fri"
     assert token.parse("Fri, 12/11/2021", tokens) == ({"weekday": 0}, ", 12/11/2021")
 
 
-def test_ddddplus_token():
+def test_ddddplus_token() -> None:
     """
     Test the dddd+ token.
     """
     token = DDDDPlus("dddd")
 
-    assert DDDDPlus.match("dddd")
-    assert DDDDPlus.match("ddddd")
-    assert not DDDDPlus.match("ddd")
+    assert DDDDPlus.match("dddd", [])
+    assert DDDDPlus.match("ddddd", [])
+    assert not DDDDPlus.match("ddd", [])
 
-    assert DDDDPlus.consume("dddd, dd/mm/yyyy") == (token, ", dd/mm/yyyy")
+    assert DDDDPlus.consume("dddd, dd/mm/yyyy", []) == (token, ", dd/mm/yyyy")
 
     tokens = list(tokenize("dddd, dd/mm/yyyy", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "Friday"
     assert token.parse("Friday, 12/11/2021", tokens) == ({"weekday": 0}, ", 12/11/2021")
 
 
-def test_yy_token():
+def test_yy_token() -> None:
     """
     Test the yy token.
     """
     token = YY("yy")
 
-    assert YY.match("y")
-    assert YY.match("yy")
-    assert not YY.match("yyy")
+    assert YY.match("y", [])
+    assert YY.match("yy", [])
+    assert not YY.match("yyy", [])
 
-    assert YY.consume("yy/mm/dd") == (token, "/mm/dd")
+    assert YY.consume("yy/mm/dd", []) == (token, "/mm/dd")
 
     tokens = list(tokenize("yy/mm/dd", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "21"
     assert token.parse("21/11/12", tokens) == ({"year": 2021}, "/11/12")
 
 
-def test_yyyy_token():
+def test_yyyy_token() -> None:
     """
     Test the yyyy token.
     """
     token = YYYY("yyyy")
 
-    assert YYYY.match("yyy")
-    assert YYYY.match("yyyy")
-    assert not YYYY.match("yy")
+    assert YYYY.match("yyy", [])
+    assert YYYY.match("yyyy", [])
+    assert not YYYY.match("yy", [])
 
-    assert YYYY.consume("yyyy/mm/dd") == (token, "/mm/dd")
+    assert YYYY.consume("yyyy/mm/dd", []) == (token, "/mm/dd")
 
     tokens = list(tokenize("yyyy/mm/dd", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "2021"
     assert token.parse("2021/11/12", tokens) == ({"year": 2021}, "/11/12")
 
 
-def test_zero_token():
+def test_zero_token() -> None:
     """
     Test the 00 token.
     """
     token = ZERO("00")
 
-    assert ZERO.match("0")
-    assert ZERO.match("00")
-    assert ZERO.match("000")
-    assert not ZERO.match("0000")
+    assert ZERO.match("0", [])
+    assert ZERO.match("00", [])
+    assert ZERO.match("000", [])
+    assert not ZERO.match("0000", [])
 
-    assert ZERO.consume("00") == (token, "")
+    assert ZERO.consume("00", []) == (token, "")
 
     tokens = list(tokenize("hh:mm:ss.000", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 167000), tokens) == "17"
@@ -571,17 +593,17 @@ def test_zero_token():
     assert token.parse("123", tokens) == ({"microsecond": 123000}, "")
 
 
-def test_ap_token():
+def test_ap_token() -> None:
     """
     Test the a/p token.
     """
     token = AP("a/p")
 
-    assert AP.match("a/p")
-    assert AP.match("A/P")
-    assert not AP.match("AM")
+    assert AP.match("a/p", [])
+    assert AP.match("A/P", [])
+    assert not AP.match("AM", [])
 
-    assert AP.consume("a/p hh:mm") == (token, " hh:mm")
+    assert AP.consume("a/p hh:mm", []) == (token, " hh:mm")
 
     tokens = list(tokenize("a/p hh:mm", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "p"
@@ -595,17 +617,17 @@ def test_ap_token():
     assert token.parse("A 09:00", tokens) == ({"meridiem": Meridiem.AM}, " 09:00")
 
 
-def test_ampm_token():
+def test_ampm_token() -> None:
     """
     Test the am/pm token.
     """
     token = AMPM("am/pm")
 
-    assert AMPM.match("am/pm")
-    assert not AMPM.match("AM/PM")
-    assert not AMPM.match("AM")
+    assert AMPM.match("am/pm", [])
+    assert not AMPM.match("AM/PM", [])
+    assert not AMPM.match("AM", [])
 
-    assert AMPM.consume("am/pm hh:mm") == (token, " hh:mm")
+    assert AMPM.consume("am/pm hh:mm", []) == (token, " hh:mm")
 
     tokens = list(tokenize("am/pm hh:mm", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "PM"
@@ -615,41 +637,46 @@ def test_ampm_token():
     assert token.parse("AM 09:00", tokens) == ({"meridiem": Meridiem.AM}, " 09:00")
 
 
-def test_parse_date_time_pattern():
+def test_parse_date_time_pattern() -> None:
     """
     Test the parse_date_time_pattern function.
     """
-    parsed = parse_date_time_pattern(
+    assert parse_date_time_pattern("0:38:19", "[h]:mm:ss", timedelta) == timedelta(
+        hours=0,
+        minutes=38,
+        seconds=19,
+    )
+
+    assert parse_date_time_pattern(
         "2021/11/12 13:14:15.167",
         "yyyy/mm/dd hh:mm:ss.000",
         datetime,
-    )
-    assert parsed == datetime(2021, 11, 12, 13, 14, 15, 167000)
+    ) == datetime(2021, 11, 12, 13, 14, 15, 167000)
 
-    parsed = parse_date_time_pattern(
+    assert parse_date_time_pattern(
         "2021/11/12 01:14:15.167 PM",
         "yyyy/mm/dd hh:mm:ss.000 am/pm",
         datetime,
-    )
-    assert parsed == datetime(2021, 11, 12, 13, 14, 15, 167000)
+    ) == datetime(2021, 11, 12, 13, 14, 15, 167000)
 
     # test that weekday is ignored
-    parsed = parse_date_time_pattern(
+    assert parse_date_time_pattern(
         "2021/11/12 Fri, 01:14:15.167 PM",
         "yyyy/mm/dd ddd, hh:mm:ss.000 am/pm",
         datetime,
-    )
-    assert parsed == datetime(2021, 11, 12, 13, 14, 15, 167000)
+    ) == datetime(2021, 11, 12, 13, 14, 15, 167000)
 
-    parsed = parse_date_time_pattern("60.123", "[ss].000", timedelta)
-    assert parsed == timedelta(seconds=60, microseconds=123000)
+    assert parse_date_time_pattern("60.123", "[ss].000", timedelta) == timedelta(
+        seconds=60,
+        microseconds=123000,
+    )
 
     with pytest.raises(Exception) as excinfo:
         parse_date_time_pattern("60.123", "[ss].000", datetime)
     assert str(excinfo.value) == "Unsupported format"
 
 
-def test_format_date_time_pattern():
+def test_format_date_time_pattern() -> None:
     """
     Test the format_date_time_pattern function.
     """
@@ -662,7 +689,7 @@ def test_format_date_time_pattern():
     )
 
 
-def test_parse_date_time_pattern_with_quotes():
+def test_parse_date_time_pattern_with_quotes() -> None:
     """
     Test parsing a timestamp with quotes.
     """
@@ -674,7 +701,7 @@ def test_parse_date_time_pattern_with_quotes():
     assert parsed == date(2021, 1, 1)
 
 
-def test_parse_date_time_with_meridiem():
+def test_parse_date_time_with_meridiem() -> None:
     """
     Test parsing a timestamp with AM/PM in the hour.
     """
@@ -693,7 +720,7 @@ def test_parse_date_time_with_meridiem():
     assert parsed == time(12, 34, 56)
 
 
-def test_parse_date_time_without_meridiem():
+def test_parse_date_time_without_meridiem() -> None:
     """
     Test parsing a timestamp without AM/PM in the hour.
     """
@@ -705,7 +732,7 @@ def test_parse_date_time_without_meridiem():
     assert parsed == datetime(2020, 12, 31, 12, 34, 56)
 
 
-def test_format_date_time_with_meridiem():
+def test_format_date_time_with_meridiem() -> None:
     """
     Test formatting a timestamp with AM/pM in the hour.
     """
@@ -716,3 +743,11 @@ def test_format_date_time_with_meridiem():
         )
         == "12:34:56 PM"
     )
+
+
+def test_infer_column_type() -> None:
+    """
+    Test type inferring via patterns.
+    """
+    assert infer_column_type("h:mm:ss am/pm") == "timeofday"
+    assert infer_column_type("[h]:mm:ss") == "duration"

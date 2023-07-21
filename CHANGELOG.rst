@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.2.6 - 2023-07-20
+==========================
+
+- Add support for querying durations in Google Sheets (#374)
+
 Version 1.2.5 - 2023-07-14
 ==========================
 

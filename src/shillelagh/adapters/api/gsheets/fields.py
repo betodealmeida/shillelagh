@@ -2,7 +2,7 @@
 Custom fields for the GSheets adapter.
 """
 import datetime
-from typing import Any, List, Optional, Type
+from typing import Any, List, Optional, Type, Union
 
 from shillelagh.adapters.api.gsheets.parsing.date import (
     format_date_time_pattern,
@@ -19,6 +19,10 @@ from shillelagh.filters import Filter
 DATETIME_SQL_QUOTE = "%Y-%m-%d %H:%M:%S"
 DATE_SQL_QUOTE = "%Y-%m-%d"
 TIME_SQL_QUOTE = "%H:%M:%S"
+
+# When filtering a sheet based on a duration we need to convert it into a datetime
+# starting at 1899-12-30, for some reason. That is not documented anywhere, obviously.
+DURATION_OFFSET = datetime.datetime(1899, 12, 30)
 
 
 class GSheetsField(Field[Internal, External]):
@@ -206,6 +210,40 @@ class GSheetsTime(GSheetsField[str, datetime.time]):
         return f"timeofday '{value}'"
 
 
+class GSheetsDuration(GSheetsField[str, datetime.timedelta]):
+    """
+    A GSheets duration.
+    """
+
+    type = "DURATION"
+    db_api_type = "DATETIME"
+
+    def parse(self, value: Optional[str]) -> Optional[datetime.timedelta]:
+        if self.pattern is None or value is None or value == "":
+            return None
+
+        return parse_date_time_pattern(value, self.pattern, datetime.timedelta)
+
+    def format(self, value: Optional[datetime.timedelta]) -> str:
+        # This method is used only when inserting or updating rows, so we
+        # encode NULLs as an empty string to match the Google Sheets API.
+        if self.pattern is None or value is None:
+            return ""
+
+        return format_date_time_pattern(value, self.pattern)
+
+    def quote(self, value: Optional[str]) -> str:
+        if self.pattern is None or value == "" or value is None:
+            return "null"
+
+        timestamp = DURATION_OFFSET + parse_date_time_pattern(
+            value,
+            self.pattern,
+            datetime.timedelta,
+        )
+        return f"datetime '{timestamp}'"
+
+
 class GSheetsBoolean(GSheetsField[str, bool]):
     """
     A GSheets boolean.
@@ -268,7 +306,7 @@ class GSheetsNumber(GSheetsField[str, float]):
 
         return format_number_pattern(value, self.pattern)
 
-    def quote(self, value: Optional[str]) -> str:
+    def quote(self, value: Optional[Union[str, int, float]]) -> str:
         if value == "" or value is None:
             return "null"
 

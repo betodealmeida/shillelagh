@@ -1917,9 +1917,10 @@ def test_unidirectional_sync_mode(
     """
     Test UNIDIRECTIONAL mode.
     """
+    credentials = mocker.MagicMock()
     mocker.patch(
         "shillelagh.adapters.api.gsheets.adapter.get_credentials",
-        return_value="SECRET",
+        return_value=credentials,
     )
 
     session = requests.Session()

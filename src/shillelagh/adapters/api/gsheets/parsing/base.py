@@ -19,14 +19,22 @@ class Token(Generic[Valid]):
         self.token = token
 
     @classmethod
-    def match(cls, pattern: str) -> bool:
+    def match(
+        cls,
+        pattern: str,
+        history: List["Token"],  # pylint: disable=unused-argument
+    ) -> bool:
         """
         Check if token handles the beginning of the pattern.
         """
         return bool(re.match(cls.regex, pattern))
 
     @classmethod
-    def consume(cls, pattern: str) -> Tuple["Token", str]:
+    def consume(
+        cls,
+        pattern: str,
+        history: List["Token"],  # pylint: disable=unused-argument
+    ) -> Tuple["Token", str]:
         """
         Consume the pattern, returning the token and the remaining pattern.
         """
@@ -99,11 +107,11 @@ def tokenize(pattern: str, classes: List[Type[Token]]) -> Iterator[Token]:
     """
     Tokenize a pattern.
     """
-    tokens = []
+    tokens: List[Token] = []
     while pattern:
         for class_ in classes:  # pragma: no cover
-            if class_.match(pattern):
-                token, pattern = class_.consume(pattern)
+            if class_.match(pattern, tokens):
+                token, pattern = class_.consume(pattern, tokens)
                 tokens.append(token)
                 break
 
