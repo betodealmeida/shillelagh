@@ -63,7 +63,6 @@ class RowTracker:
 
 
 class CSVFile(Adapter):
-
     r"""
     An adapter for CSV files.
 
@@ -277,7 +276,10 @@ class CSVFile(Adapter):
         This method will get rid of deleted rows in the files.
         """
         if not self.local:
-            self.path.unlink()
+            try:
+                self.path.unlink()
+            except FileNotFoundError:
+                pass
             return
 
         if not self.modified:

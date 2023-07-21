@@ -396,6 +396,18 @@ def test_cleanup(fs: FakeFilesystem, requests_mock: Mocker) -> None:
     assert not adapter.path.exists()
 
 
+def test_cleanup_file_deleted(fs: FakeFilesystem, requests_mock: Mocker) -> None:
+    """
+    Test that no exception is raised if local file is deleted.
+    """
+    requests_mock.get("https://example.com/test.csv", text=CONTENTS)
+
+    adapter = CSVFile("https://example.com/test.csv")
+    assert adapter.path.exists()
+    adapter.path.unlink()
+    adapter.close()
+
+
 def test_supports(fs: FakeFilesystem, requests_mock: Mocker) -> None:
     """
     Test the ``supports`` method.
