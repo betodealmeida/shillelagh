@@ -2,6 +2,7 @@
 Tests for shillelagh.adapters.api.gsheets.lib.
 """
 import itertools
+from typing import List, cast
 
 import dateutil.tz
 import pytest
@@ -27,6 +28,7 @@ from shillelagh.adapters.api.gsheets.lib import (
     get_values_from_row,
 )
 from shillelagh.adapters.api.gsheets.types import SyncMode
+from shillelagh.adapters.api.gsheets.typing import QueryResultsError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
 from shillelagh.filters import Equal, IsNotNull, IsNull, Like, NotEqual, Range
@@ -110,7 +112,10 @@ def test_format_error_message() -> None:
             },
         ],
     }
-    assert format_error_message(response["errors"]) == "Invalid query: NO_COLUMN: C"
+    assert (
+        format_error_message(cast(List[QueryResultsError], response["errors"]))
+        == "Invalid query: NO_COLUMN: C"
+    )
 
 
 def test_get_url() -> None:

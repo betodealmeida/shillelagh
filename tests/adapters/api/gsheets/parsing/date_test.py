@@ -3,10 +3,11 @@ Test the date/time pattern handling (parsing and formatting).
 """
 # pylint: disable=protected-access
 from datetime import date, datetime, time, timedelta
+from typing import cast
 
 import pytest
 
-from shillelagh.adapters.api.gsheets.parsing.base import LITERAL
+from shillelagh.adapters.api.gsheets.parsing.base import LITERAL, Token
 from shillelagh.adapters.api.gsheets.parsing.date import (
     AMPM,
     AP,
@@ -178,7 +179,7 @@ def test_m_token() -> None:
     """
     Test the m token.
     """
-    token = M("m")
+    token: Token = M("m")
 
     assert M.match("m/d/y", [])
     assert not M.match("mm/dd/yyyy", [])
@@ -187,13 +188,13 @@ def test_m_token() -> None:
     assert M.consume("m/d/y", []) == (token, "/d/y")
 
     tokens = list(tokenize("m/d/y", classes))
-    token = tokens[0]
+    token = cast(M, tokens[0])
     assert token._is_minute(tokens) is False
     tokens = list(tokenize("h//m", classes))
-    token = tokens[2]
+    token = cast(M, tokens[2])
     assert token._is_minute(tokens) is True
     tokens = list(tokenize("m//s", classes))
-    token = tokens[0]
+    token = cast(M, tokens[0])
     assert token._is_minute(tokens) is True
 
     tokens = list(tokenize("m/d/y", classes))
@@ -227,7 +228,7 @@ def test_mm_token() -> None:
     """
     Test the mm token.
     """
-    token = MM("mm")
+    token: Token = MM("mm")
 
     assert MM.match("mm/dd/yyy", [])
     assert not MM.match("mmm/dd/yyy", [])
@@ -285,7 +286,7 @@ def test_mmmmm_token() -> None:
 
     tokens = list(tokenize("mmmmm/dd/yyy", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "N"
-    assert token.parse("F 1st", token) == ({"month": 2}, " 1st")
+    assert token.parse("F 1st", tokens) == ({"month": 2}, " 1st")
     with pytest.raises(Exception) as excinfo:
         token.parse("Z 1st", tokens)
     assert str(excinfo.value) == "Unable to find month letter: Z"
@@ -362,7 +363,7 @@ def test_hplusduration_token() -> None:
         )
         == "02"
     )
-    assert token.parse("26:03:04.500", "[hh]:[mm]:[ss].000") == (
+    assert token.parse("26:03:04.500", []) == (
         {"hours": 26},
         ":03:04.500",
     )
@@ -406,7 +407,7 @@ def test_mplusduration_token() -> None:
 
     token = MPlusDuration("[mm]")
     tokens = list(tokenize("[hh]:[mm]:[ss].000", classes))
-    assert token.parse("03:04.500", "[hh]:[mm]:[ss].000") == (
+    assert token.parse("03:04.500", []) == (
         {"minutes": 3},
         ":04.500",
     )
@@ -453,7 +454,7 @@ def test_splusduration_token() -> None:
     )
 
     tokens = list(tokenize("[hh]:[mm]:[ss].000", classes))
-    assert token.parse("04.500", "[hh]:[mm]:[ss].000") == (
+    assert token.parse("04.500", []) == (
         {"seconds": 4},
         ".500",
     )
@@ -640,33 +641,35 @@ def test_parse_date_time_pattern() -> None:
     """
     Test the parse_date_time_pattern function.
     """
-    parsed = parse_date_time_pattern("0:38:19", "[h]:mm:ss", timedelta)
-    assert parsed == timedelta(hours=0, minutes=38, seconds=19)
+    assert parse_date_time_pattern("0:38:19", "[h]:mm:ss", timedelta) == timedelta(
+        hours=0,
+        minutes=38,
+        seconds=19,
+    )
 
-    parsed = parse_date_time_pattern(
+    assert parse_date_time_pattern(
         "2021/11/12 13:14:15.167",
         "yyyy/mm/dd hh:mm:ss.000",
         datetime,
-    )
-    assert parsed == datetime(2021, 11, 12, 13, 14, 15, 167000)
+    ) == datetime(2021, 11, 12, 13, 14, 15, 167000)
 
-    parsed = parse_date_time_pattern(
+    assert parse_date_time_pattern(
         "2021/11/12 01:14:15.167 PM",
         "yyyy/mm/dd hh:mm:ss.000 am/pm",
         datetime,
-    )
-    assert parsed == datetime(2021, 11, 12, 13, 14, 15, 167000)
+    ) == datetime(2021, 11, 12, 13, 14, 15, 167000)
 
     # test that weekday is ignored
-    parsed = parse_date_time_pattern(
+    assert parse_date_time_pattern(
         "2021/11/12 Fri, 01:14:15.167 PM",
         "yyyy/mm/dd ddd, hh:mm:ss.000 am/pm",
         datetime,
-    )
-    assert parsed == datetime(2021, 11, 12, 13, 14, 15, 167000)
+    ) == datetime(2021, 11, 12, 13, 14, 15, 167000)
 
-    parsed = parse_date_time_pattern("60.123", "[ss].000", timedelta)
-    assert parsed == timedelta(seconds=60, microseconds=123000)
+    assert parse_date_time_pattern("60.123", "[ss].000", timedelta) == timedelta(
+        seconds=60,
+        microseconds=123000,
+    )
 
     with pytest.raises(Exception) as excinfo:
         parse_date_time_pattern("60.123", "[ss].000", datetime)

@@ -2,7 +2,7 @@
 Custom fields for the GSheets adapter.
 """
 import datetime
-from typing import Any, List, Optional, Type
+from typing import Any, List, Optional, Type, Union
 
 from shillelagh.adapters.api.gsheets.parsing.date import (
     format_date_time_pattern,
@@ -306,7 +306,7 @@ class GSheetsNumber(GSheetsField[str, float]):
 
         return format_number_pattern(value, self.pattern)
 
-    def quote(self, value: Optional[str]) -> str:
+    def quote(self, value: Optional[Union[str, int, float]]) -> str:
         if value == "" or value is None:
             return "null"
 
