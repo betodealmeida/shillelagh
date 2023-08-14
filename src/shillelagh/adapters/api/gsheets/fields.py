@@ -328,7 +328,7 @@ class GSheetsString(GSheetsField[str, str]):
         return "" if value is None else value
 
     def quote(self, value: Optional[str]) -> str:
-        if value == "" or value is None:
+        if value is None:
             return "null"
 
         return f"'{value}'"
