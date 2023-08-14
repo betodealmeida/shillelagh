@@ -5,6 +5,9 @@ Changelog
 Next
 ====
 
+Version 1.2.7 - 2023-08-14
+==========================
+
 - Fix unneeded error when an operators is not supported by adapter (#378)
 - Fix comparison to empty strings in GSheets (#379)
 
