@@ -217,5 +217,5 @@ def test_GSheetsString() -> None:
     assert GSheetsString().format("test") == "test"
 
     assert GSheetsString().quote(None) == "null"
-    assert GSheetsString().quote("") == "null"
+    assert GSheetsString().quote("") == "''"
     assert GSheetsString().quote("test") == "'test'"
