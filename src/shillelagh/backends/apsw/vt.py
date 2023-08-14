@@ -257,9 +257,6 @@ def get_bounds(
             if all(operator in class_.operators for operator in operators):
                 bounds[column_name] = class_.build(operations)
                 break
-        else:
-            # pylint: disable=broad-exception-raised
-            raise Exception("No valid filter found")
 
     return bounds
 

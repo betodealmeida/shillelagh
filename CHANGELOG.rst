@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Fix unneeded error when an operators is not supported by adapter (#378)
+
 Version 1.2.6 - 2023-07-20
 ==========================
 

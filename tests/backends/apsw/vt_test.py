@@ -397,33 +397,33 @@ def test_cursor_with_constraints_invalid_filter() -> None:
 def test_cursor_with_constraints_no_filters() -> None:
     """
     Test passing a constraint to an adapter that cannot be filtered.
+
+    The filtering should be done by SQLite in this case.
     """
     table = VTTable(FakeAdapterNoFilters())
     cursor = table.Open()
-    with pytest.raises(Exception) as excinfo:
-        cursor.Filter(
-            42,
-            json.dumps({"indexes": [[1, 2]], "orderbys_to_process": []}),
-            ["Alice"],
-        )
-
-    assert str(excinfo.value) == "No valid filter found"
+    cursor.Filter(
+        42,
+        json.dumps({"indexes": [[1, 2]], "orderbys_to_process": []}),
+        ["Alice"],
+    )
+    assert cursor.current_row == (0, 20, "Alice", "0")
 
 
 def test_cursor_with_constraints_only_equal() -> None:
     """
     Test passing a constraint not supported by the adapter.
+
+    The filtering should be done by SQLite in this case.
     """
     table = VTTable(FakeAdapterOnlyEqual())
     cursor = table.Open()
-    with pytest.raises(Exception) as excinfo:
-        cursor.Filter(
-            42,
-            json.dumps({"indexes": [[1, 32]], "orderbys_to_process": []}),
-            ["Alice"],
-        )
-
-    assert str(excinfo.value) == "No valid filter found"
+    cursor.Filter(
+        42,
+        json.dumps({"indexes": [[1, 32]], "orderbys_to_process": []}),
+        ["Alice"],
+    )
+    assert cursor.current_row == (0, 20, "Alice", "0")
 
 
 def test_adapter_with_no_columns() -> None:
