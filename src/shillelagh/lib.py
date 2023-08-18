@@ -525,6 +525,26 @@ def SimpleCostModel(rows: int, fixed_cost: int = 0):  # pylint: disable=invalid-
     return method
 
 
+def NetworkAPICostModel(
+    download_cost: int,
+    fixed_cost: int = 0,
+):  # pylint: disable=invalid-name
+    """
+    A cost model for adapters with network API calls.
+
+    In this case, transferring less data and doing less connections is more efficient.
+    """
+
+    def method(
+        obj: Any,  # pylint: disable=unused-argument
+        filtered_columns: List[Tuple[str, Operator]],
+        order: List[Tuple[str, RequestedOrder]],  # pylint: disable=unused-argument
+    ) -> int:
+        return fixed_cost + int(download_cost / (len(filtered_columns) + 1))
+
+    return method
+
+
 def find_adapter(
     uri: str,
     adapter_kwargs: Dict[str, Any],
