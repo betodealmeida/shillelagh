@@ -2334,23 +2334,23 @@ def test_get_cost(mocker: MockerFixture) -> None:
 
     gsheets_adapter = GSheetsAPI("https://docs.google.com/spreadsheets/d/1")
 
-    assert gsheets_adapter.get_cost([], []) == 0
-    assert gsheets_adapter.get_cost([("one", Operator.EQ)], []) == 1000
+    assert gsheets_adapter.get_cost([], []) == 3303
+    assert gsheets_adapter.get_cost([("one", Operator.EQ)], []) == 3092
     assert (
         gsheets_adapter.get_cost([("one", Operator.EQ), ("two", Operator.GT)], [])
-        == 2000
+        == 3022
     )
     assert (
         gsheets_adapter.get_cost(
             [("one", Operator.EQ), ("two", Operator.GT)],
             [("one", Order.ASCENDING)],
         )
-        == 11965
+        == 3022
     )
     assert (
         gsheets_adapter.get_cost(
             [("one", Operator.EQ), ("two", Operator.GT)],
             [("one", Order.ASCENDING), ("two", Order.DESCENDING)],
         )
-        == 21931
+        == 3022
     )

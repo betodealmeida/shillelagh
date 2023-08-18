@@ -35,15 +35,18 @@ from shillelagh.exceptions import (
 )
 from shillelagh.fields import Field, Order
 from shillelagh.filters import Filter
-from shillelagh.lib import SimpleCostModel, apply_limit_and_offset, build_sql
+from shillelagh.lib import NetworkAPICostModel, apply_limit_and_offset, build_sql
 from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
 
 JSON_PAYLOAD_PREFIX = ")]}'\n"
 
-# this is just a wild guess; used to estimate query cost
+# based on very scientific tests ran in an RV using Starlink and 5G the cost for a query
+# is 2882ms + 0.4212ms * number_of_rows :-P
 AVERAGE_NUMBER_OF_ROWS = 1000
+FIXED_COST = 2882
+DOWNLOAD_COST = int(AVERAGE_NUMBER_OF_ROWS * 0.4212)
 
 
 class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
@@ -328,7 +331,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
     def get_columns(self) -> Dict[str, Field]:
         return self.columns
 
-    get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
+    get_cost = NetworkAPICostModel(DOWNLOAD_COST, FIXED_COST)
 
     def _clear_columns(self) -> None:
         """

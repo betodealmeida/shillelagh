@@ -20,6 +20,7 @@ application directory (see https://pypi.org/project/appdirs/), eg::
 """
 import logging
 import os.path
+import time
 from pathlib import Path
 from typing import List, Tuple
 
@@ -223,6 +224,7 @@ def main():  # pylint: disable=too-many-locals
 
         is_terminated, quote_context = get_query_termination(query)
         if is_terminated:
+            start = time.time()
             results = None
             try:
                 cursor.execute(query)
@@ -236,6 +238,10 @@ def main():  # pylint: disable=too-many-locals
 
             headers = [t[0] for t in cursor.description or []]
             print(tabulate(results, headers=headers))
+            duration = time.time() - start
+            print(
+                f"({len(results)} row{'s' if len(results) != 1 else ''} in {duration:.2f}s)\n",
+            )
 
     connection.close()
     print("GoodBye!")

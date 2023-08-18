@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Add new cost model ``NetworkAPICostModel`` (#381)
+
 Version 1.2.7 - 2023-08-14
 ==========================
 

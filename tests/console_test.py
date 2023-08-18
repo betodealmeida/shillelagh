@@ -23,7 +23,16 @@ def test_main(mocker: MockerFixture) -> None:
     PromptSession.return_value.prompt.side_effect = ["SELECT 1;", "", EOFError()]
     console.main()
     result = stdout.getvalue()
-    assert result == "  1\n---\n  1\nGoodBye!\n"
+    assert (
+        result
+        == """  1
+---
+  1
+(1 row in 0.00s)
+
+GoodBye!
+"""
+    )
 
 
 def test_exception(mocker: MockerFixture) -> None:
@@ -36,7 +45,12 @@ def test_exception(mocker: MockerFixture) -> None:
     PromptSession.return_value.prompt.side_effect = ["SSELECT 1;", EOFError()]
     console.main()
     result = stdout.getvalue()
-    assert result == 'SQLError: near "SSELECT": syntax error\nGoodBye!\n'
+    assert (
+        result
+        == """SQLError: near "SSELECT": syntax error
+GoodBye!
+"""
+    )
 
 
 def test_ctrl_c(mocker: MockerFixture) -> None:
@@ -53,7 +67,16 @@ def test_ctrl_c(mocker: MockerFixture) -> None:
     ]
     console.main()
     result = stdout.getvalue()
-    assert result == "  1\n---\n  1\nGoodBye!\n"
+    assert (
+        result
+        == """  1
+---
+  1
+(1 row in 0.00s)
+
+GoodBye!
+"""
+    )
 
 
 def test_configuration(mocker: MockerFixture, fs: FakeFilesystem) -> None:
@@ -119,7 +142,16 @@ def test_multiline(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     PromptSession.return_value.prompt.side_effect = ["SELECT ", "1;", "", EOFError()]
     console.main()
     result = stdout.getvalue()
-    assert result == "  1\n---\n  1\nGoodBye!\n"
+    assert (
+        result
+        == """  1
+---
+  1
+(1 row in 0.00s)
+
+GoodBye!
+"""
+    )
 
 
 def test_multiline_quoted_semicolon(mocker: MockerFixture, fs: FakeFilesystem) -> None:
@@ -133,7 +165,17 @@ def test_multiline_quoted_semicolon(mocker: MockerFixture, fs: FakeFilesystem) -
     console.main()
     result = stdout.getvalue()
 
-    assert result == "  ';'=\n   ';'\n------\n     1\nGoodBye!\n"
+    assert (
+        result
+        == """  ';'=
+   ';'
+------
+     1
+(1 row in 0.00s)
+
+GoodBye!
+"""
+    )
 
 
 def test_multiline_quoted_semicolon_on_line_end(
@@ -150,7 +192,17 @@ def test_multiline_quoted_semicolon_on_line_end(
     console.main()
     result = stdout.getvalue()
 
-    assert result == "  ';'=';\n       '\n--------\n       0\nGoodBye!\n"
+    assert (
+        result
+        == """  ';'=';
+       '
+--------
+       0
+(1 row in 0.00s)
+
+GoodBye!
+"""
+    )
 
 
 def test_multiline_triple_quoted_semicolon_on_line_end(
@@ -173,5 +225,12 @@ def test_multiline_triple_quoted_semicolon_on_line_end(
 
     assert (
         result
-        == "  ''';'''=''';\n           '''\n--------------\n             0\nGoodBye!\n"
+        == """  ''';'''=''';
+           '''
+--------------
+             0
+(1 row in 0.00s)
+
+GoodBye!
+"""
     )
