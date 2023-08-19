@@ -2,10 +2,10 @@
 Tests for shillelagh.functions.
 """
 import json
+import sys
 
 import apsw
 import pytest
-from importlib_metadata import distribution
 from pytest_mock import MockerFixture
 
 from shillelagh.adapters.registry import AdapterLoader
@@ -14,6 +14,11 @@ from shillelagh.exceptions import ProgrammingError
 from shillelagh.functions import get_metadata
 
 from .fakes import FakeAdapter
+
+if sys.version_info < (3, 10):
+    from importlib_metadata import distribution
+else:
+    from importlib.metadata import distribution
 
 
 def test_sleep_from_sql(mocker: MockerFixture, registry: AdapterLoader) -> None:
