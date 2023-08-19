@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Skeleton ``setup.py``, reads configuration from ``setup.cfg``.
 """
