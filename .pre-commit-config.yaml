@@ -92,3 +92,9 @@ repos:
     types: [python]
     exclude: ^templates/
     args: [--disable=use-implicit-booleaness-not-comparison]
+- repo: https://github.com/asottile/pyupgrade
+  rev: v3.10.1
+  hooks:
+    - id: pyupgrade
+      args:
+        - --py38-plus
