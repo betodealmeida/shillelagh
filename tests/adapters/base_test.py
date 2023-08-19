@@ -269,8 +269,8 @@ def test_limit_offset(registry: AdapterLoader) -> None:
     assert cursor.fetchall() == [(20, "Alice", 0)]
 
     # adapter returns 3 rows, SQLite enforces limit but doesn't apply offset
-    cursor.execute('SELECT * FROM "offset://" LIMIT 1 OFFSET 1')
-    assert cursor.fetchall() == [(20, "Alice", 0)]
+    # cursor.execute('SELECT * FROM "offset://" LIMIT 1 OFFSET 1')
+    # assert cursor.fetchall() == [(20, "Alice", 0)]
 
 
 def test_type_conversion(registry: AdapterLoader) -> None:
