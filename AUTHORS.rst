@@ -10,3 +10,4 @@ Contributors
 * Alex Rothberg <agrothberg@gmail.com>
 * Elias Sebbar <contact@eliassebbar.info>
 * Arash Afghahi <arash.afghahi@gmail.com>
+* Samuel Giffard <samuel@giffard.co>

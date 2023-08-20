@@ -5,13 +5,19 @@ Inspired by SQLAlchemy's ``PluginLoader``.
 """
 
 import logging
+import sys
 from collections import defaultdict
 from typing import Dict, List, Optional, Type, cast
 
-from importlib_metadata import entry_points
-
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import InterfaceError
+
+if sys.version_info < (3, 10):
+    # Use the backport library because it provides a forward-compatible
+    # implementation.
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points
 
 _logger = logging.getLogger(__name__)
 

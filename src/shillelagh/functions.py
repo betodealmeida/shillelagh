@@ -2,13 +2,19 @@
 Custom functions available to the SQL backend.
 """
 import json
+import sys
 import time
 from typing import Any, Dict, List, Type
 
-from importlib_metadata import distribution
-
 from shillelagh.adapters.base import Adapter
 from shillelagh.lib import find_adapter
+
+if sys.version_info < (3, 10):
+    # Use the backport library because it provides a forward-compatible
+    # implementation.
+    from importlib_metadata import distribution
+else:
+    from importlib.metadata import distribution
 
 __all__ = ["sleep", "get_metadata", "version"]
 
