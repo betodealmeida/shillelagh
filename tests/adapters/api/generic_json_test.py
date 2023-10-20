@@ -2,9 +2,10 @@
 Test the generic JSON adapter.
 """
 
+from datetime import timedelta
+
 import pytest
 from pytest_mock import MockerFixture
-from requests_cache import DO_NOT_CACHE
 from requests_mock.mocker import Mocker
 from yarl import URL
 
@@ -12,6 +13,8 @@ from shillelagh.adapters.api.generic_json import GenericJSONAPI
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.typing import Maybe
+
+DO_NOT_CACHE = timedelta(seconds=-1)
 
 baseurl = URL("https://api.stlouisfed.org/fred/series")
 
@@ -174,7 +177,7 @@ def test_request_headers(mocker: MockerFixture, requests_mock: Mocker) -> None:
     )
 
     # for datassette and other probing adapters
-    requests_mock.head("https://exmaple.org/-/versions.json", status_code=404)
+    requests_mock.head("https://example.org/-/versions.json", status_code=404)
 
     url = URL("https://example.org/")
     data = requests_mock.head(str(url), headers={"content-type": "application/json"})

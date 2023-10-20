@@ -6,6 +6,7 @@ Next
 ====
 
 - Add new cost model ``NetworkAPICostModel`` (#381)
+- Add a generic XML adapter (#391)
 
 Version 1.2.7 - 2023-08-14
 ==========================
