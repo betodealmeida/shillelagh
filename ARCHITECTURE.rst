@@ -21,7 +21,7 @@ SQLite supports a powerful concept called "virtual tables" (also called "foreign
 
 In the example above, whenever the ``sometable`` table is queried SQLite will call methods in the instance of ``SomeModule``, either to retrieve, insert, update, or delete rows. `Many different virtual tables exist for SQLite <https://www.sqlite.org/vtablist.html>`_, including modules for accessing CSV files or implementing spatial indexes.
 
-The SQLite library that comes in the Python standard library does not expose virtual tables, but there's a library called ``apsw`` (another Python wrapper for SQLite) that does. Using ``apsw`` it's possible to implement mdoules like ``SomeModule``, and register them as virtual tables. Unfortunately the API exposed in ``apsw`` is not Pythonic, making it non-trivial to implement new virtual tables.
+The SQLite library that comes in the Python standard library does not expose virtual tables, but there's a library called ``apsw`` (another Python wrapper for SQLite) that does. Using ``apsw`` it's possible to implement modules like ``SomeModule``, and register them as virtual tables. Unfortunately the API exposed in ``apsw`` is not Pythonic, making it non-trivial to implement new virtual tables.
 
 Shillelagh builds on top of ``apsw`` to simplify the life of both users and developers. When using Shillelagh a user doesn't need to register module for virtual tables. And the API for implementing new types of virtual tables is relatively simple and easy to understand.
 
@@ -38,7 +38,7 @@ To use the ``s3select`` a user simply needs to query a table with the correspond
 
 When Shillelagh first runs that query, it will fail, because the table ``s3://bucket/path/to/file`` doesn't exist. Instead of raising an exception, the Shillelagh `DB API 2.0 driver <https://peps.python.org/pep-0249/>`_ will parse the error message, and detect that a table is missing. It will then look at all registered adapters, trying to find one that supports the ``s3://bucket/path/to/file`` table name.
 
-If it can find an adapter that handles the table name it will register the virtual table module, create the virtual table, and re-run the query. This way, to user everything just works.
+If it can find an adapter that handles the table name it will register the virtual table module, create the virtual table, and re-run the query. This way, to the user everything just works.
 
 Behind the scenes
 =================
@@ -99,7 +99,7 @@ Once the table has been created, Shillelagh will re-execute the query. The whole
     -- (1) user:
     SELECT * FROM "https://api.github.com/repos/apache/superset/pulls";
     -- (2) raises: NO SUCH TABLE: "https://api.github.com/repos/apache/superset/pulls"
-    -- (3) Shillelagh captures the exception, registers the "github" module, and runs:
+    -- (3) Shillelagh captures the exception, registers the "githubapi" module, and runs:
     CREATE VIRTUAL TABLE "https://api.github.com/repos/apache/superset/pulls"
       USING githubapi('repos', 'apache', 'superset', 'pulls');
     SELECT * FROM "https://api.github.com/repos/apache/superset/pulls";
