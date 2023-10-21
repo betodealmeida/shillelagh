@@ -5,6 +5,9 @@ Changelog
 Next
 ====
 
+Version 1.2.8 - 2023-10-21
+==========================
+
 - Add new cost model ``NetworkAPICostModel`` (#381)
 - Add a generic XML adapter (#391)
 
