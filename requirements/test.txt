@@ -44,6 +44,8 @@ codespell==2.1.0
     # via shillelagh
 coverage[toml]==6.4.2
     # via pytest-cov
+defusedxml==0.7.1
+    # via shillelagh
 dill==0.3.6
     # via
     #   pylint

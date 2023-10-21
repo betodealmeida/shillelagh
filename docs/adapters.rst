@@ -459,3 +459,19 @@ Or via query parameters:
    SELECT * FROM "https://api.example.com/?_s_headers=(X-Auth-Token:SECRET)"
 
 Note that if passing the headers via query parameters the dictionary should be serialized using `RISON <https://pypi.org/project/prison/>`_.
+
+Generic XML
+===========
+
+The generic XML adapter is based on the generic JSON; the only difference is that it takes XML responses and uses XPath to extract the data. The XML response is converted into a JSON equivalent payload that takes in consideration only text. For example, this XML:
+
+.. code-block:: xml
+
+    <root>
+        <foo>bar</foo>
+        <baz>
+            <qux>quux</qux>o
+        </baz>
+    </root>
+
+Would get mapped to two columns, ``foo`` and ``baz``, with values ``bar`` and ``{"qux": "quux"}`` respectively.

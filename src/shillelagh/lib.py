@@ -6,6 +6,7 @@ import json
 import marshal
 import math
 import operator
+from datetime import timedelta
 from typing import (
     Any,
     Callable,
@@ -20,6 +21,7 @@ from typing import (
 )
 
 import apsw
+import requests_cache
 from packaging.version import Version
 
 from shillelagh.adapters.base import Adapter
@@ -39,6 +41,7 @@ from shillelagh.filters import (
 from shillelagh.typing import RequestedOrder, Row
 
 DELETED = range(-1, 0)
+CACHE_EXPIRATION = timedelta(minutes=3)
 
 
 class RowIDManager:
@@ -168,7 +171,7 @@ def analyze(  # pylint: disable=too-many-branches
         for column_name, value in row.items():
             # determine order
             if i > 0:
-                previous = previous_row[column_name]
+                previous = previous_row.get(column_name)
                 order[column_name] = update_order(
                     current_order=order.get(column_name, Order.NONE),
                     previous=previous,
@@ -594,3 +597,23 @@ def best_index_object_available() -> bool:
     Check if support for best index object is available.
     """
     return bool(Version(apsw.apswversion()) >= Version("3.41.0.0"))
+
+
+def get_session(
+    request_headers: Dict[str, str],
+    cache_name: str,
+    expire_after: timedelta = CACHE_EXPIRATION,
+) -> requests_cache.CachedSession:  # E: line too long (81 > 79 characters)
+    """
+    Return a cached session.
+    """
+    session = requests_cache.CachedSession(
+        cache_name=cache_name,
+        backend="sqlite",
+        expire_after=requests_cache.DO_NOT_CACHE
+        if expire_after == timedelta(seconds=-1)
+        else expire_after.total_seconds(),
+    )
+    session.headers.update(request_headers)
+
+    return session

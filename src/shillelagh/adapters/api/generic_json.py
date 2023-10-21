@@ -5,40 +5,26 @@ An adapter for fetching JSON data.
 # pylint: disable=invalid-name
 
 import logging
+from datetime import timedelta
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Union
 
 import prison
-import requests_cache
 from jsonpath import JSONPath
 from yarl import URL
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Field
+from shillelagh.fields import Field, Order
 from shillelagh.filters import Filter
-from shillelagh.lib import SimpleCostModel, analyze, flatten
+from shillelagh.lib import SimpleCostModel, analyze, flatten, get_session
 from shillelagh.typing import Maybe, RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
 
 SUPPORTED_PROTOCOLS = {"http", "https"}
 AVERAGE_NUMBER_OF_ROWS = 100
-CACHE_EXPIRATION = 180
 REQUEST_HEADERS_KEY = "_s_headers"
-
-
-def get_session(request_headers: Dict[str, str]) -> requests_cache.CachedSession:
-    """
-    Return a cached session.
-    """
-    session = requests_cache.CachedSession(
-        cache_name="generic_json_cache",
-        backend="sqlite",
-        expire_after=CACHE_EXPIRATION,
-    )
-    session.headers.update(request_headers)
-
-    return session
+CACHE_EXPIRATION = timedelta(minutes=3)
 
 
 class GenericJSONAPI(Adapter):
@@ -53,8 +39,12 @@ class GenericJSONAPI(Adapter):
     supports_offset = False
     supports_requested_columns = True
 
-    @staticmethod
-    def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
+    content_type = "application/json"
+    default_path = "$[*]"
+    cache_name = "generic_json_cache"
+
+    @classmethod
+    def supports(cls, uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         parsed = URL(uri)
         if parsed.scheme not in SUPPORTED_PROTOCOLS:
             return False
@@ -69,15 +59,18 @@ class GenericJSONAPI(Adapter):
         else:
             request_headers = kwargs.get("request_headers", {})
 
-        session = get_session(request_headers)
+        session = get_session(request_headers, cls.cache_name, CACHE_EXPIRATION)
         response = session.head(str(parsed))
-        return "application/json" in response.headers.get("content-type", "")
+        return cls.content_type in response.headers.get("content-type", "")
 
-    @staticmethod
-    def parse_uri(uri: str) -> Union[Tuple[str, str], Tuple[str, str, Dict[str, str]]]:
+    @classmethod
+    def parse_uri(
+        cls,
+        uri: str,
+    ) -> Union[Tuple[str, str], Tuple[str, str, Dict[str, str]]]:
         parsed = URL(uri)
 
-        path = parsed.fragment or "$[*]"
+        path = parsed.fragment or cls.default_path
         parsed = parsed.with_fragment("")
 
         if REQUEST_HEADERS_KEY in parsed.query:
@@ -92,15 +85,19 @@ class GenericJSONAPI(Adapter):
     def __init__(
         self,
         uri: str,
-        path: str = "$[*]",
+        path: Optional[str] = None,
         request_headers: Optional[Dict[str, str]] = None,
     ):
         super().__init__()
 
         self.uri = uri
-        self.path = path
+        self.path = path or self.default_path
 
-        self._session = get_session(request_headers or {})
+        self._session = get_session(
+            request_headers or {},
+            self.cache_name,
+            CACHE_EXPIRATION,
+        )
 
         self._set_columns()
 
@@ -113,7 +110,7 @@ class GenericJSONAPI(Adapter):
         self.columns = {
             column_name: types[column_name](
                 filters=[],
-                order=order[column_name],
+                order=order.get(column_name, Order.NONE),
                 exact=False,
             )
             for column_name in column_names
