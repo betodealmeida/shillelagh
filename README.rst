@@ -14,6 +14,8 @@ Shillelagh
 
 Shillelagh (ʃɪˈleɪlɪ) is a Python library and CLI that allows you to query many resources (APIs, files, in memory objects) using SQL. It's both user and developer friendly, making it trivial to access resources and easy to add support for new ones.
 
+Learn more on the `documentation <https://shillelagh.readthedocs.io/en/latest/>`_.
+
 The library is an implementation of the `Python DB API 2.0 <https://www.python.org/dev/peps/pep-0249/>`_ based on `SQLite <https://sqlite.org/index.html>`_ (using the `APSW <https://rogerbinns.github.io/apsw/>`_ library):
 
 .. code-block:: python
