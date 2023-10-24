@@ -19,7 +19,7 @@ from sqlalchemy import create_engine
 # the backend uses psycopg2 under the hood, so any valid connection string for it will
 # work; just replace the scheme with `shillelagh+multicorn2`
 engine = create_engine(
-    "shillelagh+multicorn2://shillelagh:shillelagh123@localhost:12345/shillelagh"
+    "shillelagh+multicorn2://shillelagh:shillelagh123@localhost:12345/shillelagh",
 )
 connection = engine.connect()
 

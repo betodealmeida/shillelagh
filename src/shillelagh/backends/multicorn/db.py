@@ -83,6 +83,7 @@ class Cursor(extensions.cursor):  # pylint: disable=too-few-public-methods
         **kwargs: Any,
     ):
         super().__init__(*args, **kwargs)
+
         self._adapters = list(adapters.values())
         self._adapter_map = {v: k for k, v in adapters.items()}
         self._adapter_kwargs = adapter_kwargs
@@ -236,7 +237,9 @@ class OptionsType(TypedDict):
     args: str
 
 
-class MulticornForeignDataWrapper(ForeignDataWrapper):
+class MulticornForeignDataWrapper(
+    ForeignDataWrapper,
+):  # pylint: disable=abstract-method
     """
     A FDW that dispatches queries to adapters.
     """
@@ -253,10 +256,7 @@ class MulticornForeignDataWrapper(ForeignDataWrapper):
         columns: List[str],
         sortkeys: Optional[List[SortKey]] = None,
     ) -> Iterator[Row]:
-        # XXX implement quals/columns
         return self.adapter.get_rows({}, [])
-
-    # XXX implement write API
 
 
 def connect(  # pylint: disable=too-many-arguments
