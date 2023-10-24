@@ -25,6 +25,7 @@ def test_connect(mocker: MockerFixture, registry: AdapterLoader) -> None:
     registry.add("dummy", FakeAdapter)
 
     connect(
+        None,
         ["dummy"],
         username="username",
         password="password",
@@ -33,6 +34,7 @@ def test_connect(mocker: MockerFixture, registry: AdapterLoader) -> None:
         database="database",
     )
     psycopg2.connect.assert_called_with(
+        None,
         cursor_factory=CursorFactory(
             {"dummy": FakeAdapter},
             {},

@@ -222,6 +222,7 @@ class CursorFactory:  # pylint: disable=too-few-public-methods
 
 
 def connect(  # pylint: disable=too-many-arguments
+    dsn: Optional[str] = None,
     adapters: Optional[List[str]] = None,
     adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     schema: str = DEFAULT_SCHEMA,
@@ -252,6 +253,7 @@ def connect(  # pylint: disable=too-many-arguments
         schema,
     )
     return psycopg2.connect(
+        dsn,
         cursor_factory=cursor_factory,
         **psycopg2_connection_kwargs,
     )
