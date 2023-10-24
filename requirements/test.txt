@@ -137,6 +137,8 @@ psutil==5.9.1
     # via shillelagh
 pyarrow==16.0.0
     # via shillelagh
+psycopg2-binary==2.9.9
+    # via shillelagh
 pyasn1==0.4.8
     # via
     #   pyasn1-modules
