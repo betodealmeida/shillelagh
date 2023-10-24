@@ -129,6 +129,26 @@ class MulticornForeignDataWrapper(ForeignDataWrapper):
     def rowid_column(self):
         return "rowid"
 
+    def get_rel_size(self, quals: List[Qual], columns: List[str]) -> Tuple[int, int]:
+        """
+        Estimate query cost.
+        """
+        all_bounds = get_all_bounds(quals)
+        filtered_columns = [
+            (column, operator[0])
+            for column, operators in all_bounds.items()
+            for operator in operators
+        ]
+
+        # the adapter returns an arbitrary cost that takes in consideration filtering and
+        # sorting; let's use that as an approximation for rows
+        rows = int(self.adapter.get_cost(filtered_columns, []))
+
+        # same assumption as the parent class
+        row_width = len(columns) * 100
+
+        return (rows, row_width)
+
     @classmethod
     def import_schema(  # pylint: disable=too-many-arguments
         cls,

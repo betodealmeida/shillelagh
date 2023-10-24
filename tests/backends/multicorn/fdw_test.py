@@ -194,3 +194,19 @@ def test_update(mocker: MockerFixture, registry: AdapterLoader) -> None:
         {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
         {"rowid": 0, "name": "Alice", "age": 20, "pets": 1},
     ]
+
+
+def test_get_rel_Size(mocker: MockerFixture, registry: AdapterLoader) -> None:
+    """
+    Test the ``get_rel_size`` method.
+    """
+    mocker.patch("shillelagh.backends.multicorn.fdw.registry", registry)
+
+    registry.add("dummy", FakeAdapter)
+
+    wrapper = MulticornForeignDataWrapper(
+        {"adapter": "dummy", "args": "qQA="},
+        {},
+    )
+
+    assert wrapper.get_rel_size([Qual("age", ">", 21)], ["name", "age"]) == (666, 200)
