@@ -111,14 +111,19 @@ class MulticornForeignDataWrapper(ForeignDataWrapper):
 
         return [key for key in sortkeys if is_sortable(key)]
 
-    def insert(self, values):
-        pass
+    def insert(self, values: Row) -> Row:
+        rowid = self.adapter.insert_row(values)
+        values["rowid"] = rowid
+        return values
 
-    def delete(self, oldvalues):
-        pass
+    def delete(self, oldvalues: Row) -> None:
+        rowid = oldvalues["rowid"]
+        self.adapter.delete_row(rowid)
 
-    def update(self, oldvalues, newvalues):
-        pass
+    def update(self, oldvalues: Row, newvalues: Row) -> Row:
+        rowid = newvalues["rowid"]
+        self.adapter.update_row(rowid, newvalues)
+        return newvalues
 
     @property
     def rowid_column(self):
@@ -127,10 +132,10 @@ class MulticornForeignDataWrapper(ForeignDataWrapper):
     @classmethod
     def import_schema(  # pylint: disable=too-many-arguments
         cls,
-        schema,
-        srv_options,
-        options,
-        restriction_type,
-        restricts,
+        schema: str,
+        srv_options: Dict[str, str],
+        options: Dict[str, str],
+        restriction_type: Optional[str],
+        restricts: List[str],
     ):
         return []

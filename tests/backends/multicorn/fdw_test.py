@@ -27,10 +27,14 @@ def test_fdw(mocker: MockerFixture, registry: AdapterLoader) -> None:
 
     registry.add("dummy", FakeAdapter)
 
+    assert (
+        MulticornForeignDataWrapper.import_schema("schema", {}, {}, "limit", []) == []
+    )
     wrapper = MulticornForeignDataWrapper(
         {"adapter": "dummy", "args": "qQA="},
         {},
     )
+    assert wrapper.rowid_column == "rowid"
 
     assert list(wrapper.execute([], ["rowid", "name", "age", "pets"])) == [
         {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
@@ -126,4 +130,67 @@ def test_can_sort(mocker: MockerFixture, registry: AdapterLoader) -> None:
             nulls_first=True,
             collate=None,
         ),
+    ]
+
+
+def test_insert(mocker: MockerFixture, registry: AdapterLoader) -> None:
+    """
+    Test the ``insert`` method.
+    """
+    mocker.patch("shillelagh.backends.multicorn.fdw.registry", registry)
+
+    registry.add("dummy", FakeAdapter)
+
+    wrapper = MulticornForeignDataWrapper(
+        {"adapter": "dummy", "args": "qQA="},
+        {},
+    )
+
+    wrapper.insert({"rowid": 2, "name": "Charlie", "age": 6, "pets": 1})
+    assert list(wrapper.execute([], ["rowid", "name", "age", "pets"])) == [
+        {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
+        {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
+        {"rowid": 2, "name": "Charlie", "age": 6, "pets": 1},
+    ]
+
+
+def test_delete(mocker: MockerFixture, registry: AdapterLoader) -> None:
+    """
+    Test the ``delete`` method.
+    """
+    mocker.patch("shillelagh.backends.multicorn.fdw.registry", registry)
+
+    registry.add("dummy", FakeAdapter)
+
+    wrapper = MulticornForeignDataWrapper(
+        {"adapter": "dummy", "args": "qQA="},
+        {},
+    )
+
+    wrapper.delete({"rowid": 1, "name": "Bob", "age": 23, "pets": 3})
+    assert list(wrapper.execute([], ["rowid", "name", "age", "pets"])) == [
+        {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
+    ]
+
+
+def test_update(mocker: MockerFixture, registry: AdapterLoader) -> None:
+    """
+    Test the ``update`` method.
+    """
+    mocker.patch("shillelagh.backends.multicorn.fdw.registry", registry)
+
+    registry.add("dummy", FakeAdapter)
+
+    wrapper = MulticornForeignDataWrapper(
+        {"adapter": "dummy", "args": "qQA="},
+        {},
+    )
+
+    wrapper.update(
+        {"rowid": 0, "name": "Alice", "age": 20, "pets": 0},
+        {"rowid": 0, "name": "Alice", "age": 20, "pets": 1},
+    )
+    assert list(wrapper.execute([], ["rowid", "name", "age", "pets"])) == [
+        {"rowid": 1, "name": "Bob", "age": 23, "pets": 3},
+        {"rowid": 0, "name": "Alice", "age": 20, "pets": 1},
     ]
