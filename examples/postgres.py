@@ -6,7 +6,7 @@ in Python. To use it, you need to install on the machine running Postgres the ex
 the multicorn2 package (not on (PyPI), and the shillelagh package.
 
 If you want to play with it Shillelagh has a `docker-compose.yml` file that will run
-Postgres with the extenion and the Python packages. Just run:
+Postgres with the extension and the Python packages. Just run:
 
     $ cd postgres/
     $ docker-compose up --build -d

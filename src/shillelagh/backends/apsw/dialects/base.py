@@ -118,7 +118,7 @@ class APSWDialect(SQLiteDialect):
                     connection,
                     table_name,
                     schema,
-                    **kwargs,
+                    **kwargs,  # pylint: disable=unused-argument
                 ),
             )
         return True

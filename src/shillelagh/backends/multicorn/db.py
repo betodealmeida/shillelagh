@@ -4,18 +4,7 @@ A DB API 2.0 wrapper.
 """
 import logging
 import re
-from typing import (
-    Any,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    TypedDict,
-    Union,
-    cast,
-)
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 from uuid import uuid4
 
 import psycopg2
@@ -97,12 +86,16 @@ class Cursor(extensions.cursor):  # pylint: disable=too-few-public-methods
         """
         Execute a query, automatically registering FDWs if necessary.
         """
+        # which cursor should be returned
+        cursor: Union["Cursor", extensions.cursor] = self
+
         while True:
             savepoint = uuid4()
             super().execute(f'SAVEPOINT "{savepoint}"')
 
             try:
-                return cast(extensions.cursor, super().execute(operation, parameters))
+                cursor = cast(extensions.cursor, super().execute(operation, parameters))
+                break
             except psycopg2.errors.UndefinedTable as ex:  # pylint: disable=no-member
                 message = ex.args[0]
                 match = NO_SUCH_TABLE.match(message)
@@ -128,7 +121,7 @@ class Cursor(extensions.cursor):  # pylint: disable=too-few-public-methods
             instance = adapter(*args, **kwargs)
             instance.drop_table()
 
-        return self
+        return cursor
 
     def _get_table_uri(self, fragment: str, operation: str) -> Optional[str]:
         """
@@ -182,7 +175,7 @@ class Cursor(extensions.cursor):  # pylint: disable=too-few-public-methods
         super().execute(
             """
 CREATE SERVER shillelagh foreign data wrapper multicorn options (
-    wrapper 'shillelagh.backends.multicorn.db.MulticornForeignDataWrapper'
+    wrapper 'shillelagh.backends.multicorn.fdw.MulticornForeignDataWrapper'
 );
     """,
         )
@@ -228,49 +221,24 @@ class CursorFactory:  # pylint: disable=too-few-public-methods
         )
 
 
-class OptionsType(TypedDict):
-    """
-    Type for OPTIONS.
-    """
-
-    adapter: str
-    args: str
-
-
-class MulticornForeignDataWrapper(
-    ForeignDataWrapper,
-):  # pylint: disable=abstract-method
-    """
-    A FDW that dispatches queries to adapters.
-    """
-
-    def __init__(self, options: OptionsType, columns: Dict[str, str]):
-        super().__init__(options, columns)
-
-        deserialized_args = deserialize(options["args"])
-        self.adapter = registry.load(options["adapter"])(*deserialized_args)
-
-    def execute(
-        self,
-        quals: List[Qual],
-        columns: List[str],
-        sortkeys: Optional[List[SortKey]] = None,
-    ) -> Iterator[Row]:
-        return self.adapter.get_rows({}, [])
-
-
 def connect(  # pylint: disable=too-many-arguments
     adapters: Optional[List[str]] = None,
     adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
-    safe: bool = False,
     schema: str = DEFAULT_SCHEMA,
     **psycopg2_connection_kwargs: Any,
 ) -> extensions.connection:
     """
     Constructor for creating a connection to the database.
+
+    Only safe adapters can be loaded. If no adapters are specified, all safe adapters are
+    loaded.
     """
     adapter_kwargs = adapter_kwargs or {}
-    enabled_adapters = registry.load_all(adapters, safe)
+    enabled_adapters = {
+        name: adapter
+        for name, adapter in registry.load_all(adapters, safe=False).items()
+        if adapter.safe
+    }
 
     # replace entry point names with class names
     mapping = {

@@ -35,19 +35,22 @@ class Multicorn2Dialect(PGDialect_psycopg2):
         """
         return db
 
-    import_dbapi = dbapi
+    @classmethod
+    def import_dbapi(cls):
+        """
+        New version of the ``dbapi`` method.
+        """
+        return db
 
     def __init__(
         self,
         adapters: Optional[List[str]] = None,
         adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
-        safe: bool = False,
         **kwargs: Any,
     ):
         super().__init__(**kwargs)
         self._adapters = adapters
         self._adapter_kwargs = adapter_kwargs or {}
-        self._safe = safe
 
     def create_connect_args(
         self,
@@ -97,9 +100,10 @@ def get_adapter_for_table_name(
     using the connection to properly pass any adapter kwargs.
     """
     raw_connection = cast(extensions.connection, connection.engine.raw_connection())
+    cursor = raw_connection.cursor()
     adapter, args, kwargs = find_adapter(
         table_name,
-        raw_connection._adapter_kwargs,
-        raw_connection._adapters,
+        cursor._adapter_kwargs,
+        cursor._adapters,
     )
     return adapter(*args, **kwargs)
