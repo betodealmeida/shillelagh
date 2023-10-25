@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     postgresql-server-dev-13 \
     python3 \
     python3-dev \
-    python3-setuptools \
+    #python3-setuptools \
     python3-pip \
     python3-venv \
     wget

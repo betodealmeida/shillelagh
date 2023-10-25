@@ -13,7 +13,7 @@ services:
       - ./entrypoint.sh:/usr/local/bin/custom_entrypoint.sh
       - ..:/src
     ports:
-      - "12345:5432"
+      - "5432:5432"
     entrypoint: /usr/local/bin/custom_entrypoint.sh
 
 volumes:

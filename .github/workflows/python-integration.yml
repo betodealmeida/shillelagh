@@ -40,13 +40,16 @@ jobs:
     - name: Start the Postgres service
       run: |
         docker-compose -f postgres/docker-compose.yml up --build -d
-    - name: Check if Postgres is ready
+    - name: List running containers
       run: |
-        docker run --network container:postgres_postgres_1 postgres_postgres pg_isready \
-          -h postgres \
-          -p 5432 \
-          -U shillelagh \
-          --timeout=30
+        docker ps
+    - name: Check Postgres logs
+      run: |
+        sleep 5
+        docker logs postgres_postgres_1
+    - name: Wait for Postgres to become available
+      run: |
+        until docker run --network container:postgres_postgres_1 postgres_postgres pg_isready -h postgres -p 5432 -U shillelagh --timeout=90; do sleep 10; done
     - name: Test with pytest
       env:
         SHILLELAGH_ADAPTER_KWARGS: ${{ secrets.SHILLELAGH_ADAPTER_KWARGS }}
@@ -55,4 +58,5 @@ jobs:
     - name: Stop the Postgres service
       if: always()
       run: |
+        docker logs postgres_postgres_1
         docker-compose -f postgres/docker-compose.yml down

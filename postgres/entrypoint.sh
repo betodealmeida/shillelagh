@@ -5,10 +5,11 @@ set -e  # If any command fails, stop the script
 cd
 python3 -m venv venv
 source venv/bin/activate
+pip3 install 'setuptools>=61' wheel
 
 # install shillelagh
 cd /src
-pip3 install -e '.[all]'
+pip3 install -v -e '.[all]'
 
 # install multicorn2
 rm -rf multicorn2
