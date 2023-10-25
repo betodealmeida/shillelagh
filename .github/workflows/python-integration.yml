@@ -37,8 +37,22 @@ jobs:
         cd multicorn2
         git checkout v2.5
         pip install .
+    - name: Start the Postgres service
+      run: |
+        docker-compose -f postgres/docker-compose.yml up --build -d
+    - name: Check if Postgres is ready
+      run: |
+        docker run --network container:postgres_postgres_1 postgres_postgres pg_isready \
+          -h postgres \
+          -p 5432 \
+          -U shillelagh \
+          --timeout=30
     - name: Test with pytest
       env:
         SHILLELAGH_ADAPTER_KWARGS: ${{ secrets.SHILLELAGH_ADAPTER_KWARGS }}
       run: |
         pytest --cov-fail-under=100 --cov=src/shillelagh -vv tests/ --doctest-modules src/shillelagh --with-integration --with-slow-integration
+    - name: Stop the Postgres service
+      if: always()
+      run: |
+        docker-compose -f postgres/docker-compose.yml down

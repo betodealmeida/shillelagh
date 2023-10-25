@@ -59,7 +59,7 @@ There is also an [experimental backend](https://shillelagh.readthedocs.io/en/lat
     from shillelagh.backends.multicorn.db import connect
 
     connection = connect(
-        username="username",
+        user="username",
         password="password",
         host="localhost",
         port=5432,

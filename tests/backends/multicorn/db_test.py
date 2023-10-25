@@ -27,7 +27,7 @@ def test_connect(mocker: MockerFixture, registry: AdapterLoader) -> None:
     connect(
         None,
         ["dummy"],
-        username="username",
+        user="username",
         password="password",
         host="host",
         port=1234,
@@ -40,7 +40,7 @@ def test_connect(mocker: MockerFixture, registry: AdapterLoader) -> None:
             {},
             "main",
         ),
-        username="username",
+        user="username",
         password="password",
         host="host",
         port=1234,
@@ -60,7 +60,7 @@ def test_cursor_factory(mocker: MockerFixture) -> None:
         "main",
     )
     assert cursor_factory(
-        username="username",
+        user="username",
         password="password",
         host="host",
         port=1234,
@@ -69,7 +69,7 @@ def test_cursor_factory(mocker: MockerFixture) -> None:
         adapters=["dummy"],
         adapter_kwargs={},
         schema="main",
-        username="username",
+        user="username",
         password="password",
         host="host",
         port=1234,
