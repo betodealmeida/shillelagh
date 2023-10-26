@@ -140,7 +140,7 @@ class GenericJSONAPI(Adapter):
         for i, row in enumerate(parser.parse(payload)):
             row = {
                 k: v
-                for k, v in row.items()
+                for k, v in (row or {}).items()
                 if requested_columns is None or k in requested_columns
             }
             row["rowid"] = i

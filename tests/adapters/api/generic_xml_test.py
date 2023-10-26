@@ -47,7 +47,8 @@ def test_generic_xml(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
 
-    requests_mock.head(re.compile(".*-/versions.json.*"), status_code=404)
+    # for datassette
+    requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
 
     params = {
         "format": "Xml",

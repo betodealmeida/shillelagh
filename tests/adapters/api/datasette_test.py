@@ -249,7 +249,7 @@ def test_is_datasette(requests_mock: Mocker) -> None:
     """
     assert not is_datasette("https://example.com/")
 
-    requests_mock.head(
+    requests_mock.get(
         "https://example.com/-/versions.json",
         json={
             "python": {
@@ -288,6 +288,12 @@ def test_is_datasette(requests_mock: Mocker) -> None:
             },
             "pysqlite3": "0.4.6",
         },
+    )
+    assert is_datasette("https://example.com/database/table")
+
+    requests_mock.get(
+        "https://example.com/-/versions.json",
+        text="Invalid page",
     )
     assert is_datasette("https://example.com/database/table")
 

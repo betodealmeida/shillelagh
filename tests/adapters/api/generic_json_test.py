@@ -2,6 +2,7 @@
 Test the generic JSON adapter.
 """
 
+import re
 from datetime import timedelta
 
 import pytest
@@ -25,14 +26,8 @@ def test_generic_json(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
 
-    # for datassette and other probing adapters
-    requests_mock.head(
-        "https://api.stlouisfed.org/-/versions.json?"
-        "series_id=GNPCA&"
-        "api_key=abcdefghijklmnopqrstuvwxyz123456&"
-        "file_type=json#$.seriess%5B*%5D",
-        status_code=404,
-    )
+    # for datassette
+    requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
 
     params = {
         "series_id": "GNPCA",
