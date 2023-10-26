@@ -59,8 +59,13 @@ def is_datasette(uri: str) -> bool:
         expire_after=180,
     )
 
-    response = session.head(uri)
-    return cast(bool, response.ok)
+    response = session.get(uri)
+    try:
+        payload = response.json()
+    except Exception:  # pylint: disable=broad-exception-caught
+        return False
+
+    return "datasette" in payload
 
 
 def get_field(value: Any) -> Field:
