@@ -31,22 +31,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements/test.txt
-    - name: Install multicorn2
-      run: |
-        git clone https://github.com/pgsql-io/multicorn2.git
-        cd multicorn2
-        git checkout v2.5
-        pip install .
     - name: Start the Postgres service
       run: |
         docker-compose -f postgres/docker-compose.yml up --build -d
-    - name: List running containers
-      run: |
-        docker ps
-    - name: Check Postgres logs
-      run: |
-        sleep 5
-        docker logs postgres_postgres_1
     - name: Wait for Postgres to become available
       run: |
         until docker run --network container:postgres_postgres_1 postgres_postgres pg_isready -h postgres -p 5432 -U shillelagh --timeout=90; do sleep 10; done

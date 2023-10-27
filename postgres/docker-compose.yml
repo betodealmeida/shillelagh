@@ -10,11 +10,9 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-      - ./entrypoint.sh:/usr/local/bin/custom_entrypoint.sh
       - ..:/src
     ports:
       - "5432:5432"
-    entrypoint: /usr/local/bin/custom_entrypoint.sh
 
 volumes:
   db_data:

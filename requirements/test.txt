@@ -95,6 +95,8 @@ lazy-object-proxy==1.7.1
     # via astroid
 mccabe==0.7.0
     # via pylint
+multicorn @ git+https://github.com/pgsql-io/multicorn2.git@v2.5
+    # via shillelagh
 multidict==6.0.2
     # via
     #   aiohttp

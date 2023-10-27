@@ -35,7 +35,7 @@ jobs:
         git clone https://github.com/pgsql-io/multicorn2.git
         cd multicorn2
         git checkout v2.5
-        pip install .
+        pip install -e '.[testing]'
     - name: Test with pytest
       run: |
         pytest --cov-fail-under=100 --cov=src/shillelagh -vv tests/ --doctest-modules src/shillelagh --without-integration --without-slow-integration
