@@ -7,10 +7,18 @@ import pytest
 from sqlalchemy import MetaData, Table, create_engine, func, inspect, select
 
 from shillelagh.adapters.registry import AdapterLoader
+from shillelagh.backends.apsw import db
 from shillelagh.backends.apsw.dialects.base import APSWDialect
 from shillelagh.exceptions import ProgrammingError
 
 from ....fakes import FakeAdapter
+
+
+def test_dbapi() -> None:
+    """
+    Test the ``dbapi`` and ``import_dbapi`` methods.
+    """
+    assert APSWDialect.dbapi() == APSWDialect.import_dbapi() == db
 
 
 def test_create_engine(registry: AdapterLoader) -> None:

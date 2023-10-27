@@ -40,8 +40,8 @@ from shillelagh.fields import (
     StringDuration,
     StringInteger,
 )
-from shillelagh.filters import Filter, Operator
-from shillelagh.lib import best_index_object_available, deserialize
+from shillelagh.filters import Operator
+from shillelagh.lib import best_index_object_available, deserialize, get_bounds
 from shillelagh.typing import (
     Constraint,
     Index,
@@ -240,25 +240,6 @@ def get_order(
         )
         for column_index, descending in orderbys
     ]
-
-
-def get_bounds(
-    columns: Dict[str, Field],
-    all_bounds: DefaultDict[str, Set[Tuple[Operator, Any]]],
-) -> Dict[str, Filter]:
-    """
-    Combine all filters that apply to each column.
-    """
-    bounds: Dict[str, Filter] = {}
-    for column_name, operations in all_bounds.items():
-        column_type = columns[column_name]
-        operators = {operation[0] for operation in operations}
-        for class_ in column_type.filters:
-            if all(operator in class_.operators for operator in operators):
-                bounds[column_name] = class_.build(operations)
-                break
-
-    return bounds
 
 
 class VTModule:  # pylint: disable=too-few-public-methods

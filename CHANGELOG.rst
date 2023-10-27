@@ -2,11 +2,12 @@
 Changelog
 =========
 
-Next
-====
+Next (1.3.0)
+============
 
 - Improve Datasette detection (#399)
 - Fix generic JSON handling of null values (#399)
+- New Postgres backend based on multicorn2 (#397)
 
 Version 1.2.8 - 2023-10-21
 ==========================
@@ -55,7 +56,7 @@ Version 1.2.1 - 2023-04-14
 - Support for S3-compatible storage (#343)
 - Adapters can now know which columns were requested (#345)
 - Python 3.11 officially supported (#334)
-- Fix for error when an adapater can't be loaded (#346)
+- Fix for error when an adapter can't be loaded (#346)
 - Fix for ``BestIndexObject`` (#350)
 - Fix for empty dataframes (#351)
 

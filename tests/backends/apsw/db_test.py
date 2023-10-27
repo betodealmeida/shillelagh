@@ -1,7 +1,8 @@
-# pylint: disable=protected-access, c-extension-no-member, too-few-public-methods
 """
 Tests for shillelagh.backends.apsw.db.
 """
+# pylint: disable=protected-access, c-extension-no-member, too-few-public-methods
+
 import datetime
 from typing import Any, List, Tuple
 from unittest import mock

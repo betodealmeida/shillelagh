@@ -12,7 +12,7 @@ Shillelagh
 .. image:: https://img.shields.io/pypi/pyversions/shillelagh
    :alt: PyPI - Python Version
 
-Shillelagh (ʃɪˈleɪlɪ) is a Python library and CLI that allows you to query many resources (APIs, files, in memory objects) using SQL. It's both user and developer friendly, making it trivial to access resources and easy to add support for new ones.
+Shillelagh (ʃɪˈleɪlɪ) is a Python library and CLI that allows you to **query many resources (APIs, files, in memory objects) using SQL**. It's both user and developer friendly, making it trivial to access resources and easy to add support for new ones.
 
 Learn more on the `documentation <https://shillelagh.readthedocs.io/en/latest/>`_.
 
@@ -48,6 +48,25 @@ And a command-line utility:
 
     $ shillelagh
     sql> SELECT * FROM a_table
+
+There is also an [experimental backend](https://shillelagh.readthedocs.io/en/latest/postgres.html) that uses Postgres with the [Multicorn2](http://multicorn2.org/) extension:
+
+.. code-block:: python
+
+    from shillelagh.backends.multicorn.db import connect
+
+    connection = connect(
+        user="username",
+        password="password",
+        host="localhost",
+        port=5432,
+        database="examples",
+    )
+
+.. code-block:: python
+
+    from sqlalchemy import create_engine
+    engine = create_engine("shillelagh+multicorn2://username:password@localhost:5432/examples")
 
 Why SQL?
 ========
@@ -135,7 +154,6 @@ You also need to install optional dependencies, depending on the adapter you wan
 .. code-block:: bash
 
     $ pip install 'shillelagh[console]'        # to use the CLI
-    $ pip install 'shillelagh[datasetteapi]'   # for Datasette
     $ pip install 'shillelagh[genericjsonapi]' # for Generic JSON
     $ pip install 'shillelagh[genericxmlapi]'  # for Generic XML
     $ pip install 'shillelagh[githubapi]'      # for GitHub
@@ -143,9 +161,7 @@ You also need to install optional dependencies, depending on the adapter you wan
     $ pip install 'shillelagh[htmltableapi]'   # for HTML tables
     $ pip install 'shillelagh[pandasmemory]'   # for Pandas in memory
     $ pip install 'shillelagh[s3selectapi]'    # for S3 files
-    $ pip install 'shillelagh[socrataapi]'     # for Socrata API
     $ pip install 'shillelagh[systemapi]'      # for CPU information
-    $ pip install 'shillelagh[weatherapi]'     # for WeatherAPI
 
 Alternatively, you can install everything with:
 

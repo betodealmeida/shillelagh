@@ -10,6 +10,7 @@ from datetime import timedelta
 from typing import (
     Any,
     Callable,
+    DefaultDict,
     Dict,
     Iterator,
     List,
@@ -617,3 +618,22 @@ def get_session(
     session.headers.update(request_headers)
 
     return session
+
+
+def get_bounds(
+    columns: Dict[str, Field],
+    all_bounds: DefaultDict[str, Set[Tuple[Operator, Any]]],
+) -> Dict[str, Filter]:
+    """
+    Combine all filters that apply to each column.
+    """
+    bounds: Dict[str, Filter] = {}
+    for column_name, operations in all_bounds.items():
+        column_type = columns[column_name]
+        operators = {operation[0] for operation in operations}
+        for class_ in column_type.filters:
+            if all(operator in class_.operators for operator in operators):
+                bounds[column_name] = class_.build(operations)
+                break
+
+    return bounds

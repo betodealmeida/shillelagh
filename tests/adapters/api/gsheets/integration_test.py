@@ -14,6 +14,7 @@ from dateutil.tz import tzoffset
 
 from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.backends.apsw.db import connect
+from shillelagh.backends.multicorn.db import connect as connect_multicorn
 
 
 @pytest.mark.skip("Credentials no longer valid")
@@ -726,3 +727,59 @@ def test_weird_symbols(adapter_kwargs: Dict[str, Any]) -> None:
     assert cursor.fetchall() == [(1.0, "a", 45.0), (2.0, "b", 1999.0)]
     assert cursor.description is not None
     assert [column[0] for column in cursor.description] == ['foo"', '"bar', 'a"b']
+
+
+@pytest.mark.slow_integration_test
+def test_public_sheet_apsw() -> None:
+    """
+    Test reading values from a public sheet with APSW.
+    """
+    table = (
+        '"https://docs.google.com/spreadsheets/d/'
+        '1LcWZMsdCl92g7nA-D6qGRqg1T5TiHyuKJUY1u9XAnsk/edit#gid=0"'
+    )
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+    sql = f"SELECT * FROM {table}"
+    cursor.execute(sql)
+    assert cursor.fetchall() == [
+        ("BR", 2),
+        ("BR", 4),
+        ("ZA", 7),
+        ("CR", 11),
+        ("CR", 11),
+        ("FR", 100),
+        ("AR", 42),
+    ]
+
+
+@pytest.mark.slow_integration_test
+def test_public_sheet_multicorn() -> None:
+    """
+    Test reading values from a public sheet with Multicorn2.
+    """
+    table = (
+        '"https://docs.google.com/spreadsheets/d/'
+        '1LcWZMsdCl92g7nA-D6qGRqg1T5TiHyuKJUY1u9XAnsk/edit#gid=0"'
+    )
+
+    connection = connect_multicorn(
+        user="shillelagh",
+        password="shillelagh123",
+        host="localhost",
+        port=12345,
+        database="shillelagh",
+    )
+    cursor = connection.cursor()
+    sql = f"SELECT * FROM {table}"
+    cursor.execute(sql)
+    assert cursor.fetchall() == [
+        ("BR", 2),
+        ("BR", 4),
+        ("ZA", 7),
+        ("CR", 11),
+        ("CR", 11),
+        ("FR", 100),
+        ("AR", 42),
+    ]

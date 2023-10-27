@@ -120,7 +120,7 @@ def test_generic_json_complex_type(
     mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
 
     # for datassette and other probing adapters
-    requests_mock.head("https://exmaple.org/-/versions.json", status_code=404)
+    requests_mock.head("https://example.org/-/versions.json", status_code=404)
 
     url = URL("https://example.org/")
     requests_mock.head(str(url), headers={"content-type": "application/json"})
@@ -217,7 +217,7 @@ def test_request_headers_in_url(mocker: MockerFixture, requests_mock: Mocker) ->
     )
 
     # for datassette and other probing adapters
-    requests_mock.head("https://exmaple.org/-/versions.json", status_code=404)
+    requests_mock.head("https://example.org/-/versions.json", status_code=404)
 
     url = URL("https://example.org/")
     data = requests_mock.head(str(url), headers={"content-type": "application/json"})

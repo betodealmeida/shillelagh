@@ -10,6 +10,7 @@ Contents
    Usage <usage>
    Adapters <adapters>
    Creating a new adapter <development>
+   Postgres backend <postgres>
    License <license>
    Authors <authors>
    Changelog <changelog>

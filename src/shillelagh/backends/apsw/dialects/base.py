@@ -1,5 +1,9 @@
+"""
+A SQLALchemy dialect based on APSW.
+"""
+
 # pylint: disable=protected-access, abstract-method
-"""A SQLALchemy dialect."""
+
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 import sqlalchemy.types
@@ -59,6 +63,13 @@ class APSWDialect(SQLiteDialect):
         """
         return db
 
+    @classmethod
+    def import_dbapi(cls):  # pylint: disable=method-hidden
+        """
+        New version of the ``dbapi`` method.
+        """
+        return db
+
     def __init__(
         self,
         adapters: Optional[List[str]] = None,
@@ -95,7 +106,6 @@ class APSWDialect(SQLiteDialect):
         connection: _ConnectionFairy,
         table_name: str,
         schema: Optional[str] = None,
-        info_cache: Optional[Dict[Any, Any]] = None,
         **kwargs: Any,
     ) -> bool:
         """
@@ -104,7 +114,14 @@ class APSWDialect(SQLiteDialect):
         try:
             get_adapter_for_table_name(connection, table_name)
         except ProgrammingError:
-            return False
+            return bool(
+                super().has_table(
+                    connection,
+                    table_name,
+                    schema,
+                    **kwargs,  # pylint: disable=unused-argument
+                ),
+            )
         return True
 
     # needed for SQLAlchemy
