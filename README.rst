@@ -13,7 +13,7 @@ Shillelagh
    :alt: PyPI - Python Version
 
 .. image:: docs/logo.png
-   :scale: 50 %
+   :width: 50 %
 
 Shillelagh (ʃɪˈleɪlɪ) is a Python library and CLI that allows you to query many resources (APIs, files, in memory objects) using SQL. It's both user and developer friendly, making it trivial to access resources and easy to add support for new ones.
 
