@@ -291,6 +291,11 @@ def test_is_datasette(requests_mock: Mocker) -> None:
     )
     assert is_datasette("https://example.com/database/table")
 
+
+def test_is_datasette_invalid(requests_mock: Mocker) -> None:
+    """
+    Test ``is_datasette`` with 2xx status that are not the right payload.
+    """
     requests_mock.get(
         "https://example.com/-/versions.json",
         text="Invalid page",
