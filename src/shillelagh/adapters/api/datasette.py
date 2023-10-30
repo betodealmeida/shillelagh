@@ -6,16 +6,16 @@ See https://datasette.io/ for more information.
 
 import logging
 import urllib.parse
+from datetime import timedelta
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, cast
 
 import dateutil.parser
-import requests_cache
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field, Float, Integer, ISODate, ISODateTime, Order, String
 from shillelagh.filters import Equal, Filter, IsNotNull, IsNull, Like, NotEqual, Range
-from shillelagh.lib import SimpleCostModel, build_sql
+from shillelagh.lib import SimpleCostModel, build_sql, get_session
 from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
@@ -27,6 +27,8 @@ AVERAGE_NUMBER_OF_ROWS = 1000
 
 # how many rows to get when performing our own pagination
 DEFAULT_LIMIT = 1000
+
+CACHE_EXPIRATION = timedelta(minutes=3)
 
 
 def is_known_domain(netloc: str) -> bool:
@@ -53,12 +55,7 @@ def is_datasette(uri: str) -> bool:
     parsed = parsed._replace(path=f"{mountpoint}/-/versions.json")
     uri = urllib.parse.urlunparse(parsed)
 
-    session = requests_cache.CachedSession(
-        cache_name="datasette_cache",
-        backend="sqlite",
-        expire_after=180,
-    )
-
+    session = get_session({}, "datasette_cache", CACHE_EXPIRATION)
     response = session.get(uri)
     try:
         payload = response.json()
@@ -127,11 +124,7 @@ class DatasetteAPI(Adapter):
         self.table = table
 
         # use a cache for the API requests
-        self._session = requests_cache.CachedSession(
-            cache_name="datasette_cache",
-            backend="sqlite",
-            expire_after=180,
-        )
+        self._session = get_session({}, "datasette_cache", CACHE_EXPIRATION)
 
         self._set_columns()
 

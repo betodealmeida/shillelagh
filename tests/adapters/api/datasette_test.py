@@ -2,9 +2,10 @@
 """
 Tests for the Datasette adapter.
 """
+from datetime import timedelta
+
 import pytest
 from pytest_mock import MockerFixture
-from requests import Session
 from requests_mock.mocker import Mocker
 
 from shillelagh.adapters.api.datasette import (
@@ -25,15 +26,14 @@ from ...fakes import (
     datasette_results,
 )
 
+DO_NOT_CACHE = timedelta(seconds=-1)
+
 
 def test_datasette(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test a simple query.
     """
-    mocker.patch(
-        "shillelagh.adapters.api.datasette.requests_cache.CachedSession",
-        return_value=Session(),
-    )
+    mocker.patch("shillelagh.adapters.api.datasette.CACHE_EXPIRATION", DO_NOT_CACHE)
 
     columns_url = (
         "https://global-power-plants.datasettes.com/global-power-plants.json?"
@@ -98,10 +98,7 @@ def test_datasette_limit_offset(mocker: MockerFixture, requests_mock: Mocker) ->
     """
     Test a simple query with limit/offset.
     """
-    mocker.patch(
-        "shillelagh.adapters.api.datasette.requests_cache.CachedSession",
-        return_value=Session(),
-    )
+    mocker.patch("shillelagh.adapters.api.datasette.CACHE_EXPIRATION", DO_NOT_CACHE)
 
     columns_url = (
         "https://global-power-plants.datasettes.com/global-power-plants.json?"
@@ -183,10 +180,8 @@ def test_datasette_no_data(mocker: MockerFixture) -> None:
     """
     Test result with no rows.
     """
-    CachedSession = mocker.patch(  # pylint: disable=invalid-name
-        "shillelagh.adapters.api.datasette.requests_cache.CachedSession",
-    )
-    CachedSession.return_value.get.return_value.json.return_value = {
+    get_session = mocker.patch("shillelagh.adapters.api.datasette.get_session")
+    get_session().get().json.return_value = {
         "columns": [],
         "rows": [],
     }
@@ -243,10 +238,12 @@ def test_is_known_domain() -> None:
     assert not is_known_domain("example.com")
 
 
-def test_is_datasette(requests_mock: Mocker) -> None:
+def test_is_datasette(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test ``is_datasette``.
     """
+    mocker.patch("shillelagh.adapters.api.datasette.CACHE_EXPIRATION", DO_NOT_CACHE)
+
     assert not is_datasette("https://example.com/")
 
     requests_mock.get(
@@ -291,26 +288,18 @@ def test_is_datasette(requests_mock: Mocker) -> None:
     )
     assert is_datasette("https://example.com/database/table")
 
-
-def test_is_datasette_invalid(requests_mock: Mocker) -> None:
-    """
-    Test ``is_datasette`` with 2xx status that are not the right payload.
-    """
     requests_mock.get(
         "https://example.com/-/versions.json",
         text="Invalid page",
     )
-    assert is_datasette("https://example.com/database/table")
+    assert not is_datasette("https://example.com/database/table")
 
 
 def test_datasette_error(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test error handling.
     """
-    mocker.patch(
-        "shillelagh.adapters.api.datasette.requests_cache.CachedSession",
-        return_value=Session(),
-    )
+    mocker.patch("shillelagh.adapters.api.datasette.CACHE_EXPIRATION", DO_NOT_CACHE)
 
     columns_url = (
         "https://global-power-plants.datasettes.com/global-power-plants.json?"

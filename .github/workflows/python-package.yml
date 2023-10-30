@@ -30,7 +30,7 @@ jobs:
         RELEASE: r1
       run: |
         python -m pip install --upgrade pip setuptools
-        pip install -r requirements/test.txt
+        python -m pip install -r requirements/test.txt
     - name: Test with pytest
       run: |
         pre-commit run --all-files
