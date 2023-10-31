@@ -86,9 +86,7 @@ def test_implementation() -> None:
     assert parse_date_time_pattern("2016-04-05", "yyyy-mm-dd", date) == date(2016, 4, 5)
 
     # unsupported parse
-    assert (
-        format_date_time_pattern(timestamp, r"mmmm d \[dddd\]") == "April 5 [Tuesday]"
-    )
+    assert format_date_time_pattern(timestamp, r"mmmm d \[dddd\]") == "April 5 [Tuesday]"
     assert format_date_time_pattern(timestamp, "h PM, ddd mmm dd") == "4 PM, Tue Apr 05"
 
     assert (

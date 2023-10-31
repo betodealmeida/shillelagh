@@ -8,7 +8,7 @@ import logging
 import urllib.parse
 from datetime import timedelta
 from operator import itemgetter
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Optional, cast
 
 import requests
 from google.auth.transport.requests import AuthorizedSession
@@ -80,9 +80,9 @@ class APSWGSheetsDialect(APSWDialect):
         self,
         access_token: Optional[str] = None,
         service_account_file: Optional[str] = None,
-        service_account_info: Optional[Dict[str, Any]] = None,
+        service_account_info: Optional[dict[str, Any]] = None,
         subject: Optional[str] = None,
-        catalog: Optional[Dict[str, str]] = None,
+        catalog: Optional[dict[str, str]] = None,
         list_all_sheets: bool = False,
         app_default_credentials: bool = False,
         **kwargs: Any,
@@ -97,8 +97,8 @@ class APSWGSheetsDialect(APSWDialect):
         self.list_all_sheets = list_all_sheets
         self.app_default_credentials = app_default_credentials
 
-    def create_connect_args(self, url: URL) -> Tuple[Tuple[()], Dict[str, Any]]:
-        adapter_kwargs: Dict[str, Any] = {
+    def create_connect_args(self, url: URL) -> tuple[tuple[()], dict[str, Any]]:
+        adapter_kwargs: dict[str, Any] = {
             "access_token": self.access_token,
             "service_account_file": self.service_account_file,
             "service_account_info": self.service_account_info,
@@ -146,10 +146,10 @@ class APSWGSheetsDialect(APSWDialect):
     def get_table_names(  # pylint: disable=unused-argument
         self,
         connection: _ConnectionFairy,
-        schema: str = None,
+        schema: Optional[str] = None,
         sqlite_include_internal: bool = False,
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Return a list of table names.
 
@@ -180,7 +180,7 @@ class APSWGSheetsDialect(APSWDialect):
         return table_names
 
 
-def get_spreadsheet_ids(session: AuthorizedSession) -> List[str]:
+def get_spreadsheet_ids(session: AuthorizedSession) -> list[str]:
     """
     Return the ID of all spreadsheets that the user has access to.
     """
@@ -198,7 +198,7 @@ def get_spreadsheet_ids(session: AuthorizedSession) -> List[str]:
     return [file["id"] for file in payload["files"]]
 
 
-def get_sheet_urls(spreadsheet_id: str, session: AuthorizedSession) -> List[str]:
+def get_sheet_urls(spreadsheet_id: str, session: AuthorizedSession) -> list[str]:
     """
     Return the URL for all sheets in a given spreadsheet.
     """
@@ -214,7 +214,7 @@ def get_sheet_urls(spreadsheet_id: str, session: AuthorizedSession) -> List[str]
         )
         return []
 
-    sheet_urls: List[str] = []
+    sheet_urls: list[str] = []
     sheets = payload["sheets"]
     for sheet in sheets:
         sheet_id = sheet["properties"]["sheetId"]

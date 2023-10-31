@@ -6,7 +6,8 @@ An adapter for in-memory Pandas dataframes.
 
 import inspect
 import operator
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
+from collections.abc import Iterator
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -29,7 +30,7 @@ from shillelagh.typing import RequestedOrder, Row
 # this is just a wild guess; used to estimate query cost
 AVERAGE_NUMBER_OF_ROWS = 1000
 
-type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
+type_map: dict[str, tuple[type[Field], list[type[Filter]]]] = {
     "i": (Integer, [Range, Equal, NotEqual, IsNull, IsNotNull]),
     "b": (Boolean, [Equal, NotEqual, IsNull, IsNotNull]),
     "u": (Integer, [Range, Equal, NotEqual, IsNull, IsNotNull]),
@@ -72,9 +73,9 @@ def find_dataframe(uri: str) -> Optional[pd.DataFrame]:
 
 def get_df_data(  # pylint: disable=too-many-arguments, too-many-branches
     df: pd.DataFrame,
-    columns: Dict[str, Field],
-    bounds: Dict[str, Filter],
-    order: List[Tuple[str, RequestedOrder]],
+    columns: dict[str, Field],
+    bounds: dict[str, Filter],
+    order: list[tuple[str, RequestedOrder]],
     limit: Optional[int] = None,
     offset: Optional[int] = None,
 ) -> Iterator[Row]:
@@ -125,7 +126,7 @@ def get_df_data(  # pylint: disable=too-many-arguments, too-many-branches
         yield dict(zip(["rowid", *column_names], row))
 
 
-def get_columns_from_df(df: pd.DataFrame) -> Dict[str, Field]:
+def get_columns_from_df(df: pd.DataFrame) -> dict[str, Field]:
     """
     Construct adapter columns from a Pandas dataframe.
     """
@@ -153,7 +154,7 @@ class PandasMemory(Adapter):
         return find_dataframe(uri) is not None
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[str]:
+    def parse_uri(uri: str) -> tuple[str]:
         return (uri,)
 
     def __init__(self, uri: str):
@@ -165,15 +166,15 @@ class PandasMemory(Adapter):
         self.df = df
         self.columns = get_columns_from_df(df)
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         return self.columns
 
     get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
 
     def get_data(
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
         **kwargs: Any,

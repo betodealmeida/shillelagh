@@ -1,5 +1,5 @@
 """Custom types for the GSheets adapter."""
-from typing import Any, List
+from typing import Any
 
 from typing_extensions import Literal, TypedDict
 
@@ -65,7 +65,7 @@ class QueryResultsRow(TypedDict):
 
     """
 
-    c: List[QueryResultsCell]
+    c: list[QueryResultsCell]
 
 
 class QueryResultsTable(TypedDict):
@@ -85,8 +85,8 @@ class QueryResultsTable(TypedDict):
 
     """
 
-    cols: List[QueryResultsColumn]
-    rows: List[QueryResultsRow]
+    cols: list[QueryResultsColumn]
+    rows: list[QueryResultsRow]
     parsedNumHeaders: int
 
 
@@ -152,4 +152,4 @@ class QueryResults(TypedDict, total=False):
     status: Literal["ok", "error"]
     sig: str
     table: QueryResultsTable
-    errors: List[QueryResultsError]
+    errors: list[QueryResultsError]

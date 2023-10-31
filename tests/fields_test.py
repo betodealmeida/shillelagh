@@ -246,8 +246,7 @@ def test_isodatetime() -> None:
     )
     assert ISODateTime().format(None) is None
     assert (
-        ISODateTime().quote("2020-01-01T12:00:00+00:00")
-        == "'2020-01-01T12:00:00+00:00'"
+        ISODateTime().quote("2020-01-01T12:00:00+00:00") == "'2020-01-01T12:00:00+00:00'"
     )
     assert ISODateTime().quote(None) == "NULL"
 
@@ -410,8 +409,7 @@ def test_string_duration() -> None:
     )
     assert StringDuration().format(None) is None
     assert (
-        StringDuration().format(datetime.timedelta(days=2, hours=4))
-        == "2 days, 4:00:00"
+        StringDuration().format(datetime.timedelta(days=2, hours=4)) == "2 days, 4:00:00"
     )
     assert (
         StringDuration().quote(

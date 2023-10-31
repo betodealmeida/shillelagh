@@ -3,8 +3,9 @@ An adapter for GitHub.
 """
 import logging
 import urllib.parse
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Optional
 
 import requests_cache
 from jsonpath import JSONPath
@@ -46,7 +47,7 @@ class Column:
 
 # a mapping from the column name (eg, ``userid``) to the path in the JSON
 # response (``{"user": {"id": 42}}`` => ``user.id``) together with the field
-TABLES: Dict[str, Dict[str, List[Column]]] = {
+TABLES: dict[str, dict[str, list[Column]]] = {
     "repos": {
         "pulls": [
             Column("url", "html_url", String()),
@@ -94,7 +95,7 @@ class GitHubAPI(Adapter):
         )
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[str, str, str, str]:
+    def parse_uri(uri: str) -> tuple[str, str, str, str]:
         parsed = urllib.parse.urlparse(uri)
         _, base, owner, repo, resource = parsed.path.rsplit("/", 4)
         return (
@@ -127,15 +128,13 @@ class GitHubAPI(Adapter):
             expire_after=180,
         )
 
-    def get_columns(self) -> Dict[str, Field]:
-        return {
-            column.name: column.field for column in TABLES[self.base][self.resource]
-        }
+    def get_columns(self) -> dict[str, Field]:
+        return {column.name: column.field for column in TABLES[self.base][self.resource]}
 
     def get_data(
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
         **kwargs: Any,
@@ -186,7 +185,7 @@ class GitHubAPI(Adapter):
 
     def _get_multiple_resources(
         self,
-        bounds: Dict[str, Filter],
+        bounds: dict[str, Filter],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
     ) -> Iterator[Row]:
@@ -197,7 +196,9 @@ class GitHubAPI(Adapter):
         if self.access_token:
             headers["Authorization"] = f"Bearer {self.access_token}"
 
-        url = f"https://api.github.com/{self.base}/{self.owner}/{self.repo}/{self.resource}"
+        url = (
+            f"https://api.github.com/{self.base}/{self.owner}/{self.repo}/{self.resource}"
+        )
 
         # map filters in ``bounds`` to query params
         params = {name: filter_.value for name, filter_ in bounds.items()}  # type: ignore

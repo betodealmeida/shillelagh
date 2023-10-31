@@ -352,9 +352,7 @@ def test_parse_number_pattern() -> None:
     assert parse_number_pattern("1.001", "#,##0.000") == 1.001
 
     # tests for conditions
-    assert (
-        parse_number_pattern("0527", '[>1000]"HIGH";[Color43][<=200]"LOW";0000') == 527
-    )
+    assert parse_number_pattern("0527", '[>1000]"HIGH";[Color43][<=200]"LOW";0000') == 527
 
     # some really complicated examples
     assert parse_number_pattern("123.00 ", "#,##0.00_);[Red](#,##0.00)") == 123
@@ -420,18 +418,13 @@ def test_format_number_pattern() -> None:
 
     # tests for conditions
     assert (
-        format_number_pattern(1005, '[>1000]"HIGH";[Color43][<=200]"LOW";0000')
-        == "HIGH"
+        format_number_pattern(1005, '[>1000]"HIGH";[Color43][<=200]"LOW";0000') == "HIGH"
     )
-    assert (
-        format_number_pattern(32, '[>1000]"HIGH";[Color43][<=200]"LOW";0000') == "LOW"
-    )
+    assert format_number_pattern(32, '[>1000]"HIGH";[Color43][<=200]"LOW";0000') == "LOW"
     assert (
         format_number_pattern(527, '[>1000]"HIGH";[Color43][<=200]"LOW";0000') == "0527"
     )
-    assert (
-        format_number_pattern(527, '[>1000]"HIGH";[Color43][<=200]"LOW"') == "########"
-    )
+    assert format_number_pattern(527, '[>1000]"HIGH";[Color43][<=200]"LOW"') == "########"
 
     # some really complicated examples
     assert format_number_pattern(123, "#,##0.00_);[Red](#,##0.00)") == "123.00 "

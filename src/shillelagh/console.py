@@ -22,7 +22,6 @@ import logging
 import os.path
 import time
 from pathlib import Path
-from typing import List, Tuple
 
 import yaml
 from appdirs import user_config_dir
@@ -176,7 +175,7 @@ sql_completer = WordCompleter(
 style = style_from_pygments_cls(get_style_by_name("friendly"))
 
 
-def main():  # pylint: disable=too-many-locals
+def main() -> None:  # pylint: disable=too-many-locals
     """
     Run a REPL until the user presses Control-D.
     """
@@ -206,7 +205,7 @@ def main():  # pylint: disable=too-many-locals
         history=FileHistory(history_path),
     )
 
-    lines: List[str] = []
+    lines: list[str] = []
     quote_context = " "
     while True:
         prompt = "sql> " if not lines else f"  {quote_context}. "
@@ -247,7 +246,7 @@ def main():  # pylint: disable=too-many-locals
     print("GoodBye!")
 
 
-def get_query_termination(query: str) -> Tuple[bool, str]:
+def get_query_termination(query: str) -> tuple[bool, str]:
     """
     Check if a query is ended or if a new line should be created.
 

@@ -6,7 +6,8 @@ Tests for shillelagh.adapters.api.gsheets.adapter.
 
 import datetime
 import json
-from typing import Any, Iterator, List
+from collections.abc import Iterator
+from typing import Any
 from unittest import mock
 
 import apsw
@@ -1245,8 +1246,7 @@ def test_insert_data(
     with pytest.raises(ProgrammingError) as excinfo:
         gsheets_adapter.insert_row({"country": "PY", "cnt": "11", "rowid": 3})
     assert (
-        str(excinfo.value)
-        == "Request range[WRONG] does not match value's range[Sheet1]"
+        str(excinfo.value) == "Request range[WRONG] does not match value's range[Sheet1]"
     )
 
 
@@ -2290,7 +2290,7 @@ def test_header_rows(mocker: MockerFixture) -> None:
     gsheets_adapter.columns = {"this is a string": String(), "this is a float": Float()}
     gsheets_adapter._column_map = {"this is a string": "B", "this is a float": "D"}
 
-    values: List[List[Any]] = [
+    values: list[list[Any]] = [
         [None, "this is", None, "this is"],
         [None, "a string", None, "a float"],
         [None, "test", None, 1.1],
@@ -2337,8 +2337,7 @@ def test_get_cost(mocker: MockerFixture) -> None:
     assert gsheets_adapter.get_cost([], []) == 3303
     assert gsheets_adapter.get_cost([("one", Operator.EQ)], []) == 3092
     assert (
-        gsheets_adapter.get_cost([("one", Operator.EQ), ("two", Operator.GT)], [])
-        == 3022
+        gsheets_adapter.get_cost([("one", Operator.EQ), ("two", Operator.GT)], []) == 3022
     )
     assert (
         gsheets_adapter.get_cost(

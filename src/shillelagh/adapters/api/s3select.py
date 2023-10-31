@@ -5,8 +5,9 @@ An adapter to S3 files via S3Select.
 import json
 import logging
 import urllib.parse
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, Union, cast
+from typing import Any, Literal, Optional, Union, cast
 
 import boto3
 from botocore import UNSIGNED
@@ -105,7 +106,7 @@ def get_input_serialization(parsed: urllib.parse.ParseResult) -> InputSerializat
     """
     Build the input serialization object.
     """
-    options: Dict[str, List[str]] = urllib.parse.parse_qs(parsed.query)
+    options: dict[str, list[str]] = urllib.parse.parse_qs(parsed.query)
 
     # the serialization format can be passed explicitly or inferred from the file
     # extension
@@ -121,7 +122,7 @@ def get_input_serialization(parsed: urllib.parse.ParseResult) -> InputSerializat
             )
         format_ = suffix[1:].lower()
 
-    input_serialization: Dict[str, Any] = {
+    input_serialization: dict[str, Any] = {
         "CompressionType": options.get("CompressionType", ["NONE"])[-1],
     }
 
@@ -217,7 +218,7 @@ class S3SelectAPI(Adapter):
         return parsed.scheme == "s3"
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[str, str, InputSerializationType, str]:
+    def parse_uri(uri: str) -> tuple[str, str, InputSerializationType, str]:
         parsed = urllib.parse.urlparse(uri)
         path = urllib.parse.unquote(parsed.fragment) or "$"
 
@@ -241,7 +242,7 @@ class S3SelectAPI(Adapter):
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
         s3_endpoint_url: Optional[str] = None,
-        s3_kwargs: Optional[Dict[str, Any]] = None,
+        s3_kwargs: Optional[dict[str, Any]] = None,
     ):
         super().__init__()
 
@@ -289,12 +290,12 @@ class S3SelectAPI(Adapter):
             for column_name in column_names
         }
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         return self.columns
 
     get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
 
-    def _run_query(self, sql: str) -> Iterator[Dict[str, Any]]:
+    def _run_query(self, sql: str) -> Iterator[dict[str, Any]]:
         """
         Run a query and return rows.
         """
@@ -323,12 +324,12 @@ class S3SelectAPI(Adapter):
                         leftover = "\n".join(records[i:])
                         break
 
-                    yield cast(Dict[str, Any], row)
+                    yield cast(dict[str, Any], row)
 
     def get_data(
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:

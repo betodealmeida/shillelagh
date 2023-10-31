@@ -4,7 +4,7 @@ Fixtures for Shillelagh.
 import json
 import logging
 import os
-from typing import Dict, Iterator
+from collections.abc import Iterator
 
 import pytest
 from pytest_mock import MockerFixture
@@ -15,7 +15,7 @@ _logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
-def adapter_kwargs() -> Dict[str, str]:
+def adapter_kwargs() -> dict[str, str]:
     """
     Load adapter configuration.
 

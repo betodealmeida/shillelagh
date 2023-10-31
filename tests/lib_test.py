@@ -1,7 +1,8 @@
 """
 Tests for shillelagh.lib.
 """
-from typing import Any, Dict, Iterator, List, Tuple
+from collections.abc import Iterator
+from typing import Any
 
 import pytest
 from pytest_mock import MockerFixture
@@ -110,7 +111,7 @@ def test_analyze() -> None:
     """
     Test ``analyze``.
     """
-    data: Iterator[Dict[str, Any]] = iter(
+    data: Iterator[dict[str, Any]] = iter(
         [
             {
                 "int": 1,
@@ -188,7 +189,7 @@ def test_build_sql() -> None:
     """
     Test ``build_sql``.
     """
-    columns: Dict[str, Field[Any, Any]] = {"a": String(), "b": Float()}
+    columns: dict[str, Field[Any, Any]] = {"a": String(), "b": Float()}
 
     sql = build_sql(columns, {"a": Equal("b"), "b": NotEqual(1.0)}, [])
     assert sql == "SELECT * WHERE a = 'b' AND b != 1.0"
@@ -223,8 +224,8 @@ def test_build_sql_with_aliases() -> None:
     """
     Test ``build_sql`` with aliases tables and columns.
     """
-    columns: Dict[str, Field[Any, Any]] = {"a": String(), "b": Float()}
-    order: List[Tuple[str, RequestedOrder]] = [
+    columns: dict[str, Field[Any, Any]] = {"a": String(), "b": Float()}
+    order: list[tuple[str, RequestedOrder]] = [
         ("a", Order.ASCENDING),
     ]
     sql = build_sql(
@@ -235,9 +236,7 @@ def test_build_sql_with_aliases() -> None:
         alias="t",
     )
     assert sql == (
-        "SELECT * FROM some_table AS t "
-        "WHERE t.a = 'b' AND t.b != 1.0 "
-        "ORDER BY t.a"
+        "SELECT * FROM some_table AS t " "WHERE t.a = 'b' AND t.b != 1.0 " "ORDER BY t.a"
     )
 
 
@@ -245,14 +244,14 @@ def test_build_sql_with_map() -> None:
     """
     Test ``build_sql`` with a column map.
     """
-    columns: Dict[str, Field] = {f"col{i}_": Integer() for i in range(4)}
+    columns: dict[str, Field] = {f"col{i}_": Integer() for i in range(4)}
     bounds = {
         "col0_": Equal(1),
         "col1_": Range(start=0, end=1, include_start=True, include_end=False),
         "col2_": Range(start=None, end=1, include_start=False, include_end=True),
         "col3_": Range(start=0, end=None, include_start=False, include_end=True),
     }
-    order: List[Tuple[str, RequestedOrder]] = [
+    order: list[tuple[str, RequestedOrder]] = [
         ("col0_", Order.ASCENDING),
         ("col1_", Order.DESCENDING),
     ]
@@ -268,7 +267,7 @@ def test_build_sql_impossible() -> None:
     """
     Test ``build_sql`` with an impossible filter.
     """
-    columns: Dict[str, Field] = {"a": String(), "b": Float()}
+    columns: dict[str, Field] = {"a": String(), "b": Float()}
 
     with pytest.raises(ImpossibleFilterError):
         build_sql(columns, {"a": Impossible()}, [])
@@ -357,8 +356,8 @@ def test_filter_data() -> None:
     """
     Test ``filter_data``.
     """
-    data: List[Dict[str, Any]]
-    bounds: Dict[str, Filter]
+    data: list[dict[str, Any]]
+    bounds: dict[str, Filter]
 
     data = [
         {"index": 10, "temperature": 15.2, "site": "Diamond_St"},
@@ -398,7 +397,7 @@ def test_filter_data() -> None:
         {"index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
     ]
 
-    order: List[Tuple[str, RequestedOrder]] = [("index", Order.DESCENDING)]
+    order: list[tuple[str, RequestedOrder]] = [("index", Order.DESCENDING)]
     assert list(filter_data(iter(data), {}, order)) == [
         {"index": 13, "temperature": 12.1, "site": "Kodiak_Trail"},
         {"index": 12, "temperature": 13.3, "site": "Platinum_St"},
@@ -432,7 +431,7 @@ def test_find_adapter(mocker: MockerFixture) -> None:
     adapter2.configure_mock(__name__="adapter2")
 
     uri = "https://example.com/"
-    adapter_kwargs: Dict[str, Any] = {}
+    adapter_kwargs: dict[str, Any] = {}
     adapters = [
         adapter1,
         adapter2,

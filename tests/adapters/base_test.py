@@ -1,8 +1,9 @@
 """
 Test for shillelagh.adapter.base.
 """
+from collections.abc import Iterator
 from datetime import datetime
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
+from typing import Any, Optional
 
 import pytest
 
@@ -25,7 +26,7 @@ class FakeAdapterWithDateTime(FakeAdapter):
 
     birthday = DateTime(filters=[Range], order=Order.ANY, exact=True)
 
-    data: List[Row] = []
+    data: list[Row] = []
 
     def __init__(self):  # pylint: disable=super-init-not-called
         pass
@@ -198,12 +199,12 @@ def test_limit_offset(registry: AdapterLoader) -> None:
 
         def get_data(  # pylint: disable=too-many-arguments
             self,
-            bounds: Dict[str, Filter],
-            order: List[Tuple[str, RequestedOrder]],
+            bounds: dict[str, Filter],
+            order: list[tuple[str, RequestedOrder]],
             limit: Optional[int] = None,
             offset: Optional[int] = None,
-            requested_columns: Optional[Set[str]] = None,
-            **kwargs: Any
+            requested_columns: Optional[set[str]] = None,
+            **kwargs: Any,
         ) -> Iterator[Row]:
             """
             Return all data.

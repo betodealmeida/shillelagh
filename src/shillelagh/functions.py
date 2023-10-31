@@ -4,7 +4,7 @@ Custom functions available to the SQL backend.
 import json
 import sys
 import time
-from typing import Any, Dict, List, Type
+from typing import Any
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.lib import find_adapter
@@ -30,8 +30,8 @@ def sleep(seconds: int) -> None:
 
 
 def get_metadata(
-    adapter_kwargs: Dict[str, Dict[str, Any]],
-    adapters: List[Type[Adapter]],
+    adapter_kwargs: dict[str, dict[str, Any]],
+    adapters: list[type[Adapter]],
     uri: str,
 ) -> str:
     """

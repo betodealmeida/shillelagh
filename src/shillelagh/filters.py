@@ -3,7 +3,7 @@ Filters for representing SQL predicates.
 """
 import re
 from enum import Enum
-from typing import Any, Optional, Set, Tuple
+from typing import Any, Optional
 
 
 class Operator(Enum):
@@ -105,7 +105,7 @@ class Endpoint:
 def get_endpoints_from_operation(
     operator: Operator,
     value: Any,
-) -> Tuple[Endpoint, Endpoint]:
+) -> tuple[Endpoint, Endpoint]:
     """
     Returns endpoints from an operation.
     """
@@ -129,10 +129,10 @@ class Filter:
     A filter representing a SQL predicate.
     """
 
-    operators: Set[Operator] = set()
+    operators: set[Operator] = set()
 
     @classmethod
-    def build(cls, operations: Set[Tuple[Operator, Any]]) -> "Filter":
+    def build(cls, operations: set[tuple[Operator, Any]]) -> "Filter":
         """
         Given a set of operations, build a filter:
 
@@ -164,7 +164,7 @@ class Impossible(Filter):
     """
 
     @classmethod
-    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+    def build(cls, operations: set[tuple[Operator, Any]]) -> Filter:
         return Impossible()
 
     def check(self, value: Any) -> bool:
@@ -185,10 +185,10 @@ class IsNull(Filter):
     Filter for ``IS NULL``.
     """
 
-    operators: Set[Operator] = {Operator.IS_NULL}
+    operators: set[Operator] = {Operator.IS_NULL}
 
     @classmethod
-    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+    def build(cls, operations: set[tuple[Operator, Any]]) -> Filter:
         return IsNull()
 
     def check(self, value: Any) -> bool:
@@ -209,10 +209,10 @@ class IsNotNull(Filter):
     Filter for ``IS NOT NULL``.
     """
 
-    operators: Set[Operator] = {Operator.IS_NOT_NULL}
+    operators: set[Operator] = {Operator.IS_NOT_NULL}
 
     @classmethod
-    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+    def build(cls, operations: set[tuple[Operator, Any]]) -> Filter:
         return IsNotNull()
 
     def check(self, value: Any) -> bool:
@@ -233,7 +233,7 @@ class Equal(Filter):
     Equality comparison.
     """
 
-    operators: Set[Operator] = {
+    operators: set[Operator] = {
         Operator.EQ,
     }
 
@@ -241,7 +241,7 @@ class Equal(Filter):
         self.value = value
 
     @classmethod
-    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+    def build(cls, operations: set[tuple[Operator, Any]]) -> Filter:
         values = {value for operator, value in operations}
         if len(values) != 1:
             return Impossible()
@@ -260,7 +260,7 @@ class NotEqual(Filter):
     Inequality comparison.
     """
 
-    operators: Set[Operator] = {
+    operators: set[Operator] = {
         Operator.NE,
     }
 
@@ -268,7 +268,7 @@ class NotEqual(Filter):
         self.value = value
 
     @classmethod
-    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+    def build(cls, operations: set[tuple[Operator, Any]]) -> Filter:
         values = {value for operator, value in operations}
         if len(values) != 1:
             return Impossible()
@@ -287,7 +287,7 @@ class Like(Filter):
     Substring searches.
     """
 
-    operators: Set[Operator] = {
+    operators: set[Operator] = {
         Operator.LIKE,
     }
 
@@ -299,7 +299,7 @@ class Like(Filter):
         )
 
     @classmethod
-    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+    def build(cls, operations: set[tuple[Operator, Any]]) -> Filter:
         # we only accept a single value
         values = {value for operator, value in operations}
         if len(values) != 1:
@@ -345,7 +345,7 @@ class Range(Filter):
         self.include_start = include_start
         self.include_end = include_end
 
-    operators: Set[Operator] = {
+    operators: set[Operator] = {
         Operator.EQ,
         Operator.GE,
         Operator.GT,
@@ -383,7 +383,7 @@ class Range(Filter):
         return Range(start.value, end.value, start.include, end.include)
 
     @classmethod
-    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+    def build(cls, operations: set[tuple[Operator, Any]]) -> Filter:
         start = Endpoint(None, True, Side.LEFT)
         end = Endpoint(None, True, Side.RIGHT)
 

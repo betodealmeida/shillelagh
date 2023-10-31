@@ -92,8 +92,8 @@ def test_load_warning(mocker: MockerFixture, registry: AdapterLoader) -> None:
 
     with pytest.raises(InterfaceError):
         registry.load("dummy")
-    assert _logger.warning.not_called()
+    _logger.warning.assert_not_called()
 
     with pytest.raises(InterfaceError):
         registry.load("dummy", warn=True)
-    assert _logger.warning.called_with("Couldn't load adapter %s", "dummy")
+    _logger.warning.assert_called_with("Couldn't load adapter %s", "dummy")
