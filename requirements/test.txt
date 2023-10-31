@@ -9,7 +9,7 @@
     # via -r requirements/test.in
 appdirs==1.4.4
     # via shillelagh
-apsw==3.38.5.post1
+apsw==3.43.2.0
     # via shillelagh
 astroid==2.14.2
     # via pylint
@@ -42,7 +42,7 @@ click==8.1.3
     # via pip-tools
 codespell==2.1.0
     # via shillelagh
-coverage[toml]==6.4.2
+coverage[toml]==7.3.2
     # via pytest-cov
 defusedxml==0.7.1
     # via shillelagh
@@ -62,7 +62,7 @@ freezegun==1.2.1
     # via shillelagh
 google-auth==2.9.1
     # via shillelagh
-greenlet==2.0.2
+greenlet==3.0.1
     # via
     #   shillelagh
     #   sqlalchemy
@@ -94,7 +94,7 @@ multidict==6.0.2
     # via yarl
 nodeenv==1.7.0
     # via pre-commit
-numpy==1.23.1
+numpy==1.26.1
     # via pandas
 packaging==21.3
     # via
@@ -128,7 +128,7 @@ pyasn1==0.4.8
     #   rsa
 pyasn1-modules==0.2.8
     # via google-auth
-pyfakefs==4.6.3
+pyfakefs==5.3.0
     # via shillelagh
 pygments==2.12.0
     # via shillelagh
@@ -155,7 +155,7 @@ python-dateutil==2.8.2
     #   shillelagh
 pytz==2022.1
     # via pandas
-pyyaml==6.0
+pyyaml==6.0.1
     # via
     #   pre-commit
     #   shillelagh
@@ -219,7 +219,7 @@ wheel==0.37.1
     # via pip-tools
 wrapt==1.14.1
     # via astroid
-yarl==1.8.1
+yarl==1.9.2
     # via shillelagh
 zipp==3.15.0
     # via importlib-metadata

@@ -1,7 +1,8 @@
 [build-system]
 # AVOID CHANGING REQUIRES: IT WILL BE UPDATED BY PYSCAFFOLD!
-requires = ["setuptools>=46.1.0,<50", "setuptools_scm[toml]>=5", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools==68.2.2", "setuptools_scm[toml]>=5", "wheel"]
+#build-backend = "setuptools.build_meta"
+build-backend = "setuptools.build_meta:__legacy__"
 
 [tool.setuptools_scm]
 # See configuration details in https://github.com/pypa/setuptools_scm
@@ -9,3 +10,7 @@ version_scheme = "no-guess-dev"
 
 [tool.flake8]
 max-line-length = 90
+extend-ignore = ["E203", "E501"]
+
+[tool.black]
+line-length = 90

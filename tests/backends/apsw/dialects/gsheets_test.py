@@ -2,7 +2,7 @@
 Test for shillelagh.backends.apsw.dialects.gsheets.
 """
 import datetime
-from typing import Any, Dict
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -259,10 +259,11 @@ def test_drive_api_disabled(mocker: MockerFixture, requests_mock: Mocker) -> Non
                         "message": (
                             "Access Not Configured. Drive API has not been used in "
                             "project 1034909279888 before or it is disabled. Enable "
-                            "it by visiting https://console.developers.google.com/apis/api/"
-                            "drive.googleapis.com/overview?project=1034909279888 then retry. "
-                            "If you enabled this API recently, wait a few minutes for the "
-                            "action to propagate to our systems and retry."
+                            "it by visiting "
+                            "https://console.developers.google.com/apis/api/"
+                            "drive.googleapis.com/overview?project=1034909279888 then "
+                            "retry. If you enabled this API recently, wait a few minutes "
+                            "for the action to propagate to our systems and retry."
                         ),
                         "extendedHelp": (
                             "https://console.developers.google.com/apis/api/"
@@ -358,7 +359,7 @@ def test_do_ping(mocker: MockerFixture, requests_mock: Mocker) -> None:
 
 @pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
-def test_types_in_sqlalchemy(adapter_kwargs: Dict[str, Any]) -> None:
+def test_types_in_sqlalchemy(adapter_kwargs: dict[str, Any]) -> None:
     """
     Test that the SQLAlchemy dialect returns types correctly.
 

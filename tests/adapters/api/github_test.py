@@ -26,9 +26,13 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
         return_value=Session(),
     )
 
-    page1_url = "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=100&page=1"
+    page1_url = (
+        "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=100&page=1"
+    )
     requests_mock.get(page1_url, json=github_response)
-    page2_url = "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=100&page=2"
+    page2_url = (
+        "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=100&page=2"
+    )
     requests_mock.get(page2_url, json=[])
 
     connection = connect(":memory:")
@@ -378,7 +382,9 @@ def test_github_rate_limit(mocker: MockerFixture, requests_mock: Mocker) -> None
         return_value=Session(),
     )
 
-    url = "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=100&page=1"
+    url = (
+        "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=100&page=1"
+    )
     requests_mock.get(
         url,
         status_code=403,

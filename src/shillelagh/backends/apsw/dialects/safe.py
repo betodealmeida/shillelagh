@@ -5,7 +5,7 @@ A "safe" Shillelagh dialect.
 When this dialect is used only adapters marked as safe and explicitly
 listed are loaded.
 """
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from sqlalchemy.engine.url import URL
 
@@ -34,8 +34,8 @@ class APSWSafeDialect(APSWDialect):
 
     def __init__(
         self,
-        adapters: Optional[List[str]] = None,
-        adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+        adapters: Optional[list[str]] = None,
+        adapter_kwargs: Optional[dict[str, dict[str, Any]]] = None,
         **kwargs: Any,
     ):
         super().__init__(adapters, adapter_kwargs, safe=True, **kwargs)
@@ -43,7 +43,7 @@ class APSWSafeDialect(APSWDialect):
     def create_connect_args(
         self,
         url: URL,
-    ) -> Tuple[Tuple[()], Dict[str, Any]]:
+    ) -> tuple[tuple[()], dict[str, Any]]:
         return (), {
             "path": ":memory:",
             "adapters": self._adapters,

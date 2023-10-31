@@ -3,7 +3,6 @@
 Tests for shillelagh.adapters.api.weatherapi.
 """
 from datetime import datetime, timedelta, timezone
-from typing import Dict
 
 import pytest
 from pytest_mock import MockerFixture
@@ -650,7 +649,7 @@ def test_combine_time_filters() -> None:
     """
     Test queries with both ``time`` and ``time_epoch``.
     """
-    bounds: Dict[str, Filter] = {
+    bounds: dict[str, Filter] = {
         "time": Range(datetime(2021, 1, 1, tzinfo=timezone.utc)),
         "time_epoch": Range(
             None,

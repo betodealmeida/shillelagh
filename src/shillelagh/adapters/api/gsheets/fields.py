@@ -2,7 +2,7 @@
 Custom fields for the GSheets adapter.
 """
 import datetime
-from typing import Any, List, Optional, Type, Union
+from typing import Any, Optional, Union
 
 from shillelagh.adapters.api.gsheets.parsing.date import (
     format_date_time_pattern,
@@ -39,7 +39,7 @@ class GSheetsField(Field[Internal, External]):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        filters: Optional[List[Type[Filter]]] = None,
+        filters: Optional[list[type[Filter]]] = None,
         order: Order = Order.NONE,
         exact: bool = False,
         pattern: Optional[str] = None,

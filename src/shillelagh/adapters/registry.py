@@ -7,7 +7,7 @@ Inspired by SQLAlchemy's ``PluginLoader``.
 import logging
 import sys
 from collections import defaultdict
-from typing import Dict, List, Optional, Type, cast
+from typing import Optional, cast
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import InterfaceError
@@ -36,7 +36,7 @@ class AdapterLoader:
         for entry_point in entry_points(group="shillelagh.adapter"):
             self.loaders[entry_point.name].append(entry_point.load)
 
-    def load(self, name: str, safe: bool = False, warn: bool = False) -> Type[Adapter]:
+    def load(self, name: str, safe: bool = False, warn: bool = False) -> type[Adapter]:
         """
         Load a given entry point by its name.
         """
@@ -45,7 +45,7 @@ class AdapterLoader:
 
         for load in self.loaders[name]:
             try:
-                return cast(Type[Adapter], load())
+                return cast(type[Adapter], load())
             except (ImportError, ModuleNotFoundError) as ex:
                 if warn:
                     _logger.warning("Couldn't load adapter %s", name)
@@ -56,9 +56,9 @@ class AdapterLoader:
 
     def load_all(
         self,
-        adapters: Optional[List[str]] = None,
+        adapters: Optional[list[str]] = None,
         safe: bool = False,
-    ) -> Dict[str, Type[Adapter]]:
+    ) -> dict[str, type[Adapter]]:
         """
         Load all the adapters given a list of names.
 
@@ -70,8 +70,8 @@ class AdapterLoader:
 
     def _load_all_safe(
         self,
-        adapters: Optional[List[str]] = None,
-    ) -> Dict[str, Type[Adapter]]:
+        adapters: Optional[list[str]] = None,
+    ) -> dict[str, type[Adapter]]:
         """
         Load all safe adapters.
 
@@ -92,8 +92,8 @@ class AdapterLoader:
 
     def _load_all(
         self,
-        adapters: Optional[List[str]] = None,
-    ) -> Dict[str, Type[Adapter]]:
+        adapters: Optional[list[str]] = None,
+    ) -> dict[str, type[Adapter]]:
         """
         Load all adapters, safe and unsafe.
 
@@ -116,12 +116,12 @@ class AdapterLoader:
         Register a new adapter.
         """
 
-        def load() -> Type[Adapter]:
+        def load() -> type[Adapter]:
             module = __import__(modulepath)
             try:
                 for token in modulepath.split(".")[1:]:
                     module = getattr(module, token)
-                return cast(Type[Adapter], getattr(module, classname))
+                return cast(type[Adapter], getattr(module, classname))
             except AttributeError as ex:
                 raise ModuleNotFoundError(
                     f"Unable to load {classname} from {modulepath}",
@@ -129,7 +129,7 @@ class AdapterLoader:
 
         self.loaders[name].append(load)
 
-    def add(self, name: str, adapter: Type[Adapter]) -> None:
+    def add(self, name: str, adapter: type[Adapter]) -> None:
         """
         Add an adapter class directly.
         """

@@ -61,7 +61,9 @@ def test_pandas() -> None:
         (12, 13.3, "Platinum_St"),
     ]
 
-    sql = """INSERT INTO mydf ("index", temperature, site) VALUES (14, 10.1, 'New_Site')"""
+    sql = (
+        """INSERT INTO mydf ("index", temperature, site) VALUES (14, 10.1, 'New_Site')"""
+    )
     cursor.execute(sql)
     sql = 'SELECT * FROM mydf WHERE "index" > 11'
     cursor.execute(sql)

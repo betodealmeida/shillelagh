@@ -1,24 +1,15 @@
-# pylint: disable=invalid-name, c-extension-no-member, unused-import
 """
 A DB API 2.0 wrapper for APSW.
 """
+# pylint: disable=invalid-name, c-extension-no-member, unused-import
+
 import datetime
 import itertools
 import logging
 import re
+from collections.abc import Iterator
 from functools import partial, wraps
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import Any, Callable, Optional, TypeVar, cast
 
 import apsw
 
@@ -62,12 +53,39 @@ from shillelagh.types import (
 )
 from shillelagh.typing import Description, SQLiteValidType
 
+__all__ = [
+    "DatabaseError",
+    "DataError",
+    "Error",
+    "IntegrityError",
+    "InterfaceError",
+    "InternalError",
+    "NotSupportedError",
+    "OperationalError",
+    "ProgrammingError",
+    "Warning",
+    "BINARY",
+    "DATETIME",
+    "NUMBER",
+    "ROWID",
+    "STRING",
+    "Binary",
+    "Date",
+    "DateFromTicks",
+    "Time",
+    "TimeFromTicks",
+    "Timestamp",
+    "TimestampFromTicks",
+    "apilevel",
+    "threadsafety",
+    "paramstyle",
+    "sqlite_version_info",
+]
+
 apilevel = "2.0"
 threadsafety = 2
 paramstyle = "qmark"
-sqlite_version_info = tuple(
-    int(number) for number in apsw.sqlitelibversion().split(".")
-)
+sqlite_version_info = tuple(int(number) for number in apsw.sqlitelibversion().split("."))
 
 NO_SUCH_TABLE = "SQLError: no such table: "
 DEFAULT_SCHEMA = "main"
@@ -101,14 +119,14 @@ def check_result(method: CURSOR_METHOD) -> CURSOR_METHOD:
     return cast(CURSOR_METHOD, wrapper)
 
 
-def get_type_code(type_name: str) -> Type[Field]:
+def get_type_code(type_name: str) -> type[Field]:
     """
     Return a ``Field`` that corresponds to a type name.
 
     This is used to build the description of the cursor after a successful
     query.
     """
-    return cast(Type[Field], type_map.get(type_name, Blob))
+    return cast(type[Field], type_map.get(type_name, Blob))
 
 
 def convert_binding(binding: Any) -> SQLiteValidType:
@@ -136,8 +154,8 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
     def __init__(  # pylint: disable=too-many-arguments
         self,
         cursor: "apsw.Cursor",
-        adapters: List[Type[Adapter]],
-        adapter_kwargs: Dict[str, Dict[str, Any]],
+        adapters: list[type[Adapter]],
+        adapter_kwargs: dict[str, dict[str, Any]],
         isolation_level: Optional[str] = None,
         schema: str = DEFAULT_SCHEMA,
     ):
@@ -161,7 +179,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         self.description: Description = None
 
         # this is set to an iterator of rows after a successful query
-        self._results: Optional[Iterator[Tuple[Any, ...]]] = None
+        self._results: Optional[Iterator[tuple[Any, ...]]] = None
         self._rowcount = -1
 
         # Approach from: https://github.com/rogerbinns/apsw/issues/160#issuecomment-33927297
@@ -169,7 +187,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         def exectrace(
             cursor: "apsw.Cursor",
             sql: str,
-            bindings: Optional[Tuple[Any, ...]],
+            bindings: Optional[tuple[Any, ...]],
         ) -> bool:
             # In the case of an empty sequence, fall back to None,
             # meaning no rows returned.
@@ -205,7 +223,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
     def execute(
         self,
         operation: str,
-        parameters: Optional[Tuple[Any, ...]] = None,
+        parameters: Optional[tuple[Any, ...]] = None,
     ) -> "Cursor":
         """
         Execute a query using the cursor.
@@ -264,7 +282,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
         return None
 
-    def _convert(self, cursor: "apsw.Cursor") -> Iterator[Tuple[Any, ...]]:
+    def _convert(self, cursor: "apsw.Cursor") -> Iterator[tuple[Any, ...]]:
         """
         Convert row from SQLite types to native Python types.
 
@@ -293,8 +311,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
         adapter, args, kwargs = find_adapter(uri, self._adapter_kwargs, self._adapters)
         formatted_args = ", ".join(
-            f"'{serialize(arg)}'"
-            for arg in combine_args_kwargs(adapter, *args, **kwargs)
+            f"'{serialize(arg)}'" for arg in combine_args_kwargs(adapter, *args, **kwargs)
         )
         table_name = escape_identifier(uri)
         self._cursor.execute(
@@ -329,7 +346,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
     def executemany(
         self,
         operation: str,
-        seq_of_parameters: Optional[List[Tuple[Any, ...]]] = None,
+        seq_of_parameters: Optional[list[tuple[Any, ...]]] = None,
     ) -> "Cursor":
         """
         Execute multiple statements.
@@ -342,7 +359,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
     @check_result
     @check_closed
-    def fetchone(self) -> Optional[Tuple[Any, ...]]:
+    def fetchone(self) -> Optional[tuple[Any, ...]]:
         """
         Fetch the next row of a query result set, returning a single sequence,
         or ``None`` when no more data is available.
@@ -358,7 +375,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
     @check_result
     @check_closed
-    def fetchmany(self, size=None) -> List[Tuple[Any, ...]]:
+    def fetchmany(self, size=None) -> list[tuple[Any, ...]]:
         """
         Fetch the next set of rows of a query result, returning a sequence of
         sequences (e.g. a list of tuples). An empty sequence is returned when
@@ -371,7 +388,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
     @check_result
     @check_closed
-    def fetchall(self) -> List[Tuple[Any, ...]]:
+    def fetchall(self) -> list[tuple[Any, ...]]:
         """
         Fetch all (remaining) rows of a query result, returning them as a
         sequence of sequences (e.g. a list of tuples). Note that the cursor's
@@ -399,14 +416,14 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
     @check_result
     @check_closed
-    def __iter__(self) -> Iterator[Tuple[Any, ...]]:
+    def __iter__(self) -> Iterator[tuple[Any, ...]]:
         for row in self._results:  # type: ignore
             self._rowcount = max(0, self._rowcount) + 1
             yield row
 
     @check_result
     @check_closed
-    def __next__(self) -> Tuple[Any, ...]:
+    def __next__(self) -> tuple[Any, ...]:
         return next(self._results)  # type: ignore
 
     next = __next__
@@ -434,10 +451,10 @@ class Connection:
     def __init__(  # pylint: disable=too-many-arguments
         self,
         path: str,
-        adapters: List[Type[Adapter]],
-        adapter_kwargs: Dict[str, Dict[str, Any]],
+        adapters: list[type[Adapter]],
+        adapter_kwargs: dict[str, dict[str, Any]],
         isolation_level: Optional[str] = None,
-        apsw_connection_kwargs: Optional[Dict[str, Any]] = None,
+        apsw_connection_kwargs: Optional[dict[str, Any]] = None,
         schema: str = DEFAULT_SCHEMA,
     ):
         # create underlying APSW connection
@@ -473,7 +490,7 @@ class Connection:
             self._connection.createscalarfunction(name, function)
 
         self.closed = False
-        self.cursors: List[Cursor] = []
+        self.cursors: list[Cursor] = []
 
     @check_closed
     def close(self) -> None:
@@ -517,7 +534,7 @@ class Connection:
     def execute(
         self,
         operation: str,
-        parameters: Optional[Tuple[Any, ...]] = None,
+        parameters: Optional[tuple[Any, ...]] = None,
     ) -> Cursor:
         """
         Execute a query on a cursor.
@@ -535,11 +552,11 @@ class Connection:
 
 def connect(  # pylint: disable=too-many-arguments
     path: str,
-    adapters: Optional[List[str]] = None,
-    adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+    adapters: Optional[list[str]] = None,
+    adapter_kwargs: Optional[dict[str, dict[str, Any]]] = None,
     safe: bool = False,
     isolation_level: Optional[str] = None,
-    apsw_connection_kwargs: Optional[Dict[str, Any]] = None,
+    apsw_connection_kwargs: Optional[dict[str, Any]] = None,
     schema: str = DEFAULT_SCHEMA,
 ) -> Connection:
     """

@@ -6,7 +6,8 @@ import datetime
 import json
 import logging
 import urllib.parse
-from typing import Any, Dict, Iterator, List, Optional, Tuple, cast
+from collections.abc import Iterator
+from typing import Any, Optional, cast
 
 import dateutil.tz
 from google.auth.transport.requests import AuthorizedSession
@@ -96,7 +97,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         )
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[str]:
+    def parse_uri(uri: str) -> tuple[str]:
         return (uri,)
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -104,9 +105,9 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         uri: str,
         access_token: Optional[str] = None,
         service_account_file: Optional[str] = None,
-        service_account_info: Optional[Dict[str, Any]] = None,
+        service_account_info: Optional[dict[str, Any]] = None,
         subject: Optional[str] = None,
-        catalog: Optional[Dict[str, str]] = None,
+        catalog: Optional[dict[str, str]] = None,
         app_default_credentials: bool = False,
     ):
         super().__init__()
@@ -127,7 +128,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         # (1) find rows being updated/delete and (2) work on a local
         # dataset when using a mode other than ``BIDIRECTIONAL``.
         self._sync_mode = get_sync_mode(uri) or SyncMode.BIDIRECTIONAL
-        self._values: Optional[List[List[Any]]] = None
+        self._values: Optional[list[list[Any]]] = None
         self._original_rows = 0
         self.modified = False
 
@@ -141,7 +142,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         self._set_metadata(uri)
 
         # Determine columns in the sheet.
-        self.columns: Dict[str, Field] = {}
+        self.columns: dict[str, Field] = {}
         self._set_columns(uri)
 
         # Store row ids for DML. When the first DML command is issued
@@ -151,7 +152,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         # rows. Because row IDs are generated on the fly, we need to
         # store the association between row ID and the values in the row
         # so we can ``DELETE`` or ``UPDATE`` them later.
-        self._row_ids: Dict[int, Row] = {}
+        self._row_ids: dict[int, Row] = {}
 
     def _set_metadata(self, uri: str) -> None:
         """
@@ -203,7 +204,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             AuthorizedSession(self.credentials) if self.credentials else Session(),
         )
 
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self) -> dict[str, Any]:
         """
         Get metadata of a sheet.
 
@@ -328,7 +329,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             if col["label"].strip()
         }
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         return self.columns
 
     get_cost = NetworkAPICostModel(DOWNLOAD_COST, FIXED_COST)
@@ -347,7 +348,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             field.order = Order.NONE
             field.exact = False
 
-    def _get_header_rows(self, values: List[List[Any]]) -> int:
+    def _get_header_rows(self, values: list[list[Any]]) -> int:
         """
         Return the number of header rows.
 
@@ -386,8 +387,8 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
     def get_data(  # pylint: disable=too-many-locals
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
         **kwargs: Any,
@@ -502,7 +503,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         return row_id
 
-    def _get_values(self) -> List[List[Any]]:
+    def _get_values(self) -> list[list[Any]]:
         """
         Download all values from the spreadsheet.
         """
@@ -530,7 +531,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         if "error" in payload:
             raise ProgrammingError(payload["error"]["message"])
 
-        self._values = cast(List[List[Any]], payload["values"])
+        self._values = cast(list[list[Any]], payload["values"])
 
         # We store the number of original rows, so that when we replace the sheet
         # values later we can clear the bottom rows in case the number of rows is

@@ -2,10 +2,12 @@
 Fields representing columns of different types and capabilities.
 """
 import datetime
+from collections.abc import Collection
 from enum import Enum
-from typing import Any, Collection, Generic, Optional, Type, TypeVar, Union, cast
+from typing import Any, Generic, Optional, TypeVar, Union, cast
 
 import dateutil.parser
+from typing_extensions import TypeAlias
 
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.filters import Filter
@@ -26,6 +28,8 @@ External = TypeVar(
         bytes,
     ],
 )
+
+FieldFilter: TypeAlias = type[Filter]
 
 
 class Order(Enum):
@@ -181,12 +185,12 @@ class Field(Generic[Internal, External]):
 
     def __init__(
         self,
-        filters: Optional[Collection[Type[Filter]]] = None,
+        filters: Optional[Collection[FieldFilter]] = None,
         order: Order = Order.NONE,
         exact: bool = False,
     ):
         # a list of what kind of filters can be used on the column
-        self.filters = filters or []
+        self.filters: Collection[FieldFilter] = filters or []
 
         # the ordering of the column
         self.order = order

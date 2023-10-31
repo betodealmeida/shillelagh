@@ -252,7 +252,9 @@ def test_csvfile(fs: FakeFilesystem) -> None:
     data = list(cursor.execute(sql))
     assert data == [(12.0, 13.3, "Platinum_St"), (13.0, 12.1, "Kodiak_Trail")]
 
-    sql = """INSERT INTO test ("index", temperature, site) VALUES (14, 10.1, 'New_Site')"""
+    sql = (
+        """INSERT INTO test ("index", temperature, site) VALUES (14, 10.1, 'New_Site')"""
+    )
     cursor.execute(sql)
     sql = 'SELECT * FROM test WHERE "index" > 11'
     data = list(cursor.execute(sql))

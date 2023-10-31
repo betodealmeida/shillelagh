@@ -6,8 +6,9 @@ See https://dev.socrata.com/ for more information.
 import logging
 import re
 import urllib.parse
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, Union
+from typing import Any, Optional, Union
 
 import requests_cache
 from requests import Request
@@ -42,8 +43,8 @@ class MetadataColumn(TypedDict):
     position: int
     renderTypeName: str
     tableColumnId: int
-    cachedContents: Dict[str, Any]
-    format: Dict[str, Any]
+    cachedContents: dict[str, Any]
+    format: dict[str, Any]
 
 
 class Number(Field[str, float]):
@@ -68,7 +69,7 @@ class Number(Field[str, float]):
         return str(value)
 
 
-type_map: Dict[str, Tuple[Type[Field], List[Type[Filter]]]] = {
+type_map: dict[str, tuple[type[Field], list[type[Filter]]]] = {
     "calendar_date": (StringDate, [Range, Equal, NotEqual, IsNull, IsNotNull]),
     "number": (Number, [Range, Equal, NotEqual, IsNull, IsNotNull]),
     "text": (String, [Range, Equal, NotEqual, Like, IsNull, IsNotNull]),
@@ -108,7 +109,7 @@ class SocrataAPI(Adapter):
         return bool(path_regex.match(parsed.path))
 
     @staticmethod
-    def parse_uri(uri: str) -> Union[Tuple[str, str], Tuple[str, str, str]]:
+    def parse_uri(uri: str) -> Union[tuple[str, str], tuple[str, str, str]]:
         parsed = urllib.parse.urlparse(uri)
         dataset_id = Path(parsed.path).stem
         query_string = urllib.parse.parse_qs(parsed.query)
@@ -141,15 +142,15 @@ class SocrataAPI(Adapter):
         payload = response.json()
         self.columns = {col["fieldName"]: get_field(col) for col in payload["columns"]}
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         return self.columns
 
     get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
 
     def get_data(
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
         **kwargs: Any,

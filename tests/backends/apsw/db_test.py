@@ -3,7 +3,7 @@
 Tests for shillelagh.backends.apsw.db.
 """
 import datetime
-from typing import Any, List, Tuple
+from typing import Any
 from unittest import mock
 
 import apsw
@@ -291,15 +291,14 @@ def test_execute_many(registry: AdapterLoader) -> None:
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
-    items: List[Tuple[Any, ...]] = [(6, "Billy", 1), (7, "Timmy", 2)]
+    items: list[tuple[Any, ...]] = [(6, "Billy", 1), (7, "Timmy", 2)]
     with pytest.raises(NotSupportedError) as excinfo:
         cursor.executemany(
             """INSERT INTO "dummy://" (age, name, pets) VALUES (?, ?, ?)""",
             items,
         )
     assert (
-        str(excinfo.value)
-        == "``executemany`` is not supported, use ``execute`` instead"
+        str(excinfo.value) == "``executemany`` is not supported, use ``execute`` instead"
     )
 
 

@@ -4,7 +4,8 @@ Tests for shillelagh.backends.apsw.vt.
 """
 import datetime
 import json
-from typing import Any, Dict, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 import apsw
 import pytest
@@ -66,7 +67,7 @@ class FakeAdapterNoColumns(FakeAdapter):
     An adapter without columns.
     """
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         return {}
 
 
@@ -441,7 +442,7 @@ def test_convert_rows_to_sqlite() -> None:
     """
     Test that rows get converted to types supported by SQLite.
     """
-    rows: Iterable[Dict[str, Any]] = [
+    rows: Iterable[dict[str, Any]] = [
         {
             "INTEGER": 1,
             "REAL": 1.0,
@@ -499,7 +500,7 @@ def test_convert_rows_from_sqlite() -> None:
     """
     Test that rows get converted from the types supported by SQLite.
     """
-    rows: Iterable[Dict[str, Any]] = [
+    rows: Iterable[dict[str, Any]] = [
         {
             "INTEGER": 1,
             "REAL": 1.0,
@@ -557,7 +558,7 @@ def test_add_sqlite_constraint(mocker: MockerFixture) -> None:
     """
     Test ``_add_sqlite_constraint``.
     """
-    operator_map: Dict[int, Operator] = {}
+    operator_map: dict[int, Operator] = {}
     mocker.patch("shillelagh.backends.apsw.vt.operator_map", new=operator_map)
 
     _add_sqlite_constraint("INVALID", Operator.LIKE)
@@ -577,7 +578,7 @@ def test_get_all_bounds() -> None:
         (0, 2),  # EQ
     ]
     constraintargs = [10, 5, "test"]
-    columns: Dict[str, Field] = {"a": String()}
+    columns: dict[str, Field] = {"a": String()}
 
     assert get_all_bounds(indexes, constraintargs, columns) == {
         "a": {(Operator.EQ, "test")},

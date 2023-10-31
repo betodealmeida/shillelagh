@@ -3,8 +3,9 @@ An adapter to WeatherAPI (https://www.weatherapi.com/).
 """
 import logging
 import urllib.parse
+from collections.abc import Iterator
 from datetime import date, datetime, timedelta, timezone
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union, cast
+from typing import Any, Optional, Union, cast
 
 import dateutil.parser
 import dateutil.tz
@@ -22,7 +23,7 @@ INITIAL_COST = 0
 FETCHING_COST = 1000
 
 
-def combine_time_filters(bounds: Dict[str, Filter]) -> Range:
+def combine_time_filters(bounds: dict[str, Filter]) -> Range:
     """
     Combine both time filters together.
 
@@ -131,7 +132,7 @@ class WeatherAPI(Adapter):
         )
 
     @staticmethod
-    def parse_uri(uri: str) -> Union[Tuple[str], Tuple[str, str]]:
+    def parse_uri(uri: str) -> Union[tuple[str], tuple[str, str]]:
         parsed = urllib.parse.urlparse(uri)
         query_string = urllib.parse.parse_qs(parsed.query)
         location = query_string["q"][0]
@@ -158,8 +159,8 @@ class WeatherAPI(Adapter):
 
     def get_cost(
         self,
-        filtered_columns: List[Tuple[str, Operator]],
-        order: List[Tuple[str, RequestedOrder]],
+        filtered_columns: list[tuple[str, Operator]],
+        order: list[tuple[str, RequestedOrder]],
     ) -> float:
         cost = INITIAL_COST
 
@@ -173,8 +174,8 @@ class WeatherAPI(Adapter):
 
     def get_data(  # pylint: disable=too-many-locals
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         **kwargs: Any,
     ) -> Iterator[Row]:
         # combine filters from the two time columns
