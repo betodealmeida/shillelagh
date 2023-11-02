@@ -7,6 +7,7 @@ Next
 
 - Improve Datasette detection (#399)
 - Fix generic JSON handling of null values (#399)
+- Add holidays adapter (#409)
 
 Version 1.2.8 - 2023-10-21
 ==========================
