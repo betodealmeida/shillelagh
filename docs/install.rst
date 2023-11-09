@@ -15,15 +15,12 @@ You also need to install optional dependencies, depending on the adapter you wan
 .. code-block:: bash
 
     $ pip install 'shillelagh[console]'       # to use the CLI
-    $ pip install 'shillelagh[datasetteapi]'  # for Datasette
     $ pip install 'shillelagh[githubapi]'     # for GitHub
     $ pip install 'shillelagh[gsheetsapi]'    # for GSheets
     $ pip install 'shillelagh[htmltableapi]'  # for HTML tables
     $ pip install 'shillelagh[pandasmemory]'  # for Pandas in memory
     $ pip install 'shillelagh[s3selectapi]'   # for S3 files
-    $ pip install 'shillelagh[socrataapi]'    # for Socrata API
     $ pip install 'shillelagh[systemapi]'     # for CPU information
-    $ pip install 'shillelagh[weatherapi]'    # for WeatherAPI
 
 Alternatively, you can install everything with:
 
