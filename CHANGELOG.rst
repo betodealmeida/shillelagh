@@ -5,9 +5,13 @@ Changelog
 Next
 ====
 
+Version 1.2.9 - 2023-11-08
+==========================
+
 - Improve Datasette detection (#399)
 - Fix generic JSON handling of null values (#399)
 - Add holidays adapter (#409)
+- Add support for decimals (#???)
 
 Version 1.2.8 - 2023-10-21
 ==========================

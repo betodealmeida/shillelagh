@@ -37,6 +37,7 @@ from shillelagh.fields import (
     Order,
     RowID,
     String,
+    StringDecimal,
     StringDuration,
     StringInteger,
 )
@@ -104,14 +105,15 @@ type_map: Dict[str, Type[Field]] = {
     field.type: field  # type: ignore
     for field in [
         Blob,
-        StringDuration,
-        Float,
-        IntBoolean,
-        StringInteger,
-        ISODate,
         FastISODateTime,
+        Float,
+        ISODate,
         ISOTime,
+        IntBoolean,
         String,
+        StringDecimal,
+        StringDuration,
+        StringInteger,
     ]
 }
 

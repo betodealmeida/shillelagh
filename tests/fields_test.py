@@ -2,6 +2,7 @@
 Tests for shillelagh.fields.
 """
 import datetime
+import decimal
 import sys
 from typing import Union
 
@@ -29,6 +30,7 @@ from shillelagh.fields import (
     StringBoolean,
     StringDate,
     StringDateTime,
+    StringDecimal,
     StringDuration,
     StringTime,
     Time,
@@ -509,3 +511,15 @@ def test_fastisodatetime() -> None:
     with pytest.raises(ProgrammingError) as excinfo:
         FastISODateTime().parse("invalid")
     assert str(excinfo.value) == 'Unable to parse "invalid"'
+
+
+def test_stringdecimal() -> None:
+    """
+    Test ``StringDecimal``.
+    """
+    assert StringDecimal().parse("1.23") == decimal.Decimal("1.23")
+    assert StringDecimal().parse(None) is None
+    assert StringDecimal().format(decimal.Decimal("1.23")) == "1.23"
+    assert StringDecimal().format(None) is None
+    assert StringDecimal().quote("1.23") == "1.23"
+    assert StringDecimal().quote(None) == "NULL"

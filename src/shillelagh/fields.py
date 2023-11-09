@@ -2,6 +2,7 @@
 Fields representing columns of different types and capabilities.
 """
 import datetime
+import decimal
 from enum import Enum
 from typing import Any, Collection, Generic, Optional, Type, TypeVar, Union, cast
 
@@ -23,6 +24,7 @@ External = TypeVar(
         datetime.datetime,
         datetime.time,
         datetime.timedelta,
+        decimal.Decimal,
         bytes,
     ],
 )
@@ -738,3 +740,27 @@ class IntBoolean(Field[int, bool]):
         if value is None:
             return "NULL"
         return str(value)
+
+
+class StringDecimal(Field[str, decimal.Decimal]):
+    """
+    Decimals as strings.
+    """
+
+    type = "DECIMAL"
+    db_api_type = "NUMBER"
+
+    def parse(self, value: Optional[str]) -> Optional[decimal.Decimal]:
+        if value is None:
+            return None
+        return decimal.Decimal(value)
+
+    def format(self, value: Optional[decimal.Decimal]) -> Optional[str]:
+        if value is None:
+            return None
+        return str(value)
+
+    def quote(self, value: Optional[str]) -> str:
+        if value is None:
+            return "NULL"
+        return value
