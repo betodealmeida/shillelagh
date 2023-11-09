@@ -414,7 +414,7 @@ Note that the JSON payload should return the data as a list of dictionaries. In 
       ]
     }
 
-In the payload above the data is stored in the ``seriess`` key. In order to have Shillelagh access the data correctly you should pass a `JSONPath <https://goessner.net/articles/JsonPath/>`_ expression as an achor in the URL. For this payload the expression ``$.seriess[*]`` will return all rows inside the ``seriess`` children.
+In the payload above the data is stored in the ``seriess`` key. In order to have Shillelagh access the data correctly you should pass a `JSONPath <https://goessner.net/articles/JsonPath/>`_ expression as an anchor in the URL. For this payload the expression ``$.seriess[*]`` will return all rows inside the ``seriess`` children.
 
 If you need to authenticate you can pass custom request headers via adapter keyword arguments:
 
