@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.2.10 - 2023-11-08
+===========================
+
+- Add missing ``requests-cache`` dependency (#413)
+
 Version 1.2.9 - 2023-11-08
 ==========================
 
