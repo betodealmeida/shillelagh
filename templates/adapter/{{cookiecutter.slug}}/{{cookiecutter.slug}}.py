@@ -32,7 +32,7 @@ class {{ cookiecutter.adapter_name|replace(' ', '') }}{{ cookiecutter.adapter_ty
     # rows returned.
     supports_limit = False
 
-    # Similarly, if this is true the adapter will receive a ``offset`` argument
+    # Similarly, if this is true the adapter will receive an ``offset`` argument
     # in the ``get_data`` method, and will be responsible for offsetting the
     # rows that are returned.
     supports_offset = False
@@ -159,7 +159,7 @@ class {{ cookiecutter.adapter_name|replace(' ', '') }}{{ cookiecutter.adapter_ty
     # If you're using the cost model above unmodified you can simply point the
     # method to the ``SimpleCostModel`` class. Don't forget to uncomment the import
     # at the top of the file.
-    # get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
+    # get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS, FIXED_COST)
 
     # This method yields rows of data, each row a dictionary. If any columns are
     # declared as filterable there might be a corresponding ``Filter`` object in

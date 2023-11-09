@@ -739,3 +739,15 @@ Second, we want to implement ``has_table`` and ``get_table_names``. The first is
                 for obj in response.get("Contents", [])
                 if obj["Key"].startswith(prefix) and obj["Key"].endswith(SUFFIX)
             ]
+
+Cookiecutter template
+=====================
+
+Shillelagh has a `cookiecutter <https://github.com/cookiecutter/cookiecutter>`_ template that scaffolds the creation of new adapters and their tests. Just run:
+
+.. code-block:: bash
+
+    $ pip install cookiecutter
+    $ cookiecutter templates/adapter/
+
+And answer the questions.
