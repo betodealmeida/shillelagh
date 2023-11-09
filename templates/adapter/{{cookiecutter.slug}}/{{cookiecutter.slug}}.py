@@ -2,14 +2,20 @@
 """
 {{ cookiecutter.description }}
 """
+import math
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import requests_cache
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.fields import Field
-from shillelagh.filters import Filter
+from shillelagh.filters import Filter, Operator
+
+# from shillelagh.lib import SimpleCostModel
 from shillelagh.typing import RequestedOrder, Row
+
+AVERAGE_NUMBER_OF_ROWS = 1000
+FIXED_COST = 0
 
 
 class {{ cookiecutter.adapter_name|replace(' ', '') }}{{ cookiecutter.adapter_type }}(Adapter):
@@ -20,6 +26,22 @@ class {{ cookiecutter.adapter_name|replace(' ', '') }}{{ cookiecutter.adapter_ty
 
     # Set this to ``True`` if the adapter doesn't access the filesystem.
     safe = False
+
+    # If this is true, the adapter will receive a ``limit`` argument in the
+    # ``get_data`` method, and will be responsible for limiting the number of
+    # rows returned.
+    supports_limit = False
+
+    # Similarly, if this is true the adapter will receive a ``offset`` argument
+    # in the ``get_data`` method, and will be responsible for offsetting the
+    # rows that are returned.
+    supports_offset = False
+
+    # If this is true, the adapter will receive a ``requested_columns`` argument
+    # in the ``get_data`` method, and will be responsible for returning only the
+    # requested columns. Otherwise the adapter will have no indication of which
+    # columns were requested, and should return all columns always.
+    supports_requested_columns = False
 
     # This method is used to determine which URIs your adapter will handle. For
     # example, if your adapter interfaces with an API at api.example.com you
@@ -41,7 +63,9 @@ class {{ cookiecutter.adapter_name|replace(' ', '') }}{{ cookiecutter.adapter_ty
         return False
 
     # This method parses the URI into arguments that are passed to initialize the
-    # adapter class. The simplest implementation returns the URI unmodified.
+    # adapter class. The simplest implementation returns the URI unmodified, but
+    # adapters might process the URL and return only relevant parts of the URI,
+    # like an ID or path.
     @staticmethod
     def parse_uri(uri: str) -> Tuple[str]:
         return (uri,)
@@ -73,7 +97,7 @@ class {{ cookiecutter.adapter_name|replace(' ', '') }}{{ cookiecutter.adapter_ty
     #
     #     self.columns["time"] = DateTime(filters=[Range])
     #
-    # It's then up to the ``get_rows`` method to translate temporal filters into
+    # It's then up to the ``get_data`` method to translate temporal filters into
     # the corresponding API calls.
     #
     # The column definition should also specify if the column has a natural order,
@@ -114,13 +138,78 @@ class {{ cookiecutter.adapter_name|replace(' ', '') }}{{ cookiecutter.adapter_ty
     def get_metadata(self) -> Dict[str, Any]:
         return {}
 
+    # A method for estimating the cost of a query, used by the query planner. The
+    # model receives the name of the columns and the operators filtering them, as
+    # well as the columns that should be sorted and how.
+    def get_cost(
+        self,
+        filtered_columns: List[Tuple[str, Operator]],
+        order: List[Tuple[str, RequestedOrder]],
+    ) -> float:
+        # A simple model for estimating query costs.
+        #
+        # The model assumes that each filtering operation is O(n), and each
+        # sorting operation is O(n log n), in addition to a fixed cost.
+        return int(
+            FIXED_COST
+            + AVERAGE_NUMBER_OF_ROWS * len(filtered_columns)
+            + AVERAGE_NUMBER_OF_ROWS * math.log2(AVERAGE_NUMBER_OF_ROWS) * len(order)
+        )
+
+    # If you're using the cost model above unmodified you can simply point the
+    # method to the ``SimpleCostModel`` class. Don't forget to uncomment the import
+    # at the top of the file.
+    # get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
+
     # This method yields rows of data, each row a dictionary. If any columns are
     # declared as filterable there might be a corresponding ``Filter`` object in
     # the ``bounds`` argument that must be used to filter the column (unless the
     # column was declared as inexact).
-    def get_rows(
+    #
+    # Note that, in addition to the actual columns, each row should also have a
+    # column called ``rowid``, with an integer value. If the adapter is read-only
+    # this an be any number; for adapters that implement DML the rowid is used
+    # in ``INSERT``, ``UPDATE``, and ``DELETE`` operations.
+    def get_data(
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
+        # if ``supports_limit`` is true uncomment below:
+        # limit: Optional[int] = None,
+        # if ``supports_offset` is true uncomment below:
+        # offset: Optional[int] = None,
+        # if ``supports_requested_columns`` is true uncomment below:
+        # requested_columns: Optional[Set[str]] = None,
+        **kwargs: Any,
     ) -> Iterator[Row]:
+        pass
+
+    # For adapters that support ``INSERT`` statements, this method will be called
+    # for every row that is inserted. Note that ``row`` will have a special column
+    # called ``rowid``.
+    #
+    # The CSV adapter is a good example of how to handle row IDs. Each row in the
+    # file is assigned a sequential row ID, starting from zero, and the CSV adapter
+    # uses a ``RowIDManager`` to keep track of inserts and deletes.
+    def insert_data(self, row: Row) -> int:
+        pass
+
+    # Delete a row given its ID.
+    def delete_data(self, row_id: int) -> None:
+        pass
+
+    # Method for updating data. If this method is not implemented the base method
+    # will perform a delete followed by an insert.
+    def update_data(self, row_id: int, row: Row) -> None:
+        pass
+
+    # Close the file. This can be used for garbage collection. For example, in the
+    # CsV adapter uses this method to effectively delete rows marked as deleted;
+    # the GSheets adapter uses this to synchronize the local copy of the sheet back
+    # to the actual sheet.
+    def close(self) -> None:
+        pass
+
+    # This is called when the user runs ``DROP TABLE`` on a table.
+    def drop_table(self) -> None:
         pass
