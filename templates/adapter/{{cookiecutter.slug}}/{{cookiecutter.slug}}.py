@@ -168,7 +168,7 @@ class {{ cookiecutter.adapter_name|replace(' ', '') }}{{ cookiecutter.adapter_ty
     #
     # Note that, in addition to the actual columns, each row should also have a
     # column called ``rowid``, with an integer value. If the adapter is read-only
-    # this an be any number; for adapters that implement DML the rowid is used
+    # this can be any number; for adapters that implement DML the rowid is used
     # in ``INSERT``, ``UPDATE``, and ``DELETE`` operations.
     def get_data(
         self,
@@ -203,8 +203,8 @@ class {{ cookiecutter.adapter_name|replace(' ', '') }}{{ cookiecutter.adapter_ty
     def update_data(self, row_id: int, row: Row) -> None:
         pass
 
-    # Close the file. This can be used for garbage collection. For example, in the
-    # CsV adapter uses this method to effectively delete rows marked as deleted;
+    # Close the file. This can be used for garbage collection. For example, the
+    # CSV adapter uses this method to effectively delete rows marked as deleted;
     # the GSheets adapter uses this to synchronize the local copy of the sheet back
     # to the actual sheet.
     def close(self) -> None:
