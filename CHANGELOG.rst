@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.2.11 - 2023-11-27
+===========================
+
+- Relax ``holidays`` dependency for Apache Superset (#416)
+
 Version 1.2.10 - 2023-11-08
 ===========================
 
