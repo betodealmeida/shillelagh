@@ -479,6 +479,29 @@ def test_drop_table(mocker: MockerFixture, registry: AdapterLoader) -> None:
     drop_table.assert_called()  # type: ignore
 
 
+def test_drop_table_with_comments(
+    mocker: MockerFixture,
+    registry: AdapterLoader,
+) -> None:
+    """
+    Test ``drop_table`` when the query has comments.
+    """
+    registry.add("dummy", FakeAdapter)
+    drop_table = mocker.patch.object(FakeAdapter, "drop_table")
+
+    connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+-- hello
+DROP TABLE "dummy://"
+-- goodbye
+    """,
+    )
+    drop_table.assert_called()  # type: ignore
+
+
 def test_best_index(mocker: MockerFixture) -> None:
     """
     Test that ``use_bestindex_object`` is only passed for apsw >= 3.41.0.0

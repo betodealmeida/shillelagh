@@ -254,6 +254,10 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         """
         Build a ``DROP TABLE`` regexp.
         """
+        # remove comments
+        operation = "\n".join(
+            line for line in operation.split("\n") if not line.strip().startswith("--")
+        )
         regexp = re.compile(
             rf"^\s*DROP\s+TABLE\s+(IF\s+EXISTS\s+)?"
             rf'({self.schema}\.)?(?P<uri>(.*?)|(".*?"))\s*;?\s*$',
