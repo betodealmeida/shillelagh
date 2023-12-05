@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.2.12 - 2023-12-05
+===========================
+
+- ``DROP TABLE`` now handles comments in query (#417)
+
 Version 1.2.11 - 2023-11-27
 ===========================
 
