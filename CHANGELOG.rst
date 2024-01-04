@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Add custom adapter for the Preset API (#421)
+
 Version 1.2.12 - 2023-12-05
 ===========================
 
