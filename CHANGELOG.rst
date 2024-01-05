@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Preset adapter can now query workspaces (#422)
+
 Version 1.2.13 - 2024-01-04
 ===========================
 
