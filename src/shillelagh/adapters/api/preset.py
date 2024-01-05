@@ -38,7 +38,9 @@ class PresetAPI(GenericJSONAPI):
     @classmethod
     def supports(cls, uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         parsed = URL(uri)
-        return parsed.scheme in ("http", "https") and parsed.host == "api.app.preset.io"
+        return parsed.scheme in ("http", "https") and (
+            parsed.host == "preset.io" or parsed.host.endswith(".preset.io")
+        )
 
     def __init__(
         self,
