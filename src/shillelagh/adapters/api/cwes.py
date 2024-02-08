@@ -33,13 +33,6 @@ class CwesAPI(Adapter):
     supports_limit = False
     supports_offset = False
 
-    # These two columns can be used to filter the results from the API. We
-    # define them as inexact since we will retrieve data for the whole day,
-    # even if specific hours are requested. The post-filtering will be done
-    # by the backend.
-    # time = DateTime(filters=[Range], order=Order.ASCENDING, exact=False)
-    # time_epoch = Float(filters=[Range], order=Order.ASCENDING, exact=False)
-
     cwe_id = String()
     description = String()
 
