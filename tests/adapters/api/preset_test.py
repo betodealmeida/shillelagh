@@ -9,8 +9,9 @@ import pytest
 from pytest_mock import MockerFixture
 from requests_mock.mocker import Mocker
 
-from shillelagh.adapters.api.preset import PresetAPI
+from shillelagh.adapters.api.preset import PresetAPI, PresetWorkspaceAPI, get_urls
 from shillelagh.backends.apsw.db import connect
+from shillelagh.exceptions import ProgrammingError
 
 DO_NOT_CACHE = timedelta(seconds=-1)
 
@@ -71,11 +72,176 @@ def test_supports() -> None:
     assert PresetAPI.supports("/etc/password") is False
     assert PresetAPI.supports("https://example.org/data.html") is False
     assert PresetAPI.supports("https://api.app.preset.io/v1/teams/") is True
+    assert PresetAPI.supports("https://api.app-sdx.preset.io/v1/teams/") is True
     assert (
         PresetAPI.supports(
-            "https://db64ce64.us1a.app-sdx.preset.io/sqllab/?savedQueryId=1",
+            "https://abcdef01.us1a.app.preset.io/sqllab/?savedQueryId=1",
+        )
+        is False
+    )
+
+    assert PresetWorkspaceAPI.supports("https://api.app.preset.io/v1/teams/") is False
+    assert (
+        PresetWorkspaceAPI.supports(
+            "https://abcdef01.us1a.app.preset.io/sqllab/?savedQueryId=1",
         )
         is True
     )
-    assert PresetAPI.supports("https://preset.io/") is True
-    assert PresetAPI.supports("https://phishingpreset.io/") is False
+    assert (
+        PresetWorkspaceAPI.supports(
+            "https://abcdef01.us1a.app-sdx.preset.io/sqllab/?savedQueryId=1",
+        )
+        is True
+    )
+
+
+def test_get_urls() -> None:
+    """
+    Test the ``get_urls`` function.
+    """
+    urls = get_urls(
+        "https://abcdef01.us1a.app-sdx.preset.io/api/v1/chart/",
+        page_size=42,
+    )
+    assert (
+        next(urls)
+        == "https://abcdef01.us1a.app-sdx.preset.io/api/v1/chart/?q=(page:0,page_size:42)"
+    )
+    assert (
+        next(urls)
+        == "https://abcdef01.us1a.app-sdx.preset.io/api/v1/chart/?q=(page:1,page_size:42)"
+    )
+
+    urls = get_urls("https://example.org/?q=(((")
+    assert next(urls) == "https://example.org/?q=((("
+    with pytest.raises(StopIteration):
+        next(urls)
+
+    urls = get_urls("https://example.org/?q=(page:0,page_size:42)")
+    assert next(urls) == "https://example.org/?q=(page:0,page_size:42)"
+    with pytest.raises(StopIteration):
+        next(urls)
+
+
+def test_preset_workspace(mocker: MockerFixture, requests_mock: Mocker) -> None:
+    """
+    Test a simple query to a Preset workspace.
+    """
+    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
+
+    # for datassette
+    requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
+
+    requests_mock.post(
+        "https://api.app.preset.io/v1/auth/",
+        json={"payload": {"access_token": "SECRET"}},
+    )
+    requests_mock.get(
+        "https://abcdef01.us1a.app.preset.io/api/v1/chart/?q=(page:0,page_size:100)",
+        json={"result": [{"id": 1, "slice_name": "Team 1"}]},
+    )
+    requests_mock.get(
+        "https://abcdef01.us1a.app.preset.io/api/v1/chart/?q=(page:1,page_size:100)",
+        json={"result": []},
+    )
+
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={
+            "presetworkspaceapi": {
+                "access_token": "XXX",
+                "access_secret": "YYY",
+            },
+        },
+    )
+    cursor = connection.cursor()
+
+    sql = 'SELECT * FROM "https://abcdef01.us1a.app.preset.io/api/v1/chart/"'
+    rows = list(cursor.execute(sql))
+    assert rows == [(1, "Team 1")]
+
+
+def test_preset_workspace_error(mocker: MockerFixture, requests_mock: Mocker) -> None:
+    """
+    Test error handling when accessing a workspace API.
+    """
+    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
+
+    # for datassette
+    requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
+
+    requests_mock.post(
+        "https://api.app.preset.io/v1/auth/",
+        json={"payload": {"access_token": "SECRET"}},
+    )
+    requests_mock.get(
+        "https://abcdef01.us1a.app.preset.io/api/v1/chart/?q=(page:0,page_size:100)",
+        json={
+            "errors": [
+                {
+                    "message": "Your session has expired. Please refresh the page to sign in.",
+                    "error_type": "GENERIC_BACKEND_ERROR",
+                    "level": "error",
+                    "extra": {
+                        "issue_codes": [
+                            {
+                                "code": 1011,
+                                "message": "Issue 1011 - Superset encountered an unexpected error.",
+                            },
+                        ],
+                    },
+                },
+            ],
+        },
+        status_code=500,
+    )
+
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={
+            "presetworkspaceapi": {
+                "access_token": "XXX",
+                "access_secret": "YYY",
+            },
+        },
+    )
+    cursor = connection.cursor()
+
+    sql = 'SELECT * FROM "https://abcdef01.us1a.app.preset.io/api/v1/chart/"'
+    with pytest.raises(ProgrammingError) as excinfo:
+        cursor.execute(sql)
+    assert (
+        str(excinfo.value)
+        == "Error: Your session has expired. Please refresh the page to sign in."
+    )
+
+
+def test_preset_workspace_no_urls(mocker: MockerFixture, requests_mock: Mocker) -> None:
+    """
+    Test when no URLs are returned.
+    """
+    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
+    mocker.patch("shillelagh.adapters.api.preset.get_urls", return_value=[])
+
+    # for datassette
+    requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
+
+    requests_mock.post(
+        "https://api.app.preset.io/v1/auth/",
+        json={"payload": {"access_token": "SECRET"}},
+    )
+
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={
+            "presetworkspaceapi": {
+                "access_token": "XXX",
+                "access_secret": "YYY",
+            },
+        },
+    )
+    cursor = connection.cursor()
+
+    sql = 'SELECT * FROM "https://abcdef01.us1a.app.preset.io/api/v1/chart/"'
+    rows = list(cursor.execute(sql))
+    assert rows == []
