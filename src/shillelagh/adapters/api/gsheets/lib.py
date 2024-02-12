@@ -206,7 +206,7 @@ def get_values_from_row(row: Row, column_map: Dict[str, str]) -> List[Any]:
         >>> get_values_from_row(row, column_map)
         ['BR', '', 10]
     """
-    n_cols = get_index_from_letters(max(column_map.values())) + 1
+    n_cols = max([get_index_from_letters(val) for val in column_map.values()]) + 1
     row = {column_map[k]: v for k, v in row.items() if k in column_map}
     return [row.get(column, "") for column in itertools.islice(gen_letters(), n_cols)]
 
