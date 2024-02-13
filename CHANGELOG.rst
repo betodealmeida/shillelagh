@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Preset adapter now handles pagination, offset and limit (#427)
+
 Version 1.2.14 - 2024-01-05
 ===========================
 
