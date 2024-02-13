@@ -272,7 +272,7 @@ def test_get_values_from_row() -> None:
     """
     column_map = {"country": "Z", "cnt": "AB"}
     row = {"country": "BR", "cnt": 10}
-    assert get_values_from_row(row, column_map) == 25 * [""] + ["BR", "", 10]
+    assert get_values_from_row(row, column_map) == 25 * [""] + ["BR", "", 10]  # type: ignore
 
 
 def test_get_credentials(mocker: MockerFixture):
