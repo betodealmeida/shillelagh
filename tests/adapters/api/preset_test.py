@@ -99,28 +99,49 @@ def test_get_urls() -> None:
     """
     Test the ``get_urls`` function.
     """
-    urls = get_urls(
+    gen = get_urls(
         "https://abcdef01.us1a.app-sdx.preset.io/api/v1/chart/",
+        offset=45,
+        limit=50,
         page_size=42,
     )
+
+    url, slice_ = next(gen)
     assert (
-        next(urls)
-        == "https://abcdef01.us1a.app-sdx.preset.io/api/v1/chart/?q=(page:0,page_size:42)"
-    )
-    assert (
-        next(urls)
+        url
         == "https://abcdef01.us1a.app-sdx.preset.io/api/v1/chart/?q=(page:1,page_size:42)"
     )
-
-    urls = get_urls("https://example.org/?q=(((")
-    assert next(urls) == "https://example.org/?q=((("
+    assert slice_.start == 3
+    url, slice_ = next(gen)
+    assert (
+        url
+        == "https://abcdef01.us1a.app-sdx.preset.io/api/v1/chart/?q=(page:2,page_size:11)"
+    )
+    assert slice_.start == 0
     with pytest.raises(StopIteration):
-        next(urls)
+        next(gen)
 
-    urls = get_urls("https://example.org/?q=(page:0,page_size:42)")
-    assert next(urls) == "https://example.org/?q=(page:0,page_size:42)"
+
+def test_get_urls_unable_to_parse() -> None:
+    """
+    Test the ``get_urls`` function when the URL query can't be parsed.
+    """
+
+    gen = get_urls("https://example.org/?q=(((")
+    assert next(gen)[0] == "https://example.org/?q=((("
     with pytest.raises(StopIteration):
-        next(urls)
+        next(gen)
+
+
+def test_get_urls_with_page_parameters() -> None:
+    """
+    Test the ``get_urls`` function when the URL already has page parameters.
+    """
+
+    gen = get_urls("https://example.org/?q=(page:0,page_size:42)")
+    assert next(gen)[0] == "https://example.org/?q=(page:0,page_size:42)"
+    with pytest.raises(StopIteration):
+        next(gen)
 
 
 def test_preset_workspace(mocker: MockerFixture, requests_mock: Mocker) -> None:
@@ -159,6 +180,59 @@ def test_preset_workspace(mocker: MockerFixture, requests_mock: Mocker) -> None:
     sql = 'SELECT * FROM "https://abcdef01.us1a.app.preset.io/api/v1/chart/"'
     rows = list(cursor.execute(sql))
     assert rows == [(1, "Team 1")]
+
+
+def test_preset_workspace_pagination(
+    mocker: MockerFixture,
+    requests_mock: Mocker,
+) -> None:
+    """
+    Test pagination in a query to a Preset workspace.
+    """
+    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
+
+    # for datassette
+    requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
+
+    requests_mock.post(
+        "https://api.app.preset.io/v1/auth/",
+        json={"payload": {"access_token": "SECRET"}},
+    )
+    requests_mock.get(
+        "https://abcdef01.us1a.app.preset.io/api/v1/chart/?q=(page:0,page_size:100)",
+        json={
+            "result": [{"id": i + 1, "slice_name": f"Team {i+1}"} for i in range(100)],
+        },
+    )
+    requests_mock.get(
+        "https://abcdef01.us1a.app.preset.io/api/v1/chart/?q=(page:1,page_size:3)",
+        json={
+            "result": [
+                {"id": i + 101, "slice_name": f"Team {i+101}"} for i in range(3)
+            ],
+        },
+    )
+
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={
+            "presetworkspaceapi": {
+                "access_token": "XXX",
+                "access_secret": "YYY",
+            },
+        },
+    )
+    cursor = connection.cursor()
+
+    sql = 'SELECT * FROM "https://abcdef01.us1a.app.preset.io/api/v1/chart/" LIMIT 5 OFFSET 98'
+    rows = list(cursor.execute(sql))
+    assert rows == [
+        (99, "Team 99"),
+        (100, "Team 100"),
+        (101, "Team 101"),
+        (102, "Team 102"),
+        (103, "Team 103"),
+    ]
 
 
 def test_preset_workspace_error(mocker: MockerFixture, requests_mock: Mocker) -> None:
@@ -223,25 +297,14 @@ def test_preset_workspace_no_urls(mocker: MockerFixture, requests_mock: Mocker) 
     mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
     mocker.patch("shillelagh.adapters.api.preset.get_urls", return_value=[])
 
-    # for datassette
-    requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
-
     requests_mock.post(
         "https://api.app.preset.io/v1/auth/",
         json={"payload": {"access_token": "SECRET"}},
     )
 
-    connection = connect(
-        ":memory:",
-        adapter_kwargs={
-            "presetworkspaceapi": {
-                "access_token": "XXX",
-                "access_secret": "YYY",
-            },
-        },
+    adapter = PresetWorkspaceAPI(
+        "https://abcdef01.us1a.app.preset.io/api/v1/chart/",
+        access_token="XXX",
+        access_secret="YYY",
     )
-    cursor = connection.cursor()
-
-    sql = 'SELECT * FROM "https://abcdef01.us1a.app.preset.io/api/v1/chart/"'
-    rows = list(cursor.execute(sql))
-    assert rows == []
+    assert list(adapter.get_data({}, [])) == []
