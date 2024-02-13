@@ -7,11 +7,15 @@ from shillelagh.backends.apsw.db import connect
 if __name__ == "__main__":
     connection = connect(
         ":memory:",
+        # create tokens/secrets at https://manage.app.preset.io/app/user
         adapter_kwargs={
             "presetapi": {
-                # create a token/secret at https://manage.app.preset.io/app/user
-                "access_token": "XXX",
-                "access_secret": "YYY",
+                "access_token": "",
+                "access_secret": "",
+            },
+            "presetworkspaceapi": {
+                "access_token": "",
+                "access_secret": "",
             },
         },
     )
@@ -21,6 +25,14 @@ if __name__ == "__main__":
     SELECT * FROM
     "https://api.app.preset.io/v1/teams/"
     LIMIT 1
+    """
+    for row in cursor.execute(SQL):
+        print(row)
+
+    SQL = """
+    SELECT * FROM
+    "https://d90230ca.us1a.app-sdx.preset.io/api/v1/chart/"
+    LIMIT 12
     """
     for row in cursor.execute(SQL):
         print(row)

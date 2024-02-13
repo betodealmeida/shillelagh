@@ -475,3 +475,31 @@ The generic XML adapter is based on the generic JSON; the only difference is tha
     </root>
 
 Would get mapped to two columns, ``foo`` and ``baz``, with values ``bar`` and ``{"qux": "quux"}`` respectively.
+
+Preset (https://preset.io)
+==========================
+
+There are two adapters based on the generic JSON adapter that are specific to `Preset <https://preset.io>`_. They handle authentication and pagination of the APIs, so they're more efficient than the generic one.
+
+To configure, you need an access token and secret:
+
+.. code-block:: python
+
+    from shillelagh.backends.apsw.db import connect
+
+    connection = connect(
+        ":memory:",
+        # create tokens/secrets at https://manage.app.preset.io/app/user
+        adapter_kwargs={
+            "presetapi": {
+                "access_token": "",
+                "access_secret": "",
+            },
+            "presetworkspaceapi": {
+                "access_token": "",
+                "access_secret": "",
+            },
+        },
+    )
+
+The token and secret should normally be the same, but because the workspace API is slightly different from the main Preset API they were implemented as different adapters.
