@@ -57,7 +57,7 @@ class PresetAPI(GenericJSONAPI):
         parsed = URL(uri)
         return (
             parsed.scheme in ("http", "https")
-            and re.match(r"api.app(-\w+)?.preset.io", parsed.host) is not None
+            and re.match(r"api\.app(-\w+)?\.preset\.io", parsed.host) is not None
         )
 
     def __init__(

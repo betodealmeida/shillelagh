@@ -72,6 +72,7 @@ def test_supports() -> None:
     assert PresetAPI.supports("/etc/password") is False
     assert PresetAPI.supports("https://example.org/data.html") is False
     assert PresetAPI.supports("https://api.app.preset.io/v1/teams/") is True
+    assert PresetAPI.supports("https://api.appxpreset.io/v1/teams/") is False
     assert PresetAPI.supports("https://api.app-sdx.preset.io/v1/teams/") is True
     assert (
         PresetAPI.supports(
