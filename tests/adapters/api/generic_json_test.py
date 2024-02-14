@@ -3,10 +3,8 @@ Test the generic JSON adapter.
 """
 
 import re
-from datetime import timedelta
 
 import pytest
-from pytest_mock import MockerFixture
 from requests_mock.mocker import Mocker
 from yarl import URL
 
@@ -15,17 +13,13 @@ from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.typing import Maybe
 
-DO_NOT_CACHE = timedelta(seconds=-1)
-
 baseurl = URL("https://api.stlouisfed.org/fred/series")
 
 
-def test_generic_json(mocker: MockerFixture, requests_mock: Mocker) -> None:
+def test_generic_json(requests_mock: Mocker) -> None:
     """
     Test a simple query.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
-
     # for datassette
     requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
 
@@ -63,7 +57,10 @@ def test_generic_json(mocker: MockerFixture, requests_mock: Mocker) -> None:
         },
     )
 
-    connection = connect(":memory:")
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={"genericjsonapi": {"cache_expiration": -1}},
+    )
     cursor = connection.cursor()
 
     sql = f'SELECT * FROM "{url}"'
@@ -110,15 +107,10 @@ def test_generic_json(mocker: MockerFixture, requests_mock: Mocker) -> None:
     assert str(excinfo.value) == "Error: An error occurred"
 
 
-def test_generic_json_complex_type(
-    mocker: MockerFixture,
-    requests_mock: Mocker,
-) -> None:
+def test_generic_json_complex_type(requests_mock: Mocker) -> None:
     """
     Test a query where columns are complex.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
-
     # for datassette and other probing adapters
     requests_mock.head("https://example.org/-/versions.json", status_code=404)
 
@@ -134,7 +126,10 @@ def test_generic_json_complex_type(
         ],
     )
 
-    connection = connect(":memory:")
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={"genericjsonapi": {"cache_expiration": -1}},
+    )
     cursor = connection.cursor()
 
     sql = f'SELECT * FROM "{url}"'
@@ -161,11 +156,10 @@ def test_supports(requests_mock: Mocker) -> None:
     assert GenericJSONAPI.supports("https://example.org/data.json", fast=False) is True
 
 
-def test_request_headers(mocker: MockerFixture, requests_mock: Mocker) -> None:
+def test_request_headers(requests_mock: Mocker) -> None:
     """
     Test passing requests headers.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
     supports = requests_mock.head(
         "https://example.org/data.json",
         headers={"content-type": "application/json"},
@@ -191,12 +185,18 @@ def test_request_headers(mocker: MockerFixture, requests_mock: Mocker) -> None:
         "https://example.org/data.json",
         fast=False,
         request_headers={"foo": "bar"},
+        cache_expiration=-1,
     )
     assert supports.last_request.headers["foo"] == "bar"
 
     connection = connect(
         ":memory:",
-        adapter_kwargs={"genericjsonapi": {"request_headers": {"foo": "bar"}}},
+        adapter_kwargs={
+            "genericjsonapi": {
+                "request_headers": {"foo": "bar"},
+                "cache_expiration": -1,
+            },
+        },
     )
     cursor = connection.cursor()
 
@@ -206,11 +206,10 @@ def test_request_headers(mocker: MockerFixture, requests_mock: Mocker) -> None:
     assert data.last_request.headers["foo"] == "bar"
 
 
-def test_request_headers_in_url(mocker: MockerFixture, requests_mock: Mocker) -> None:
+def test_request_headers_in_url(requests_mock: Mocker) -> None:
     """
     Test passing requests headers.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
     supports = requests_mock.head(
         "https://example.org/data.json",
         headers={"content-type": "application/json"},
@@ -235,10 +234,14 @@ def test_request_headers_in_url(mocker: MockerFixture, requests_mock: Mocker) ->
     GenericJSONAPI.supports(
         "https://example.org/data.json?_s_headers=(foo:bar)",
         fast=False,
+        cache_expiration=-1,
     )
     assert supports.last_request.headers["foo"] == "bar"
 
-    connection = connect(":memory:")
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={"genericjsonapi": {"cache_expiration": -1}},
+    )
     cursor = connection.cursor()
 
     sql = 'SELECT * FROM "https://example.org/?_s_headers=(foo:bar)"'
