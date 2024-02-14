@@ -13,7 +13,7 @@ import requests
 from jsonpath import JSONPath
 from yarl import URL
 
-from shillelagh.adapters.api.generic_json import GenericJSONAPI
+from shillelagh.adapters.api.generic_json import CACHE_EXPIRATION, GenericJSONAPI
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
 from shillelagh.filters import Filter
@@ -60,19 +60,25 @@ class PresetAPI(GenericJSONAPI):
             and re.match(r"api\.app(-\w+)?\.preset\.io", parsed.host) is not None
         )
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         uri: str,
         path: Optional[str] = None,
         access_token: Optional[str] = None,
         access_secret: Optional[str] = None,
+        cache_expiration: float = CACHE_EXPIRATION.total_seconds(),
     ):
         if access_token is None or access_secret is None:
             raise ValueError("access_token and access_secret must be provided")
 
         jwt_token = get_jwt_token(uri, access_token, access_secret)
         request_headers = {"Authorization": f"Bearer {jwt_token}"}
-        super().__init__(uri, path=path, request_headers=request_headers)
+        super().__init__(
+            uri,
+            path=path,
+            request_headers=request_headers,
+            cache_expiration=cache_expiration,
+        )
 
 
 def get_urls(
@@ -82,7 +88,7 @@ def get_urls(
     page_size: int = MAX_PAGE_SIZE,
 ) -> Iterator[Tuple[str, slice]]:
     """
-    Get all paginated URLs to download data from together with a limit/offset slice.
+    Get all paginated URLs to download data together with a limit/offset slice.
     """
     start = offset or 0
     stop = start + limit if limit is not None else None

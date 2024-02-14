@@ -4,18 +4,14 @@ Test the generic XML adapter.
 
 import re
 import xml.etree.ElementTree as ET
-from datetime import timedelta
 
 import pytest
-from pytest_mock import MockerFixture
 from requests_mock.mocker import Mocker
 from yarl import URL
 
 from shillelagh.adapters.api.generic_xml import element_to_dict
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
-
-DO_NOT_CACHE = timedelta(seconds=-1)
 
 baseurl = URL("https://api.congress.gov/v3/bill/118")
 
@@ -41,12 +37,10 @@ def test_element_to_dict() -> None:
     }
 
 
-def test_generic_xml(mocker: MockerFixture, requests_mock: Mocker) -> None:
+def test_generic_xml(requests_mock: Mocker) -> None:
     """
     Test a simple query.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
-
     # for datassette
     requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
 
@@ -160,7 +154,10 @@ def test_generic_xml(mocker: MockerFixture, requests_mock: Mocker) -> None:
 </api-root>""",
     )
 
-    connection = connect(":memory:")
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={"genericxmlapi": {"cache_expiration": -1}},
+    )
     cursor = connection.cursor()
 
     sql = f'SELECT congress, type, latestAction FROM "{url}"'

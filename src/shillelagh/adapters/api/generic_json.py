@@ -59,7 +59,15 @@ class GenericJSONAPI(Adapter):
         else:
             request_headers = kwargs.get("request_headers", {})
 
-        session = get_session(request_headers, cls.cache_name, CACHE_EXPIRATION)
+        cache_expiration = kwargs.get(
+            "cache_expiration",
+            CACHE_EXPIRATION.total_seconds(),
+        )
+        session = get_session(
+            request_headers,
+            cls.cache_name,
+            timedelta(seconds=cache_expiration),
+        )
         response = session.head(str(parsed))
         return cls.content_type in response.headers.get("content-type", "")
 
@@ -87,6 +95,7 @@ class GenericJSONAPI(Adapter):
         uri: str,
         path: Optional[str] = None,
         request_headers: Optional[Dict[str, str]] = None,
+        cache_expiration: float = CACHE_EXPIRATION.total_seconds(),
     ):
         super().__init__()
 
@@ -96,7 +105,7 @@ class GenericJSONAPI(Adapter):
         self._session = get_session(
             request_headers or {},
             self.cache_name,
-            CACHE_EXPIRATION,
+            timedelta(seconds=cache_expiration),
         )
 
         self._set_columns()

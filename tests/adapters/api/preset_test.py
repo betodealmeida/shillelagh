@@ -3,7 +3,6 @@ Test the Preset adapter.
 """
 
 import re
-from datetime import timedelta
 
 import pytest
 from pytest_mock import MockerFixture
@@ -13,15 +12,11 @@ from shillelagh.adapters.api.preset import PresetAPI, PresetWorkspaceAPI, get_ur
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 
-DO_NOT_CACHE = timedelta(seconds=-1)
 
-
-def test_preset(mocker: MockerFixture, requests_mock: Mocker) -> None:
+def test_preset(requests_mock: Mocker) -> None:
     """
     Test a simple query.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
-
     # for datassette
     requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
 
@@ -40,6 +35,7 @@ def test_preset(mocker: MockerFixture, requests_mock: Mocker) -> None:
             "presetapi": {
                 "access_token": "XXX",
                 "access_secret": "YYY",
+                "cache_expiration": -1,
             },
         },
     )
@@ -50,13 +46,14 @@ def test_preset(mocker: MockerFixture, requests_mock: Mocker) -> None:
     assert rows == [(1, "Team 1")]
 
 
-def test_preset_missing_token(mocker: MockerFixture) -> None:
+def test_preset_missing_token() -> None:
     """
     Test a simple query.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
-
-    connection = connect(":memory:")
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={"presetapi": {"cache_expiration": -1}},
+    )
     cursor = connection.cursor()
 
     sql = 'SELECT * FROM "https://api.app.preset.io/v1/teams/"'
@@ -145,12 +142,10 @@ def test_get_urls_with_page_parameters() -> None:
         next(gen)
 
 
-def test_preset_workspace(mocker: MockerFixture, requests_mock: Mocker) -> None:
+def test_preset_workspace(requests_mock: Mocker) -> None:
     """
     Test a simple query to a Preset workspace.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
-
     # for datassette
     requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
 
@@ -173,6 +168,7 @@ def test_preset_workspace(mocker: MockerFixture, requests_mock: Mocker) -> None:
             "presetworkspaceapi": {
                 "access_token": "XXX",
                 "access_secret": "YYY",
+                "cache_expiration": -1,
             },
         },
     )
@@ -183,15 +179,10 @@ def test_preset_workspace(mocker: MockerFixture, requests_mock: Mocker) -> None:
     assert rows == [(1, "Team 1")]
 
 
-def test_preset_workspace_pagination(
-    mocker: MockerFixture,
-    requests_mock: Mocker,
-) -> None:
+def test_preset_workspace_pagination(requests_mock: Mocker) -> None:
     """
     Test pagination in a query to a Preset workspace.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
-
     # for datassette
     requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
 
@@ -220,6 +211,7 @@ def test_preset_workspace_pagination(
             "presetworkspaceapi": {
                 "access_token": "XXX",
                 "access_secret": "YYY",
+                "cache_expiration": -1,
             },
         },
     )
@@ -236,12 +228,10 @@ def test_preset_workspace_pagination(
     ]
 
 
-def test_preset_workspace_error(mocker: MockerFixture, requests_mock: Mocker) -> None:
+def test_preset_workspace_error(requests_mock: Mocker) -> None:
     """
     Test error handling when accessing a workspace API.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
-
     # for datassette
     requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
 
@@ -277,6 +267,7 @@ def test_preset_workspace_error(mocker: MockerFixture, requests_mock: Mocker) ->
             "presetworkspaceapi": {
                 "access_token": "XXX",
                 "access_secret": "YYY",
+                "cache_expiration": -1,
             },
         },
     )
@@ -295,7 +286,6 @@ def test_preset_workspace_no_urls(mocker: MockerFixture, requests_mock: Mocker) 
     """
     Test when no URLs are returned.
     """
-    mocker.patch("shillelagh.adapters.api.generic_json.CACHE_EXPIRATION", DO_NOT_CACHE)
     mocker.patch("shillelagh.adapters.api.preset.get_urls", return_value=[])
 
     requests_mock.post(
@@ -307,5 +297,6 @@ def test_preset_workspace_no_urls(mocker: MockerFixture, requests_mock: Mocker) 
         "https://abcdef01.us1a.app.preset.io/api/v1/chart/",
         access_token="XXX",
         access_secret="YYY",
+        cache_expiration=-1,
     )
     assert list(adapter.get_data({}, [])) == []
