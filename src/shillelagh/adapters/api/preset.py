@@ -8,9 +8,9 @@ import logging
 import re
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, cast
 
+import jsonpath
 import prison
 import requests
-from jsonpath import JSONPath
 from yarl import URL
 
 from shillelagh.adapters.api.generic_json import CACHE_EXPIRATION, GenericJSONAPI
@@ -178,8 +178,7 @@ class PresetWorkspaceAPI(PresetAPI):
                 )
                 raise ProgrammingError(f"Error: {messages}")
 
-            parser = JSONPath(self.path)
-            rows = parser.parse(payload)[slice_]
+            rows = jsonpath.findall(self.path, payload)[slice_]
             if not rows:
                 break
 

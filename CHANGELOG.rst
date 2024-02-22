@@ -6,6 +6,7 @@ Next
 ====
 
 - Allow for custom expiration time in the generic JSON/XML adapters (#429)
+- Use a different JSONPath library that handles root better (#431)
 
 Version 1.2.15 - 2024-02-13
 ===========================

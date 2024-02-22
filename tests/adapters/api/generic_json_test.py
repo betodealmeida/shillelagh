@@ -248,3 +248,36 @@ def test_request_headers_in_url(requests_mock: Mocker) -> None:
     rows = list(cursor.execute(sql))
     assert rows == [("bar", '["one", "two"]')]
     assert data.last_request.headers["foo"] == "bar"
+
+
+def test_single_row(requests_mock: Mocker) -> None:
+    """
+    Test a query where the response is a single row as a dictionary.
+    """
+    # for datassette
+    requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
+
+    url = "https://www.boredapi.com/api/activity?participants=1#$"
+    requests_mock.head(str(url), headers={"content-type": "application/json"})
+    requests_mock.get(
+        str(url),
+        json={
+            "activity": "Solve a Rubik's cube",
+            "type": "recreational",
+            "participants": 1,
+            "price": 0,
+            "link": "",
+            "key": "4151544",
+            "accessibility": 0.1,
+        },
+    )
+
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={"genericjsonapi": {"cache_expiration": -1}},
+    )
+    cursor = connection.cursor()
+
+    sql = f'SELECT * FROM "{url}"'
+    rows = list(cursor.execute(sql))
+    assert rows == [("Solve a Rubik's cube", "recreational", 1, 0, "", "4151544", 0.1)]

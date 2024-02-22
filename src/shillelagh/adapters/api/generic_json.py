@@ -8,8 +8,8 @@ import logging
 from datetime import timedelta
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Union
 
+import jsonpath
 import prison
-from jsonpath import JSONPath
 from yarl import URL
 
 from shillelagh.adapters.base import Adapter
@@ -145,8 +145,7 @@ class GenericJSONAPI(Adapter):
         if not response.ok:
             raise ProgrammingError(f'Error: {payload["message"]}')
 
-        parser = JSONPath(self.path)
-        for i, row in enumerate(parser.parse(payload)):
+        for i, row in enumerate(jsonpath.findall(self.path, payload)):
             row = {
                 k: v
                 for k, v in (row or {}).items()
