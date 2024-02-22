@@ -6,8 +6,8 @@ import urllib.parse
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
+import jsonpath
 import requests_cache
-from jsonpath import JSONPath
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
@@ -177,7 +177,7 @@ class GitHubAPI(Adapter):
         payload = response.json()
 
         row = {
-            column.name: JSONPath(column.json_path).parse(payload)[0]
+            column.name: jsonpath.findall(column.json_path, payload)[0]
             for column in TABLES[self.base][self.resource]
         }
         row["rowid"] = 0
@@ -231,7 +231,7 @@ class GitHubAPI(Adapter):
                     break
 
                 row = {
-                    column.name: JSONPath(column.json_path).parse(resource)[0]
+                    column.name: jsonpath.findall(column.json_path, resource)[0]
                     for column in TABLES[self.base][self.resource]
                 }
                 row["rowid"] = rowid

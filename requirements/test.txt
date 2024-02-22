@@ -86,8 +86,6 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-jsonpath-python==1.0.6
-    # via shillelagh
 lazy-object-proxy==1.7.1
     # via astroid
 mccabe==0.7.0
@@ -156,6 +154,8 @@ python-dateutil==2.8.2
     #   holidays
     #   pandas
     #   shillelagh
+python-jsonpath==0.10.3
+    # via shillelagh
 pytz==2022.1
     # via pandas
 pyyaml==6.0
