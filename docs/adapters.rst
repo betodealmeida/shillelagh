@@ -316,7 +316,7 @@ You can select data from any `Datasette <https://datasette.io/>`_ table, by usin
 GitHub
 ======
 
-The GitHub adapter currently allows pull requests to be queried (other endpoints can be easily added):
+The GitHub adapter currently allows pull requests and issues to be queried (other endpoints can be easily added):
 
 .. code-block:: sql
 
