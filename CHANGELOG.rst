@@ -5,6 +5,9 @@ Changelog
 Next
 ====
 
+Version 1.2.17 - 2024-02-23
+===========================
+
 - Add support for GitHub issues (#433)
 
 Version 1.2.16 - 2024-02-22
