@@ -1,6 +1,7 @@
 """
 An adapter for GitHub.
 """
+import json
 import logging
 import urllib.parse
 from dataclasses import dataclass
@@ -18,6 +19,18 @@ from shillelagh.typing import RequestedOrder, Row
 _logger = logging.getLogger(__name__)
 
 PAGE_SIZE = 100
+
+
+class JSONString(Field[Any, str]):
+    """
+    A field to handle JSON values.
+    """
+
+    type = "TEXT"
+    db_api_type = "STRING"
+
+    def parse(self, value: Any) -> Optional[str]:
+        return value if value is None else json.dumps(value)
 
 
 @dataclass
@@ -78,6 +91,10 @@ TABLES: Dict[str, Dict[str, List[Column]]] = {
             Column("updated_at", "updated_at", StringDateTime()),
             Column("closed_at", "closed_at", StringDateTime()),
             Column("body", "body", String()),
+            Column("author_association", "author_association", String()),
+            Column("labels", "labels[*].name", JSONString()),
+            Column("assignees", "assignees[*].login", JSONString()),
+            Column("reactions", "reactions", JSONString()),
         ],
     },
 }
@@ -193,7 +210,7 @@ class GitHubAPI(Adapter):
         payload = response.json()
 
         row = {
-            column.name: get_path_or_none(payload, column.json_path)
+            column.name: get_value(column, payload)
             for column in TABLES[self.base][self.resource]
         }
         row["rowid"] = 0
@@ -247,7 +264,7 @@ class GitHubAPI(Adapter):
                     break
 
                 row = {
-                    column.name: get_path_or_none(resource, column.json_path)
+                    column.name: get_value(column, resource)
                     for column in TABLES[self.base][self.resource]
                 }
                 row["rowid"] = rowid
@@ -258,11 +275,16 @@ class GitHubAPI(Adapter):
             page += 1
 
 
-def get_path_or_none(resource: Dict[str, Any], path: str) -> Optional[Any]:
+def get_value(column: Column, resource: Dict[str, Any]) -> Any:
     """
-    Return the value at ``path`` in ``resource`` or ``None`` if it doesn't exist.
+    Extract the value of a column from a resource.
     """
+    values = jsonpath.findall(column.json_path, resource)
+
+    if isinstance(column.field, JSONString):
+        return values
+
     try:
-        return jsonpath.findall(path, resource)[0]
+        return values[0]
     except IndexError:
         return None

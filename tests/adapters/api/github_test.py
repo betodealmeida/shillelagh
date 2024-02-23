@@ -603,3 +603,41 @@ def test_github_missing_field(mocker: MockerFixture, requests_mock: Mocker) -> N
         (False,),
         (False,),
     ]
+
+
+def test_github_json_field(mocker: MockerFixture, requests_mock: Mocker) -> None:
+    """
+    Test a request when the response has a JSON field.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    page1_url = "https://api.github.com/repos/apache/superset/issues?state=all&per_page=100&page=1"
+    requests_mock.get(page1_url, json=github_issues_response)
+    page2_url = "https://api.github.com/repos/apache/superset/issues?state=all&per_page=100&page=2"
+    requests_mock.get(page2_url, json=[])
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = """
+        SELECT labels FROM
+        "https://api.github.com/repos/apache/superset/issues"
+        WHERE labels != '[]'
+        LIMIT 10
+    """
+    data = list(cursor.execute(sql))
+    assert data == [
+        ('["size/M", "dependencies:npm", "github_actions", "packages"]',),
+        ('["size/S"]',),
+        ('["size/M"]',),
+        ('["size/M", "api"]',),
+        ('["size/L", "api"]',),
+        ('["size/XS"]',),
+        ('["size/XS", "dependencies:npm"]',),
+        ('["size/S"]',),
+        ('["size/XS", "hold:review-after-release"]',),
+        ('["size/M", "review-checkpoint", "plugins"]',),
+    ]
