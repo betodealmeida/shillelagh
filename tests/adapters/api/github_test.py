@@ -14,7 +14,11 @@ from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.filters import Equal
 
-from ...fakes import github_response, github_single_response
+from ...fakes import (
+    github_issues_response,
+    github_pulls_response,
+    github_single_response,
+)
 
 
 def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
@@ -27,7 +31,7 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
     )
 
     page1_url = "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=100&page=1"
-    requests_mock.get(page1_url, json=github_response)
+    requests_mock.get(page1_url, json=github_pulls_response)
     page2_url = "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=100&page=2"
     requests_mock.get(page2_url, json=[])
 
@@ -206,11 +210,11 @@ def test_github_limit_offset(mocker: MockerFixture, requests_mock: Mocker) -> No
     page2_url = (
         "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=2"
     )
-    requests_mock.get(page2_url, json=github_response[:5])
+    requests_mock.get(page2_url, json=github_pulls_response[:5])
     page3_url = (
         "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=3"
     )
-    requests_mock.get(page3_url, json=github_response[5:])
+    requests_mock.get(page3_url, json=github_pulls_response[5:])
 
     connection = connect(":memory:")
     cursor = connection.cursor()
@@ -466,11 +470,11 @@ def test_get_multiple_resources(mocker: MockerFixture, requests_mock: Mocker) ->
     page2_url = (
         "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=2"
     )
-    requests_mock.get(page2_url, json=github_response[:5])
+    requests_mock.get(page2_url, json=github_pulls_response[:5])
     page3_url = (
         "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=3"
     )
-    requests_mock.get(page3_url, json=github_response[5:])
+    requests_mock.get(page3_url, json=github_pulls_response[5:])
 
     adapter = GitHubAPI("repos", "apache", "superset", "pulls")
     rows = adapter._get_multiple_resources(  # pylint: disable=protected-access
@@ -559,4 +563,81 @@ def test_get_multiple_resources(mocker: MockerFixture, requests_mock: Mocker) ->
             "merged_at": None,
             "rowid": 4,
         },
+    ]
+
+
+def test_github_missing_field(mocker: MockerFixture, requests_mock: Mocker) -> None:
+    """
+    Test a request when the response is missing a field.
+
+    For example, some issues don't have the ``draft`` field in the response.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    page1_url = "https://api.github.com/repos/apache/superset/issues?state=all&per_page=100&page=1"
+    requests_mock.get(page1_url, json=github_issues_response)
+    page2_url = "https://api.github.com/repos/apache/superset/issues?state=all&per_page=100&page=2"
+    requests_mock.get(page2_url, json=[])
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = """
+        SELECT draft FROM
+        "https://api.github.com/repos/apache/superset/issues"
+        LIMIT 10
+    """
+    data = list(cursor.execute(sql))
+    assert data == [
+        (False,),
+        (False,),
+        (None,),
+        (None,),
+        (False,),
+        (None,),
+        (False,),
+        (None,),
+        (False,),
+        (False,),
+    ]
+
+
+def test_github_json_field(mocker: MockerFixture, requests_mock: Mocker) -> None:
+    """
+    Test a request when the response has a JSON field.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    page1_url = "https://api.github.com/repos/apache/superset/issues?state=all&per_page=100&page=1"
+    requests_mock.get(page1_url, json=github_issues_response)
+    page2_url = "https://api.github.com/repos/apache/superset/issues?state=all&per_page=100&page=2"
+    requests_mock.get(page2_url, json=[])
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = """
+        SELECT labels FROM
+        "https://api.github.com/repos/apache/superset/issues"
+        WHERE labels != '[]'
+        LIMIT 10
+    """
+    data = list(cursor.execute(sql))
+    assert data == [
+        ('["size/M", "dependencies:npm", "github_actions", "packages"]',),
+        ('["size/S"]',),
+        ('["size/M"]',),
+        ('["size/M", "api"]',),
+        ('["size/L", "api"]',),
+        ('["size/XS"]',),
+        ('["size/XS", "dependencies:npm"]',),
+        ('["size/S"]',),
+        ('["size/XS", "hold:review-after-release"]',),
+        ('["size/M", "review-checkpoint", "plugins"]',),
     ]
