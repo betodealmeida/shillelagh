@@ -20,9 +20,10 @@ application directory (see https://pypi.org/project/appdirs/), eg::
 """
 import logging
 import os.path
+import sys
 import time
 from pathlib import Path
-from typing import List, Tuple
+from typing import Iterable, Iterator, Optional
 
 import yaml
 from appdirs import user_config_dir
@@ -174,6 +175,79 @@ sql_completer = WordCompleter(
 )
 
 style = style_from_pygments_cls(get_style_by_name("friendly"))
+quote_chars = ('"', "'", "`")
+
+
+def emit_statements(lines: Iterable[str]) -> Iterator[str]:
+    """
+    Consume lines and emit complete statements.
+    """
+    quote_context: Optional[str] = None
+
+    rest = ""
+    for line in lines:
+        start = 0
+        for pos, char in enumerate(line):
+            if quote_context is not None and char == quote_context:
+                # leave context
+                quote_context = None
+            elif quote_context is None and char == ";":
+                yield (rest + line[start:pos]).strip()
+                rest = ""
+                start = pos + 1
+            else:
+                for quote in quote_chars:
+                    if quote_context is None and char == quote:
+                        # enter context
+                        quote_context = quote
+
+        rest += line[start:] + "\n"
+
+
+def repl(session: PromptSession) -> Iterator[str]:
+    """
+    Yield lines.
+    """
+    quote_context: Optional[str] = None
+
+    start = True
+    while True:
+        if start:
+            prompt = "🍀> "
+        elif quote_context is None:
+            prompt = "  . "
+        else:
+            prompt = f" {quote_context}. "
+
+        try:
+            line = session.prompt(prompt)
+            yield line
+        except KeyboardInterrupt:
+            continue  # Control-C pressed. Clear and try again.
+        except EOFError:
+            break  # Control-D pressed.
+
+        quote_context = update_quote_context(line, quote_context)
+        start = quote_context is None and line.strip().endswith(";")
+
+
+def update_quote_context(line: str, quote_context: Optional[str]) -> Optional[str]:
+    """
+    Update the quote context.
+
+    Inside single quotes, inside double quotes, neither.
+    """
+    for char in line:
+        if quote_context is not None and char == quote_context:
+            # leave context
+            quote_context = None
+        else:
+            for quote in quote_chars:
+                if quote_context is None and char == quote:
+                    # enter context
+                    quote_context = quote
+
+    return quote_context
 
 
 def main():  # pylint: disable=too-many-locals
@@ -199,6 +273,16 @@ def main():  # pylint: disable=too-many-locals
     connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
     cursor = connection.cursor()
 
+    # non-interactive
+    if not sys.stdin.isatty():
+        for query in emit_statements(sys.stdin.readlines()):
+            cursor.execute(query)
+            results = cursor.fetchall()
+            headers = [t[0] for t in cursor.description or []]
+            sys.stdout.write(tabulate(results, headers=headers))
+            sys.stdout.write("\n")
+        return
+
     session = PromptSession(
         lexer=PygmentsLexer(SqlLexer),
         completer=sql_completer,
@@ -206,68 +290,26 @@ def main():  # pylint: disable=too-many-locals
         history=FileHistory(history_path),
     )
 
-    lines: List[str] = []
-    quote_context = " "
-    while True:
-        prompt = "sql> " if not lines else f"  {quote_context}. "
+    for query in emit_statements(repl(session)):
+        start = time.time()
+        results = None
         try:
-            line = session.prompt(prompt)
-        except KeyboardInterrupt:
-            lines = []
-            quote_context = " "
-            continue  # Control-C pressed. Clear and try again.
-        except EOFError:
-            break  # Control-D pressed.
+            cursor.execute(query)
+            results = cursor.fetchall()
+        except Error as ex:
+            print(ex)
+            continue
 
-        lines.append(line)
-        query = "\n".join(lines)
-
-        is_terminated, quote_context = get_query_termination(query)
-        if is_terminated:
-            start = time.time()
-            results = None
-            try:
-                cursor.execute(query)
-                results = cursor.fetchall()
-            except Error as ex:
-                print(ex)
-                continue
-            finally:
-                lines = []
-                quote_context = " "
-
-            headers = [t[0] for t in cursor.description or []]
-            print(tabulate(results, headers=headers))
-            duration = time.time() - start
-            print(
-                f"({len(results)} row{'s' if len(results) != 1 else ''} in {duration:.2f}s)\n",
-            )
+        headers = [t[0] for t in cursor.description or []]
+        print(tabulate(results, headers=headers))
+        duration = time.time() - start
+        print(
+            f"({len(results)} row{'s' if len(results) != 1 else ''} "
+            f"in {duration:.2f}s)\n",
+        )
 
     connection.close()
     print("GoodBye!")
-
-
-def get_query_termination(query: str) -> Tuple[bool, str]:
-    """
-    Check if a query is ended or if a new line should be created.
-
-    This function looks for a semicolon at the end, making sure no quotation mark must be
-    closed.
-    """
-    quote_context = " "
-    quote_chars = ('"', "'", "`")
-
-    for query_char in query:
-        if quote_context == query_char:
-            quote_context = " "
-        else:
-            for quote in quote_chars:
-                if quote_context == " " and quote == query_char:
-                    quote_context = quote
-
-    is_terminated = quote_context == " " and query.endswith(";")
-
-    return is_terminated, quote_context
 
 
 if __name__ == "__main__":
