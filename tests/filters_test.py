@@ -7,6 +7,7 @@ from shillelagh.filters import (
     Endpoint,
     Equal,
     Impossible,
+    In,
     IsNotNull,
     IsNull,
     Like,
@@ -385,3 +386,41 @@ def test_is_not_null() -> None:
     assert IsNotNull.build([]) == IsNotNull()  # type: ignore
     assert IsNotNull().check(None) is False
     assert IsNotNull() != 0
+
+
+def test_in_numbers() -> None:
+    """
+    Test ``In``.
+    """
+    operations = {(Operator.IN, tuple({0, 1, 5}))}
+    filter_ = In.build(operations)
+    assert isinstance(filter_, In)
+    assert str(filter_) == "IN(0, 1, 5)"
+
+
+def test_in_check_strings() -> None:
+    """
+    Test ``In``.
+    """
+    operations = {(Operator.IN, tuple({"b", "a"}))}
+    filter_ = In.build(operations)
+    assert isinstance(filter_, In)
+    assert filter_.check("a")
+    assert filter_.check("b")
+    assert not filter_.check("c")
+    assert str(filter_) in [
+        "IN('b', 'a')",
+        "IN('a', 'b')",
+    ]
+
+
+def test_in_multiple_value_impossible() -> None:
+    """
+    Test multiple IN operations are not allowed.
+    """
+    operations = {
+        (Operator.IN, tuple({0, 1})),
+        (Operator.IN, tuple({2, 3})),
+    }
+    filter_ = In.build(operations)
+    assert isinstance(filter_, Impossible)
