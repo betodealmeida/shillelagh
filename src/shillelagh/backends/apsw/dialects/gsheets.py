@@ -146,7 +146,7 @@ class APSWGSheetsDialect(APSWDialect):
     def get_table_names(  # pylint: disable=unused-argument
         self,
         connection: _ConnectionFairy,
-        schema: str = None,
+        schema: Optional[str] = None,
         sqlite_include_internal: bool = False,
         **kwargs: Any,
     ) -> List[str]:
