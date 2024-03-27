@@ -187,11 +187,11 @@ def get_index_from_letters(letters: str) -> int:
 
     """
     base26 = reversed([string.ascii_uppercase.index(letter) + 1 for letter in letters])
-    return (
+    return int(
         sum(
             value * (len(string.ascii_uppercase) ** i) for i, value in enumerate(base26)
         )
-        - 1
+        - 1,
     )
 
 

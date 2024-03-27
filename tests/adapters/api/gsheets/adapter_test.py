@@ -752,6 +752,11 @@ def test_api_bugs(mocker: MockerFixture) -> None:
         status_code=400,
         headers={},
     )
+    adapter.register_uri(
+        "GET",
+        "https://sheets.googleapis.com/v4/spreadsheets/3/developerMetadata/0",
+        status_code=200,
+    )
 
     connection = connect(":memory:", ["gsheetsapi"])
     cursor = connection.cursor()

@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Fix OAuth2 flow in GSheets (#438)
+
 Version 1.2.17 - 2024-02-23
 ===========================
 

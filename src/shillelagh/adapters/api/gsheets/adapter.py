@@ -251,8 +251,11 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         if response.encoding is None:
             response.encoding = "utf-8"
 
-        if response.status_code != 200:
-            raise ProgrammingError(response.text)
+        try:
+            response.raise_for_status()
+        except Exception as ex:
+            self._check_permissions(ex)
+            raise ProgrammingError(response.text) from ex
 
         if response.text.startswith(JSON_PAYLOAD_PREFIX):
             result = json.loads(response.text[len(JSON_PAYLOAD_PREFIX) :])
