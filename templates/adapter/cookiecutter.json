@@ -1,6 +1,6 @@
 {
     "adapter_name": "MyAdapter",
     "description": "An adapter for ...",
-    "adapter_type": ["API", "File", "Memory"],
+    "adapter_type": ["api", "file", "memory"],
     "slug": "{{ cookiecutter.adapter_name|lower|replace(' ', '-') }}"
 }
