@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Relax ``tabulate`` dependency for Apache Superset (#443)
+
 Version 1.2.18 - 2024-03-27
 ===========================
 
