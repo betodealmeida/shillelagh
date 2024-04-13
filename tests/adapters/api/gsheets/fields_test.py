@@ -2,6 +2,7 @@
 """
 Tests for shillelagh.adapters.api.gsheets.fields.
 """
+
 import datetime
 
 import dateutil.tz

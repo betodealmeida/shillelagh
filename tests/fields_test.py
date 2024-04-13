@@ -1,6 +1,7 @@
 """
 Tests for shillelagh.fields.
 """
+
 import datetime
 import decimal
 import sys
@@ -456,7 +457,6 @@ def test_polymorphic_field() -> None:
         db_api_type = "STRING"
 
     class CustomFakeAdapter(FakeAdapter):
-
         """
         A simple adapter with an ``IntegerOrString`` column.
         """

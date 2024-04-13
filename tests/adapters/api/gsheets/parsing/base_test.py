@@ -1,6 +1,7 @@
 """
 Test the base parser/tokenizer.
 """
+
 # pylint: disable=protected-access
 from datetime import datetime
 

@@ -1,6 +1,7 @@
 """
 A simple example showing the Socrata adapter.
 """
+
 from shillelagh.backends.apsw.db import connect
 
 if __name__ == "__main__":

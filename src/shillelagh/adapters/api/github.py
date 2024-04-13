@@ -1,6 +1,7 @@
 """
 An adapter for GitHub.
 """
+
 import json
 import logging
 import urllib.parse
@@ -101,7 +102,6 @@ TABLES: Dict[str, Dict[str, List[Column]]] = {
 
 
 class GitHubAPI(Adapter):
-
     """
     An adapter for GitHub.
     """

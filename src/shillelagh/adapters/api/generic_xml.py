@@ -42,7 +42,6 @@ def element_to_dict(element: ET.Element) -> Any:
 
 
 class GenericXMLAPI(GenericJSONAPI):
-
     """
     An adapter for fetching XML data.
     """

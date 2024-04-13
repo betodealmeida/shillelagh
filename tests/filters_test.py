@@ -1,6 +1,7 @@
 """
 Tests for shillelagh.filters.
 """
+
 import pytest
 
 from shillelagh.filters import (

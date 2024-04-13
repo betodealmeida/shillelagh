@@ -39,7 +39,9 @@ cfgv==3.3.1
 charset-normalizer==2.1.0
     # via requests
 click==8.1.3
-    # via pip-tools
+    # via
+    #   pip-compile-multi
+    #   pip-tools
 codespell==2.1.0
     # via shillelagh
 coverage[toml]==6.4.2
@@ -52,10 +54,6 @@ dill==0.3.6
     #   shillelagh
 distlib==0.3.5
     # via virtualenv
-exceptiongroup==1.0.4
-    # via
-    #   cattrs
-    #   pytest
 filelock==3.7.1
     # via virtualenv
 freezegun==1.2.1
@@ -76,8 +74,6 @@ idna==3.3
     # via
     #   requests
     #   yarl
-importlib-metadata==6.7.0
-    # via shillelagh
 iniconfig==1.1.1
     # via pytest
 isort==5.10.1
@@ -105,8 +101,12 @@ pandas==1.4.3
     # via shillelagh
 pep517==0.12.0
     # via build
-pip-tools==6.8.0
+pip-compile-multi==2.6.3
     # via shillelagh
+pip-tools==6.8.0
+    # via
+    #   pip-compile-multi
+    #   shillelagh
 platformdirs==2.5.2
     # via
     #   pylint
@@ -173,6 +173,8 @@ requests-mock==1.9.3
     # via shillelagh
 rsa==4.9
     # via google-auth
+ruff==0.3.7
+    # via shillelagh
 s3transfer==0.6.0
     # via boto3
 six==1.16.0
@@ -193,18 +195,13 @@ tabulate==0.8.9
 toml==0.10.2
     # via pre-commit
 tomli==2.0.1
-    # via
-    #   build
-    #   coverage
-    #   pylint
-    #   pytest
+    # via pep517
 tomlkit==0.11.1
     # via pylint
+toposort==1.10
+    # via pip-compile-multi
 typing-extensions==4.3.0
-    # via
-    #   astroid
-    #   pylint
-    #   shillelagh
+    # via shillelagh
 url-normalize==1.4.3
     # via requests-cache
 urllib3==1.26.10
@@ -224,8 +221,6 @@ wrapt==1.14.1
     # via astroid
 yarl==1.8.1
     # via shillelagh
-zipp==3.15.0
-    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

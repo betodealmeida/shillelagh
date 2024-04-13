@@ -1,6 +1,7 @@
 """
 Custom fields for the GSheets adapter.
 """
+
 import datetime
 from typing import Any, List, Optional, Type, Union
 

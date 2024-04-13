@@ -2,6 +2,7 @@
 """
 A DB API 2.0 wrapper for APSW.
 """
+
 import datetime
 import itertools
 import logging
@@ -61,6 +62,29 @@ from shillelagh.types import (
     TimestampFromTicks,
 )
 from shillelagh.typing import Description, SQLiteValidType
+
+__all__ = [
+    "DatabaseError",
+    "DataError",
+    "Error",
+    "IntegrityError",
+    "InterfaceError",
+    "InternalError",
+    "OperationalError",
+    "BINARY",
+    "DATETIME",
+    "NUMBER",
+    "ROWID",
+    "STRING",
+    "Binary",
+    "Date",
+    "DateFromTicks",
+    "Time",
+    "TimeFromTicks",
+    "Timestamp",
+    "TimestampFromTicks",
+    "Warning",
+]
 
 apilevel = "2.0"
 threadsafety = 2
@@ -128,7 +152,6 @@ def convert_binding(binding: Any) -> SQLiteValidType:
 
 
 class Cursor:  # pylint: disable=too-many-instance-attributes
-
     """
     Connection cursor.
     """
@@ -432,7 +455,6 @@ def apsw_version() -> str:
 
 
 class Connection:
-
     """Connection."""
 
     def __init__(  # pylint: disable=too-many-arguments

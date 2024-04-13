@@ -21,7 +21,6 @@ AVERAGE_NUMBER_OF_ROWS = 100
 
 
 class HTMLTableAPI(Adapter):
-
     """
     An adapter for scraping HTML tables.
     """

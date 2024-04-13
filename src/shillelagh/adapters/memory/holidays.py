@@ -27,7 +27,6 @@ class BoundsType(TypedDict, total=False):
 
 
 class HolidaysMemory(Adapter):
-
     """
     An adapter for in-memory holidays.
     """

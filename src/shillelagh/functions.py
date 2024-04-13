@@ -1,6 +1,7 @@
 """
 Custom functions available to the SQL backend.
 """
+
 import json
 import sys
 import time

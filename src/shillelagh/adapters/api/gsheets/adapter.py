@@ -2,6 +2,7 @@
 """
 Google Sheets adapter.
 """
+
 import datetime
 import json
 import logging

@@ -1,4 +1,5 @@
 """DB API 2.0 types for Shillelagh."""
+
 import datetime
 import inspect
 import time

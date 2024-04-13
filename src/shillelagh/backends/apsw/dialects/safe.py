@@ -5,6 +5,7 @@ A "safe" Shillelagh dialect.
 When this dialect is used only adapters marked as safe and explicitly
 listed are loaded.
 """
+
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.engine.url import URL
@@ -13,7 +14,6 @@ from shillelagh.backends.apsw.dialects.base import APSWDialect
 
 
 class APSWSafeDialect(APSWDialect):
-
     """
     A "safe" Shillelagh dialect.
 

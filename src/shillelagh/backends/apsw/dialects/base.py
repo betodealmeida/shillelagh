@@ -1,5 +1,6 @@
 # pylint: disable=protected-access, abstract-method
 """A SQLALchemy dialect."""
+
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 import sqlalchemy.types
@@ -30,7 +31,6 @@ class SQLAlchemyColumn(TypedDict):
 
 
 class APSWDialect(SQLiteDialect):
-
     """
     A SQLAlchemy dialect for Shillelagh.
 

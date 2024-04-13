@@ -1,6 +1,7 @@
 """
 Tests for shillelagh.adapters.api.gsheets.lib.
 """
+
 import itertools
 from typing import List, cast
 

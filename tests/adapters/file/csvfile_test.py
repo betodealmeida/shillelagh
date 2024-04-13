@@ -2,6 +2,7 @@
 """
 Tests for shillelagh.adapters.file.csvfile.
 """
+
 from datetime import datetime, timezone
 from pathlib import Path
 

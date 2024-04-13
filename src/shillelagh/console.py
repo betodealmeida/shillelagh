@@ -18,6 +18,7 @@ application directory (see https://pypi.org/project/appdirs/), eg::
       api_key: XXX
 
 """
+
 import logging
 import os.path
 import sys

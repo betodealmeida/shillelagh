@@ -1,6 +1,7 @@
 """
 Test the date/time pattern handling (parsing and formatting).
 """
+
 # pylint: disable=protected-access
 from datetime import date, datetime, time, timedelta
 from typing import cast

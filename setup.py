@@ -1,6 +1,7 @@
 """
 Skeleton ``setup.py``, reads configuration from ``setup.cfg``.
 """
+
 import sys
 
 from pkg_resources import VersionConflict, require

@@ -1,6 +1,7 @@
 """
 Token for parsing date and time.
 """
+
 import re
 from datetime import date, datetime, time, timedelta
 from typing import Any, Dict, Generic, Iterator, List, Tuple, Type, TypeVar

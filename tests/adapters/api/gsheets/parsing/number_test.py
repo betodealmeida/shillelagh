@@ -1,6 +1,7 @@
 """
 Test number parsing.
 """
+
 import pytest
 
 from shillelagh.adapters.api.gsheets.parsing.base import tokenize

@@ -1,4 +1,5 @@
 """Helper functions for Shillelagh."""
+
 import base64
 import inspect
 import itertools
