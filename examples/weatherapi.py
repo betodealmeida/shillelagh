@@ -1,6 +1,7 @@
 """
 A simple example showing the WeatherAPI adapter.
 """
+
 import os
 import sys
 from datetime import datetime, timedelta

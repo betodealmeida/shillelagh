@@ -1,6 +1,7 @@
 """
 Tests for shillelagh.lib.
 """
+
 from typing import Any, Dict, Iterator, List, Tuple
 
 import pytest

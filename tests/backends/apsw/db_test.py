@@ -2,6 +2,7 @@
 """
 Tests for shillelagh.backends.apsw.db.
 """
+
 import datetime
 from typing import Any, List, Tuple
 from unittest import mock
@@ -427,7 +428,6 @@ def test_connect_safe_lists_only_safe_adapters(registry: AdapterLoader) -> None:
     """
 
     class UnsafeAdapter(FakeAdapter):
-
         """
         A safe adapter.
         """

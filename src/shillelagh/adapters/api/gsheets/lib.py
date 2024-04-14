@@ -1,4 +1,5 @@
 """Helper functions for the GSheets adapter."""
+
 import datetime
 import itertools
 import string

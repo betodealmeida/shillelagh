@@ -1,6 +1,7 @@
 """
 Tests for shillelagh.backends.apsw.dialects.safe.
 """
+
 from sqlalchemy.engine.url import make_url
 
 from shillelagh.backends.apsw.dialects.safe import APSWSafeDialect

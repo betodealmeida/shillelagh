@@ -6,6 +6,7 @@ These tests operate on a spreadsheet, fetching and changing data.
 Uses a private sheet: https://docs.google.com/spreadsheets/d/
     1_rN3lm0R_bU3NemO0s9pbFkY5LQPcuy1pscv8ZXPtg8/edit
 """
+
 import datetime
 from typing import Any, Dict
 

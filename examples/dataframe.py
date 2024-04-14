@@ -1,6 +1,7 @@
 """
 A simple example showing the Pandas adapter.
 """
+
 import pandas as pd
 
 from shillelagh.backends.apsw.db import connect

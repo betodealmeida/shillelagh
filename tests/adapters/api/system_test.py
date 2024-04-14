@@ -1,6 +1,7 @@
 """
 Tests for the system adapter.
 """
+
 from datetime import datetime, timezone
 from unittest import mock
 

@@ -2,6 +2,7 @@
 """
 Tests for shillelagh.console.
 """
+
 from io import StringIO
 from pathlib import Path
 

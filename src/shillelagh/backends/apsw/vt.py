@@ -6,6 +6,7 @@ This module implements a SQLite virtual table that delegates data requests
 to adapters. The main goal is to make the interface easier to use, to
 simplify the work of writing new adapters.
 """
+
 import json
 import logging
 from collections import defaultdict
@@ -264,7 +265,6 @@ def get_bounds(
 
 
 class VTModule:  # pylint: disable=too-few-public-methods
-
     """
     A module used to create SQLite virtual tables.
 

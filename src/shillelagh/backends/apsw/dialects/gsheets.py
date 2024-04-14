@@ -4,6 +4,7 @@ A dialect that only connects to GSheets.
 
 This dialect was implemented to replace the ``gsheetsdb`` library.
 """
+
 import logging
 import urllib.parse
 from datetime import timedelta

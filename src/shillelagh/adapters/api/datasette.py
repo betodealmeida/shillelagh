@@ -89,7 +89,6 @@ def get_field(value: Any) -> Field:
 
 
 class DatasetteAPI(Adapter):
-
     """
     An adapter to Datasette instances (https://datasette.io/).
     """

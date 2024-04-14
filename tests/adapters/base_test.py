@@ -1,6 +1,7 @@
 """
 Test for shillelagh.adapter.base.
 """
+
 from datetime import datetime
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
@@ -18,7 +19,6 @@ from ..fakes import FakeAdapter
 
 
 class FakeAdapterWithDateTime(FakeAdapter):
-
     """
     An adapter with a timestamp column.
     """
@@ -179,7 +179,6 @@ def test_limit_offset(registry: AdapterLoader) -> None:
     """
 
     class CustomFakeAdapter(FakeAdapter):
-
         """
         Custom ``FakeAdapter`` with more data.
         """
@@ -203,7 +202,7 @@ def test_limit_offset(registry: AdapterLoader) -> None:
             limit: Optional[int] = None,
             offset: Optional[int] = None,
             requested_columns: Optional[Set[str]] = None,
-            **kwargs: Any
+            **kwargs: Any,
         ) -> Iterator[Row]:
             """
             Return all data.
@@ -211,7 +210,6 @@ def test_limit_offset(registry: AdapterLoader) -> None:
             return iter(self.data)
 
     class FakeAdapterWithLimitOnly(CustomFakeAdapter):
-
         """
         An adapter that only supports limit (like ``s3select``)
         """
@@ -222,7 +220,6 @@ def test_limit_offset(registry: AdapterLoader) -> None:
         supports_offset = False
 
     class FakeAdapterWithLimitAndOffset(CustomFakeAdapter):
-
         """
         An adapter that supports both limit and offset.
         """
@@ -233,7 +230,6 @@ def test_limit_offset(registry: AdapterLoader) -> None:
         supports_offset = True
 
     class FakeAdapterWithOffsetOnly(CustomFakeAdapter):
-
         """
         An adapter that supports only offset.
         """

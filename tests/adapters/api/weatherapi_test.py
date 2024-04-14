@@ -2,6 +2,7 @@
 """
 Tests for shillelagh.adapters.api.weatherapi.
 """
+
 from datetime import datetime, timedelta, timezone
 from typing import Dict
 

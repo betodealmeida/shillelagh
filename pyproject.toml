@@ -9,3 +9,8 @@ version_scheme = "no-guess-dev"
 
 [tool.flake8]
 max-line-length = 90
+
+[tool.ruff]
+exclude = [
+    "templates",
+]

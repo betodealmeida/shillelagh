@@ -1,6 +1,7 @@
 """
 Fields representing columns of different types and capabilities.
 """
+
 import datetime
 import decimal
 from enum import Enum
@@ -48,7 +49,6 @@ class Order(Enum):
 
 
 class Field(Generic[Internal, External]):
-
     """
     Represents a column in a table.
 

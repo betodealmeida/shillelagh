@@ -1,6 +1,7 @@
 """
 Tests for the Socrata adapter.
 """
+
 from datetime import date
 
 import pytest

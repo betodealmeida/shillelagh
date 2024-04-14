@@ -2,6 +2,7 @@
 """
 Tests for the Datasette adapter.
 """
+
 import datetime
 
 import pytest

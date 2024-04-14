@@ -129,8 +129,7 @@ def get_input_serialization(parsed: urllib.parse.ParseResult) -> InputSerializat
         input_serialization["CSV"] = {
             k: unescape_backslash(v[-1])
             for k, v in options.items()
-            if k
-            in CSVSerializationOptionsType.__annotations__  # pylint: disable=no-member
+            if k in CSVSerializationOptionsType.__annotations__  # pylint: disable=no-member
         }
         if "FileHeaderInfo" not in input_serialization["CSV"]:
             input_serialization["CSV"]["FileHeaderInfo"] = "USE"
@@ -141,8 +140,7 @@ def get_input_serialization(parsed: urllib.parse.ParseResult) -> InputSerializat
         input_serialization["JSON"] = {
             k: v[-1]
             for k, v in options.items()
-            if k
-            in JSONSerializationOptionsType.__annotations__  # pylint: disable=no-member
+            if k in JSONSerializationOptionsType.__annotations__  # pylint: disable=no-member
         }
 
         return cast(JSONSerializationType, input_serialization)
@@ -151,8 +149,7 @@ def get_input_serialization(parsed: urllib.parse.ParseResult) -> InputSerializat
         input_serialization["Parquet"] = {
             k: v[-1]
             for k, v in options.items()
-            if k
-            in ParquetSerializationOptionsType.__annotations__  # pylint: disable=no-member
+            if k in ParquetSerializationOptionsType.__annotations__  # pylint: disable=no-member
         }
 
         return cast(ParquetSerializationType, input_serialization)
@@ -163,7 +160,6 @@ def get_input_serialization(parsed: urllib.parse.ParseResult) -> InputSerializat
 
 
 class S3SelectAPI(Adapter):
-
     """
     An adapter to S3 files via S3Select.
 

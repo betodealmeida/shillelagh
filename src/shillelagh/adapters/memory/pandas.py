@@ -138,7 +138,6 @@ def get_columns_from_df(df: pd.DataFrame) -> Dict[str, Field]:
 
 
 class PandasMemory(Adapter):
-
     """
     An adapter for in-memory Pandas dataframes.
     """

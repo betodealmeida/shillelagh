@@ -1,6 +1,7 @@
 """
 Tests for shillelagh.backends.apsw.dialects.base.
 """
+
 from unittest import mock
 
 import pytest

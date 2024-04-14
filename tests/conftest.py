@@ -1,6 +1,7 @@
 """
 Fixtures for Shillelagh.
 """
+
 import json
 import logging
 import os

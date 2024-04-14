@@ -1,4 +1,5 @@
 """Custom types for the GSheets adapter."""
+
 from typing import Any, List
 
 from typing_extensions import Literal, TypedDict

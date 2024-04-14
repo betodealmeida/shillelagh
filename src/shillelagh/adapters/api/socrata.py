@@ -3,6 +3,7 @@ An adapter to the Socrata Open Data API.
 
 See https://dev.socrata.com/ for more information.
 """
+
 import logging
 import re
 import urllib.parse
@@ -88,7 +89,6 @@ def get_field(col: MetadataColumn) -> Field:
 
 
 class SocrataAPI(Adapter):
-
     """
     An adapter to the Socrata Open Data API (https://dev.socrata.com/).
 

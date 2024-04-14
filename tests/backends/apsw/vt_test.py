@@ -2,6 +2,7 @@
 """
 Tests for shillelagh.backends.apsw.vt.
 """
+
 import datetime
 import json
 from typing import Any, Dict, Iterable
@@ -28,7 +29,6 @@ from ...fakes import FakeAdapter
 
 
 class FakeAdapterNoFilters(FakeAdapter):
-
     """
     An adapter where columns have no filters.
     """
@@ -39,7 +39,6 @@ class FakeAdapterNoFilters(FakeAdapter):
 
 
 class FakeAdapterOnlyEqual(FakeAdapter):
-
     """
     An adapter where columns can only be filtered via equality.
     """
@@ -50,7 +49,6 @@ class FakeAdapterOnlyEqual(FakeAdapter):
 
 
 class FakeAdapterStaticSort(FakeAdapter):
-
     """
     An adapter with columns having a static order.
     """
@@ -61,7 +59,6 @@ class FakeAdapterStaticSort(FakeAdapter):
 
 
 class FakeAdapterNoColumns(FakeAdapter):
-
     """
     An adapter without columns.
     """

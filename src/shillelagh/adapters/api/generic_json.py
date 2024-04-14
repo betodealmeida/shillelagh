@@ -28,7 +28,6 @@ CACHE_EXPIRATION = timedelta(minutes=3)
 
 
 class GenericJSONAPI(Adapter):
-
     """
     An adapter for fetching JSON data.
     """

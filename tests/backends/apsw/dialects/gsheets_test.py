@@ -1,6 +1,7 @@
 """
 Test for shillelagh.backends.apsw.dialects.gsheets.
 """
+
 import datetime
 from typing import Any, Dict
 from unittest import mock

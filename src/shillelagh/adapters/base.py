@@ -1,4 +1,5 @@
 """Base class for adapters."""
+
 import atexit
 import inspect
 from typing import Any, Dict, Iterator, List, Optional, Tuple
@@ -12,7 +13,6 @@ FIXED_COST = 666
 
 
 class Adapter:
-
     """
     An adapter to a table.
 

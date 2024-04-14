@@ -31,7 +31,6 @@ class FakeEntryPoint:  # pylint: disable=too-few-public-methods
 
 
 class FakeAdapter(Adapter):
-
     """
     A simple adapter that keeps data in memory.
     """

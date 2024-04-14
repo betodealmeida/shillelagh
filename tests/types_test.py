@@ -1,6 +1,7 @@
 """
 Tests for shillelagh.types.
 """
+
 from datetime import date, datetime, time, timezone
 
 from shillelagh.backends.apsw.db import connect

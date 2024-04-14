@@ -1,6 +1,7 @@
 """
 An adapter to WeatherAPI (https://www.weatherapi.com/).
 """
+
 import logging
 import urllib.parse
 from datetime import date, datetime, timedelta, timezone
@@ -61,7 +62,6 @@ def combine_time_filters(bounds: Dict[str, Filter]) -> Range:
 
 
 class WeatherAPI(Adapter):
-
     """
     An adapter for WeatherAPI (https://www.weatherapi.com/).
 

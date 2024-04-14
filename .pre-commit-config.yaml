@@ -34,20 +34,6 @@ repos:
   hooks:
   - id: isort
 
-- repo: https://github.com/psf/black
-  rev: 22.10.0
-  hooks:
-  - id: black
-    language_version: python3
-    exclude: ^templates/
-
-## If like to embrace black styles even in the docs:
-# - repo: https://github.com/asottile/blacken-docs
-#   rev: v1.9.1
-#   hooks:
-#   - id: blacken-docs
-#     additional_dependencies: [black]
-
 - repo: https://github.com/PyCQA/flake8
   rev: 3.9.2
   hooks:
@@ -77,12 +63,14 @@ repos:
 #  hooks:
 #  - id: reorder-python-imports
 #    args: [--application-directories=.:src]
+
 - repo: https://github.com/hadialqattan/pycln
   rev: v2.1.2
   hooks:
   - id: pycln
     args: [--config=pyproject.toml]
     exclude: ^templates/
+
 - repo: local
   hooks:
   - id: pylint
@@ -92,9 +80,17 @@ repos:
     types: [python]
     exclude: ^templates/
     args: [--disable=use-implicit-booleaness-not-comparison]
+
 - repo: https://github.com/asottile/pyupgrade
   rev: v3.10.1
   hooks:
     - id: pyupgrade
       args:
         - --py38-plus
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.3.7
+  hooks:
+    - id: ruff
+      args: [ --fix ]
+    - id: ruff-format

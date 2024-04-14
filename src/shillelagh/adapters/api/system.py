@@ -4,6 +4,7 @@ memory, disks, network, sensors).
 
 See https://github.com/giampaolo/psutil for more information.
 """
+
 import logging
 import time
 import urllib.parse
@@ -101,7 +102,6 @@ def get_columns(resource: ResourceType) -> Dict[str, Field]:
 
 
 class SystemAPI(Adapter):
-
     """
     An adapter for retrieving system information.
     """
@@ -117,8 +117,7 @@ class SystemAPI(Adapter):
         parsed = urllib.parse.urlparse(uri)
         return parsed.scheme == "system" and (
             # pylint: disable=protected-access
-            parsed.netloc in ResourceType._value2member_map_
-            or parsed.netloc == ""
+            parsed.netloc in ResourceType._value2member_map_ or parsed.netloc == ""
         )
 
     @staticmethod

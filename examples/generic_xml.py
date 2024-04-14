@@ -1,6 +1,7 @@
 """
 A simple example showing the generic XML.
 """
+
 import sys
 
 from shillelagh.backends.apsw.db import connect

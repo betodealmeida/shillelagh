@@ -1,6 +1,7 @@
 """
 Tests for shillelagh.functions.
 """
+
 import json
 import sys
 
