@@ -7,7 +7,7 @@
 #
 -e file:.
     # via -r requirements/base.in
-apsw==3.38.5.post1
+apsw==3.45.3.0
     # via shillelagh
 attrs==23.1.0
     # via
