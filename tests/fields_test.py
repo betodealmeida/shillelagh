@@ -17,6 +17,7 @@ from shillelagh.fields import (
     Boolean,
     Date,
     DateTime,
+    Decimal,
     FastISODateTime,
     Field,
     Float,
@@ -35,6 +36,7 @@ from shillelagh.fields import (
     StringDuration,
     StringTime,
     Time,
+    Unknown,
 )
 from shillelagh.filters import Equal
 from shillelagh.types import BINARY, DATETIME, NUMBER, STRING
@@ -523,3 +525,35 @@ def test_stringdecimal() -> None:
     assert StringDecimal().format(None) is None
     assert StringDecimal().quote("1.23") == "1.23"
     assert StringDecimal().quote(None) == "NULL"
+
+
+def test_decimal() -> None:
+    """
+    Test ``Decimal``.
+    """
+    assert Decimal().parse(decimal.Decimal("1.23")) == decimal.Decimal("1.23")
+    assert Decimal().parse(None) is None
+    assert Decimal().format(decimal.Decimal("1.23")) == decimal.Decimal("1.23")
+    assert Decimal().format(None) is None
+    assert Decimal().quote(decimal.Decimal("1.23")) == "1.23"
+    assert Decimal().quote(None) == "NULL"
+
+
+def test_unkown() -> None:
+    """
+    Test ``Unknown``.
+    """
+    assert Unknown().parse(1) == 1
+    assert Unknown().parse("1") == "1"
+    assert Unknown().parse(True) is True
+    assert Unknown().parse(None) is None
+
+    assert Unknown().format(1) == 1
+    assert Unknown().format("1") == "1"
+    assert Unknown().format(True) is True
+    assert Unknown().format(None) is None
+
+    assert Unknown().quote(1) == "1"
+    assert Unknown().quote("1") == "'1'"
+    assert Unknown().quote(True) == "1"
+    assert Unknown().quote(None) == "NULL"

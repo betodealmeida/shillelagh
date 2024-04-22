@@ -187,6 +187,8 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         self._results: Optional[Iterator[Tuple[Any, ...]]] = None
         self._rowcount = -1
 
+        self.operation: Optional[str] = None
+
         # Approach from: https://github.com/rogerbinns/apsw/issues/160#issuecomment-33927297
         # pylint: disable=unused-argument
         def exectrace(
@@ -239,6 +241,9 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
         self.description = None
         self._rowcount = -1
+
+        # store current SQL in the cursor
+        self.operation = operation
 
         # convert parameters (bindings) to types accepted by SQLite
         if parameters:
@@ -494,9 +499,10 @@ class Connection:
                 self._adapter_kwargs,
                 adapters,
             ),
+            "date_trunc": functions.date_trunc,
         }
         for name, function in available_functions.items():
-            self._connection.createscalarfunction(name, function)
+            self._connection.create_scalar_function(name, function)
 
         self.closed = False
         self.cursors: List[Cursor] = []
