@@ -5,34 +5,19 @@ This is meant to be used with Apache Superset and has only been tested with the 
 it produces, eg:
 
     SELECT
-        DATE_TRUNC(order_id__ordered_at, 'month') AS order_id__ordered_at
-      , order_id__is_food_order AS order_id__is_food_order
-      , orders as orders
+        order_id__ordered_at__month AS order_id__ordered_at,
+        order_id__is_food_order AS order_id__is_food_order,
+        orders as orders
     FROM "https://semantic-layer.cloud.getdbt.com/"
+    WHERE
+        order_id__ordered_at >= '2017-01-01T00:00:00.000000'
+        AND order_id__ordered_at < '2018-01-01T00:00:00.000000'
+        AND order_id__is_food_order = true
     GROUP BY
-        order_id__ordered_at
-      , order_id__is_food_order
-    ORDER BY
-        order_id__ordered_at DESC
+        order_id__ordered_at__month,
+        order_id__is_food_order
+    ORDER BY order_id__ordered_at DESC
     LIMIT 10000
-
-Some notes worth mentioning:
-
-1. The dbt semantic layer doesn't return the type of dimensions, but we need to know the
-types in order to filter the data, since the filter is passed as a SQL string. To solve
-this we need to run a query for each dimension, with a ``LIMIT 0``, to get the type of
-the column from the Arrow schema of the response. This is extremely slow, so it needs a
-disk cache.
-
-2. Requesting metrics with a time dimension with a given grain is complicated. To make it
-work with SQL I had to add a custom function ``DATE_TRUNC`` to Shillelagh, and the adapter
-will parse the SQL using sqlglot to infer the time grain of each temporal column. Reading
-the SQL at the adapter level is hacky — I had to write code that goes up the stack looking
-for a cursor, where the current SQL is stored.
-
-TODO:
-
-    - Cache for dimension requests and ``_get_grains``
 
 """
 
@@ -42,6 +27,7 @@ import inspect
 import logging
 import re
 import time
+from collections import defaultdict
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, TypedDict, cast
 from urllib.parse import urlparse
 
@@ -49,6 +35,9 @@ import pandas as pd
 import pyarrow as pa
 import sqlglot
 from python_graphql_client import GraphqlClient
+from sqlglot import expressions as exp
+from sqlglot.optimizer.qualify_columns import qualify_columns
+from sqlglot.optimizer.scope import traverse_scope
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.backends.apsw.db import Cursor
@@ -101,6 +90,7 @@ LIST_METRICS = """
             type
             dimensions {
                 name
+                description
                 queryableGranularities
                 type
                 expr
@@ -130,6 +120,7 @@ CREATE_QUERY = """
         }
     }
 """
+
 POLL_RESULTS = """
     query PollResults(
         $environmentId: BigInt!,
@@ -143,6 +134,34 @@ POLL_RESULTS = """
             status
             error
             arrowResult
+        }
+    }
+"""
+
+METRICS_FOR_DIMENSIONS = """
+    query GetDimensions(
+        $environmentId: BigInt!,
+        $dimensions: [GroupByInput!]!,
+    ) {
+        metricsForDimensions(
+            environmentId: $environmentId,
+            dimensions: $dimensions,
+        ) {
+            name
+        }
+    }
+"""
+
+DIMENSIONS_FOR_METRICS = """
+    query GetMetrics(
+        $environmentId: BigInt!,
+        $metrics: [MetricInput!]!,
+    ) {
+        dimensions(
+            environmentId: $environmentId,
+            metrics: $metrics,
+        ) {
+            name
         }
     }
 """
@@ -162,18 +181,19 @@ def find_cursor() -> Optional[Cursor]:
     return None
 
 
-def extract_grains(sql: str) -> Dict[str, str]:
+def extract_columns_from_sql(table: str, columns: Set[str], sql: str) -> Set[str]:
     """
-    Extract the time grain from the SQL query.
-
-    TODO: improve this so it works with queries that have other sources; it should only
-    check for columns that are being selected directly from the semantic layer.
+    Parse the SQL and extract requested columns.
     """
-    expression = sqlglot.parse_one(sql, dialect="sqlite")
-
+    schema = {table: {column: "unused" for column in columns}}
+    ast = sqlglot.parse_one(sql)
+    ast = qualify_columns(ast, schema=schema)
     return {
-        exp.unit.this: exp.this.this.upper()
-        for exp in expression.find_all(sqlglot.expressions.DateTrunc)
+        column.name
+        for scope in traverse_scope(ast)
+        for column in scope.columns
+        if isinstance(scope.sources.get(column.table), exp.Table)
+        and column.table == table
     }
 
 
@@ -249,7 +269,6 @@ class DbtMetricFlowAPI(Adapter):
     safe = True
     supports_limit = True
     supports_offset = False
-    supports_requested_columns = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
@@ -265,33 +284,32 @@ class DbtMetricFlowAPI(Adapter):
 
     @staticmethod
     def parse_uri(uri: str) -> Tuple[str]:
-        parsed = urlparse(uri)
+        return (uri,)
 
-        if match := CUSTOM_URL_PATTERN.match(parsed.netloc):
-            endpoint = (
-                f"https://{match['id']}.semantic-layer.{match['region']}.dbt.com/"
-            )
-        else:
-            endpoint = "https://semantic-layer.cloud.getdbt.com/api/graphql"
-
-        return (endpoint,)
-
-    def __init__(self, endpoint: str, service_token: str, environment_id: int):
+    def __init__(self, table: str, service_token: str, environment_id: int):
         super().__init__()
 
+        self.table = table
+        self.environment_id = environment_id
+
+        endpoint = self._get_endpoint(table)
         self.client = GraphqlClient(
             endpoint=endpoint,
             headers={"Authorization": f"Bearer {service_token}"},
         )
-        self.environment_id = environment_id
+
         self._set_columns()
 
-    def _get_grains(self) -> Dict[str, str]:
+    @staticmethod
+    def _get_endpoint(url: str) -> str:
         """
-        Extract grains from current query.
+        Return the GraphQL endpoint.
         """
-        cursor = find_cursor()
-        return extract_grains(cursor.operation) if cursor and cursor.operation else {}
+        parsed = urlparse(url)
+        if match := CUSTOM_URL_PATTERN.match(parsed.netloc):
+            return f"https://{match['id']}.semantic-layer.{match['region']}.dbt.com/api/graphql"
+
+        return "https://semantic-layer.cloud.getdbt.com/api/graphql"
 
     def _set_columns(self) -> None:
         payload = self.client.execute(
@@ -300,21 +318,35 @@ class DbtMetricFlowAPI(Adapter):
         )
 
         self.columns: Dict[str, Field] = {}
-        self.metrics: Set[str] = set()
-        self.dimensions: Dict[str, Set[str]] = {}
-        self.aliases: Dict[str, str] = {}
+        self.metrics: Dict[str, str] = {}
+        self.dimensions: Dict[str, str] = {}
+        self.grains: Dict[str, Tuple[str, str]] = {}
 
+        built_dimensions: Set[str] = set()
         for metric in payload["data"]["metrics"]:
             self.columns[metric["name"]] = Decimal()
-            self.metrics.add(metric["name"])
+            self.metrics[metric["name"]] = metric["description"]
 
             for dimension in metric["dimensions"]:
                 name = dimension["name"]
-                if name not in self.columns:
-                    self.columns[name] = self._build_column_from_dimension(name)
-                    self.dimensions[name] = set(dimension["queryableGranularities"])
+                if name in built_dimensions:
+                    continue
+
+                column = self._build_column_from_dimension(name)
+                built_dimensions.add(name)
+
+                # for time dimensions we create a dimension for each grain
+                if dimension["type"] == "TIME":
                     for grain in dimension["queryableGranularities"]:
-                        self.aliases[f"{name}__{grain.lower()}"] = name
+                        alias = f"{name}__{grain.lower()}"
+                        self.columns[alias] = column
+                        self.dimensions[alias] = dimension["description"]
+                        self.grains[alias] = (name, grain.lower())
+                else:
+                    self.columns[name] = column
+                    self.dimensions[name] = dimension["description"]
+
+        self.columns = dict(sorted(self.columns.items()))
 
     def _run_query(self, **variables: Any) -> str:
         """
@@ -345,6 +377,48 @@ class DbtMetricFlowAPI(Adapter):
 
         return cast(str, payload["data"]["query"]["arrowResult"])
 
+    def _get_metrics_for_dimensions(self, dimensions: Set[str]) -> Set[str]:
+        """
+        Get metrics for a set of dimensions.
+        """
+        payload = self.client.execute(
+            query=METRICS_FOR_DIMENSIONS,
+            variables={
+                "environmentId": self.environment_id,
+                "dimensions": [{"name": dimension} for dimension in dimensions],
+            },
+        )
+
+        return {metric["name"] for metric in payload["data"]["metricsForDimensions"]}
+
+    def _get_dimensions_for_metrics(self, metrics: Set[str]) -> Set[str]:
+        """
+        Get dimensions for a set of metrics.
+        """
+        payload = self.client.execute(
+            query=DIMENSIONS_FOR_METRICS,
+            variables={
+                "environmentId": self.environment_id,
+                "metrics": [{"name": metric} for metric in metrics],
+            },
+        )
+
+        reverse_grain: Dict[str, Set[str]] = defaultdict(set)
+        for alias, (
+            name,
+            grain,  # pylint: disable=unused-variable
+        ) in self.grains.items():
+            reverse_grain[name].add(alias)
+
+        dimensions: Set[str] = set()
+        for dimension in payload["data"]["dimensions"]:
+            if dimension["name"] in self.dimensions:
+                dimensions.add(dimension["name"])
+            elif dimension["name"] in reverse_grain:
+                dimensions.update(reverse_grain[dimension["name"]])
+
+        return dimensions
+
     def _build_column_from_dimension(  # pylint: disable=too-many-return-statements
         self,
         name: str,
@@ -354,8 +428,6 @@ class DbtMetricFlowAPI(Adapter):
 
         Unfortunately the API does not provide the type of the dimension, so we
         need to fetch each one and read the type from the Arrow response.
-
-        TODO: heavily cache this.
         """
         try:
             byte_string = self._run_query(
@@ -418,6 +490,12 @@ class DbtMetricFlowAPI(Adapter):
                 order=Order.ANY,
                 exact=True,
             )
+        if pa.types.is_decimal(field.type):
+            return Decimal(
+                filters=[Equal, NotEqual, Range, IsNull, IsNotNull],
+                order=Order.ANY,
+                exact=True,
+            )
 
         return Unknown(
             filters=[Equal, NotEqual, IsNull, IsNotNull],
@@ -433,16 +511,16 @@ class DbtMetricFlowAPI(Adapter):
         """
         Build a ``WhereInput`` list from the bounds to filter in GraphQL.
         """
-        grains = self._get_grains()
-
         where: List[WhereInput] = []
         for column_name, filter_ in bounds.items():
             if isinstance(filter_, Impossible):
                 raise ImpossibleFilterError()
 
-            grain = grains.get(column_name.upper())
-            grain_method = f".grain('{grain.lower()}')" if grain else ""
-            ref = f"{{{{ Dimension('{column_name}'){grain_method} }}}}"
+            if column_name in self.grains:
+                base_column_name, grain = self.grains[column_name]
+                ref = f"{{{{ TimeDimension('{base_column_name}', '{grain}') }}}}"
+            else:
+                ref = f"{{{{ Dimension('{column_name}') }}}}"
 
             field = columns[column_name]
             if isinstance(filter_, Equal):
@@ -476,27 +554,11 @@ class DbtMetricFlowAPI(Adapter):
         """
         Build group bys based on the requested columns and the SQL query.
         """
-        grains = self._get_grains()
-
-        groupbys = []
-        for column in requested_columns:
-            if column in self.dimensions:
-                groupby: GroupByInput = {"name": column}
-
-                # Check if column needs a grain; for some reason SQLglot returns the
-                # column name in uppercase.
-                ref = column.upper()
-                if ref in grains:
-                    grain = grains[ref]
-                    if grain not in self.dimensions[column]:
-                        raise ProgrammingError(
-                            f"Time grain {grain} not supported for {column}",
-                        )
-                    groupby["grain"] = grain
-
-                groupbys.append(groupby)
-
-        return groupbys
+        return [
+            {"name": column}
+            for column in requested_columns
+            if column in self.dimensions
+        ]
 
     def _build_orderbys(
         self,
@@ -533,13 +595,22 @@ class DbtMetricFlowAPI(Adapter):
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
-        requested_columns: Optional[Set[str]] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
-        if requested_columns is None:
-            raise ProgrammingError(
-                "You are using an older version of apsw, please ugprade",
-            )
+        cursor = find_cursor()
+        if cursor is None or cursor.operation is None:
+            raise InternalError("Unable to get reference to cursor")
+
+        # When the virtual table has more than 63 columns apsw will return any requested
+        # columns in the 1-63 range, plus ALL columns from 64-, since the mask is a 64-bit
+        # value. This doesn't work for dbt, since only related columns should be requested
+        # together. To solve this we need to parse the SQL and extract the columns
+        # ourselves.
+        requested_columns = extract_columns_from_sql(
+            self.table,
+            set(self.columns),
+            cursor.operation,
+        )
 
         groupbys = self._build_groupbys(requested_columns)
         orderbys = self._build_orderbys(order, groupbys)
@@ -559,7 +630,6 @@ class DbtMetricFlowAPI(Adapter):
 
         # pylint: disable=invalid-name
         df = stream_to_dataframe(byte_string)
-        df.rename(columns=self.aliases, inplace=True)
         df.rename_axis("rowid", inplace=True)
 
         yield from df.reset_index().to_dict(orient="records")

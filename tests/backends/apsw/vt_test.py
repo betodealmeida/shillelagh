@@ -126,6 +126,7 @@ def test_virtual_best_index_object(mocker: MockerFixture) -> None:
             {"op": 73},
         ],
         "aOrderBy": [{"iColumn": 1, "desc": False}],
+        "colUsed_names": ["age", "pets"],
     }
 
     adapter = FakeAdapter()

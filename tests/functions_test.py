@@ -91,15 +91,15 @@ def test_date_trunc() -> None:
     """
     assert date_trunc(None, "YEAR") is None
 
-    assert date_trunc("2024-02-03T04:05:06.7", "YEAR") == "2024-01-01T00:00:00"
-    assert date_trunc("2024-02-03T04:05:06.7", "QUARTER") == "2024-01-01T00:00:00"
-    assert date_trunc("2024-02-03T04:05:06.7", "MONTH") == "2024-02-01T00:00:00"
-    assert date_trunc("2024-02-03T04:05:06.7", "WEEK") == "2024-01-29T00:00:00"
-    assert date_trunc("2024-02-03T04:05:06.7", "DAY") == "2024-02-03T00:00:00"
-    assert date_trunc("2024-02-03T04:05:06.7", "HOUR") == "2024-02-03T04:00:00"
-    assert date_trunc("2024-02-03T04:05:06.7", "MINUTE") == "2024-02-03T04:05:00"
-    assert date_trunc("2024-02-03T04:05:06.7", "SECOND") == "2024-02-03T04:05:06"
+    assert date_trunc("2024-02-03T04:05:06.700000", "YEAR") == "2024-01-01T00:00:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "QUARTER") == "2024-01-01T00:00:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "MONTH") == "2024-02-01T00:00:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "WEEK") == "2024-01-29T00:00:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "DAY") == "2024-02-03T00:00:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "HOUR") == "2024-02-03T04:00:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "MINUTE") == "2024-02-03T04:05:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "SECOND") == "2024-02-03T04:05:06"
 
     with pytest.raises(ValueError) as excinfo:
-        date_trunc("2024-02-03T04:05:06.7", "INVALID")
+        date_trunc("2024-02-03T04:05:06.700000", "INVALID")
     assert str(excinfo.value) == "Unsupported truncation unit: invalid"

@@ -444,7 +444,7 @@ class VTTable:
         columns = self.adapter.get_columns()
         column_names = list(columns.keys())
 
-        index_info_dict = index_info_to_dict(index_info)
+        index_info_dict = index_info_to_dict(index_info, column_names=column_names)
         constraints = [
             (constraint.get("iColumn", -1), constraint["op"])
             for constraint in index_info_dict["aConstraint"]
@@ -462,7 +462,7 @@ class VTTable:
             estimated_cost,
         ) = self._build_index(constraints, orderbys)
 
-        requested_columns = sorted({column_names[i] for i in index_info.colUsed})
+        requested_columns = sorted(index_info_dict["colUsed_names"])
         index_name = json.dumps(
             {
                 "indexes": indexes,

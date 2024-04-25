@@ -5,9 +5,8 @@ Tests for the DbtMetricFlowAPI adapter.
 # pylint: disable=line-too-long, invalid-name, unused-argument, redefined-outer-name, protected-access, too-many-lines
 
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
-from operator import itemgetter
 from typing import Any, Dict
 from unittest.mock import MagicMock, call
 
@@ -16,8 +15,12 @@ import pyarrow as pa
 import pytest
 from pytest_mock import MockerFixture
 
-from shillelagh.adapters.api.dbt_metricflow import DbtMetricFlowAPI, Timestamp
-from shillelagh.backends.apsw.db import connect
+from shillelagh.adapters.api.dbt_metricflow import (
+    DbtMetricFlowAPI,
+    Timestamp,
+    find_cursor,
+)
+from shillelagh.backends.apsw.db import Cursor, connect
 from shillelagh.exceptions import ImpossibleFilterError, InternalError, ProgrammingError
 from shillelagh.fields import Boolean, Date
 from shillelagh.fields import Decimal as DecimalField
@@ -32,6 +35,46 @@ from shillelagh.filters import (
     Range,
 )
 
+INIT_PAYLOAD = [
+    {
+        "data": {
+            "metrics": [
+                {
+                    "name": "orders",
+                    "description": "Count of orders.",
+                    "type": "SIMPLE",
+                    "dimensions": [
+                        {
+                            "name": "order_id__is_food_order",
+                            "description": (
+                                "A boolean indicating if this order included any food "
+                                "items."
+                            ),
+                            "queryableGranularities": [],
+                            "type": "CATEGORICAL",
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    {"data": {"createQuery": {"queryId": "2fWo7hWqRbyMJpBbBNTwD6WX2jb"}}},
+    {
+        "data": {
+            "query": {
+                "sql": """SELECT
+  is_food_order AS order_id__is_food_order
+FROM `dbt-tutorial-347100`.`dbt_beto`.`orders` orders_src_10000
+GROUP BY
+  order_id__is_food_order""",
+                "status": "SUCCESSFUL",
+                "error": None,
+                "arrowResult": "/////4AAAAAQAAAAAAAKAAwABgAFAAgACgAAAAABBAAMAAAACAAIAAAABAAIAAAABAAAAAEAAAAUAAAAEAAUAAgABgAHAAwAAAAQABAAAAAAAAEGEAAAACwAAAAEAAAAAAAAABcAAABvcmRlcl9pZF9faXNfZm9vZF9vcmRlcgAEAAQABAAAAP////+IAAAAFAAAAAAAAAAMABYABgAFAAgADAAMAAAAAAMEABgAAAAQAAAAAAAAAAAACgAYAAwABAAIAAoAAAA8AAAAEAAAAAMAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAEAAAAAAAAACAAAAAAAAAABAAAAAAAAAAAAAAABAAAAAwAAAAAAAAABAAAAAAAAAAYAAAAAAAAAAgAAAAAAAAD/////AAAAAA==",
+            },
+        },
+    },
+]
+
 
 @pytest.fixture
 def client(mocker: MockerFixture) -> MagicMock:
@@ -42,39 +85,7 @@ def client(mocker: MockerFixture) -> MagicMock:
         "shillelagh.adapters.api.dbt_metricflow.GraphqlClient",
     )
     GraphqlClient().execute.side_effect = [
-        {
-            "data": {
-                "metrics": [
-                    {
-                        "name": "orders",
-                        "description": "Count of orders.",
-                        "type": "SIMPLE",
-                        "dimensions": [
-                            {
-                                "name": "order_id__is_food_order",
-                                "queryableGranularities": [],
-                                "type": "CATEGORICAL",
-                            },
-                        ],
-                    },
-                ],
-            },
-        },
-        {"data": {"createQuery": {"queryId": "2fWo7hWqRbyMJpBbBNTwD6WX2jb"}}},
-        {
-            "data": {
-                "query": {
-                    "sql": """SELECT
-  is_food_order AS order_id__is_food_order
-FROM `dbt-tutorial-347100`.`dbt_beto`.`orders` orders_src_10000
-GROUP BY
-  order_id__is_food_order""",
-                    "status": "SUCCESSFUL",
-                    "error": None,
-                    "arrowResult": "/////4AAAAAQAAAAAAAKAAwABgAFAAgACgAAAAABBAAMAAAACAAIAAAABAAIAAAABAAAAAEAAAAUAAAAEAAUAAgABgAHAAwAAAAQABAAAAAAAAEGEAAAACwAAAAEAAAAAAAAABcAAABvcmRlcl9pZF9faXNfZm9vZF9vcmRlcgAEAAQABAAAAP////+IAAAAFAAAAAAAAAAMABYABgAFAAgADAAMAAAAAAMEABgAAAAQAAAAAAAAAAAACgAYAAwABAAIAAoAAAA8AAAAEAAAAAMAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAEAAAAAAAAACAAAAAAAAAABAAAAAAAAAAAAAAABAAAAAwAAAAAAAAABAAAAAAAAAAYAAAAAAAAAAgAAAAAAAAD/////AAAAAA==",
-                },
-            },
-        },
+        *INIT_PAYLOAD,
         {"data": {"createQuery": {"queryId": "2fThegMTT9iBqmUHQE0gXY7dzEJ"}}},
         {
             "data": {
@@ -171,39 +182,7 @@ def client_with_error(mocker: MockerFixture) -> None:
     """
     GraphqlClient = mocker.patch("shillelagh.adapters.api.dbt_metricflow.GraphqlClient")
     GraphqlClient().execute.side_effect = [
-        {
-            "data": {
-                "metrics": [
-                    {
-                        "name": "customers_with_orders",
-                        "description": "Distict count of customers placing orders",
-                        "type": "SIMPLE",
-                        "dimensions": [
-                            {
-                                "name": "customer__customer_name",
-                                "queryableGranularities": [],
-                                "type": "CATEGORICAL",
-                            },
-                        ],
-                    },
-                ],
-            },
-        },
-        {"data": {"createQuery": {"queryId": "2fWo7hWqRbyMJpBbBNTwD6WX2jb"}}},
-        {
-            "data": {
-                "query": {
-                    "sql": """SELECT
-  is_food_order AS order_id__is_food_order
-FROM `dbt-tutorial-347100`.`dbt_beto`.`orders` orders_src_10000
-GROUP BY
-  order_id__is_food_order""",
-                    "status": "SUCCESSFUL",
-                    "error": None,
-                    "arrowResult": "/////4AAAAAQAAAAAAAKAAwABgAFAAgACgAAAAABBAAMAAAACAAIAAAABAAIAAAABAAAAAEAAAAUAAAAEAAUAAgABgAHAAwAAAAQABAAAAAAAAEGEAAAACwAAAAEAAAAAAAAABcAAABvcmRlcl9pZF9faXNfZm9vZF9vcmRlcgAEAAQABAAAAP////+IAAAAFAAAAAAAAAAMABYABgAFAAgADAAMAAAAAAMEABgAAAAQAAAAAAAAAAAACgAYAAwABAAIAAoAAAA8AAAAEAAAAAMAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAEAAAAAAAAACAAAAAAAAAABAAAAAAAAAAAAAAABAAAAAwAAAAAAAAABAAAAAAAAAAYAAAAAAAAAAgAAAAAAAAD/////AAAAAA==",
-                },
-            },
-        },
+        *INIT_PAYLOAD,
         {"data": {"createQuery": {"queryId": "2fThegMTT9iBqmUHQE0gXY7dzEJ"}}},
         {
             "data": {
@@ -260,6 +239,10 @@ def client_with_bad_request(mocker: MockerFixture) -> None:
                         "dimensions": [
                             {
                                 "name": "order_id__is_food_order",
+                                "description": (
+                                    "A boolean indicating if this order included any "
+                                    "food items."
+                                ),
                                 "queryableGranularities": [],
                                 "type": "CATEGORICAL",
                             },
@@ -320,6 +303,7 @@ def test_dbtmetricflowapi(mocker: MockerFixture, client: MockerFixture) -> None:
             type
             dimensions {
                 name
+                description
                 queryableGranularities
                 type
                 expr
@@ -504,30 +488,12 @@ def test_dbtmetricflowapi_error(
     cursor = connection.cursor()
 
     sql = """
-        SELECT customers_with_orders, customer__customer_name
+        SELECT order_id__is_food_order
         FROM "https://semantic-layer.cloud.getdbt.com/"
         LIMIT 10
     """
     with pytest.raises(ProgrammingError):
         cursor.execute(sql)
-
-
-def test_get_data_no_requested_columns(
-    mocker: MockerFixture,
-    client: MockerFixture,
-) -> None:
-    """
-    Test ``get_data`` with older versions of apsw without ``requested_columns``.
-    """
-    mocker.patch("time.sleep")
-
-    adapter = DbtMetricFlowAPI(
-        "https://semantic-layer.cloud.getdbt.com/api/graphql",
-        "dbtc_XXX",
-        123456,
-    )
-    with pytest.raises(ProgrammingError):
-        list(adapter.get_data(bounds={}, order=[]))
 
 
 def test_get_data_requested_columns(
@@ -537,6 +503,12 @@ def test_get_data_requested_columns(
     """
     Test ``get_data`` with newer versions of apsw with ``requested_columns``.
     """
+    cursor = mocker.MagicMock()
+    cursor.operation = "SELECT orders, order_id__is_food_order FROM t"
+    mocker.patch(
+        "shillelagh.adapters.api.dbt_metricflow.find_cursor",
+        return_value=cursor,
+    )
     mocker.patch("time.sleep")
 
     adapter = DbtMetricFlowAPI(
@@ -544,17 +516,33 @@ def test_get_data_requested_columns(
         "dbtc_XXX",
         123456,
     )
-    assert list(
-        adapter.get_data(
-            bounds={},
-            order=[],
-            requested_columns={"orders", "order_id__is_food_order"},
-        ),
-    ) == [
+    assert list(adapter.get_data(bounds={}, order=[])) == [
         {"rowid": 0, "order_id__is_food_order": None, "orders": Decimal("1119")},
         {"rowid": 1, "order_id__is_food_order": True, "orders": Decimal("18261")},
         {"rowid": 2, "order_id__is_food_order": False, "orders": Decimal("40272")},
     ]
+
+
+def test_get_data_no_cursor(
+    mocker: MockerFixture,
+    client: MockerFixture,
+) -> None:
+    """
+    Test that ``get_data`` fails when we can't fnd the cursor.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.dbt_metricflow.find_cursor",
+        return_value=None,
+    )
+
+    adapter = DbtMetricFlowAPI(
+        "https://semantic-layer.cloud.getdbt.com/api/graphql",
+        "dbtc_XXX",
+        123456,
+    )
+    with pytest.raises(InternalError) as excinfo:
+        list(adapter.get_data(bounds={}, order=[]))
+    assert str(excinfo.value) == "Unable to get reference to cursor"
 
 
 def test_parse_uri() -> None:
@@ -562,14 +550,27 @@ def test_parse_uri() -> None:
     Test the ``parse_uri`` method.
     """
     assert DbtMetricFlowAPI.parse_uri("https://semantic-layer.cloud.getdbt.com/") == (
-        "https://semantic-layer.cloud.getdbt.com/api/graphql",
+        "https://semantic-layer.cloud.getdbt.com/",
     )
     assert DbtMetricFlowAPI.parse_uri("https://ab123.us1.dbt.com/") == (
-        "https://ab123.semantic-layer.us1.dbt.com/",
+        "https://ab123.us1.dbt.com/",
     )
 
 
-def test__build_where(
+def test_get_endpoint() -> None:
+    """
+    Test the ``_get_endpoint`` method.
+    """
+    assert (
+        DbtMetricFlowAPI._get_endpoint("https://semantic-layer.cloud.getdbt.com/")
+        == "https://semantic-layer.cloud.getdbt.com/api/graphql"
+    )
+    assert DbtMetricFlowAPI._get_endpoint("https://ab123.us1.dbt.com/") == (
+        "https://ab123.semantic-layer.us1.dbt.com/api/graphql"
+    )
+
+
+def test_build_where(
     mocker: MockerFixture,
     client: MockerFixture,
 ) -> None:
@@ -582,7 +583,12 @@ def test__build_where(
         123456,
     )
 
-    columns: Dict[str, Field] = {"is_food_order": Boolean(), "order_id": Integer()}
+    columns: Dict[str, Field] = {
+        "is_food_order": Boolean(),
+        "order_id": Integer(),
+        "order_id__ordered_at__month": Date(),
+    }
+    adapter.grains["order_id__ordered_at__month"] = ("order_id__ordered_at", "month")
 
     assert adapter._build_where(columns, {}) == []
 
@@ -625,6 +631,17 @@ def test__build_where(
     assert adapter._build_where(columns, {"order_id": Range(None, 20)}) == [
         {
             "sql": "{{ Dimension('order_id') }} < 20",
+        },
+    ]
+    assert adapter._build_where(
+        columns,
+        {"order_id__ordered_at__month": Range(None, datetime(2023, 1, 1, 12, 0))},
+    ) == [
+        {
+            "sql": (
+                "{{ TimeDimension('order_id__ordered_at', 'month') }}"
+                " < '2023-01-01T12:00:00'"
+            ),
         },
     ]
 
@@ -730,6 +747,13 @@ def test_build_column_from_dimension(mocker: MockerFixture) -> None:
             exact=True,
         )
 
+        reader.schema = pa.schema([("dim", pa.decimal128(10))])
+        assert adapter._build_column_from_dimension("dim") == DecimalField(
+            filters=[Equal, NotEqual, Range, IsNull, IsNotNull],
+            order=Order.ANY,
+            exact=True,
+        )
+
         reader.schema = pa.schema([("dim", pa.binary())])
         assert adapter._build_column_from_dimension("dim") == Unknown(
             filters=[Equal, NotEqual, IsNull, IsNotNull],
@@ -756,7 +780,7 @@ def test_run_query_error(client_with_bad_request: MockerFixture) -> None:
 
 def test_time_dimension_aliases(mocker: MockerFixture) -> None:
     """
-    Test that time dimensions have aliases for each valid grain.
+    Test that time dimensions are created for each valid grain.
     """
     GraphqlClient = mocker.patch("shillelagh.adapters.api.dbt_metricflow.GraphqlClient")
     GraphqlClient().execute.return_value = {
@@ -769,6 +793,7 @@ def test_time_dimension_aliases(mocker: MockerFixture) -> None:
                         {
                             "expr": None,
                             "name": "metric_time",
+                            "description": "The metric time",
                             "queryableGranularities": [
                                 "DAY",
                                 "WEEK",
@@ -788,6 +813,7 @@ def test_time_dimension_aliases(mocker: MockerFixture) -> None:
                         {
                             "expr": None,
                             "name": "metric_time",
+                            "description": "The metric time",
                             "queryableGranularities": [
                                 "DAY",
                                 "WEEK",
@@ -816,12 +842,20 @@ def test_time_dimension_aliases(mocker: MockerFixture) -> None:
         "dbtc_XXX",
         123456,
     )
-    assert adapter.aliases == {
-        "metric_time__day": "metric_time",
-        "metric_time__week": "metric_time",
-        "metric_time__month": "metric_time",
-        "metric_time__quarter": "metric_time",
-        "metric_time__year": "metric_time",
+
+    assert adapter.dimensions == {
+        "metric_time__day": "The metric time",
+        "metric_time__week": "The metric time",
+        "metric_time__month": "The metric time",
+        "metric_time__year": "The metric time",
+        "metric_time__quarter": "The metric time",
+    }
+    assert adapter.grains == {
+        "metric_time__day": ("metric_time", "day"),
+        "metric_time__week": ("metric_time", "week"),
+        "metric_time__month": ("metric_time", "month"),
+        "metric_time__quarter": ("metric_time", "quarter"),
+        "metric_time__year": ("metric_time", "year"),
     }
 
 
@@ -839,93 +873,16 @@ def test_build_groupbys(
         "dbtc_XXX",
         123456,
     )
-    mocker.patch.object(adapter, "_get_grains", return_value={})
 
-    assert adapter.dimensions == {"order_id__is_food_order": set()}
+    assert adapter.dimensions == {
+        "order_id__is_food_order": "A boolean indicating if this order included any food items.",
+    }
     assert adapter._build_groupbys({"order_id__is_food_order"}) == [
         {"name": "order_id__is_food_order"},
     ]
 
 
-def test_build_groupbys_temporal(
-    mocker: MockerFixture,
-    client: MockerFixture,
-) -> None:
-    """
-    Test the ``_build_groupbys`` method with temporal dimensions.
-    """
-    mocker.patch("time.sleep")
-
-    adapter = DbtMetricFlowAPI(
-        "https://semantic-layer.cloud.getdbt.com/api/graphql",
-        "dbtc_XXX",
-        123456,
-    )
-
-    # add a temporal dimension
-    adapter.dimensions["order_id__ordered_at"] = {
-        "DAY",
-        "WEEK",
-        "MONTH",
-        "QUARTER",
-        "YEAR",
-    }
-    mocker.patch.object(
-        adapter,
-        "_get_grains",
-        return_value={"ORDER_ID__ORDERED_AT": "MONTH"},
-    )
-
-    assert sorted(
-        adapter._build_groupbys(
-            {"order_id__is_food_order", "order_id__ordered_at", "orders"},
-        ),
-        key=itemgetter("name"),
-    ) == [
-        {"name": "order_id__is_food_order"},
-        {"name": "order_id__ordered_at", "grain": "MONTH"},
-    ]
-
-
-def test_build_groupbys_temporal_invalid_grain(
-    mocker: MockerFixture,
-    client: MockerFixture,
-) -> None:
-    """
-    Test the ``_build_groupbys`` method with temporal dimensions.
-    """
-    mocker.patch("time.sleep")
-
-    adapter = DbtMetricFlowAPI(
-        "https://semantic-layer.cloud.getdbt.com/api/graphql",
-        "dbtc_XXX",
-        123456,
-    )
-
-    # add a temporal dimension
-    adapter.dimensions["order_id__ordered_at"] = {
-        "DAY",
-        "WEEK",
-        "MONTH",
-        "QUARTER",
-        "YEAR",
-    }
-    mocker.patch.object(
-        adapter,
-        "_get_grains",
-        return_value={"ORDER_ID__ORDERED_AT": "MINUTE"},
-    )
-
-    with pytest.raises(ProgrammingError) as excinfo:
-        adapter._build_groupbys(
-            {"order_id__is_food_order", "order_id__ordered_at", "orders"},
-        )
-    assert (
-        str(excinfo.value) == "Time grain MINUTE not supported for order_id__ordered_at"
-    )
-
-
-def test_build_orderbys_temporal(
+def test_build_orderbys(
     mocker: MockerFixture,
     client: MockerFixture,
 ) -> None:
@@ -940,43 +897,46 @@ def test_build_orderbys_temporal(
         123456,
     )
 
-    # add a temporal dimension
-    adapter.dimensions["order_id__ordered_at"] = {
-        "DAY",
-        "WEEK",
-        "MONTH",
-        "QUARTER",
-        "YEAR",
+    assert adapter.metrics == {"orders": "Count of orders."}
+    assert adapter.dimensions == {
+        "order_id__is_food_order": "A boolean indicating if this order included any food items.",
     }
-    mocker.patch.object(
-        adapter,
-        "_get_grains",
-        return_value={"ORDER_ID__ORDERED_AT": "MONTH"},
-    )
-
-    groupbys = adapter._build_groupbys(
-        {"order_id__is_food_order", "order_id__ordered_at", "orders"},
-    )
-
-    assert adapter._build_orderbys([], groupbys) == []
     assert adapter._build_orderbys(
         [
-            ("orders", Order.DESCENDING),
             ("order_id__is_food_order", Order.ASCENDING),
-            ("order_id__ordered_at", Order.DESCENDING),
+            ("orders", Order.DESCENDING),
         ],
-        groupbys,
+        [{"name": "order_id__is_food_order"}],
     ) == [
-        {"descending": True, "metric": {"name": "orders"}},
         {"descending": False, "groupBy": {"name": "order_id__is_food_order"}},
-        {
-            "descending": True,
-            "groupBy": {"name": "order_id__ordered_at", "grain": "MONTH"},
-        },
+        {"descending": True, "metric": {"name": "orders"}},
     ]
 
+
+def test_build_orderbys_error(
+    mocker: MockerFixture,
+    client: MockerFixture,
+) -> None:
+    """
+    Test the ``_build_orderbys`` method when it encounters an error.
+    """
+    mocker.patch("time.sleep")
+
+    adapter = DbtMetricFlowAPI(
+        "https://semantic-layer.cloud.getdbt.com/api/graphql",
+        "dbtc_XXX",
+        123456,
+    )
+
     with pytest.raises(ProgrammingError) as excinfo:
-        adapter._build_orderbys([("invalid", Order.DESCENDING)], [])
+        adapter._build_orderbys(
+            [
+                ("order_id__is_food_order", Order.ASCENDING),
+                ("orders", Order.DESCENDING),
+                ("invalid", Order.DESCENDING),
+            ],
+            [{"name": "order_id__is_food_order"}],
+        )
     assert str(excinfo.value) == "Invalid order by column: invalid"
 
 
@@ -990,7 +950,7 @@ def test_integration(adapter_kwargs: Dict[str, Any]) -> None:
 
     sql = """
         SELECT
-            DATE_TRUNC(order_id__ordered_at, 'month') AS order_id__ordered_at,
+            order_id__ordered_at__month AS order_id__ordered_at,
             order_id__is_food_order AS order_id__is_food_order,
             orders as orders
         FROM "https://semantic-layer.cloud.getdbt.com/"
@@ -999,7 +959,7 @@ def test_integration(adapter_kwargs: Dict[str, Any]) -> None:
             AND order_id__ordered_at < '2018-01-01T00:00:00.000000'
             AND order_id__is_food_order = true
         GROUP BY
-            order_id__ordered_at,
+            order_id__ordered_at__month,
             order_id__is_food_order
         ORDER BY order_id__ordered_at DESC
         LIMIT 10000
@@ -1007,12 +967,141 @@ def test_integration(adapter_kwargs: Dict[str, Any]) -> None:
     cursor.execute(sql)
     data = cursor.fetchall()
     assert data == [
-        ("2017-08-01T00:00:00", True, Decimal("2347")),
-        ("2017-07-01T00:00:00", True, Decimal("2057")),
-        ("2017-06-01T00:00:00", True, Decimal("2378")),
-        ("2017-05-01T00:00:00", True, Decimal("2497")),
-        ("2017-04-01T00:00:00", True, Decimal("2101")),
-        ("2017-03-01T00:00:00", True, Decimal("1894")),
-        ("2017-02-01T00:00:00", True, Decimal("1127")),
-        ("2017-01-01T00:00:00", True, Decimal("1185")),
+        (datetime(2017, 8, 1, 0, 0, tzinfo=timezone.utc), True, Decimal("2347")),
+        (datetime(2017, 7, 1, 0, 0, tzinfo=timezone.utc), True, Decimal("2057")),
+        (datetime(2017, 6, 1, 0, 0, tzinfo=timezone.utc), True, Decimal("2378")),
+        (datetime(2017, 5, 1, 0, 0, tzinfo=timezone.utc), True, Decimal("2497")),
+        (datetime(2017, 4, 1, 0, 0, tzinfo=timezone.utc), True, Decimal("2101")),
+        (datetime(2017, 3, 1, 0, 0, tzinfo=timezone.utc), True, Decimal("1894")),
+        (datetime(2017, 2, 1, 0, 0, tzinfo=timezone.utc), True, Decimal("1127")),
+        (datetime(2017, 1, 1, 0, 0, tzinfo=timezone.utc), True, Decimal("1185")),
     ]
+
+
+def test_find_cursor(mocker: MockerFixture) -> None:
+    """
+    Test the ``find_cursor`` helper.
+    """
+    assert find_cursor() is None
+
+    cursor = Cursor(mocker.MagicMock(), [], {})
+    assert find_cursor() == cursor
+
+    def nested() -> None:
+        assert find_cursor() == cursor
+
+    nested()
+
+
+def test_get_metrics_for_dimensions(mocker: MockerFixture) -> None:
+    """
+    Test the ``_get_metrics_for_dimensions`` helper.
+    """
+    GraphqlClient: MagicMock = mocker.patch(
+        "shillelagh.adapters.api.dbt_metricflow.GraphqlClient",
+    )
+    GraphqlClient().execute.side_effect = [
+        *INIT_PAYLOAD,
+        {
+            "data": {
+                "metricsForDimensions": [
+                    {"name": "revenue"},
+                    {"name": "order_cost"},
+                    {"name": "median_revenue"},
+                    {"name": "food_revenue"},
+                    {"name": "food_revenue_pct"},
+                    {"name": "revenue_growth_mom"},
+                    {"name": "order_gross_profit"},
+                    {"name": "cumulative_revenue"},
+                    {"name": "order_total"},
+                    {"name": "large_order"},
+                    {"name": "orders"},
+                    {"name": "food_orders"},
+                    {"name": "customers_with_orders"},
+                    {"name": "new_customer"},
+                ],
+            },
+        },
+    ]
+
+    adapter = DbtMetricFlowAPI(
+        "https://semantic-layer.cloud.getdbt.com/api/graphql",
+        "dbtc_XXX",
+        123456,
+    )
+    assert adapter._get_metrics_for_dimensions({"order_id__is_food_order"}) == {
+        "food_revenue_pct",
+        "median_revenue",
+        "food_orders",
+        "food_revenue",
+        "order_gross_profit",
+        "cumulative_revenue",
+        "large_order",
+        "new_customer",
+        "order_total",
+        "order_cost",
+        "revenue_growth_mom",
+        "customers_with_orders",
+        "revenue",
+        "orders",
+    }
+
+
+def test_get_dimensions_for_metrics(mocker: MockerFixture) -> None:
+    """
+    Test the ``_get_dimensions_for_metrics`` helper.
+    """
+    GraphqlClient: MagicMock = mocker.patch(
+        "shillelagh.adapters.api.dbt_metricflow.GraphqlClient",
+    )
+    GraphqlClient().execute.side_effect = [
+        *INIT_PAYLOAD,
+        {
+            "data": {
+                "dimensions": [
+                    {"name": "customer__customer_name"},
+                    {"name": "customer__customer_type"},
+                    {"name": "customer__first_ordered_at"},
+                    {"name": "customer__last_ordered_at"},
+                    {"name": "location__location_name"},
+                    {"name": "location__opened_at"},
+                    {"name": "metric_time"},
+                    {"name": "order_id__is_drink_order"},
+                    {"name": "order_id__is_food_order"},
+                    {"name": "order_id__order_total_dim"},
+                    {"name": "order_id__ordered_at"},
+                ],
+            },
+        },
+    ]
+
+    adapter = DbtMetricFlowAPI(
+        "https://semantic-layer.cloud.getdbt.com/api/graphql",
+        "dbtc_XXX",
+        123456,
+    )
+
+    adapter.dimensions = {
+        "order_id__is_food_order": "A boolean indicating if this order included any food items.",
+        "metric_time__day": "The metric time",
+        "metric_time__week": "The metric time",
+        "metric_time__month": "The metric time",
+        "metric_time__year": "The metric time",
+        "metric_time__quarter": "The metric time",
+    }
+    adapter.grains = {
+        "metric_time__day": ("metric_time", "day"),
+        "metric_time__week": ("metric_time", "week"),
+        "metric_time__month": ("metric_time", "month"),
+        "metric_time__quarter": ("metric_time", "quarter"),
+        "metric_time__year": ("metric_time", "year"),
+    }
+
+    assert adapter._get_dimensions_for_metrics({"orders"}) == {
+        "order_id__is_food_order",
+        "metric_time__day",
+        "metric_time__week",
+        "metric_time__month",
+        "metric_time__year",
+        "metric_time__quarter",
+    }
