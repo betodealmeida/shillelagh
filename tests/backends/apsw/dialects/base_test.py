@@ -66,3 +66,10 @@ def test_has_table(registry: AdapterLoader) -> None:
     assert inspector.has_table("dummy://a")
     assert inspector.has_table("dummy://b")
     assert not inspector.has_table("funny://b")
+
+
+def test_import_dbapi() -> None:
+    """
+    Test ``import_dbapi``.
+    """
+    assert APSWDialect.import_dbapi() == APSWDialect.dbapi()

@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Add ``import_dbapi()`` to supress warning (#452)
+
 Version 1.2.19 - 2024-04-03
 ===========================
 
