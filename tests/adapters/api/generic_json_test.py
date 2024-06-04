@@ -99,12 +99,14 @@ def test_generic_json(requests_mock: Mocker) -> None:
 
     requests_mock.get(
         "https://example.org/data.json",
-        json={"message": "An error occurred"},
+        json={
+            "error": {"code": 1002, "message": "API key is invalid or not provided."},
+        },
         status_code=500,
     )
     with pytest.raises(ProgrammingError) as excinfo:
         list(cursor.execute(sql))
-    assert str(excinfo.value) == "Error: An error occurred"
+    assert str(excinfo.value) == "Error: API key is invalid or not provided."
 
 
 def test_generic_json_complex_type(requests_mock: Mocker) -> None:

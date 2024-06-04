@@ -142,7 +142,7 @@ class GenericJSONAPI(Adapter):
         response = self._session.get(self.uri)
         payload = response.json()
         if not response.ok:
-            raise ProgrammingError(f'Error: {payload["message"]}')
+            raise ProgrammingError(f'Error: {payload["error"]["message"]}')
 
         for i, row in enumerate(jsonpath.findall(self.path, payload)):
             row = {
