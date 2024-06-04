@@ -59,6 +59,13 @@ class APSWDialect(SQLiteDialect):
         """
         return db
 
+    @classmethod
+    def import_dbapi(cls):  # pylint: disable=method-hidden
+        """
+        Return the DB API module.
+        """
+        return db
+
     def __init__(
         self,
         adapters: Optional[List[str]] = None,
