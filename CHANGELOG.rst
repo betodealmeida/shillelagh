@@ -5,7 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.2.20 - 2024-07-10
+===========================
+
 - Add ``import_dbapi()`` to supress warning (#452)
+- Remove ``LIMIT`` and ``OFFSET`` from GitHub adapter (#456)
 
 Version 1.2.19 - 2024-04-03
 ===========================
