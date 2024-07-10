@@ -198,113 +198,6 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
     ]
 
 
-def test_github_limit_offset(mocker: MockerFixture, requests_mock: Mocker) -> None:
-    """
-    Test a simple request with limit/offset.
-    """
-    mocker.patch("shillelagh.adapters.api.github.PAGE_SIZE", new=5)
-    mocker.patch(
-        "shillelagh.adapters.api.github.requests_cache.CachedSession",
-        return_value=Session(),
-    )
-
-    page2_url = (
-        "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=2"
-    )
-    requests_mock.get(page2_url, json=github_pulls_response[:5])
-    page3_url = (
-        "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=3"
-    )
-    requests_mock.get(page3_url, json=github_pulls_response[5:])
-
-    connection = connect(":memory:")
-    cursor = connection.cursor()
-
-    sql = """
-        SELECT * FROM
-        "https://api.github.com/repos/apache/superset/pulls"
-        LIMIT 5 OFFSET 8
-    """
-    data = list(cursor.execute(sql))
-    assert data == [
-        (
-            "https://github.com/apache/superset/pull/16569",
-            726107410,
-            16569,
-            "open",
-            "docs: versioned _export Stable",
-            47772523,
-            "amitmiran137",
-            False,
-            "version_export_ff_on",
-            datetime.datetime(2021, 9, 2, 16, 52, 34, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 2, 18, 6, 27, tzinfo=datetime.timezone.utc),
-            None,
-            None,
-        ),
-        (
-            "https://github.com/apache/superset/pull/16566",
-            725808286,
-            16566,
-            "open",
-            "fix(docker): add ecpg to docker image",
-            33317356,
-            "villebro",
-            False,
-            "villebro/libecpg",
-            datetime.datetime(2021, 9, 2, 12, 1, 2, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 2, 12, 6, 50, tzinfo=datetime.timezone.utc),
-            None,
-            None,
-        ),
-        (
-            "https://github.com/apache/superset/pull/16564",
-            725669631,
-            16564,
-            "open",
-            "refactor: orderby control refactoring",
-            2016594,
-            "zhaoyongjie",
-            True,
-            "refactor_orderby",
-            datetime.datetime(2021, 9, 2, 9, 45, 40, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 3, 10, 31, 4, tzinfo=datetime.timezone.utc),
-            None,
-            None,
-        ),
-        (
-            "https://github.com/apache/superset/pull/16554",
-            724863880,
-            16554,
-            "open",
-            "refactor: Update async query init to support runtime feature flags",
-            296227,
-            "robdiciuccio",
-            False,
-            "rd/async-query-init-refactor",
-            datetime.datetime(2021, 9, 1, 19, 51, 51, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 1, 22, 29, 46, tzinfo=datetime.timezone.utc),
-            None,
-            None,
-        ),
-        (
-            "https://github.com/apache/superset/pull/16549",
-            724669525,
-            16549,
-            "open",
-            "feat(dashboard): Native filters - add type to native filter configuration",
-            12539911,
-            "m-ajay",
-            False,
-            "feat/migration-add-type-to-native-filter",
-            datetime.datetime(2021, 9, 1, 16, 35, 50, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 3, 17, 33, 42, tzinfo=datetime.timezone.utc),
-            None,
-            None,
-        ),
-    ]
-
-
 def test_github_single_resource(mocker: MockerFixture, requests_mock: Mocker) -> None:
     """
     Test a request to a single resource.
@@ -468,22 +361,75 @@ def test_get_multiple_resources(mocker: MockerFixture, requests_mock: Mocker) ->
         return_value=Session(),
     )
 
+    page1_url = (
+        "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=1"
+    )
+    requests_mock.get(page1_url, json=github_pulls_response[:5])
     page2_url = (
         "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=2"
     )
-    requests_mock.get(page2_url, json=github_pulls_response[:5])
+    requests_mock.get(page2_url, json=github_pulls_response[5:])
     page3_url = (
         "https://api.github.com/repos/apache/superset/pulls?state=all&per_page=5&page=3"
     )
-    requests_mock.get(page3_url, json=github_pulls_response[5:])
+    requests_mock.get(page3_url, json=[])
 
     adapter = GitHubAPI("repos", "apache", "superset", "pulls")
     rows = adapter._get_multiple_resources(  # pylint: disable=protected-access
         {"state": Equal("all")},
-        limit=5,
-        offset=8,
     )
     assert list(rows) == [
+        {
+            "url": "https://github.com/apache/superset/pull/16581",
+            "id": 726927278,
+            "number": 16581,
+            "state": "open",
+            "title": "feat: Arash/datasets and reports",
+            "userid": 48933336,
+            "username": "AAfghahi",
+            "draft": False,
+            "head": "arash/datasetsAndReports",
+            "created_at": "2021-09-03T15:57:37Z",
+            "updated_at": "2021-09-03T15:57:39Z",
+            "closed_at": None,
+            "merged_at": None,
+            "rowid": 0,
+        },
+        {
+            "url": "https://github.com/apache/superset/pull/16576",
+            "id": 726586317,
+            "number": 16576,
+            "state": "open",
+            "title": "chore(viz): remove legacy table viz code",
+            "userid": 33317356,
+            "username": "villebro",
+            "draft": True,
+            "head": "villebro/remove-table-viz",
+            "created_at": "2021-09-03T07:52:18Z",
+            "updated_at": "2021-09-03T08:48:45Z",
+            "closed_at": None,
+            "merged_at": None,
+            "rowid": 1,
+        },
+        {
+            "url": "https://github.com/apache/superset/pull/16571",
+            "id": 726278427,
+            "number": 16571,
+            "state": "open",
+            "title": (
+                "chore(deps-dev): bump storybook-addon-jsx from 7.3.3 to 7.3.13 in "
+                "/superset-frontend"
+            ),
+            "userid": 49699333,
+            "username": "dependabot[bot]",
+            "draft": False,
+            "head": "dependabot/npm_and_yarn/superset-frontend/storybook-addon-jsx-7.3.13",
+            "created_at": "2021-09-02T20:51:50Z",
+            "updated_at": "2021-09-02T21:22:54Z",
+            "closed_at": None,
+            "merged_at": None,
+            "rowid": 2,
+        },
         {
             "url": "https://github.com/apache/superset/pull/16569",
             "id": 726107410,
@@ -498,7 +444,7 @@ def test_get_multiple_resources(mocker: MockerFixture, requests_mock: Mocker) ->
             "updated_at": "2021-09-02T18:06:27Z",
             "closed_at": None,
             "merged_at": None,
-            "rowid": 0,
+            "rowid": 3,
         },
         {
             "url": "https://github.com/apache/superset/pull/16566",
@@ -514,7 +460,7 @@ def test_get_multiple_resources(mocker: MockerFixture, requests_mock: Mocker) ->
             "updated_at": "2021-09-02T12:06:50Z",
             "closed_at": None,
             "merged_at": None,
-            "rowid": 1,
+            "rowid": 4,
         },
         {
             "url": "https://github.com/apache/superset/pull/16564",
@@ -530,7 +476,7 @@ def test_get_multiple_resources(mocker: MockerFixture, requests_mock: Mocker) ->
             "updated_at": "2021-09-03T10:31:04Z",
             "closed_at": None,
             "merged_at": None,
-            "rowid": 2,
+            "rowid": 5,
         },
         {
             "url": "https://github.com/apache/superset/pull/16554",
@@ -546,7 +492,7 @@ def test_get_multiple_resources(mocker: MockerFixture, requests_mock: Mocker) ->
             "updated_at": "2021-09-01T22:29:46Z",
             "closed_at": None,
             "merged_at": None,
-            "rowid": 3,
+            "rowid": 6,
         },
         {
             "url": "https://github.com/apache/superset/pull/16549",
@@ -562,7 +508,39 @@ def test_get_multiple_resources(mocker: MockerFixture, requests_mock: Mocker) ->
             "updated_at": "2021-09-03T17:33:42Z",
             "closed_at": None,
             "merged_at": None,
-            "rowid": 4,
+            "rowid": 7,
+        },
+        {
+            "url": "https://github.com/apache/superset/pull/16548",
+            "id": 724668038,
+            "number": 16548,
+            "state": "open",
+            "title": "refactor: sql_json view endpoint: encapsulate ctas parameters",
+            "userid": 35701650,
+            "username": "ofekisr",
+            "draft": False,
+            "head": "refactor/sql_json_view4",
+            "created_at": "2021-09-01T16:33:45Z",
+            "updated_at": "2021-09-01T17:06:32Z",
+            "closed_at": None,
+            "merged_at": None,
+            "rowid": 8,
+        },
+        {
+            "url": "https://github.com/apache/superset/pull/16545",
+            "id": 724509555,
+            "number": 16545,
+            "state": "open",
+            "title": "perf(dashboard): decrease number of rerenders of FiltersBadge",
+            "userid": 15073128,
+            "username": "kgabryje",
+            "draft": False,
+            "head": "perf/dashboard-rerenders-4",
+            "created_at": "2021-09-01T13:41:12Z",
+            "updated_at": "2021-09-02T15:39:15Z",
+            "closed_at": None,
+            "merged_at": None,
+            "rowid": 9,
         },
     ]
 
