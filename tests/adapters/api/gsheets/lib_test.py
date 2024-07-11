@@ -94,6 +94,21 @@ def test_get_field() -> None:
         Order.ANY,
         True,
     )
+    assert get_field(
+        {
+            "id": "A",
+            "label": "Send time",
+            "type": "timeofday",
+            "pattern": "M/D/YY h:mm",
+        },
+        timezone,
+    ) == GSheetsDateTime(
+        [Range, Equal, NotEqual, IsNull, IsNotNull],
+        Order.ANY,
+        True,
+        "M/D/YY h:mm",
+        timezone,
+    )
 
 
 def test_format_error_message() -> None:

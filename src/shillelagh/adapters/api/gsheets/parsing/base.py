@@ -115,6 +115,8 @@ def tokenize(pattern: str, classes: List[Type[Token]]) -> Iterator[Token]:
                 token, pattern = class_.consume(pattern, tokens)
                 tokens.append(token)
                 break
+        else:
+            raise InvalidPattern(f'Could not consume "{pattern}"')
 
     # combine unescaped literals
     while tokens:

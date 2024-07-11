@@ -9,6 +9,7 @@ import pytest
 
 from shillelagh.adapters.api.gsheets.parsing.base import (
     LITERAL,
+    InvalidPattern,
     InvalidValue,
     is_unescaped_literal,
     tokenize,
@@ -83,6 +84,10 @@ def test_tokenize() -> None:
         LITERAL('"dd/mm/yyyy"'),
         LITERAL(")"),
     ]
+
+    with pytest.raises(InvalidPattern) as excinfo:
+        list(tokenize("dd/mm/yyyy", []))
+    assert str(excinfo.value) == 'Could not consume "dd/mm/yyyy"'
 
 
 def test_is_unescaped_literal() -> None:
