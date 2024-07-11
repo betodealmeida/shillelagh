@@ -538,6 +538,9 @@ def infer_column_type(pattern: str) -> str:
 
     GSheets returns ``datetime`` as the type for timestamps, but also for time of day and
     durations. We need to parse the pattern to figure out the exact type.
+
+    This also handles a case where a timestamp (``1/2/24 14:41``) with a proper pattern
+    (``M/D/YY h:mm``) was being returned as type ``timeofday``.
     """
     classes = [
         # durations should come first because they need to be modified

@@ -49,10 +49,10 @@ def get_field(
     """
     Return a Shillelagh ``Field`` from a Google Chart API results column.
     """
-    # GSheets returns type ``datetime`` for timestamps, but also for time of day and
-    # durations. We need to tokenize the pattern in order to figure out the correct type.
-    if col["type"] == "datetime" and "pattern" in col:
-        col["type"] = infer_column_type(col["pattern"])
+    # GSheets returns all kind of incorrect types (eg, ``datetime`` or ``timeofday`` for
+    # timestamps. We parse the patter in order to infer the correct type.
+    if col["type"] in {"datetime", "timeofday"} and "pattern" in col:
+        col["type"] = infer_column_type(col["pattern"].lower())
 
     type_map: Dict[str, Tuple[Type[GSheetsField], List[Type[Filter]]]] = {
         "string": (GSheetsString, [Range, Equal, NotEqual, Like, IsNull, IsNotNull]),
