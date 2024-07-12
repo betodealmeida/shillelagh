@@ -5,9 +5,11 @@ Custom functions available to the SQL backend.
 import json
 import sys
 import time
-from typing import Any, Dict, List, Type
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Type
 
 from shillelagh.adapters.base import Adapter
+from shillelagh.fields import FastISODateTime
 from shillelagh.lib import find_adapter
 
 if sys.version_info < (3, 10):
@@ -77,3 +79,67 @@ def version() -> str:
 
     """
     return str(distribution("shillelagh").version)
+
+
+def date_trunc(  # pylint: disable=too-many-return-statements
+    value: Optional[str],
+    unit: str,
+) -> Optional[str]:
+    """
+    Truncate a datetime to a given unit.
+    """
+    field = FastISODateTime()
+    timestamp = field.parse(value)
+    if timestamp is None:
+        return None
+
+    unit = unit.lower()
+    if unit == "year":
+        truncated = datetime(year=timestamp.year, month=1, day=1)
+    elif unit == "quarter":
+        month = ((timestamp.month - 1) // 3) * 3 + 1
+        truncated = datetime(year=timestamp.year, month=month, day=1)
+    elif unit == "month":
+        truncated = datetime(year=timestamp.year, month=timestamp.month, day=1)
+    elif unit == "week":
+        # assumes the week starts on Monday
+        start_of_week = timestamp - timedelta(days=timestamp.weekday())
+        truncated = datetime(
+            year=start_of_week.year,
+            month=start_of_week.month,
+            day=start_of_week.day,
+        )
+    elif unit == "day":
+        truncated = datetime(
+            year=timestamp.year,
+            month=timestamp.month,
+            day=timestamp.day,
+        )
+    elif unit == "hour":
+        truncated = datetime(
+            year=timestamp.year,
+            month=timestamp.month,
+            day=timestamp.day,
+            hour=timestamp.hour,
+        )
+    elif unit == "minute":
+        truncated = datetime(
+            year=timestamp.year,
+            month=timestamp.month,
+            day=timestamp.day,
+            hour=timestamp.hour,
+            minute=timestamp.minute,
+        )
+    elif unit == "second":
+        truncated = datetime(
+            year=timestamp.year,
+            month=timestamp.month,
+            day=timestamp.day,
+            hour=timestamp.hour,
+            minute=timestamp.minute,
+            second=timestamp.second,
+        )
+    else:
+        raise ValueError(f"Unsupported truncation unit: {unit}")
+
+    return field.format(truncated)

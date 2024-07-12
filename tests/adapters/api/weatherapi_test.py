@@ -4,7 +4,7 @@ Tests for shillelagh.adapters.api.weatherapi.
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Dict
+from typing import Any, Dict
 
 import pytest
 from pytest_mock import MockerFixture
@@ -693,7 +693,7 @@ def test_combine_time_filters() -> None:
 
 
 @pytest.mark.integration_test
-def test_integration(adapter_kwargs) -> None:
+def test_integration(adapter_kwargs: Dict[str, Any]) -> None:
     """
     Full integration test reading from the API.
     """

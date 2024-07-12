@@ -12,7 +12,7 @@ from pytest_mock import MockerFixture
 from shillelagh.adapters.registry import AdapterLoader
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.functions import get_metadata
+from shillelagh.functions import date_trunc, get_metadata
 
 from .fakes import FakeAdapter
 
@@ -83,3 +83,23 @@ def test_version_from_sql() -> None:
     apsw_version = apsw.apswversion()  # pylint: disable=c-extension-no-member
     version = f"{shillelagh_version} (apsw {apsw_version})"
     assert cursor.fetchall() == [(version,)]
+
+
+def test_date_trunc() -> None:
+    """
+    Test the ``date_trunc`` function.
+    """
+    assert date_trunc(None, "YEAR") is None
+
+    assert date_trunc("2024-02-03T04:05:06.700000", "YEAR") == "2024-01-01T00:00:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "QUARTER") == "2024-01-01T00:00:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "MONTH") == "2024-02-01T00:00:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "WEEK") == "2024-01-29T00:00:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "DAY") == "2024-02-03T00:00:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "HOUR") == "2024-02-03T04:00:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "MINUTE") == "2024-02-03T04:05:00"
+    assert date_trunc("2024-02-03T04:05:06.700000", "SECOND") == "2024-02-03T04:05:06"
+
+    with pytest.raises(ValueError) as excinfo:
+        date_trunc("2024-02-03T04:05:06.700000", "INVALID")
+    assert str(excinfo.value) == "Unsupported truncation unit: invalid"

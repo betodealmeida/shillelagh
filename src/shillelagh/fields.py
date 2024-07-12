@@ -8,6 +8,8 @@ from enum import Enum
 from typing import Any, Collection, Generic, Optional, Type, TypeVar, Union, cast
 
 import dateutil.parser
+from sqlalchemy.dialects.sqlite.base import SQLiteDialect
+from sqlalchemy.sql import literal
 
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.filters import Filter
@@ -742,6 +744,20 @@ class IntBoolean(Field[int, bool]):
         return str(value)
 
 
+class Decimal(Field[decimal.Decimal, decimal.Decimal]):
+    """
+    Decimals.
+    """
+
+    type = "DECIMAL"
+    db_api_type = "NUMBER"
+
+    def quote(self, value: Optional[decimal.Decimal]) -> str:
+        if value is None:
+            return "NULL"
+        return str(value)
+
+
 class StringDecimal(Field[str, decimal.Decimal]):
     """
     Decimals as strings.
@@ -764,3 +780,27 @@ class StringDecimal(Field[str, decimal.Decimal]):
         if value is None:
             return "NULL"
         return value
+
+
+class Unknown(Field[Any, Any]):
+    """
+    An unknown type.
+
+    Used in APIs where there's no information about the column type, and the columns are
+    dynamic. Variables are passed as-is, and quoting is done by the SQLite dialect based
+    on the Python type.
+    """
+
+    type = "TEXT"
+    db_api_type = "STRING"
+
+    def quote(self, value: Any) -> Any:
+        if value is None:
+            return "NULL"
+
+        return str(
+            literal(value).compile(
+                dialect=SQLiteDialect(),
+                compile_kwargs={"literal_binds": True},
+            ),
+        )
