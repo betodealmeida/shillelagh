@@ -5,6 +5,12 @@ Changelog
 Next
 ====
 
+Version 1.2.21 - 2024-07-12
+===========================
+
+- Fix for invalid pattern in GSheets (#458)
+- dbt MetricFlow adapter (#459)
+
 Version 1.2.20 - 2024-07-10
 ===========================
 
