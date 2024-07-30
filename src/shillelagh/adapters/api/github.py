@@ -97,6 +97,15 @@ TABLES: Dict[str, Dict[str, List[Column]]] = {
             Column("assignees", "assignees[*].login", JSONString()),
             Column("reactions", "reactions", JSONString()),
         ],
+        "stats/punch_card": [
+            Column("dow", "$.[0]", Integer()),
+            Column("hour", "$.[1]", Integer()),
+            Column("commits", "$.[2]", Integer()),
+        ],
+        "stats/participation": [
+            Column("all", "all", JSONString()),
+            Column("owner", "owner", JSONString()),
+        ],
     },
 }
 
@@ -115,11 +124,11 @@ class GitHubAPI(Adapter):
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         parsed = urllib.parse.urlparse(uri)
 
-        if parsed.path.count("/") != 4:
+        if parsed.path.count("/") <= 4:
             return False
 
         # pylint: disable=unused-variable
-        _, base, owner, repo, resource = parsed.path.rsplit("/", 4)
+        _, base, owner, repo, resource = parsed.path.split("/", 4)
         return (
             parsed.netloc == "api.github.com"
             and base in TABLES
@@ -129,7 +138,7 @@ class GitHubAPI(Adapter):
     @staticmethod
     def parse_uri(uri: str) -> Tuple[str, str, str, str]:
         parsed = urllib.parse.urlparse(uri)
-        _, base, owner, repo, resource = parsed.path.rsplit("/", 4)
+        _, base, owner, repo, resource = parsed.path.split("/", 4)
         return (
             base,
             owner,
