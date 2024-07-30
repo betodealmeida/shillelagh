@@ -145,9 +145,14 @@ class GenericJSONAPI(Adapter):
             raise ProgrammingError(f'Error: {payload["error"]["message"]}')
 
         for i, row in enumerate(jsonpath.findall(self.path, payload)):
+            if isinstance(row, list):
+                row = {f"col_{i}": value for i, value in enumerate(row)}
+            elif row is None:
+                row = {}
+
             row = {
                 k: v
-                for k, v in (row or {}).items()
+                for k, v in row.items()
                 if requested_columns is None or k in requested_columns
             }
             row["rowid"] = i

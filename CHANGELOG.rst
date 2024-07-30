@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Handle array-only responses in the generic JSON adapter (#???)
+
 Version 1.2.21 - 2024-07-12
 ===========================
 

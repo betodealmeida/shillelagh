@@ -283,3 +283,47 @@ def test_single_row(requests_mock: Mocker) -> None:
     sql = f'SELECT * FROM "{url}"'
     rows = list(cursor.execute(sql))
     assert rows == [("Solve a Rubik's cube", "recreational", 1, 0, "", "4151544", 0.1)]
+
+
+def test_generic_json_array(requests_mock: Mocker) -> None:
+    """
+    Test a query where the response has only arrays.
+    """
+    # for datassette and other probing adapters
+    requests_mock.get(
+        "https://api.github.com/repos/apache/superset/-/versions.json",
+        status_code=404,
+    )
+
+    url = URL("https://api.github.com/repos/apache/superset/stats/punch_card")
+    requests_mock.head(str(url), headers={"content-type": "application/json"})
+    requests_mock.get(
+        str(url),
+        json=[
+            [0, 0, 15],
+            [0, 1, 8],
+            [0, 2, 6],
+            [0, 3, 3],
+            [0, 4, 2],
+            None,
+        ],
+    )
+
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={"genericjsonapi": {"cache_expiration": -1}},
+    )
+    cursor = connection.cursor()
+
+    sql = f'SELECT * FROM "{url}"'
+    rows = list(cursor.execute(sql))
+    assert rows == [
+        (0, 0, 15),
+        (0, 1, 8),
+        (0, 2, 6),
+        (0, 3, 3),
+        (0, 4, 2),
+        (None, None, None),
+    ]
+    assert cursor.description
+    assert {t[0] for t in cursor.description} == {"col_0", "col_1", "col_2"}
