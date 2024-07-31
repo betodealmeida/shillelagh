@@ -6,14 +6,15 @@ import json
 import logging
 import urllib.parse
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, TypedDict
 
 import jsonpath
 import requests_cache
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.fields import Boolean, Field, Integer, String, StringDateTime
+from shillelagh.fields import Boolean, DateTime, Field, Integer, String, StringDateTime
 from shillelagh.filters import Equal, Filter
 from shillelagh.typing import RequestedOrder, Row
 
@@ -58,54 +59,111 @@ class Column:
     default: Optional[Filter] = None
 
 
+def participation_processor(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Process participation data.
+
+    https://docs.github.com/en/rest/metrics/statistics?apiVersion=2022-11-28#get-the-weekly-commit-count
+    """
+    today_utc_midnight = datetime.now(timezone.utc).replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+    start = today_utc_midnight - timedelta(weeks=len(payload["all"]))
+
+    return [
+        {
+            "start_at": start + timedelta(weeks=i),
+            "end_at": start + timedelta(weeks=i + 1),
+            "all": all,
+            "owner": owner,
+        }
+        for i, (all, owner) in enumerate(zip(payload["all"], payload["owner"]))
+    ]
+
+
+class EndPointDefinition(TypedDict):
+    """
+    A definition for an endpoint.
+
+    This is used to define the columns and the path to the values in the JSON response.
+    It can also specify if the endpoint is paginated (most are) and a processor to
+    transform the payload.
+    """
+
+    columns: List[Column]
+    paginated: bool
+    processor: Optional[Callable[[Dict[str, Any]], List[Dict[str, Any]]]]
+
+
 # a mapping from the column name (eg, ``userid``) to the path in the JSON
 # response (``{"user": {"id": 42}}`` => ``user.id``) together with the field
-TABLES: Dict[str, Dict[str, List[Column]]] = {
+TABLES: Dict[str, Dict[str, EndPointDefinition]] = {
     "repos": {
-        "pulls": [
-            Column("url", "html_url", String()),
-            Column("id", "id", Integer()),
-            Column("number", "number", Integer(filters=[Equal])),
-            Column("state", "state", String(filters=[Equal]), Equal("all")),
-            Column("title", "title", String()),
-            Column("userid", "user.id", Integer()),
-            Column("username", "user.login", String()),
-            Column("draft", "draft", Boolean()),
-            Column("head", "head.ref", String(filters=[Equal])),  # head.label?
-            Column("created_at", "created_at", StringDateTime()),
-            Column("updated_at", "updated_at", StringDateTime()),
-            Column("closed_at", "closed_at", StringDateTime()),
-            Column("merged_at", "merged_at", StringDateTime()),
-        ],
-        "issues": [
-            Column("url", "html_url", String()),
-            Column("id", "id", Integer()),
-            Column("number", "number", Integer(filters=[Equal])),
-            Column("state", "state", String(filters=[Equal]), Equal("all")),
-            Column("title", "title", String()),
-            Column("userid", "user.id", Integer()),
-            Column("username", "user.login", String()),
-            Column("draft", "draft", Boolean()),
-            Column("locked", "locked", Boolean()),
-            Column("comments", "comments", Integer()),
-            Column("created_at", "created_at", StringDateTime()),
-            Column("updated_at", "updated_at", StringDateTime()),
-            Column("closed_at", "closed_at", StringDateTime()),
-            Column("body", "body", String()),
-            Column("author_association", "author_association", String()),
-            Column("labels", "labels[*].name", JSONString()),
-            Column("assignees", "assignees[*].login", JSONString()),
-            Column("reactions", "reactions", JSONString()),
-        ],
-        "stats/punch_card": [
-            Column("dow", "$.[0]", Integer()),
-            Column("hour", "$.[1]", Integer()),
-            Column("commits", "$.[2]", Integer()),
-        ],
-        "stats/participation": [
-            Column("all", "all", JSONString()),
-            Column("owner", "owner", JSONString()),
-        ],
+        "pulls": {
+            "columns": [
+                Column("url", "html_url", String()),
+                Column("id", "id", Integer()),
+                Column("number", "number", Integer(filters=[Equal])),
+                Column("state", "state", String(filters=[Equal]), Equal("all")),
+                Column("title", "title", String()),
+                Column("userid", "user.id", Integer()),
+                Column("username", "user.login", String()),
+                Column("draft", "draft", Boolean()),
+                Column("head", "head.ref", String(filters=[Equal])),  # head.label?
+                Column("created_at", "created_at", StringDateTime()),
+                Column("updated_at", "updated_at", StringDateTime()),
+                Column("closed_at", "closed_at", StringDateTime()),
+                Column("merged_at", "merged_at", StringDateTime()),
+            ],
+            "paginated": True,
+            "processor": None,
+        },
+        "issues": {
+            "columns": [
+                Column("url", "html_url", String()),
+                Column("id", "id", Integer()),
+                Column("number", "number", Integer(filters=[Equal])),
+                Column("state", "state", String(filters=[Equal]), Equal("all")),
+                Column("title", "title", String()),
+                Column("userid", "user.id", Integer()),
+                Column("username", "user.login", String()),
+                Column("draft", "draft", Boolean()),
+                Column("locked", "locked", Boolean()),
+                Column("comments", "comments", Integer()),
+                Column("created_at", "created_at", StringDateTime()),
+                Column("updated_at", "updated_at", StringDateTime()),
+                Column("closed_at", "closed_at", StringDateTime()),
+                Column("body", "body", String()),
+                Column("author_association", "author_association", String()),
+                Column("labels", "labels[*].name", JSONString()),
+                Column("assignees", "assignees[*].login", JSONString()),
+                Column("reactions", "reactions", JSONString()),
+            ],
+            "paginated": True,
+            "processor": None,
+        },
+        "stats/punch_card": {
+            "columns": [
+                Column("dow", "$.[0]", Integer()),
+                Column("hour", "$.[1]", Integer()),
+                Column("commits", "$.[2]", Integer()),
+            ],
+            "paginated": True,
+            "processor": None,
+        },
+        "stats/participation": {
+            "columns": [
+                Column("start_at", "$.start_at", DateTime()),
+                Column("end_at", "$.end_at", DateTime()),
+                Column("all", "$.all", Integer()),
+                Column("owner", "$.owner", Integer()),
+            ],
+            "paginated": False,
+            "processor": participation_processor,
+        },
     },
 }
 
@@ -124,7 +182,7 @@ class GitHubAPI(Adapter):
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         parsed = urllib.parse.urlparse(uri)
 
-        if parsed.path.count("/") <= 4:
+        if parsed.path.count("/") < 4:
             return False
 
         # pylint: disable=unused-variable
@@ -171,7 +229,8 @@ class GitHubAPI(Adapter):
 
     def get_columns(self) -> Dict[str, Field]:
         return {
-            column.name: column.field for column in TABLES[self.base][self.resource]
+            column.name: column.field
+            for column in TABLES[self.base][self.resource]["columns"]
         }
 
     def get_data(
@@ -181,7 +240,7 @@ class GitHubAPI(Adapter):
         **kwargs: Any,
     ) -> Iterator[Row]:
         # apply default values
-        for column in TABLES[self.base][self.resource]:
+        for column in TABLES[self.base][self.resource]["columns"]:
             if column.default is not None and column.name not in bounds:
                 bounds[column.name] = column.default
 
@@ -213,7 +272,7 @@ class GitHubAPI(Adapter):
 
         row = {
             column.name: get_value(column, payload)
-            for column in TABLES[self.base][self.resource]
+            for column in TABLES[self.base][self.resource]["columns"]
         }
         row["rowid"] = 0
         _logger.debug(row)
@@ -231,16 +290,23 @@ class GitHubAPI(Adapter):
             headers["Authorization"] = f"Bearer {self.access_token}"
 
         url = f"https://api.github.com/{self.base}/{self.owner}/{self.repo}/{self.resource}"
+        config = TABLES[self.base][self.resource]
 
         # map filters in ``bounds`` to query params
         params = {name: filter_.value for name, filter_ in bounds.items()}  # type: ignore
-        params["per_page"] = PAGE_SIZE
 
         page = 1
         rowid = 0
         while True:
-            _logger.info("GET %s (page %d)", url, page)
-            params["page"] = page
+            if config["paginated"]:
+                _logger.info("GET %s (page %d)", url, page)
+                params.update(
+                    {
+                        "per_page": PAGE_SIZE,
+                        "page": page,
+                    },
+                )
+
             response = self._session.get(url, headers=headers, params=params)
 
             payload = response.json()
@@ -250,15 +316,21 @@ class GitHubAPI(Adapter):
             if not response.ok:
                 raise ProgrammingError(payload["message"])
 
+            if processor := config["processor"]:
+                payload = processor(payload)
+
             for resource in payload:
                 row = {
                     column.name: get_value(column, resource)
-                    for column in TABLES[self.base][self.resource]
+                    for column in config["columns"]
                 }
                 row["rowid"] = rowid
                 _logger.debug(row)
                 yield row
                 rowid += 1
+
+            if not config["paginated"]:
+                break
 
             page += 1
 

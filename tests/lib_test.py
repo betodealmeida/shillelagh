@@ -447,6 +447,12 @@ def test_find_adapter(mocker: MockerFixture) -> None:
     adapter2.supports.side_effect = [None, True]
     assert find_adapter(uri, adapter_kwargs, adapters) == (adapter2, ("2",), {})
 
+    adapter1.supports.side_effect = ValueError("Not supported")
+    adapter2.supports.side_effect = [None, ValueError("Not supported")]
+    with pytest.raises(ProgrammingError) as excinfo:
+        find_adapter(uri, adapter_kwargs, adapters)
+    assert excinfo.value.args[0] == "Unsupported table: https://example.com/"
+
 
 def test_is_null() -> None:
     """

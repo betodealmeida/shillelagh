@@ -291,11 +291,11 @@ def test_generic_json_array(requests_mock: Mocker) -> None:
     """
     # for datassette and other probing adapters
     requests_mock.get(
-        "https://api.github.com/repos/apache/superset/-/versions.json",
+        "https://example.com/-/versions.json",
         status_code=404,
     )
 
-    url = URL("https://api.github.com/repos/apache/superset/stats/punch_card")
+    url = URL("https://example.com/")
     requests_mock.head(str(url), headers={"content-type": "application/json"})
     requests_mock.get(
         str(url),
