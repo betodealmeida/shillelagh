@@ -567,7 +567,12 @@ def find_adapter(
     for adapter in adapters:
         key = adapter.__name__.lower()
         kwargs = adapter_kwargs.get(key, {})
-        supported: Optional[bool] = adapter.supports(uri, fast=True, **kwargs)
+
+        try:
+            supported: Optional[bool] = adapter.supports(uri, fast=True, **kwargs)
+        except Exception:  # pylint: disable=broad-except
+            supported = False
+
         if supported:
             args = adapter.parse_uri(uri)
             return adapter, args, kwargs
@@ -577,7 +582,13 @@ def find_adapter(
     for adapter in candidates:
         key = adapter.__name__.lower()
         kwargs = adapter_kwargs.get(key, {})
-        if adapter.supports(uri, fast=False, **kwargs):
+
+        try:
+            supported = adapter.supports(uri, fast=False, **kwargs)
+        except Exception:  # pylint: disable=broad-except
+            supported = False
+
+        if supported:
             args = adapter.parse_uri(uri)
             return adapter, args, kwargs
 
@@ -611,9 +622,11 @@ def get_session(
     session = requests_cache.CachedSession(
         cache_name=cache_name,
         backend="sqlite",
-        expire_after=requests_cache.DO_NOT_CACHE
-        if expire_after == timedelta(seconds=-1)
-        else expire_after.total_seconds(),
+        expire_after=(
+            requests_cache.DO_NOT_CACHE
+            if expire_after == timedelta(seconds=-1)
+            else expire_after.total_seconds()
+        ),
     )
     session.headers.update(request_headers)
 

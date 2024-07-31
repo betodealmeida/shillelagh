@@ -3,14 +3,15 @@
 Tests for the Datasette adapter.
 """
 
-import datetime
+from datetime import datetime, timezone
 
 import pytest
+from freezegun import freeze_time
 from pytest_mock import MockerFixture
 from requests import Session
 from requests_mock.mocker import Mocker
 
-from shillelagh.adapters.api.github import GitHubAPI
+from shillelagh.adapters.api.github import GitHubAPI, participation_processor
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.filters import Equal
@@ -55,8 +56,8 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
             "AAfghahi",
             False,
             "arash/datasetsAndReports",
-            datetime.datetime(2021, 9, 3, 15, 57, 37, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 3, 15, 57, 39, tzinfo=datetime.timezone.utc),
+            datetime(2021, 9, 3, 15, 57, 37, tzinfo=timezone.utc),
+            datetime(2021, 9, 3, 15, 57, 39, tzinfo=timezone.utc),
             None,
             None,
         ),
@@ -70,8 +71,8 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
             "villebro",
             True,
             "villebro/remove-table-viz",
-            datetime.datetime(2021, 9, 3, 7, 52, 18, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 3, 8, 48, 45, tzinfo=datetime.timezone.utc),
+            datetime(2021, 9, 3, 7, 52, 18, tzinfo=timezone.utc),
+            datetime(2021, 9, 3, 8, 48, 45, tzinfo=timezone.utc),
             None,
             None,
         ),
@@ -85,8 +86,8 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
             "dependabot[bot]",
             False,
             "dependabot/npm_and_yarn/superset-frontend/storybook-addon-jsx-7.3.13",
-            datetime.datetime(2021, 9, 2, 20, 51, 50, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 2, 21, 22, 54, tzinfo=datetime.timezone.utc),
+            datetime(2021, 9, 2, 20, 51, 50, tzinfo=timezone.utc),
+            datetime(2021, 9, 2, 21, 22, 54, tzinfo=timezone.utc),
             None,
             None,
         ),
@@ -100,8 +101,8 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
             "amitmiran137",
             False,
             "version_export_ff_on",
-            datetime.datetime(2021, 9, 2, 16, 52, 34, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 2, 18, 6, 27, tzinfo=datetime.timezone.utc),
+            datetime(2021, 9, 2, 16, 52, 34, tzinfo=timezone.utc),
+            datetime(2021, 9, 2, 18, 6, 27, tzinfo=timezone.utc),
             None,
             None,
         ),
@@ -115,8 +116,8 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
             "villebro",
             False,
             "villebro/libecpg",
-            datetime.datetime(2021, 9, 2, 12, 1, 2, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 2, 12, 6, 50, tzinfo=datetime.timezone.utc),
+            datetime(2021, 9, 2, 12, 1, 2, tzinfo=timezone.utc),
+            datetime(2021, 9, 2, 12, 6, 50, tzinfo=timezone.utc),
             None,
             None,
         ),
@@ -130,8 +131,8 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
             "zhaoyongjie",
             True,
             "refactor_orderby",
-            datetime.datetime(2021, 9, 2, 9, 45, 40, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 3, 10, 31, 4, tzinfo=datetime.timezone.utc),
+            datetime(2021, 9, 2, 9, 45, 40, tzinfo=timezone.utc),
+            datetime(2021, 9, 3, 10, 31, 4, tzinfo=timezone.utc),
             None,
             None,
         ),
@@ -145,8 +146,8 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
             "robdiciuccio",
             False,
             "rd/async-query-init-refactor",
-            datetime.datetime(2021, 9, 1, 19, 51, 51, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 1, 22, 29, 46, tzinfo=datetime.timezone.utc),
+            datetime(2021, 9, 1, 19, 51, 51, tzinfo=timezone.utc),
+            datetime(2021, 9, 1, 22, 29, 46, tzinfo=timezone.utc),
             None,
             None,
         ),
@@ -160,8 +161,8 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
             "m-ajay",
             False,
             "feat/migration-add-type-to-native-filter",
-            datetime.datetime(2021, 9, 1, 16, 35, 50, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 3, 17, 33, 42, tzinfo=datetime.timezone.utc),
+            datetime(2021, 9, 1, 16, 35, 50, tzinfo=timezone.utc),
+            datetime(2021, 9, 3, 17, 33, 42, tzinfo=timezone.utc),
             None,
             None,
         ),
@@ -175,8 +176,8 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
             "ofekisr",
             False,
             "refactor/sql_json_view4",
-            datetime.datetime(2021, 9, 1, 16, 33, 45, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 1, 17, 6, 32, tzinfo=datetime.timezone.utc),
+            datetime(2021, 9, 1, 16, 33, 45, tzinfo=timezone.utc),
+            datetime(2021, 9, 1, 17, 6, 32, tzinfo=timezone.utc),
             None,
             None,
         ),
@@ -190,8 +191,8 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
             "kgabryje",
             False,
             "perf/dashboard-rerenders-4",
-            datetime.datetime(2021, 9, 1, 13, 41, 12, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 2, 15, 39, 15, tzinfo=datetime.timezone.utc),
+            datetime(2021, 9, 1, 13, 41, 12, tzinfo=timezone.utc),
+            datetime(2021, 9, 2, 15, 39, 15, tzinfo=timezone.utc),
             None,
             None,
         ),
@@ -230,8 +231,8 @@ def test_github_single_resource(mocker: MockerFixture, requests_mock: Mocker) ->
             "AAfghahi",
             False,
             "arash/datasetsAndReports",
-            datetime.datetime(2021, 9, 3, 15, 57, 37, tzinfo=datetime.timezone.utc),
-            datetime.datetime(2021, 9, 3, 15, 57, 39, tzinfo=datetime.timezone.utc),
+            datetime(2021, 9, 3, 15, 57, 37, tzinfo=timezone.utc),
+            datetime(2021, 9, 3, 15, 57, 39, tzinfo=timezone.utc),
             None,
             None,
         ),
@@ -619,4 +620,110 @@ def test_github_json_field(mocker: MockerFixture, requests_mock: Mocker) -> None
         ('["size/S"]',),
         ('["size/XS", "hold:review-after-release"]',),
         ('["size/M", "review-checkpoint", "plugins"]',),
+    ]
+
+
+@freeze_time("2024-01-01T00:00:00Z")
+def test_participation_processor() -> None:
+    """
+    Test the ``participation_processor`` function.
+    """
+    payload = {
+        "all": [27, 34, 27, 31, 24],
+        "owner": [0, 0, 0, 0, 0],
+    }
+    processed = participation_processor(payload)
+
+    assert processed == [
+        {
+            "start_at": datetime(2023, 11, 27, 0, 0, tzinfo=timezone.utc),
+            "end_at": datetime(2023, 12, 4, 0, 0, tzinfo=timezone.utc),
+            "all": 27,
+            "owner": 0,
+        },
+        {
+            "start_at": datetime(2023, 12, 4, 0, 0, tzinfo=timezone.utc),
+            "end_at": datetime(2023, 12, 11, 0, 0, tzinfo=timezone.utc),
+            "all": 34,
+            "owner": 0,
+        },
+        {
+            "start_at": datetime(2023, 12, 11, 0, 0, tzinfo=timezone.utc),
+            "end_at": datetime(2023, 12, 18, 0, 0, tzinfo=timezone.utc),
+            "all": 27,
+            "owner": 0,
+        },
+        {
+            "start_at": datetime(2023, 12, 18, 0, 0, tzinfo=timezone.utc),
+            "end_at": datetime(2023, 12, 25, 0, 0, tzinfo=timezone.utc),
+            "all": 31,
+            "owner": 0,
+        },
+        {
+            "start_at": datetime(2023, 12, 25, 0, 0, tzinfo=timezone.utc),
+            "end_at": datetime(2024, 1, 1, 0, 0, tzinfo=timezone.utc),
+            "all": 24,
+            "owner": 0,
+        },
+    ]
+
+
+@freeze_time("2024-01-01T00:00:00Z")
+def test_github_participation(mocker: MockerFixture, requests_mock: Mocker) -> None:
+    """
+    Test a request to the participation stats.
+    """
+    mocker.patch(
+        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        return_value=Session(),
+    )
+
+    url = "https://api.github.com/repos/apache/superset/stats/participation"
+    requests_mock.get(
+        url,
+        json={
+            "all": [27, 34, 27, 31, 24],
+            "owner": [0, 0, 0, 0, 0],
+        },
+    )
+
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = """
+        SELECT * FROM
+        "https://api.github.com/repos/apache/superset/stats/participation"
+    """
+    data = list(cursor.execute(sql))
+    assert data == [
+        (
+            datetime(2023, 11, 27, 0, 0, tzinfo=timezone.utc),
+            datetime(2023, 12, 4, 0, 0, tzinfo=timezone.utc),
+            27,
+            0,
+        ),
+        (
+            datetime(2023, 12, 4, 0, 0, tzinfo=timezone.utc),
+            datetime(2023, 12, 11, 0, 0, tzinfo=timezone.utc),
+            34,
+            0,
+        ),
+        (
+            datetime(2023, 12, 11, 0, 0, tzinfo=timezone.utc),
+            datetime(2023, 12, 18, 0, 0, tzinfo=timezone.utc),
+            27,
+            0,
+        ),
+        (
+            datetime(2023, 12, 18, 0, 0, tzinfo=timezone.utc),
+            datetime(2023, 12, 25, 0, 0, tzinfo=timezone.utc),
+            31,
+            0,
+        ),
+        (
+            datetime(2023, 12, 25, 0, 0, tzinfo=timezone.utc),
+            datetime(2024, 1, 1, 0, 0, tzinfo=timezone.utc),
+            24,
+            0,
+        ),
     ]
