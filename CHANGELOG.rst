@@ -5,10 +5,15 @@ Changelog
 Next
 ====
 
+Version 1.2.25 - 2024-08-07
+===========================
+
+- Relax ``pyarrow`` dependency (#465)
+
 Version 1.2.24 - 2024-07-31
 ===========================
 
-- Release ``packaging`` dependency (#464)
+- Relax ``packaging`` dependency (#464)
 
 Version 1.2.23 - 2024-07-31
 ===========================
