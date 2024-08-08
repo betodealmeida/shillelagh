@@ -327,3 +327,62 @@ def test_generic_json_array(requests_mock: Mocker) -> None:
     ]
     assert cursor.description
     assert {t[0] for t in cursor.description} == {"col_0", "col_1", "col_2"}
+
+
+def test_generic_json_string_array(requests_mock: Mocker) -> None:
+    """
+    Test a query where the JSONPath returns just a string.
+    """
+    payload = {
+        "lastTimestamp": "20240808022653Z",
+        "project_count": 243,
+        "roster_counts": {
+            "superset": {"members": 65, "owners": 35},
+        },
+        "projects": {
+            "superset": {
+                "createTimestamp": "20170523163111Z",
+                "modifyTimestamp": "20240617171611Z",
+                "member_count": 65,
+                "owner_count": 35,
+                "members": [
+                    "aafghahi",
+                    "amitmiran",
+                    "arivero",
+                    "benceorlai",
+                    "beto",
+                ],
+                "owners": [
+                    "amitmiran",
+                    "beto",
+                    "bkyryliuk",
+                    "ccwilliams",
+                    "craigrueda",
+                ],
+                "pmc": True,
+                "podling": "graduated",
+            },
+        },
+    }
+    url = URL("https://example.com/#$.projects.superset.members[*]")
+    requests_mock.head(str(url), headers={"content-type": "application/json"})
+    requests_mock.get(str(url), json=payload)
+
+    connection = connect(
+        ":memory:",
+        adapter_kwargs={"genericjsonapi": {"cache_expiration": -1}},
+    )
+    cursor = connection.cursor()
+
+    sql = f'SELECT * FROM "{url}"'
+    rows = list(cursor.execute(sql))
+    assert rows == [
+        ("aafghahi",),
+        ("amitmiran",),
+        ("arivero",),
+        ("benceorlai",),
+        ("beto",),
+    ]
+
+    assert cursor.description
+    assert {t[0] for t in cursor.description} == {"col_0"}

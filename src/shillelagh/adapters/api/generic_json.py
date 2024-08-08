@@ -147,6 +147,8 @@ class GenericJSONAPI(Adapter):
         for i, row in enumerate(jsonpath.findall(self.path, payload)):
             if isinstance(row, list):
                 row = {f"col_{i}": value for i, value in enumerate(row)}
+            elif isinstance(row, str):
+                row = {"col_0": row}
             elif row is None:
                 row = {}
 

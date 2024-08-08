@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.2.26 - 2024-08-08
+===========================
+
+- Improve generic JSON to handle arrays of strings (#466)
+
 Version 1.2.25 - 2024-08-07
 ===========================
 
