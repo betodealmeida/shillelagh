@@ -2,12 +2,17 @@
 Custom functions available to the SQL backend.
 """
 
+import importlib
 import json
 import sys
 import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Type
 
+import pip
+from packaging.version import InvalidVersion, Version
+
+import shillelagh
 from shillelagh.adapters.base import Adapter
 from shillelagh.fields import FastISODateTime
 from shillelagh.lib import find_adapter
@@ -17,7 +22,22 @@ if sys.version_info < (3, 10):
 else:
     from importlib.metadata import distribution
 
-__all__ = ["sleep", "get_metadata", "version"]
+__all__ = ["upgrade", "sleep", "get_metadata", "version", "date_trunc"]
+
+
+def upgrade(target_version: str) -> str:
+    """
+    Upgrade the library to a given version.
+    """
+    try:
+        pip.main(["install", f"shillelagh=={Version(target_version)}"])
+        importlib.reload(shillelagh)
+    except InvalidVersion:
+        return f"Invalid version: {target_version}"
+    except Exception as ex:  # pylint: disable=broad-except
+        return f"Upgrade failed: {ex}"
+
+    return f"Upgrade to {target_version} successful."
 
 
 def sleep(seconds: int) -> None:

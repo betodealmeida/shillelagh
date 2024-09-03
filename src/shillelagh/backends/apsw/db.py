@@ -459,7 +459,7 @@ def apsw_version() -> str:
     return f"{functions.version()} (apsw {apsw.apswversion()})"
 
 
-class Connection:
+class Connection:  # pylint: disable=too-many-instance-attributes
     """Connection."""
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -470,12 +470,14 @@ class Connection:
         isolation_level: Optional[str] = None,
         apsw_connection_kwargs: Optional[Dict[str, Any]] = None,
         schema: str = DEFAULT_SCHEMA,
+        safe: bool = False,
     ):
         # create underlying APSW connection
         apsw_connection_kwargs = apsw_connection_kwargs or {}
         self._connection = apsw.Connection(path, **apsw_connection_kwargs)
         self.isolation_level = isolation_level
         self.schema = schema
+        self.safe = safe
 
         # register adapters
         for adapter in adapters:
@@ -501,6 +503,9 @@ class Connection:
             ),
             "date_trunc": functions.date_trunc,
         }
+        if not safe:
+            available_functions["upgrade"] = functions.upgrade
+
         for name, function in available_functions.items():
             self._connection.create_scalar_function(name, function)
 
@@ -593,4 +598,5 @@ def connect(  # pylint: disable=too-many-arguments
         isolation_level,
         apsw_connection_kwargs,
         schema,
+        safe,
     )
