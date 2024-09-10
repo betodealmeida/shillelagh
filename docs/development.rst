@@ -296,6 +296,8 @@ If an adapter declares support for ``LIMIT`` and ``OFFSET`` a corresponding para
 
 Now the adapter can handle ``limit`` and ``offset``, reducing the amount of data that is returned. Note that even if the adapter declares supporting ``LIMIT``, SQLite will still enforce the limit, ie, if for any reason the adapter returns more rows than the limit SQLite will fix the problem. The same is not true for the offset.
 
+Note that an adapter can only support ``limit`` and ``offset`` if it has filters on all the columns. Otherwise it would potentially return only a subset of the data, since after returning ``limit`` rows the data could be filtered further by SQLite.
+
 Returning only the requested columns
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

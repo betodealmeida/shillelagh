@@ -4,6 +4,7 @@ Simple adapter for the Preset API (https://preset.io/).
 This is a derivation of the generic JSON adapter that handles Preset auth.
 """
 
+import itertools
 import logging
 import re
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, cast
@@ -81,54 +82,35 @@ class PresetAPI(GenericJSONAPI):
         )
 
 
-def get_urls(
-    resource_url: str,
-    offset: Optional[int] = None,
-    limit: Optional[int] = None,
-    page_size: int = MAX_PAGE_SIZE,
-) -> Iterator[Tuple[str, slice]]:
+def get_urls(resource_url: str, page_size: int = MAX_PAGE_SIZE) -> Iterator[str]:
     """
-    Get all paginated URLs to download data together with a limit/offset slice.
+    Get all URLs to download data.
     """
-    start = offset or 0
-    stop = start + limit if limit is not None else None
-
     baseurl = URL(resource_url)
     query = baseurl.query.get("q", "()")
     try:
         params = prison.loads(query)
     except Exception:  # pylint: disable=broad-except
-        yield str(baseurl), slice(start, stop)
+        yield str(baseurl)
         return
 
     # assume the user knows better and keep the URL unmodified
     if "page" in params or "page_size" in params:
-        yield str(baseurl), slice(start, stop)
+        yield str(baseurl)
         return
 
-    page = start // page_size
-    start = start % page_size
-    remaining = limit if limit is not None else float("inf")
+    params["page_size"] = page_size
+    page = 0
     while True:
         params["page"] = page
-        params["page_size"] = min(start + remaining, page_size)
-        yield str(baseurl.with_query({"q": prison.dumps(params)})), slice(start, None)
-
-        remaining -= page_size - start
-        if remaining <= 0:
-            break
-
+        yield str(baseurl.with_query({"q": prison.dumps(params)}))
         page += 1
-        start = 0
 
 
 class PresetWorkspaceAPI(PresetAPI):
     """
     Adapter for Preset workspaces.
     """
-
-    supports_limit = True
-    supports_offset = True
 
     default_path = "$.result[*]"
     cache_name = "preset_cache"
@@ -143,10 +125,16 @@ class PresetWorkspaceAPI(PresetAPI):
         )
 
     def _set_columns(self) -> None:
-        # request only a single page of results to infer schema
-        rows = list(self.get_data({}, [], limit=MAX_PAGE_SIZE))
-        column_names = list(rows[0].keys()) if rows else []
+        rows = self.get_data({}, [])
 
+        try:
+            row = next(rows)
+            rows = itertools.chain([row], rows)
+            column_names = list(row.keys())
+        except StopIteration:
+            column_names = []
+
+        rows = itertools.islice(rows, MAX_PAGE_SIZE)
         _, order, types = analyze(iter(rows))
 
         self.columns = {
@@ -163,12 +151,10 @@ class PresetWorkspaceAPI(PresetAPI):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
         requested_columns: Optional[Set[str]] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
-        for url, slice_ in get_urls(self.uri, offset, limit, MAX_PAGE_SIZE):
+        for url in get_urls(self.uri, MAX_PAGE_SIZE):
             response = self._session.get(str(url))
             payload = response.json()
             if not response.ok:
@@ -178,7 +164,7 @@ class PresetWorkspaceAPI(PresetAPI):
                 )
                 raise ProgrammingError(f"Error: {messages}")
 
-            rows = jsonpath.findall(self.path, payload)[slice_]
+            rows = jsonpath.findall(self.path, payload)
             if not rows:
                 break
 
