@@ -12,7 +12,7 @@ from pytest_mock import MockerFixture
 from shillelagh.adapters.registry import AdapterLoader
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.functions import date_trunc, get_metadata
+from shillelagh.functions import date_trunc, get_metadata, upgrade
 
 from .fakes import FakeAdapter
 
@@ -103,3 +103,36 @@ def test_date_trunc() -> None:
     with pytest.raises(ValueError) as excinfo:
         date_trunc("2024-02-03T04:05:06.700000", "INVALID")
     assert str(excinfo.value) == "Unsupported truncation unit: invalid"
+
+
+def test_upgrade(mocker: MockerFixture) -> None:
+    """
+    Test ``upgrade``.
+    """
+    pip = mocker.patch("shillelagh.functions.pip")
+    importlib = mocker.patch("shillelagh.functions.importlib")
+
+    output = upgrade("1.2.3")
+
+    assert output == "Upgrade to 1.2.3 successful."
+    pip.main.assert_called_with(["install", "shillelagh==1.2.3"])
+    importlib.reload.assert_called_with(sys.modules["shillelagh"])
+
+
+def test_upgrade_invalid_version() -> None:
+    """
+    Test ``upgrade`` with an invalid version.
+    """
+    output = upgrade("1.2.3 malicious_package=0.1")
+    assert output == "Invalid version: 1.2.3 malicious_package=0.1"
+
+
+def test_upgrade_exception(mocker: MockerFixture) -> None:
+    """
+    Test ``upgrade`` with an exception.
+    """
+    pip = mocker.patch("shillelagh.functions.pip")
+    pip.main.side_effect = Exception("Boom!")
+
+    output = upgrade("1.2.3")
+    assert output == "Upgrade failed: Boom!"
