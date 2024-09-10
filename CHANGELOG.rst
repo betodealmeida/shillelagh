@@ -5,6 +5,9 @@ Changelog
 Next
 ====
 
+Version 1.2.27 - 2024-09-10
+===========================
+
 - Removes pagination from Preset API and adds note to documentation (#469)
 - Add ``UPGRADE()`` function to upgrade the library (#468)
 
