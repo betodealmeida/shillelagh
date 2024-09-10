@@ -99,25 +99,19 @@ def test_get_urls() -> None:
     """
     gen = get_urls(
         "https://abcdef01.us1a.app-sdx.preset.io/api/v1/chart/",
-        offset=45,
-        limit=50,
         page_size=42,
     )
 
-    url, slice_ = next(gen)
+    url = next(gen)
+    assert (
+        url
+        == "https://abcdef01.us1a.app-sdx.preset.io/api/v1/chart/?q=(page:0,page_size:42)"
+    )
+    url = next(gen)
     assert (
         url
         == "https://abcdef01.us1a.app-sdx.preset.io/api/v1/chart/?q=(page:1,page_size:42)"
     )
-    assert slice_.start == 3
-    url, slice_ = next(gen)
-    assert (
-        url
-        == "https://abcdef01.us1a.app-sdx.preset.io/api/v1/chart/?q=(page:2,page_size:11)"
-    )
-    assert slice_.start == 0
-    with pytest.raises(StopIteration):
-        next(gen)
 
 
 def test_get_urls_unable_to_parse() -> None:
@@ -126,7 +120,7 @@ def test_get_urls_unable_to_parse() -> None:
     """
 
     gen = get_urls("https://example.org/?q=(((")
-    assert next(gen)[0] == "https://example.org/?q=((("
+    assert next(gen) == "https://example.org/?q=((("
     with pytest.raises(StopIteration):
         next(gen)
 
@@ -137,7 +131,7 @@ def test_get_urls_with_page_parameters() -> None:
     """
 
     gen = get_urls("https://example.org/?q=(page:0,page_size:42)")
-    assert next(gen)[0] == "https://example.org/?q=(page:0,page_size:42)"
+    assert next(gen) == "https://example.org/?q=(page:0,page_size:42)"
     with pytest.raises(StopIteration):
         next(gen)
 
@@ -197,12 +191,16 @@ def test_preset_workspace_pagination(requests_mock: Mocker) -> None:
         },
     )
     requests_mock.get(
-        "https://abcdef01.us1a.app.preset.io/api/v1/chart/?q=(page:1,page_size:3)",
+        "https://abcdef01.us1a.app.preset.io/api/v1/chart/?q=(page:1,page_size:100)",
         json={
             "result": [
-                {"id": i + 101, "slice_name": f"Team {i+101}"} for i in range(3)
+                {"id": i + 101, "slice_name": f"Team {i+101}"} for i in range(50)
             ],
         },
+    )
+    requests_mock.get(
+        "https://abcdef01.us1a.app.preset.io/api/v1/chart/?q=(page:2,page_size:100)",
+        json={"result": []},
     )
 
     connection = connect(

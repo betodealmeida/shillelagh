@@ -60,8 +60,6 @@ class GenericXMLAPI(GenericJSONAPI):
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
         requested_columns: Optional[Set[str]] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
