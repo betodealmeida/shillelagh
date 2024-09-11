@@ -5,7 +5,10 @@ Changelog
 Next
 ====
 
-- Allow finer grain for the requests cache (#487)
+Version 1.2.28 - 2024-09-11
+===========================
+
+- Allow finer grain for the requests cache (#471)
 
 Version 1.2.27 - 2024-09-10
 ===========================
