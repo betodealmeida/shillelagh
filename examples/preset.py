@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     SQL = """
     SELECT * FROM
-    "https://d90230ca.us1a.app-sdx.preset.io/api/v1/chart/"
+    "https://12345678.us1a.app.preset.io/api/v1/chart/"
     LIMIT 12
     """
     for row in cursor.execute(SQL):

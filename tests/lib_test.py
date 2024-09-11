@@ -2,6 +2,7 @@
 Tests for shillelagh.lib.
 """
 
+from datetime import timedelta
 from typing import Any, Dict, Iterator, List, Tuple
 
 import pytest
@@ -31,6 +32,7 @@ from shillelagh.lib import (
     escape_string,
     filter_data,
     find_adapter,
+    get_session,
     is_not_null,
     is_null,
     serialize,
@@ -485,3 +487,32 @@ def test_apply_limit_and_offset() -> None:
 
     rows = apply_limit_and_offset(iter(range(10)), offset=2)
     assert list(rows) == [2, 3, 4, 5, 6, 7, 8, 9]
+
+
+def test_get_session(mocker: MockerFixture) -> None:
+    """
+    Test ``get_session``.
+    """
+    requests_cache = mocker.patch("shillelagh.lib.requests_cache")
+
+    get_session({}, "test", timedelta(seconds=10))
+    requests_cache.CachedSession.assert_called_once_with(
+        cache_name="test",
+        backend="sqlite",
+        expire_after=10,
+    )
+
+
+def test_get_session_namespaced(mocker: MockerFixture) -> None:
+    """
+    Test ``get_session`` with a namespaced cache key.
+    """
+    requests_cache = mocker.patch("shillelagh.lib.requests_cache")
+    mocker.patch("shillelagh.lib.create_namespaced_cache_key", return_value="ns")
+
+    get_session({}, "test", timedelta(seconds=10))
+    requests_cache.CachedSession.assert_called_once_with(
+        cache_name="ns",
+        backend="sqlite",
+        expire_after=10,
+    )

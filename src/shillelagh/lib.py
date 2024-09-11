@@ -611,16 +611,26 @@ def best_index_object_available() -> bool:
     return bool(Version(apsw.apswversion()) >= Version("3.41.0.0"))
 
 
+def create_namespaced_cache_key(cache_name: str) -> str:
+    """
+    Get the cache name with a specific namespace.
+
+    This function does nothing. It can be monkeypatched to add a namespace to the cache,
+    if one is needed -- eg, when using the library in a multi-tenant environment.
+    """
+    return cache_name
+
+
 def get_session(
     request_headers: Dict[str, str],
     cache_name: str,
     expire_after: timedelta = CACHE_EXPIRATION,
-) -> requests_cache.CachedSession:  # E: line too long (81 > 79 characters)
+) -> requests_cache.CachedSession:
     """
     Return a cached session.
     """
     session = requests_cache.CachedSession(
-        cache_name=cache_name,
+        cache_name=create_namespaced_cache_key(cache_name),
         backend="sqlite",
         expire_after=(
             requests_cache.DO_NOT_CACHE

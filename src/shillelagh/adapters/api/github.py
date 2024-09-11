@@ -10,12 +10,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, TypedDict
 
 import jsonpath
-import requests_cache
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Boolean, DateTime, Field, Integer, String, StringDateTime
 from shillelagh.filters import Equal, Filter
+from shillelagh.lib import get_session
 from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
@@ -220,11 +220,10 @@ class GitHubAPI(Adapter):
         self.resource = resource
         self.access_token = access_token
 
-        # use a cache for the API requests
-        self._session = requests_cache.CachedSession(
+        self._session = get_session(
+            request_headers={},
             cache_name="github_cache",
-            backend="sqlite",
-            expire_after=180,
+            expire_after=timedelta(minutes=3),
         )
 
     def get_columns(self) -> Dict[str, Field]:
