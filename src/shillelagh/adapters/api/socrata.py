@@ -7,10 +7,10 @@ See https://dev.socrata.com/ for more information.
 import logging
 import re
 import urllib.parse
+from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, Union
 
-import requests_cache
 from requests import Request
 from typing_extensions import TypedDict
 
@@ -18,7 +18,7 @@ from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError, ProgrammingError
 from shillelagh.fields import Field, Order, String, StringDate
 from shillelagh.filters import Equal, Filter, IsNotNull, IsNull, Like, NotEqual, Range
-from shillelagh.lib import SimpleCostModel, build_sql, flatten
+from shillelagh.lib import SimpleCostModel, build_sql, flatten, get_session
 from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
@@ -126,10 +126,10 @@ class SocrataAPI(Adapter):
         self.app_token = app_token
 
         # use a cache for the API requests
-        self._session = requests_cache.CachedSession(
+        self._session = get_session(
+            request_headers={},
             cache_name="socrata_cache",
-            backend="sqlite",
-            expire_after=180,
+            expire_after=timedelta(minutes=3),
         )
 
         self._set_columns()

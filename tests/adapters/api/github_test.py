@@ -28,7 +28,7 @@ def test_github(mocker: MockerFixture, requests_mock: Mocker) -> None:
     Test a simple request.
     """
     mocker.patch(
-        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        "shillelagh.adapters.api.github.get_session",
         return_value=Session(),
     )
 
@@ -204,7 +204,7 @@ def test_github_single_resource(mocker: MockerFixture, requests_mock: Mocker) ->
     Test a request to a single resource.
     """
     mocker.patch(
-        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        "shillelagh.adapters.api.github.get_session",
         return_value=Session(),
     )
 
@@ -247,7 +247,7 @@ def test_github_single_resource_with_offset(
     Test a request to a single resource.
     """
     mocker.patch(
-        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        "shillelagh.adapters.api.github.get_session",
         return_value=Session(),
     )
 
@@ -273,7 +273,7 @@ def test_github_rate_limit(mocker: MockerFixture, requests_mock: Mocker) -> None
     Test that the adapter was rate limited by the API.
     """
     mocker.patch(
-        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        "shillelagh.adapters.api.github.get_session",
         return_value=Session(),
     )
 
@@ -315,7 +315,7 @@ def test_github_auth_token(mocker: MockerFixture, requests_mock: Mocker) -> None
     Test a simple request.
     """
     mocker.patch(
-        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        "shillelagh.adapters.api.github.get_session",
         return_value=Session(),
     )
 
@@ -358,7 +358,7 @@ def test_get_multiple_resources(mocker: MockerFixture, requests_mock: Mocker) ->
     """
     mocker.patch("shillelagh.adapters.api.github.PAGE_SIZE", new=5)
     mocker.patch(
-        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        "shillelagh.adapters.api.github.get_session",
         return_value=Session(),
     )
 
@@ -553,7 +553,7 @@ def test_github_missing_field(mocker: MockerFixture, requests_mock: Mocker) -> N
     For example, some issues don't have the ``draft`` field in the response.
     """
     mocker.patch(
-        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        "shillelagh.adapters.api.github.get_session",
         return_value=Session(),
     )
 
@@ -590,7 +590,7 @@ def test_github_json_field(mocker: MockerFixture, requests_mock: Mocker) -> None
     Test a request when the response has a JSON field.
     """
     mocker.patch(
-        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        "shillelagh.adapters.api.github.get_session",
         return_value=Session(),
     )
 
@@ -674,7 +674,7 @@ def test_github_participation(mocker: MockerFixture, requests_mock: Mocker) -> N
     Test a request to the participation stats.
     """
     mocker.patch(
-        "shillelagh.adapters.api.github.requests_cache.CachedSession",
+        "shillelagh.adapters.api.github.get_session",
         return_value=Session(),
     )
 

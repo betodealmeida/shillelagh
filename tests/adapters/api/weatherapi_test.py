@@ -25,7 +25,7 @@ def test_weatherapi(mocker: MockerFixture, requests_mock: Mocker) -> None:
     Test the adapter.
     """
     mocker.patch(
-        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        "shillelagh.adapters.api.weatherapi.get_session",
         return_value=Session(),
     )
 
@@ -108,7 +108,7 @@ def test_weatherapi_api_error(mocker: MockerFixture, requests_mock: Mocker) -> N
     Test handling errors in the API.
     """
     mocker.patch(
-        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        "shillelagh.adapters.api.weatherapi.get_session",
         return_value=Session(),
     )
 
@@ -532,7 +532,7 @@ def test_dispatch(mocker: MockerFixture, requests_mock: Mocker) -> None:
     Test the dispatcher.
     """
     mocker.patch(
-        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        "shillelagh.adapters.api.weatherapi.get_session",
         return_value=Session(),
     )
 
@@ -593,7 +593,7 @@ def test_dispatch_api_key_connection(
     Test passing the key via the adapter kwargs.
     """
     mocker.patch(
-        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        "shillelagh.adapters.api.weatherapi.get_session",
         return_value=Session(),
     )
 
@@ -625,7 +625,7 @@ def test_dispatch_impossible(mocker: MockerFixture) -> None:
     any network requests.
     """
     session = mocker.patch(
-        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        "shillelagh.adapters.api.weatherapi.get_session",
     )
 
     connection = connect(
@@ -728,7 +728,7 @@ def test_get_cost(mocker: MockerFixture) -> None:
     Test ``get_cost``.
     """
     mocker.patch(
-        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
+        "shillelagh.adapters.api.weatherapi.get_session",
         return_value=Session(),
     )
 
@@ -761,9 +761,7 @@ def test_window(mocker: MockerFixture) -> None:
     """
     Test the default window size of days to fetch data.
     """
-    session = mocker.patch(
-        "shillelagh.adapters.api.weatherapi.requests_cache.CachedSession",
-    )
+    session = mocker.patch("shillelagh.adapters.api.weatherapi.get_session")
     session.return_value.get.return_value.json.return_value = weatherapi_response
 
     adapter = WeatherAPI("location", "XXX")

@@ -23,7 +23,7 @@ def test_socrata(mocker: MockerFixture, requests_mock: Mocker) -> None:
     Test a simple query.
     """
     mocker.patch(
-        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
+        "shillelagh.adapters.api.socrata.get_session",
         return_value=Session(),
     )
 
@@ -62,7 +62,7 @@ def test_socrata_app_token_url(mocker: MockerFixture, requests_mock: Mocker) -> 
     Test app token being passed via the URL.
     """
     mocker.patch(
-        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
+        "shillelagh.adapters.api.socrata.get_session",
         return_value=Session(),
     )
 
@@ -96,7 +96,7 @@ def test_socrata_app_token_connection(
     Test app token being passed via the connection instead of the URL.
     """
     mocker.patch(
-        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
+        "shillelagh.adapters.api.socrata.get_session",
         return_value=Session(),
     )
 
@@ -129,7 +129,7 @@ def test_socrata_no_data(mocker: MockerFixture, requests_mock: Mocker) -> None:
     Test that some queries return no data.
     """
     mocker.patch(
-        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
+        "shillelagh.adapters.api.socrata.get_session",
         return_value=Session(),
     )
 
@@ -160,7 +160,7 @@ def test_socrata_impossible(mocker: MockerFixture, requests_mock: Mocker) -> Non
     Test that impossible queries return no data.
     """
     mocker.patch(
-        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
+        "shillelagh.adapters.api.socrata.get_session",
         return_value=Session(),
     )
 
@@ -190,7 +190,7 @@ def test_socrata_invalid_query(mocker: MockerFixture, requests_mock: Mocker) -> 
     Test that invalid queries are handled correctly.
     """
     mocker.patch(
-        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
+        "shillelagh.adapters.api.socrata.get_session",
         return_value=Session(),
     )
 
@@ -258,7 +258,7 @@ def test_get_cost(mocker: MockerFixture) -> None:
     Test ``get_cost``.
     """
     mocker.patch(
-        "shillelagh.adapters.api.socrata.requests_cache.CachedSession",
+        "shillelagh.adapters.api.socrata.get_session",
     )
 
     adapter = SocrataAPI("netloc", "dataset", "XXX")

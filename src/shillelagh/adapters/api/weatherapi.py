@@ -9,12 +9,12 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Union, cast
 
 import dateutil.parser
 import dateutil.tz
-import requests_cache
 
 from shillelagh.adapters.base import Adapter
 from shillelagh.exceptions import ImpossibleFilterError
 from shillelagh.fields import DateTime, Float, IntBoolean, Integer, Order, String
 from shillelagh.filters import Filter, Impossible, Operator, Range
+from shillelagh.lib import get_session
 from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
@@ -150,10 +150,10 @@ class WeatherAPI(Adapter):
 
         # use a cache, since the adapter does a lot of similar API requests,
         # and the data should rarely (never?) change
-        self._session = requests_cache.CachedSession(
+        self._session = get_session(
+            request_headers={},
             cache_name="weatherapi_cache",
-            backend="sqlite",
-            expire_after=180,
+            expire_after=timedelta(minutes=3),
         )
 
     def get_cost(
