@@ -769,7 +769,7 @@ def test_public_sheet_multicorn() -> None:
         user="shillelagh",
         password="shillelagh123",
         host="localhost",
-        port=12345,
+        port=5432,
         database="shillelagh",
     )
     cursor = connection.cursor()
