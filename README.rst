@@ -52,7 +52,7 @@ And a command-line utility:
     $ shillelagh
     sql> SELECT * FROM a_table
 
-There is also an [experimental backend](https://shillelagh.readthedocs.io/en/latest/postgres.html) that uses Postgres with the [Multicorn2](http://multicorn2.org/) extension:
+There is also an `experimental backend <https://shillelagh.readthedocs.io/en/latest/postgres.html>`_ that uses Postgres with the `Multicorn2 <http://multicorn2.org/>`_ extension:
 
 .. code-block:: python
 
