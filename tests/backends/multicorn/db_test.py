@@ -85,10 +85,8 @@ def test_cursor(mocker: MockerFixture) -> None:
     super = mocker.patch("shillelagh.backends.multicorn.db.super", create=True)
     execute = mocker.MagicMock(name="execute")
     super.return_value.execute = execute
-    connection = mocker.MagicMock()
 
     cursor = Cursor(
-        connection,
         adapters={"dummy": FakeAdapter},
         adapter_kwargs={},
         schema="main",
@@ -149,7 +147,6 @@ def test_cursor_no_table_match(mocker: MockerFixture) -> None:
     super = mocker.patch("shillelagh.backends.multicorn.db.super", create=True)
     execute = mocker.MagicMock(name="execute")
     super.return_value.execute = execute
-    connection = mocker.MagicMock()
 
     execute.side_effect = [
         True,  # SAVEPOINT
@@ -157,7 +154,6 @@ def test_cursor_no_table_match(mocker: MockerFixture) -> None:
     ]
 
     cursor = Cursor(
-        connection,
         adapters={"dummy": FakeAdapter},
         adapter_kwargs={},
         schema="main",
@@ -175,7 +171,6 @@ def test_cursor_no_table_name(mocker: MockerFixture) -> None:
     super = mocker.patch("shillelagh.backends.multicorn.db.super", create=True)
     execute = mocker.MagicMock(name="execute")
     super.return_value.execute = execute
-    connection = mocker.MagicMock()
 
     execute.side_effect = [
         True,  # SAVEPOINT
@@ -183,7 +178,6 @@ def test_cursor_no_table_name(mocker: MockerFixture) -> None:
     ]
 
     cursor = Cursor(
-        connection,
         adapters={"dummy": FakeAdapter},
         adapter_kwargs={},
         schema="main",
@@ -206,10 +200,8 @@ def test_drop_table(mocker: MockerFixture) -> None:
         "shillelagh.backends.multicorn.db.find_adapter",
         return_value=(adapter, ["one"], {"two": 2}),
     )
-    connection = mocker.MagicMock()
 
     cursor = Cursor(
-        connection,
         adapters={"dummy": FakeAdapter},
         adapter_kwargs={},
         schema="main",
@@ -233,10 +225,8 @@ def test_table_without_columns(mocker: MockerFixture) -> None:
         "shillelagh.backends.multicorn.db.find_adapter",
         return_value=(adapter, ["one"], {"two": 2}),
     )
-    connection = mocker.MagicMock()
 
     cursor = Cursor(
-        connection,
         adapters={"dummy": adapter},
         adapter_kwargs={},
         schema="main",

@@ -74,7 +74,6 @@ def test_get_adapter_for_table_name(mocker: MockerFixture) -> None:
     mocker.patch("shillelagh.backends.multicorn.db.super", create=True)
     connection = mocker.MagicMock()
     connection.engine.raw_connection().cursor.return_value = Cursor(
-        connection,
         adapters={"dummy": FakeAdapter},
         adapter_kwargs={},
         schema="main",
