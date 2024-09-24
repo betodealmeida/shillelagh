@@ -105,3 +105,5 @@ ENV/
 *.sqlite
 *.db
 *.swp
+
+multicorn2

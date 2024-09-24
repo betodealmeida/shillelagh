@@ -52,6 +52,25 @@ And a command-line utility:
     $ shillelagh
     sql> SELECT * FROM a_table
 
+There is also an [experimental backend](https://shillelagh.readthedocs.io/en/latest/postgres.html) that uses Postgres with the [Multicorn2](http://multicorn2.org/) extension:
+
+.. code-block:: python
+
+    from shillelagh.backends.multicorn.db import connect
+
+    connection = connect(
+        user="username",
+        password="password",
+        host="localhost",
+        port=5432,
+        database="examples",
+    )
+
+.. code-block:: python
+
+    from sqlalchemy import create_engine
+    engine = create_engine("shillelagh+multicorn2://username:password@localhost:5432/examples")
+
 Why SQL?
 ========
 

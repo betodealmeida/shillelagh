@@ -286,9 +286,10 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         operation = "\n".join(
             line for line in operation.split("\n") if not line.strip().startswith("--")
         )
+        schema = re.escape(self.schema)
         regexp = re.compile(
-            rf"^\s*DROP\s+TABLE\s+(IF\s+EXISTS\s+)?"
-            rf'({self.schema}\.)?(?P<uri>(.*?)|(".*?"))\s*;?\s*$',
+            r"^\s*DROP\s+TABLE\s+(IF\s+EXISTS\s+)?"
+            rf'({schema}\.)?(?P<uri>(.*?)|(".*?"))\s*;?\s*$',
             re.IGNORECASE,
         )
         if match := regexp.match(operation):

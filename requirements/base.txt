@@ -19,6 +19,8 @@ certifi==2022.6.15
     # via requests
 charset-normalizer==2.1.0
     # via requests
+exceptiongroup==1.1.3
+    # via cattrs
 greenlet==2.0.2
     # via
     #   shillelagh
@@ -45,9 +47,14 @@ sqlalchemy==1.4.39
     # via shillelagh
 typing-extensions==4.3.0
     # via shillelagh
+    # via
+    #   cattrs
+    #   shillelagh
 url-normalize==1.4.3
     # via requests-cache
 urllib3==1.26.10
     # via
     #   requests
     #   requests-cache
+zipp==3.15.0
+    # via importlib-metadata
