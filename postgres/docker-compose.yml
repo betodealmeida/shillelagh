@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   postgres:
-    build: .
+    build:
+      context: ..
+      dockerfile: postgres/Dockerfile
     environment:
       POSTGRES_PASSWORD: shillelagh123
       POSTGRES_USER: shillelagh
@@ -10,7 +12,6 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-      - ..:/src
     ports:
       - "5432:5432"
 

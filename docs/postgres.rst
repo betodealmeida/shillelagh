@@ -14,10 +14,10 @@ To use the backend you need to:
 
 Note that you need to install Python packages in a way that they are available to the process running Postgres. You can either install them globally, or install them in a virtual environment and have it activated in the process that starts Postgres.
 
-The ``postgres/`` directory has a Docker configuration that can be used to test the backend, or as a basis for installation. To run it, enter the directory and execute:
+The ``postgres/`` directory has a Docker configuration that can be used to test the backend, or as a basis for installation. To run it, execute:
 
 .. code-block:: bash
 
-   docker compose up --build -d
+   docker compose -f postgres/docker-compose.yml up
 
 You should then be able to run the example script in `examples/postgres.py`_ to test that everything works.

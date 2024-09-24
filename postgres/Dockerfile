@@ -10,10 +10,12 @@ USER root
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
+    git \
     postgresql-server-dev-13 \
     python3 \
     python3-dev \
     python3-pip \
+    python3-venv \
     wget
 
 # Download, build, and install multicorn2
@@ -24,7 +26,13 @@ RUN wget https://github.com/pgsql-io/multicorn2/archive/refs/tags/v2.5.tar.gz &&
     make install
 
 
-RUN pip install -e '.[all]'
+# Create a virtual environment and install dependencies
+RUN python3 -m venv /code/venv && \
+    /code/venv/bin/pip install --upgrade pip && \
+    /code/venv/bin/pip install -e '.[all]'
+
+# Set environment variable for PostgreSQL to use the virtual environment
+ENV PATH="/code/venv/bin:$PATH"
 
 # Switch back to the default postgres user
 USER postgres
