@@ -2,13 +2,13 @@
 """
 A DB API 2.0 wrapper.
 """
+
 import logging
 import re
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 from uuid import uuid4
 
 import psycopg2
-from multicorn import ForeignDataWrapper, Qual, SortKey
 from psycopg2 import extensions
 
 from shillelagh.adapters.base import Adapter
@@ -20,14 +20,12 @@ from shillelagh.exceptions import (  # nopycln: import; pylint: disable=redefine
     IntegrityError,
     InterfaceError,
     InternalError,
-    NotSupportedError,
     OperationalError,
     ProgrammingError,
     Warning,
 )
 from shillelagh.lib import (
     combine_args_kwargs,
-    deserialize,
     escape_identifier,
     find_adapter,
     serialize,
@@ -46,7 +44,29 @@ from shillelagh.types import (
     Timestamp,
     TimestampFromTicks,
 )
-from shillelagh.typing import Row
+
+__all__ = [
+    "DatabaseError",
+    "DataError",
+    "Error",
+    "IntegrityError",
+    "InterfaceError",
+    "InternalError",
+    "OperationalError",
+    "BINARY",
+    "DATETIME",
+    "NUMBER",
+    "ROWID",
+    "STRING",
+    "Binary",
+    "Date",
+    "DateFromTicks",
+    "Time",
+    "TimeFromTicks",
+    "Timestamp",
+    "TimestampFromTicks",
+    "Warning",
+]
 
 apilevel = "2.0"
 threadsafety = 2

@@ -18,6 +18,6 @@ The ``postgres/`` directory has a Docker configuration that can be used to test 
 
 .. code-block:: bash
 
-   docker-compose up --build -d
+   docker compose up --build -d
 
 You should then be able to run the example script in `examples/postgres.py`_ to test that everything works.

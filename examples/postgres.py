@@ -9,7 +9,7 @@ If you want to play with it Shillelagh has a `docker-compose.yml` file that will
 Postgres with the extension and the Python packages. Just run:
 
     $ cd postgres/
-    $ docker-compose up --build -d
+    $ docker compose up --build -d
 
 Then you can run this script.
 """

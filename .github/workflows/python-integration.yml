@@ -33,7 +33,7 @@ jobs:
         pip install -r requirements/test.txt
     - name: Start the Postgres service
       run: |
-        docker-compose -f postgres/docker-compose.yml up --build -d
+        docker compose -f postgres/docker-compose.yml up --build -d
     - name: Wait for Postgres to become available
       run: |
         until docker run --network container:postgres_postgres_1 postgres_postgres pg_isready -h postgres -p 5432 -U shillelagh --timeout=90; do sleep 10; done
@@ -46,4 +46,4 @@ jobs:
       if: always()
       run: |
         docker logs postgres_postgres_1
-        docker-compose -f postgres/docker-compose.yml down
+        docker compose -f postgres/docker-compose.yml down

@@ -18,7 +18,6 @@ from shillelagh.lib import find_adapter
 
 
 class Multicorn2Dialect(PGDialect_psycopg2):
-
     """
     A SQLAlchemy dialect for Shillelagh based on psycopg2 and multicorn2.
     """
