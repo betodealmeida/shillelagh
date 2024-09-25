@@ -5,6 +5,7 @@ Test the generic JSON adapter.
 import re
 
 import pytest
+from requests_mock import ANY
 from requests_mock.mocker import Mocker
 from yarl import URL
 
@@ -209,6 +210,73 @@ def test_request_headers(requests_mock: Mocker) -> None:
     rows = list(cursor.execute(sql))
     assert rows == [("bar", '["one", "two"]')]
     assert data.last_request.headers["foo"] == "bar"
+
+
+@pytest.mark.parametrize(
+    ("url", "expected_auth", "expected_source"),
+    # START DOC: url_configs_test_cases
+    [
+        ("https://api1.example.com/path", "xyz", "api1"),
+        ("https://api1.example.com/path/1", "xyz", "api1"),
+        ("https://api1.example.com/", "NOPE", "base"),
+        ("https://api1.example.com:8080/path", "NOPE", "base"),
+        ("https://example.com/path", "NOPE", "base"),
+        ("http://api1.example.com/path", "NOPE", "base"),
+        ("https://api2.example.com/?param=yes", "abc", "api2"),
+        ("https://api2.example.com?param=yes", "abc", "api2"),
+        ("https://api2.example.com?q=123&param=yes", "abc", "api2"),
+        ("https://api2.example.com?param=no", "NOPE", "base"),
+        ("https://api2.example.com?q=123", "NOPE", "base"),
+        ("https://api2.example.com?q=123&param=yes&_s_headers=(Authorization:mine)", "mine", "api2"),
+    ]
+    # END DOC: url_configs_test_cases
+)
+def test_request_headers_in_url_configs(
+    requests_mock: Mocker, url: str, expected_auth: str, expected_source: str
+) -> None:
+    # START DOC: url_configs_test_config
+    adapter_kwargs = {
+        "genericjsonapi": {
+            "cache_expiration": -1,
+            "request_headers": {
+                "Authorization": "NOPE",
+                "X-Source": "base",
+            },
+            "url_configs": {
+                "https://api1.example.com/path": {
+                    "request_headers": {
+                        "Authorization": "xyz",
+                        "X-Source": "api1",
+                    },
+                },
+                "https://api2.example.com?param=yes": {
+                    "request_headers": {
+                        "Authorization": "abc",
+                        "X-Source": "api2",
+                    },
+                },
+            },
+        }
+    }
+    connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
+    # END DOC: url_configs_test_config
+    cursor = connection.cursor()
+
+    requests_mock.register_uri(
+        method=ANY,
+        url=ANY,
+        status_code=200,
+        headers={"Content-Type": "application/json"},
+        json=lambda req, _ctx: [dict(req.headers)],
+    )
+
+    assert GenericJSONAPI.supports(url, fast=False, **adapter_kwargs["genericjsonapi"])
+    assert cursor.execute(
+        f'SELECT "Authorization", "X-Source" FROM "{url}"'
+    ).fetchone() == (
+        expected_auth,
+        expected_source
+    )
 
 
 def test_request_headers_in_url(requests_mock: Mocker) -> None:

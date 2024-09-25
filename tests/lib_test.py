@@ -37,6 +37,7 @@ from shillelagh.lib import (
     is_not_null,
     is_null,
     serialize,
+    seq_startswith,
     uncombine_args_kwargs,
     unescape_identifier,
     unescape_string,
@@ -371,6 +372,12 @@ def test_deserialize() -> None:
             {"b": "TEST", "c": 20.0},
             (0, "TEST", {"c": 20.0}),
         ),
+        (
+            'def func(a: int = 0, b: str = "test", *, c: float = 10.0) -> None: pass',
+            (),
+            {"b": "TEST"},
+            (0, "TEST", {"c": 10.0}),
+        ),
     ],
 )
 def test_combine_uncombine_args_kwargs(
@@ -546,3 +553,17 @@ def test_get_session_namespaced(mocker: MockerFixture) -> None:
         backend="sqlite",
         expire_after=10,
     )
+
+
+@pytest.mark.parametrize(
+    ("seq1", "seq2", "result"),
+    [
+        ((1, 2, 3), (), True),
+        ((1, 2, 3), (1, 2), True),
+        ((1, 2, 3), (1, 2, 3, 4, 5), False),
+        ((), (), True),
+        ((), (1, 2), False),
+    ],
+)
+def test_seq_startswith(seq1: Tuple[int], seq2: Tuple[int], result: bool):
+    assert seq_startswith(seq1, seq2) == result

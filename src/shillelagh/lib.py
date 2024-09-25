@@ -627,6 +627,10 @@ def flatten(row: Row) -> Row:
     }
 
 
+def seq_startswith(t1: Sequence[Any], t2: Sequence[Any]) -> bool:
+    return t1[: len(t2)] == t2
+
+
 def best_index_object_available() -> bool:
     """
     Check if support for best index object is available.

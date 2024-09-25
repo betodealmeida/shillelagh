@@ -460,6 +460,29 @@ Or via query parameters:
 
 Note that if passing the headers via query parameters the dictionary should be serialized using `RISON <https://pypi.org/project/prison/>`_.
 
+To ensure secret header values aren't sent to the wrong URL, you may wish to specify that certain request headers should only be sent to certain URL patterns. You may do so via the ``url_configs`` keyword argument, which should contain a map from URL patterns to adapter kwarg dicts. A URL pattern is determined to match a URL if:
+
+ 1. the origins (scheme+host+port) are equal;
+ 2. the pattern's slash-separated path parts are a prefix of the URL's path parts; and
+ 3. the pattern's query parameter key-value tuples are a subset of the URL's query parameter key-value tuples.
+
+Headers specified in config keys ``request_headers`` and ``url_configs.*.request_headers`` and in URI query param ``_s_headers`` are merged in that order, with later values overriding earlier ones.
+
+For example, with the following config:
+
+.. literalinclude:: /../tests/adapters/api/generic_json_test.py
+    :start-after: START DOC: url_configs_test_config
+    :end-before: END DOC: url_configs_test_config
+    :dedent:
+
+here are some example URLs alongside their resulting ``Authorization`` and ``X-Source`` headers:
+
+.. literalinclude:: /../tests/adapters/api/generic_json_test.py
+    :start-after: START DOC: url_configs_test_cases
+    :end-before: END DOC: url_configs_test_cases
+    :dedent:
+
+
 Generic XML
 ===========
 
