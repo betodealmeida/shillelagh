@@ -383,6 +383,24 @@ def test_type_code() -> None:
     assert NUMBER != 1
 
 
+def test_duration() -> None:
+    """
+    Test ``Duration``.
+    """
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    sql = "CREATE TABLE test_table (a DURATION)"
+    cursor.execute(sql)
+
+    sql = "INSERT INTO test_table (a) VALUES (?)"
+    cursor.execute(sql, (datetime.timedelta(hours=1),))
+
+    sql = "SELECT * FROM test_table"
+    cursor.execute(sql)
+    assert cursor.fetchall() == [(datetime.timedelta(hours=1),)]
+
+
 def test_string_duration() -> None:
     """
     Test ``StringDuration``.

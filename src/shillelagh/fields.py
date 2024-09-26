@@ -575,6 +575,15 @@ class StringDateTime(ISODateTime):
         return timestamp
 
 
+class Duration(Field[datetime.timedelta, datetime.timedelta]):
+    """
+    Shillelagh field used for representing durations as `timedelta` objects.
+    """
+
+    type = "DURATION"
+    db_api_type = "DATETIME"
+
+
 class StringDuration(Field[str, datetime.timedelta]):
     """
     A duration.
