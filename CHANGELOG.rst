@@ -2,8 +2,11 @@
 Changelog
 =========
 
-Next (1.3.0)
-============
+Next
+====
+
+Version 1.3.0 - 2024-09-26
+==========================
 
 - New Postgres backend based on multicorn2 (#397)
 
