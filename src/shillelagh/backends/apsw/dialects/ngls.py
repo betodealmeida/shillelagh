@@ -86,7 +86,8 @@ class NglsReports:
         # filter out the Gemma reports
         reports_gemma = reports_df["report.category"] == "Gemma"
         reports_tdos = reports_df["report.category"] == "Tdos"
-        reports_df = reports_df[reports_gemma + reports_tdos]
+        reports_calls = reports_df["report.category"] == "Calls"
+        reports_df = reports_df[reports_gemma + reports_tdos + reports_calls]
         self.table_names = list(reports_df["table_name"].values)
         table_ids = dict(
             reports_df[["table_name", "report.id"]]
