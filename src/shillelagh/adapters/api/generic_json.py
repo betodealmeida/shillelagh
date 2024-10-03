@@ -139,9 +139,10 @@ class GenericJSONAPI(Adapter):
         **kwargs: Any,
     ) -> Iterator[Row]:
         response = self._session.get(self.uri)
-        payload = response.json()
         if not response.ok:
-            raise ProgrammingError(f'Error: {payload["error"]["message"]}')
+            raise ProgrammingError(f'Error: {response.text}')
+
+        payload = response.json()
 
         for i, row in enumerate(jsonpath.findall(self.path, payload)):
             if isinstance(row, list):
