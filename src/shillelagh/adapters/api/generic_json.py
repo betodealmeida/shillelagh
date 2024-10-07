@@ -5,8 +5,9 @@ An adapter for fetching JSON data.
 # pylint: disable=invalid-name
 
 import logging
+from collections.abc import Iterator
 from datetime import timedelta
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Union
+from typing import Any, Optional, Union
 
 import jsonpath
 import prison
@@ -74,7 +75,7 @@ class GenericJSONAPI(Adapter):
     def parse_uri(
         cls,
         uri: str,
-    ) -> Union[Tuple[str, str], Tuple[str, str, Dict[str, str]]]:
+    ) -> Union[tuple[str, str], tuple[str, str, dict[str, str]]]:
         parsed = URL(uri)
 
         path = parsed.fragment or cls.default_path
@@ -93,7 +94,7 @@ class GenericJSONAPI(Adapter):
         self,
         uri: str,
         path: Optional[str] = None,
-        request_headers: Optional[Dict[str, str]] = None,
+        request_headers: Optional[dict[str, str]] = None,
         cache_expiration: float = CACHE_EXPIRATION.total_seconds(),
     ):
         super().__init__()
@@ -125,16 +126,16 @@ class GenericJSONAPI(Adapter):
             if column_name != "rowid"
         }
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         return self.columns
 
     get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
 
     def get_data(  # pylint: disable=unused-argument, too-many-arguments
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
-        requested_columns: Optional[Set[str]] = None,
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
+        requested_columns: Optional[set[str]] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
         response = self._session.get(self.uri)

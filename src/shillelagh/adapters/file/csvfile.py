@@ -15,9 +15,10 @@ import logging
 import os
 import tempfile
 import urllib.parse
+from collections.abc import Iterator
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple, cast
+from typing import Any, Optional, cast
 
 import requests
 
@@ -123,7 +124,7 @@ class CSVFile(Adapter):
         return "text/csv" in response.headers.get("content-type", "")
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[str]:
+    def parse_uri(uri: str) -> tuple[str]:
         return (uri,)
 
     def __init__(self, path_or_uri: str):
@@ -180,13 +181,13 @@ class CSVFile(Adapter):
         self.last_row = row_tracker.last_row
         self.num_rows = num_rows
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         return self.columns
 
     def get_cost(
         self,
-        filtered_columns: List[Tuple[str, Operator]],
-        order: List[Tuple[str, RequestedOrder]],
+        filtered_columns: list[tuple[str, Operator]],
+        order: list[tuple[str, RequestedOrder]],
     ) -> float:
         cost = INITIAL_COST
 
@@ -204,8 +205,8 @@ class CSVFile(Adapter):
 
     def get_data(
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
         **kwargs: Any,

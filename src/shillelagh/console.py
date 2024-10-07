@@ -23,8 +23,9 @@ import logging
 import os.path
 import sys
 import time
+from collections.abc import Iterable, Iterator
 from pathlib import Path
-from typing import Iterable, Iterator, Optional
+from typing import Optional
 
 import yaml
 from appdirs import user_config_dir

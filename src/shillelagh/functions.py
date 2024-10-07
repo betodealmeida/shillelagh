@@ -7,7 +7,7 @@ import json
 import sys
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Optional
 
 import pip
 from packaging.version import InvalidVersion, Version
@@ -53,8 +53,8 @@ def sleep(seconds: int) -> None:
 
 
 def get_metadata(
-    adapter_kwargs: Dict[str, Dict[str, Any]],
-    adapters: List[Type[Adapter]],
+    adapter_kwargs: dict[str, dict[str, Any]],
+    adapters: list[type[Adapter]],
     uri: str,
 ) -> str:
     """

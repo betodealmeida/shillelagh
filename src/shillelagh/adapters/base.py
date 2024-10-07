@@ -2,7 +2,8 @@
 
 import atexit
 import inspect
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from collections.abc import Iterator
+from typing import Any, Optional
 
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.fields import Field, RowID
@@ -91,15 +92,15 @@ class Adapter:
         raise NotImplementedError("Subclasses must implement ``supports``")
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[Any, ...]:
+    def parse_uri(uri: str) -> tuple[Any, ...]:
         """Parse table name, and return arguments to instantiate adapter."""
         raise NotImplementedError("Subclasses must implement ``parse_uri``")
 
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self) -> dict[str, Any]:
         """Return any extra metadata about the table."""
         return {}
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         """
         Return the columns available in the table.
 
@@ -113,8 +114,8 @@ class Adapter:
 
     def get_cost(  # pylint: disable=unused-argument
         self,
-        filtered_columns: List[Tuple[str, Operator]],
-        order: List[Tuple[str, RequestedOrder]],
+        filtered_columns: list[tuple[str, Operator]],
+        order: list[tuple[str, RequestedOrder]],
     ) -> float:
         """
         Estimate the query cost.
@@ -126,8 +127,8 @@ class Adapter:
 
     def get_data(
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         **kwargs: Any,
     ) -> Iterator[Row]:
         """
@@ -145,8 +146,8 @@ class Adapter:
 
     def get_rows(
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         **kwargs: Any,
     ) -> Iterator[Row]:
         """

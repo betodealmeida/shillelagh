@@ -48,7 +48,7 @@ def Time(  # pylint: disable=invalid-name
     return datetime.time(hour, minute, second, tzinfo=datetime.timezone.utc)
 
 
-def Timestamp(  # pylint: disable=invalid-name, too-many-arguments
+def Timestamp(  # pylint: disable=invalid-name, too-many-arguments, too-many-positional-arguments
     year: int,
     month: int,
     day: int,

@@ -7,7 +7,8 @@ This is a derivation of the generic JSON adapter that handles Preset auth.
 import itertools
 import logging
 import re
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, cast
+from collections.abc import Iterator
+from typing import Any, Optional, cast
 
 import jsonpath
 import prison
@@ -61,7 +62,7 @@ class PresetAPI(GenericJSONAPI):
             and re.match(r"api\.app(-\w+)?\.preset\.io", parsed.host) is not None
         )
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         uri: str,
         path: Optional[str] = None,
@@ -149,9 +150,9 @@ class PresetWorkspaceAPI(PresetAPI):
 
     def get_data(  # pylint: disable=unused-argument, too-many-arguments, too-many-locals
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
-        requested_columns: Optional[Set[str]] = None,
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
+        requested_columns: Optional[set[str]] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
         for url in get_urls(self.uri, MAX_PAGE_SIZE):

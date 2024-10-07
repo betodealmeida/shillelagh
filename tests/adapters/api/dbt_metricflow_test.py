@@ -7,7 +7,7 @@ Tests for the DbtMetricFlowAPI adapter.
 import base64
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import MagicMock, call
 
 import pandas as pd
@@ -583,7 +583,7 @@ def test_build_where(
         123456,
     )
 
-    columns: Dict[str, Field] = {
+    columns: dict[str, Field] = {
         "is_food_order": Boolean(),
         "order_id": Integer(),
         "order_id__ordered_at__month": Date(),
@@ -941,7 +941,7 @@ def test_build_orderbys_error(
 
 
 @pytest.mark.slow_integration_test
-def test_integration(adapter_kwargs: Dict[str, Any]) -> None:
+def test_integration(adapter_kwargs: dict[str, Any]) -> None:
     """
     Full integration test running a query.
     """

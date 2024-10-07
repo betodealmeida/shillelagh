@@ -4,7 +4,7 @@ A SQLAlchemy dialect based on psycopg2 and multicorn2.
 
 # pylint: disable=protected-access, abstract-method
 
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Optional, cast
 
 from psycopg2 import extensions
 from sqlalchemy.dialects.postgresql.psycopg2 import PGDialect_psycopg2
@@ -28,7 +28,7 @@ class Multicorn2Dialect(PGDialect_psycopg2):
     supports_statement_cache = True
 
     @classmethod
-    def dbapi(cls):
+    def dbapi(cls):  # pylint: disable=method-hidden
         """
         Return the DB API module.
         """
@@ -43,8 +43,8 @@ class Multicorn2Dialect(PGDialect_psycopg2):
 
     def __init__(
         self,
-        adapters: Optional[List[str]] = None,
-        adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+        adapters: Optional[list[str]] = None,
+        adapter_kwargs: Optional[dict[str, dict[str, Any]]] = None,
         **kwargs: Any,
     ):
         super().__init__(**kwargs)
@@ -54,7 +54,7 @@ class Multicorn2Dialect(PGDialect_psycopg2):
     def create_connect_args(
         self,
         url: URL,
-    ) -> Tuple[List[Any], Dict[str, Any]]:
+    ) -> tuple[list[Any], dict[str, Any]]:
         args, kwargs = super().create_connect_args(url)
         kwargs.update(
             {

@@ -4,7 +4,8 @@ An adapter for fetching XML data.
 
 import logging
 import xml.etree.ElementTree as ET
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
+from collections.abc import Iterator
+from typing import Any, Optional
 
 from defusedxml import ElementTree as DET
 
@@ -26,7 +27,7 @@ def element_to_dict(element: ET.Element) -> Any:
     if element.text and element.text.strip():
         return element.text.strip()
 
-    result: Dict[str, Any] = {}
+    result: dict[str, Any] = {}
     for child in element:
         child_data = element_to_dict(child)
         if child.tag in result:
@@ -58,9 +59,9 @@ class GenericXMLAPI(GenericJSONAPI):
 
     def get_data(  # pylint: disable=unused-argument, too-many-arguments
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
-        requested_columns: Optional[Set[str]] = None,
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
+        requested_columns: Optional[set[str]] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
         response = self._session.get(self.uri)

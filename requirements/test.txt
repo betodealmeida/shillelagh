@@ -7,103 +7,116 @@
 #
 -e file:.
     # via -r requirements/test.in
-aiohttp==3.9.5
+aiohappyeyeballs==2.4.3
+    # via aiohttp
+aiohttp==3.10.9
     # via python-graphql-client
 aiosignal==1.3.1
     # via aiohttp
 appdirs==1.4.4
     # via shillelagh
-apsw==3.45.3.0
+apsw==3.46.1.0
     # via shillelagh
-astroid==2.14.2
+astroid==3.3.5
     # via pylint
-attrs==21.4.0
+async-timeout==4.0.3
+    # via aiohttp
+attrs==24.2.0
     # via
     #   aiohttp
     #   cattrs
-    #   pytest
     #   requests-cache
-beautifulsoup4==4.11.1
+beautifulsoup4==4.12.3
     # via shillelagh
-boto3==1.24.35
+boto3==1.35.35
     # via shillelagh
-botocore==1.27.35
+botocore==1.35.35
     # via
     #   boto3
     #   s3transfer
-build==0.8.0
+build==1.2.2.post1
     # via pip-tools
-cachetools==5.2.0
+cachetools==5.5.0
     # via google-auth
-cattrs==22.2.0
+cattrs==24.1.2
     # via requests-cache
-certifi==2022.6.15
+certifi==2024.8.30
     # via requests
-cfgv==3.3.1
+cfgv==3.4.0
     # via pre-commit
-charset-normalizer==2.1.0
+charset-normalizer==3.3.2
     # via requests
-click==8.1.3
+click==8.1.7
     # via
     #   pip-compile-multi
     #   pip-tools
-codespell==2.1.0
+codespell==2.3.0
     # via shillelagh
-coverage[toml]==6.4.2
+coverage[toml]==7.6.1
     # via pytest-cov
 defusedxml==0.7.1
     # via shillelagh
-dill==0.3.6
+dill==0.3.9
     # via
     #   pylint
     #   shillelagh
-distlib==0.3.5
+distlib==0.3.8
     # via virtualenv
-filelock==3.7.1
+exceptiongroup==1.2.2
+    # via
+    #   cattrs
+    #   pytest
+filelock==3.16.1
     # via virtualenv
-freezegun==1.2.1
+flake8==7.1.1
+    # via flake8-pyproject
+flake8-pyproject==1.2.3
+    # via shillelagh
+freezegun==1.5.1
     # via shillelagh
 frozenlist==1.4.1
     # via
     #   aiohttp
     #   aiosignal
-google-auth==2.9.1
+google-auth==2.35.0
     # via shillelagh
-greenlet==2.0.2
-    # via
-    #   shillelagh
-    #   sqlalchemy
-holidays==0.35
+greenlet==3.1.1
+    # via shillelagh
+holidays==0.58
     # via shillelagh
 html5lib==1.1
     # via shillelagh
-identify==2.5.2
+identify==2.6.1
     # via pre-commit
-idna==3.3
+idna==3.10
     # via
     #   requests
     #   yarl
-iniconfig==1.1.1
+importlib-metadata==8.5.0
+    # via
+    #   build
+    #   shillelagh
+iniconfig==2.0.0
     # via pytest
-isort==5.10.1
+isort==5.13.2
     # via pylint
 jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-lazy-object-proxy==1.7.1
-    # via astroid
 mccabe==0.7.0
-    # via pylint
+    # via
+    #   flake8
+    #   pylint
 multicorn @ git+https://github.com/pgsql-io/multicorn2.git@v2.5
     # via shillelagh
-multidict==6.0.2
+multidict==6.1.0
     # via
     #   aiohttp
     #   yarl
-nodeenv==1.7.0
+nodeenv==1.9.1
     # via pre-commit
-numpy==1.23.1
+numpy==2.0.2
     # via
     #   pandas
     #   pyarrow
@@ -112,61 +125,65 @@ packaging==24.1
     #   build
     #   pytest
     #   shillelagh
-pandas==1.4.3
+pandas==2.2.3
     # via shillelagh
-pep517==0.12.0
-    # via build
-pip-compile-multi==2.6.3
+pip-compile-multi==2.6.4
     # via shillelagh
-pip-tools==6.8.0
+pip-tools==7.4.1
     # via
     #   pip-compile-multi
     #   shillelagh
-platformdirs==2.5.2
+platformdirs==4.3.6
     # via
     #   pylint
     #   requests-cache
     #   virtualenv
-pluggy==1.0.0
+pluggy==1.5.0
     # via pytest
-pre-commit==2.20.0
+pre-commit==4.0.0
     # via shillelagh
 prison==0.2.1
     # via shillelagh
-prompt-toolkit==3.0.30
+prompt-toolkit==3.0.48
     # via shillelagh
-psutil==5.9.1
-    # via shillelagh
-pyarrow==16.0.0
+psutil==6.0.0
     # via shillelagh
 psycopg2-binary==2.9.9
     # via shillelagh
-pyasn1==0.4.8
+pyarrow==17.0.0
+    # via shillelagh
+pyasn1==0.6.1
     # via
     #   pyasn1-modules
     #   rsa
-pyasn1-modules==0.2.8
+pyasn1-modules==0.4.1
     # via google-auth
-pyfakefs==4.6.3
+pycodestyle==2.12.1
+    # via flake8
+pyfakefs==5.6.0
     # via shillelagh
-pygments==2.12.0
+pyflakes==3.2.0
+    # via flake8
+pygments==2.18.0
     # via shillelagh
-pylint==2.16.2
+pylint==3.3.1
     # via shillelagh
-pyparsing==3.0.9
-    # via packaging
-pytest==7.2.0
+pyproject-hooks==1.2.0
+    # via
+    #   build
+    #   pip-tools
+pytest==8.3.3
     # via
     #   pytest-cov
     #   pytest-mock
     #   shillelagh
-pytest-cov==3.0.0
+pytest-cov==5.0.0
     # via shillelagh
 pytest-integration==0.2.2
     # via shillelagh
-pytest-mock==3.8.2
+pytest-mock==3.14.0
     # via shillelagh
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   botocore
     #   freezegun
@@ -175,80 +192,89 @@ python-dateutil==2.8.2
     #   shillelagh
 python-graphql-client==0.4.3
     # via shillelagh
-python-jsonpath==0.10.3
+python-jsonpath==1.2.0
     # via shillelagh
-pytz==2022.1
+pytz==2024.2
     # via pandas
-pyyaml==6.0
+pyyaml==6.0.2
     # via
     #   pre-commit
     #   shillelagh
-requests==2.31.0
+requests==2.32.3
     # via
     #   python-graphql-client
     #   requests-cache
     #   requests-mock
     #   shillelagh
-requests-cache==1.0.1
+requests-cache==1.2.1
     # via shillelagh
-requests-mock==1.9.3
+requests-mock==1.12.1
     # via shillelagh
 rsa==4.9
     # via google-auth
-ruff==0.3.7
+ruff==0.6.9
     # via shillelagh
-s3transfer==0.6.0
+s3transfer==0.10.2
     # via boto3
 six==1.16.0
     # via
-    #   google-auth
     #   html5lib
     #   prison
     #   python-dateutil
-    #   requests-mock
     #   url-normalize
-    #   virtualenv
-soupsieve==2.3.2.post1
+soupsieve==2.6
     # via beautifulsoup4
-sqlalchemy==1.4.39
+sqlalchemy==2.0.35
     # via shillelagh
-sqlglot==23.11.2
+sqlglot==25.24.4
     # via shillelagh
-tabulate==0.8.9
+tabulate==0.9.0
     # via shillelagh
-toml==0.10.2
-    # via pre-commit
-tomli==2.0.1
-    # via pep517
-tomlkit==0.11.1
+tomli==2.0.2
+    # via
+    #   build
+    #   coverage
+    #   flake8-pyproject
+    #   pip-tools
+    #   pylint
+    #   pytest
+tomlkit==0.13.2
     # via pylint
 toposort==1.10
     # via pip-compile-multi
-typing-extensions==4.3.0
-    # via shillelagh
+typing-extensions==4.12.2
+    # via
+    #   astroid
+    #   cattrs
+    #   multidict
+    #   pylint
+    #   shillelagh
+    #   sqlalchemy
+tzdata==2024.2
+    # via pandas
 url-normalize==1.4.3
     # via requests-cache
-urllib3==1.26.10
+urllib3==1.26.20
     # via
     #   botocore
     #   requests
     #   requests-cache
-virtualenv==20.15.1
+virtualenv==20.26.6
     # via pre-commit
-wcwidth==0.2.5
+wcwidth==0.2.13
     # via prompt-toolkit
 webencodings==0.5.1
     # via html5lib
-websockets==12.0
+websockets==13.1
     # via python-graphql-client
-wheel==0.37.1
+wheel==0.44.0
     # via pip-tools
-wrapt==1.14.1
-    # via astroid
-yarl==1.8.1
+yarl==1.13.1
     # via
     #   aiohttp
     #   shillelagh
+zipp==3.20.2
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

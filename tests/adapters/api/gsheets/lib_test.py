@@ -3,7 +3,7 @@ Tests for shillelagh.adapters.api.gsheets.lib.
 """
 
 import itertools
-from typing import List, cast
+from typing import cast
 
 import dateutil.tz
 import pytest
@@ -129,7 +129,7 @@ def test_format_error_message() -> None:
         ],
     }
     assert (
-        format_error_message(cast(List[QueryResultsError], response["errors"]))
+        format_error_message(cast(list[QueryResultsError], response["errors"]))
         == "Invalid query: NO_COLUMN: C"
     )
 

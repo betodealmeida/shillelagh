@@ -8,9 +8,10 @@ See https://github.com/giampaolo/psutil for more information.
 import logging
 import time
 import urllib.parse
+from collections.abc import Iterator
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Type, Union
+from typing import Any, Optional, Union
 
 import psutil
 
@@ -24,7 +25,7 @@ _logger = logging.getLogger(__name__)
 AVERAGE_NUMBER_OF_ROWS = 100
 
 
-MEMORY_COLUMNS: Dict[str, Type[Field]] = {
+MEMORY_COLUMNS: dict[str, type[Field]] = {
     "total": Integer,
     "available": Integer,
     "percent": Float,
@@ -34,7 +35,7 @@ MEMORY_COLUMNS: Dict[str, Type[Field]] = {
     "inactive": Integer,
     "wired": Integer,
 }
-SWAP_COLUMNS: Dict[str, Type[Field]] = {
+SWAP_COLUMNS: dict[str, type[Field]] = {
     "total": Integer,
     "used": Integer,
     "free": Integer,
@@ -55,14 +56,14 @@ class ResourceType(str, Enum):
     ALL = "all"
 
 
-def get_columns(resource: ResourceType) -> Dict[str, Field]:
+def get_columns(resource: ResourceType) -> dict[str, Field]:
     """
     Build columns depending on the chosen resource.
     """
     memory_prefix = "virtual_" if resource == ResourceType.ALL else ""
     swap_prefix = "swap_" if resource == ResourceType.ALL else ""
 
-    columns: Dict[str, Field] = {}
+    columns: dict[str, Field] = {}
 
     if resource in {ResourceType.CPU, ResourceType.ALL}:
         columns.update(
@@ -121,7 +122,7 @@ class SystemAPI(Adapter):
         )
 
     @staticmethod
-    def parse_uri(uri: str) -> Union[Tuple[str], Tuple[str, float]]:
+    def parse_uri(uri: str) -> Union[tuple[str], tuple[str, float]]:
         parsed = urllib.parse.urlparse(uri)
         resource = parsed.netloc or "all"
         query_string = urllib.parse.parse_qs(parsed.query)
@@ -139,21 +140,21 @@ class SystemAPI(Adapter):
         self._set_columns()
 
     def _set_columns(self) -> None:
-        self.columns: Dict[str, Field] = {
+        self.columns: dict[str, Field] = {
             "timestamp": DateTime(filters=None, order=Order.ASCENDING, exact=False),
         }
         self.columns.update(get_columns(self.resource))
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         return self.columns
 
-    def get_data(  # pylint: disable=too-many-arguments
+    def get_data(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-        requested_columns: Optional[Set[str]] = None,
+        requested_columns: Optional[set[str]] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
         requested_columns = requested_columns or set(self.columns.keys())
@@ -163,7 +164,7 @@ class SystemAPI(Adapter):
             if offset is not None:
                 time.sleep(self.interval * offset)
 
-            row: Dict[str, Any] = {"rowid": rowid}
+            row: dict[str, Any] = {"rowid": rowid}
             if "timestamp" in requested_columns:
                 row["timestamp"] = datetime.now(timezone.utc)
 

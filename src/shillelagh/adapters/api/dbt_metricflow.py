@@ -28,7 +28,8 @@ import logging
 import re
 import time
 from collections import defaultdict
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, TypedDict, cast
+from collections.abc import Iterator
+from typing import Any, Optional, TypedDict, cast
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -181,7 +182,7 @@ def find_cursor() -> Optional[Cursor]:
     return None
 
 
-def extract_columns_from_sql(table: str, columns: Set[str], sql: str) -> Set[str]:
+def extract_columns_from_sql(table: str, columns: set[str], sql: str) -> set[str]:
     """
     Parse the SQL and extract requested columns.
     """
@@ -283,7 +284,7 @@ class DbtMetricFlowAPI(Adapter):
         )
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[str]:
+    def parse_uri(uri: str) -> tuple[str]:
         return (uri,)
 
     def __init__(self, table: str, service_token: str, environment_id: int):
@@ -317,12 +318,12 @@ class DbtMetricFlowAPI(Adapter):
             variables={"environmentId": self.environment_id},
         )
 
-        self.columns: Dict[str, Field] = {}
-        self.metrics: Dict[str, str] = {}
-        self.dimensions: Dict[str, str] = {}
-        self.grains: Dict[str, Tuple[str, str]] = {}
+        self.columns: dict[str, Field] = {}
+        self.metrics: dict[str, str] = {}
+        self.dimensions: dict[str, str] = {}
+        self.grains: dict[str, tuple[str, str]] = {}
 
-        built_dimensions: Set[str] = set()
+        built_dimensions: set[str] = set()
         for metric in payload["data"]["metrics"]:
             self.columns[metric["name"]] = Decimal()
             self.metrics[metric["name"]] = metric["description"]
@@ -377,7 +378,7 @@ class DbtMetricFlowAPI(Adapter):
 
         return cast(str, payload["data"]["query"]["arrowResult"])
 
-    def _get_metrics_for_dimensions(self, dimensions: Set[str]) -> Set[str]:
+    def _get_metrics_for_dimensions(self, dimensions: set[str]) -> set[str]:
         """
         Get metrics for a set of dimensions.
         """
@@ -391,7 +392,7 @@ class DbtMetricFlowAPI(Adapter):
 
         return {metric["name"] for metric in payload["data"]["metricsForDimensions"]}
 
-    def _get_dimensions_for_metrics(self, metrics: Set[str]) -> Set[str]:
+    def _get_dimensions_for_metrics(self, metrics: set[str]) -> set[str]:
         """
         Get dimensions for a set of metrics.
         """
@@ -403,14 +404,14 @@ class DbtMetricFlowAPI(Adapter):
             },
         )
 
-        reverse_grain: Dict[str, Set[str]] = defaultdict(set)
+        reverse_grain: dict[str, set[str]] = defaultdict(set)
         for alias, (
             name,
             grain,  # pylint: disable=unused-variable
         ) in self.grains.items():
             reverse_grain[name].add(alias)
 
-        dimensions: Set[str] = set()
+        dimensions: set[str] = set()
         for dimension in payload["data"]["dimensions"]:
             if dimension["name"] in self.dimensions:
                 dimensions.add(dimension["name"])
@@ -505,13 +506,13 @@ class DbtMetricFlowAPI(Adapter):
 
     def _build_where(
         self,
-        columns: Dict[str, Field],
-        bounds: Dict[str, Filter],
-    ) -> List[WhereInput]:
+        columns: dict[str, Field],
+        bounds: dict[str, Filter],
+    ) -> list[WhereInput]:
         """
         Build a ``WhereInput`` list from the bounds to filter in GraphQL.
         """
-        where: List[WhereInput] = []
+        where: list[WhereInput] = []
         for column_name, filter_ in bounds.items():
             if isinstance(filter_, Impossible):
                 raise ImpossibleFilterError()
@@ -549,8 +550,8 @@ class DbtMetricFlowAPI(Adapter):
 
     def _build_groupbys(
         self,
-        requested_columns: Set[str],
-    ) -> List[GroupByInput]:
+        requested_columns: set[str],
+    ) -> list[GroupByInput]:
         """
         Build group bys based on the requested columns and the SQL query.
         """
@@ -562,9 +563,9 @@ class DbtMetricFlowAPI(Adapter):
 
     def _build_orderbys(
         self,
-        order: List[Tuple[str, RequestedOrder]],
-        groupbys: List[GroupByInput],
-    ) -> List[OrderByInput]:
+        order: list[tuple[str, RequestedOrder]],
+        groupbys: list[GroupByInput],
+    ) -> list[OrderByInput]:
         """
         Build order bys based on the requested columns and the SQL query.
         """
@@ -587,13 +588,13 @@ class DbtMetricFlowAPI(Adapter):
 
         return orderbys
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         return self.columns
 
     def get_data(
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:

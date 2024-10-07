@@ -1,6 +1,7 @@
 """
 Tests for the s3select adapter.
 """
+
 # pylint: disable=unused-argument, redefined-outer-name, use-implicit-booleaness-not-comparison
 
 from typing import cast
@@ -9,7 +10,6 @@ from urllib.parse import urlparse
 
 import pytest
 from botocore import UNSIGNED
-from botocore.config import Config
 from pytest_mock import MockerFixture
 
 from shillelagh.adapters.api.s3select import (
@@ -169,10 +169,11 @@ def test_s3select_with_kwargs_auth(boto3: MagicMock) -> None:
     sql = 'SELECT * FROM "s3://bucket/file.csv"'
     data = list(cursor.execute(sql))
     assert data == [("Sam", "(949) 555-1234", "Irvine", "Solutions Architect")]
-    assert boto3.client.called_with(
+    boto3.client.assert_called_with(
         "s3",
         aws_access_key_id="XXX",
         aws_secret_access_key="YYY",
+        endpoint_url=None,
     )
 
 
@@ -187,13 +188,15 @@ def test_s3_select_environment_auth(boto3: MagicMock) -> None:
     sql = 'SELECT * FROM "s3://bucket/file.csv"'
     data = list(cursor.execute(sql))
     assert data == [("Sam", "(949) 555-1234", "Irvine", "Solutions Architect")]
-    assert boto3.client.called_with("s3")
+    boto3.client.assert_called_with("s3", endpoint_url=None)
 
 
-def test_s3_select_no_auth(boto3: MagicMock) -> None:
+def test_s3_select_no_auth(mocker: MockerFixture, boto3: MagicMock) -> None:
     """
     Test the adapter when no credential are passed or found.
     """
+    # pylint: disable=invalid-name
+    Config = mocker.patch("shillelagh.adapters.api.s3select.Config")
     boto3.session.Session().get_credentials.return_value = None
     connection = connect(":memory:")
     cursor = connection.cursor()
@@ -201,7 +204,11 @@ def test_s3_select_no_auth(boto3: MagicMock) -> None:
     sql = 'SELECT * FROM "s3://bucket/file.csv"'
     data = list(cursor.execute(sql))
     assert data == [("Sam", "(949) 555-1234", "Irvine", "Solutions Architect")]
-    assert boto3.client.called_with("s3", config=Config(signature_version=UNSIGNED))
+    boto3.client.assert_called_with(
+        "s3",
+        config=Config(signature_version=UNSIGNED),
+        endpoint_url=None,
+    )
 
 
 def test_drop_table(boto3: MagicMock) -> None:

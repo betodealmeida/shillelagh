@@ -3,7 +3,8 @@ An adapter for in-memory holidays.
 """
 
 import datetime
-from typing import Any, Iterator, List, Optional, Tuple, TypedDict
+from collections.abc import Iterator
+from typing import Any, Optional, TypedDict
 
 from holidays import country_holidays, list_supported_countries
 
@@ -46,7 +47,7 @@ class HolidaysMemory(Adapter):
         return uri == "holidays"
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[()]:
+    def parse_uri(uri: str) -> tuple[()]:
         return ()
 
     get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
@@ -54,7 +55,7 @@ class HolidaysMemory(Adapter):
     def get_data(  # type: ignore
         self,
         bounds: BoundsType,
-        order: List[Tuple[str, RequestedOrder]],
+        order: list[tuple[str, RequestedOrder]],
         **kwargs: Any,
     ) -> Iterator[Row]:
         countries = (

@@ -4,7 +4,8 @@ import datetime
 import itertools
 import string
 import urllib.parse
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
+from collections.abc import Iterator
+from typing import Any, Optional
 
 import google.auth
 import google.oauth2.credentials
@@ -54,7 +55,7 @@ def get_field(
     if col["type"] in {"datetime", "timeofday"} and "pattern" in col:
         col["type"] = infer_column_type(col["pattern"].lower())
 
-    type_map: Dict[str, Tuple[Type[GSheetsField], List[Type[Filter]]]] = {
+    type_map: dict[str, tuple[type[GSheetsField], list[type[Filter]]]] = {
         "string": (GSheetsString, [Range, Equal, NotEqual, Like, IsNull, IsNotNull]),
         "number": (GSheetsNumber, [Range, Equal, NotEqual, IsNull, IsNotNull]),
         "boolean": (GSheetsBoolean, [Equal, NotEqual, IsNull, IsNotNull]),
@@ -76,7 +77,7 @@ def get_field(
     )
 
 
-def format_error_message(errors: List[QueryResultsError]) -> str:
+def format_error_message(errors: list[QueryResultsError]) -> str:
     """
     Return an error message from a Google Chart API error response.
     """
@@ -196,7 +197,7 @@ def get_index_from_letters(letters: str) -> int:
     )
 
 
-def get_values_from_row(row: Row, column_map: Dict[str, str]) -> List[Any]:
+def get_values_from_row(row: Row, column_map: dict[str, str]) -> list[Any]:
     """
     Convert a ``Row`` into a list of values.
 
@@ -215,7 +216,7 @@ def get_values_from_row(row: Row, column_map: Dict[str, str]) -> List[Any]:
 def get_credentials(
     access_token: Optional[str] = None,
     service_account_file: Optional[str] = None,
-    service_account_info: Optional[Dict[str, Any]] = None,
+    service_account_info: Optional[dict[str, Any]] = None,
     subject: Optional[str] = None,
     app_default_credentials: Optional[bool] = False,
 ) -> Optional[Credentials]:
