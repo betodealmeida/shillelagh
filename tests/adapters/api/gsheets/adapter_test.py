@@ -6,7 +6,8 @@ Tests for shillelagh.adapters.api.gsheets.adapter.
 
 import datetime
 import json
-from typing import Any, Iterator, List
+from collections.abc import Iterator
+from typing import Any
 from unittest import mock
 
 import apsw
@@ -2295,7 +2296,7 @@ def test_header_rows(mocker: MockerFixture) -> None:
     gsheets_adapter.columns = {"this is a string": String(), "this is a float": Float()}
     gsheets_adapter._column_map = {"this is a string": "B", "this is a float": "D"}
 
-    values: List[List[Any]] = [
+    values: list[list[Any]] = [
         [None, "this is", None, "this is"],
         [None, "a string", None, "a float"],
         [None, "test", None, 1.1],

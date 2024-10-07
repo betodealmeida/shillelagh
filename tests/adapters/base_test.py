@@ -2,8 +2,9 @@
 Test for shillelagh.adapter.base.
 """
 
+from collections.abc import Iterator
 from datetime import datetime
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
+from typing import Any, Optional
 
 import pytest
 
@@ -25,7 +26,7 @@ class FakeAdapterWithDateTime(FakeAdapter):
 
     birthday = DateTime(filters=[Range], order=Order.ANY, exact=True)
 
-    data: List[Row] = []
+    data: list[Row] = []
 
     def __init__(self):  # pylint: disable=super-init-not-called
         pass
@@ -195,13 +196,13 @@ def test_limit_offset(registry: AdapterLoader) -> None:
                 {"rowid": None, "name": "Charlie", "age": 6, "pets": 1},
             ]
 
-        def get_data(  # pylint: disable=too-many-arguments
+        def get_data(  # pylint: disable=too-many-arguments, too-many-positional-arguments
             self,
-            bounds: Dict[str, Filter],
-            order: List[Tuple[str, RequestedOrder]],
+            bounds: dict[str, Filter],
+            order: list[tuple[str, RequestedOrder]],
             limit: Optional[int] = None,
             offset: Optional[int] = None,
-            requested_columns: Optional[Set[str]] = None,
+            requested_columns: Optional[set[str]] = None,
             **kwargs: Any,
         ) -> Iterator[Row]:
             """
@@ -256,17 +257,17 @@ def test_limit_offset(registry: AdapterLoader) -> None:
     assert cursor.fetchall() == [(23, "Bob", 3)]
 
     # adapter returns 3 rows (even though it says it supports ``LIMIT``), SQLite then
-    # applies offset and enforces limit
+    # ignores offset and enforces limit
     cursor.execute('SELECT * FROM "limit://" LIMIT 1 OFFSET 1')
-    assert cursor.fetchall() == [(23, "Bob", 3)]
+    assert cursor.fetchall() == [(20, "Alice", 0)]
 
     # adapter returns 3 rows, SQLite enforces limit but doesn't apply offset
     cursor.execute('SELECT * FROM "limit+offset://" LIMIT 1 OFFSET 1')
     assert cursor.fetchall() == [(20, "Alice", 0)]
 
     # adapter returns 3 rows, SQLite enforces limit but doesn't apply offset
-    # cursor.execute('SELECT * FROM "offset://" LIMIT 1 OFFSET 1')
-    # assert cursor.fetchall() == [(20, "Alice", 0)]
+    cursor.execute('SELECT * FROM "offset://" LIMIT 1 OFFSET 1')
+    assert cursor.fetchall() == [(20, "Alice", 0)]
 
 
 def test_type_conversion(registry: AdapterLoader) -> None:

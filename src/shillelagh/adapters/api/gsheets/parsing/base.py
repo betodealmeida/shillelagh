@@ -3,8 +3,9 @@ Token for parsing date and time.
 """
 
 import re
+from collections.abc import Iterator
 from datetime import date, datetime, time, timedelta
-from typing import Any, Dict, Generic, Iterator, List, Tuple, Type, TypeVar
+from typing import Any, Generic, TypeVar
 
 Valid = TypeVar("Valid", datetime, date, time, timedelta, str, int, float)
 
@@ -23,7 +24,7 @@ class Token(Generic[Valid]):
     def match(
         cls,
         pattern: str,
-        history: List["Token"],  # pylint: disable=unused-argument
+        history: list["Token"],  # pylint: disable=unused-argument
     ) -> bool:
         """
         Check if token handles the beginning of the pattern.
@@ -34,8 +35,8 @@ class Token(Generic[Valid]):
     def consume(
         cls,
         pattern: str,
-        history: List["Token"],  # pylint: disable=unused-argument
-    ) -> Tuple["Token", str]:
+        history: list["Token"],  # pylint: disable=unused-argument
+    ) -> tuple["Token", str]:
         """
         Consume the pattern, returning the token and the remaining pattern.
         """
@@ -46,13 +47,13 @@ class Token(Generic[Valid]):
         token = match.group()
         return cls(token), pattern[len(token) :]
 
-    def format(self, value: Valid, tokens: List["Token"]) -> str:
+    def format(self, value: Valid, tokens: list["Token"]) -> str:
         """
         Format the value using the pattern.
         """
         raise NotImplementedError("Subclasses MUST implement ``format``")
 
-    def parse(self, value: str, tokens: List["Token"]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: list["Token"]) -> tuple[dict[str, Any], str]:
         """
         Parse the value given a pattern.
 
@@ -80,7 +81,7 @@ class LITERAL(Token):
     def format(
         self,
         value: Valid,
-        tokens: List[Token],
+        tokens: list[Token],
     ) -> str:
         if self.token.startswith("\\"):
             return self.token[1:]
@@ -88,7 +89,7 @@ class LITERAL(Token):
             return self.token[1:-1]
         return self.token
 
-    def parse(self, value: str, tokens: List[Token]) -> Tuple[Dict[str, Any], str]:
+    def parse(self, value: str, tokens: list[Token]) -> tuple[dict[str, Any], str]:
         if self.token.startswith("\\"):
             size = 1
             if not value[:size] == self.token[1:]:
@@ -104,11 +105,11 @@ class LITERAL(Token):
         return {}, value[size:]
 
 
-def tokenize(pattern: str, classes: List[Type[Token]]) -> Iterator[Token]:
+def tokenize(pattern: str, classes: list[type[Token]]) -> Iterator[Token]:
     """
     Tokenize a pattern.
     """
-    tokens: List[Token] = []
+    tokens: list[Token] = []
     while pattern:
         for class_ in classes:  # pragma: no cover
             if class_.match(pattern, tokens):

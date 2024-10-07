@@ -5,7 +5,7 @@ Tests for shillelagh.backends.apsw.db.
 # pylint: disable=protected-access, c-extension-no-member, too-few-public-methods
 
 import datetime
-from typing import Any, List, Tuple
+from typing import Any
 from unittest import mock
 
 import apsw
@@ -20,7 +20,6 @@ from shillelagh.fields import Float, String, StringInteger
 from ...fakes import FakeAdapter
 
 
-@pytest.mark.skip("Weird apsw error")
 def test_connect(registry: AdapterLoader) -> None:
     """
     Test ``connect``.
@@ -35,19 +34,18 @@ def test_connect(registry: AdapterLoader) -> None:
     cursor.execute(
         """INSERT INTO "dummy://" (age, name, pets) VALUES (6, 'Billy', 1)""",
     )
-    # assert cursor.rowcount == 1
-    cursor.execute("""DELETE FROM "dummy://" WHERE name = 'Billy'""")
-    # assert cursor.rowcount == 1
 
     cursor.execute('SELECT * FROM "dummy://"')
-    assert cursor.fetchall() == [(20.0, "Alice", 0), (23.0, "Bob", 3)]
-    assert cursor.rowcount == 2
+    assert cursor.fetchall() == [(20, "Alice", 0), (23, "Bob", 3), (6, "Billy", 1)]
+    assert cursor.rowcount == 3
 
     cursor.execute('SELECT * FROM "dummy://"')
-    assert cursor.fetchone() == (20.0, "Alice", 0)
-    assert cursor.rowcount == 2
-    assert cursor.fetchone() == (23.0, "Bob", 3)
-    assert cursor.rowcount == 2
+    assert cursor.fetchone() == (20, "Alice", 0)
+    assert cursor.rowcount == 3
+    assert cursor.fetchone() == (23, "Bob", 3)
+    assert cursor.rowcount == 3
+    assert cursor.fetchone() == (6, "Billy", 1)
+    assert cursor.rowcount == 3
     assert cursor.fetchone() is None
 
     cursor.execute('SELECT * FROM "dummy://" WHERE age > 21')
@@ -57,9 +55,9 @@ def test_connect(registry: AdapterLoader) -> None:
 
     cursor.execute('SELECT * FROM "dummy://"')
     assert cursor.fetchmany() == [(20.0, "Alice", 0)]
-    assert cursor.fetchmany(1000) == [(23.0, "Bob", 3)]
+    assert cursor.fetchmany(1000) == [(23.0, "Bob", 3), (6.0, "Billy", 1)]
     assert cursor.fetchall() == []
-    assert cursor.rowcount == 2
+    assert cursor.rowcount == 3
 
 
 def test_connect_schema_prefix(registry: AdapterLoader) -> None:
@@ -299,7 +297,7 @@ def test_execute_many(registry: AdapterLoader) -> None:
     connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
     cursor = connection.cursor()
 
-    items: List[Tuple[Any, ...]] = [(6, "Billy", 1), (7, "Timmy", 2)]
+    items: list[tuple[Any, ...]] = [(6, "Billy", 1), (7, "Timmy", 2)]
     with pytest.raises(NotSupportedError) as excinfo:
         cursor.executemany(
             """INSERT INTO "dummy://" (age, name, pets) VALUES (?, ?, ?)""",

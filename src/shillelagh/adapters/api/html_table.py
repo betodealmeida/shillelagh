@@ -5,7 +5,8 @@ An adapter that scrapes HTML tables.
 # pylint: disable=invalid-name
 
 import urllib.parse
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from collections.abc import Iterator
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -48,7 +49,7 @@ class HTMLTableAPI(Adapter):
         return len(dataframes) > 0
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[str, int]:
+    def parse_uri(uri: str) -> tuple[str, int]:
         parsed = urllib.parse.urlparse(uri)
 
         # extract table index from anchor and remove from URI
@@ -66,15 +67,15 @@ class HTMLTableAPI(Adapter):
         self.df = pd.read_html(uri, flavor="bs4")[index]
         self.columns = get_columns_from_df(self.df)
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         return self.columns
 
     get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
 
     def get_data(
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
         **kwargs: Any,

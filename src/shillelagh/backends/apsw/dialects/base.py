@@ -4,7 +4,7 @@ A SQLALchemy dialect.
 
 # pylint: disable=protected-access, abstract-method
 
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Optional, cast
 
 import sqlalchemy.types
 from sqlalchemy.dialects.sqlite.base import SQLiteDialect
@@ -51,7 +51,7 @@ class APSWDialect(SQLiteDialect):
     # ``SQLiteDialect.colspecs`` has custom representations for objects that SQLite stores
     # as string (eg, timestamps). Since the Shillelagh DB API driver returns them as
     # proper objects the custom representations are not needed.
-    colspecs: Dict[TypeEngine, TypeEngine] = {}
+    colspecs: dict[TypeEngine, TypeEngine] = {}
 
     supports_sane_rowcount = False
 
@@ -71,8 +71,8 @@ class APSWDialect(SQLiteDialect):
 
     def __init__(
         self,
-        adapters: Optional[List[str]] = None,
-        adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+        adapters: Optional[list[str]] = None,
+        adapter_kwargs: Optional[dict[str, dict[str, Any]]] = None,
         safe: bool = False,
         **kwargs: Any,
     ):
@@ -84,7 +84,7 @@ class APSWDialect(SQLiteDialect):
     def create_connect_args(
         self,
         url: URL,
-    ) -> Tuple[Tuple[()], Dict[str, Any]]:
+    ) -> tuple[tuple[()], dict[str, Any]]:
         path = str(url.database) if url.database else ":memory:"
         return (), {
             "path": path,
@@ -141,7 +141,7 @@ class APSWDialect(SQLiteDialect):
         table_name: str,
         schema: Optional[str] = None,
         **kwargs: Any,
-    ) -> List[SQLAlchemyColumn]:
+    ) -> list[SQLAlchemyColumn]:
         adapter = get_adapter_for_table_name(connection, table_name)
         columns = adapter.get_columns()
         return [

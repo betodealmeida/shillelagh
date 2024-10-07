@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Support Python 3.12, drop support for 3.8 (#478)
+
 Version 1.3.0 - 2024-09-26
 ==========================
 

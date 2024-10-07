@@ -3,17 +3,8 @@ An FDW.
 """
 
 from collections import defaultdict
-from typing import (
-    Any,
-    DefaultDict,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    TypedDict,
-)
+from collections.abc import Iterator
+from typing import Any, DefaultDict, Optional, TypedDict
 
 from multicorn import ForeignDataWrapper, Qual, SortKey
 
@@ -32,11 +23,11 @@ operator_map = {
 }
 
 
-def get_all_bounds(quals: List[Qual]) -> DefaultDict[str, Set[Tuple[Operator, Any]]]:
+def get_all_bounds(quals: list[Qual]) -> DefaultDict[str, set[tuple[Operator, Any]]]:
     """
     Convert list of ``Qual`` into a set of operators for each column.
     """
-    all_bounds: DefaultDict[str, Set[Tuple[Operator, Any]]] = defaultdict(set)
+    all_bounds: DefaultDict[str, set[tuple[Operator, Any]]] = defaultdict(set)
     for qual in quals:
         if operator := operator_map.get(qual.operator):
             all_bounds[qual.field_name].add((operator, qual.value))
@@ -58,7 +49,7 @@ class MulticornForeignDataWrapper(ForeignDataWrapper):
     A FDW that dispatches queries to adapters.
     """
 
-    def __init__(self, options: OptionsType, columns: Dict[str, str]):
+    def __init__(self, options: OptionsType, columns: dict[str, str]):
         super().__init__(options, columns)
 
         deserialized_args = deserialize(options["args"])
@@ -67,9 +58,9 @@ class MulticornForeignDataWrapper(ForeignDataWrapper):
 
     def execute(
         self,
-        quals: List[Qual],
-        columns: List[str],
-        sortkeys: Optional[List[SortKey]] = None,
+        quals: list[Qual],
+        columns: list[str],
+        sortkeys: Optional[list[SortKey]] = None,
     ) -> Iterator[Row]:
         """
         Execute a query.
@@ -77,7 +68,7 @@ class MulticornForeignDataWrapper(ForeignDataWrapper):
         all_bounds = get_all_bounds(quals)
         bounds = get_bounds(self.columns, all_bounds)
 
-        order: List[Tuple[str, RequestedOrder]] = [
+        order: list[tuple[str, RequestedOrder]] = [
             (key.attname, Order.DESCENDING if key.is_reversed else Order.ASCENDING)
             for key in sortkeys or []
         ]
@@ -90,7 +81,7 @@ class MulticornForeignDataWrapper(ForeignDataWrapper):
 
         return self.adapter.get_rows(bounds, order, **kwargs)
 
-    def can_sort(self, sortkeys: List[SortKey]) -> List[SortKey]:
+    def can_sort(self, sortkeys: list[SortKey]) -> list[SortKey]:
         """
         Return a list of sorts the adapter can perform.
         """
@@ -129,7 +120,7 @@ class MulticornForeignDataWrapper(ForeignDataWrapper):
     def rowid_column(self):
         return "rowid"
 
-    def get_rel_size(self, quals: List[Qual], columns: List[str]) -> Tuple[int, int]:
+    def get_rel_size(self, quals: list[Qual], columns: list[str]) -> tuple[int, int]:
         """
         Estimate query cost.
         """
@@ -150,12 +141,12 @@ class MulticornForeignDataWrapper(ForeignDataWrapper):
         return (rows, row_width)
 
     @classmethod
-    def import_schema(  # pylint: disable=too-many-arguments
+    def import_schema(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         cls,
         schema: str,
-        srv_options: Dict[str, str],
-        options: Dict[str, str],
+        srv_options: dict[str, str],
+        options: dict[str, str],
         restriction_type: Optional[str],
-        restricts: List[str],
+        restricts: list[str],
     ):
         return []

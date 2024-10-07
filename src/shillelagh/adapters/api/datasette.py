@@ -6,8 +6,9 @@ See https://datasette.io/ for more information.
 
 import logging
 import urllib.parse
+from collections.abc import Iterator
 from datetime import timedelta
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, cast
+from typing import Any, Optional, cast
 
 import dateutil.parser
 
@@ -69,7 +70,7 @@ def get_field(value: Any) -> Field:
     """
     Return a Shillelagh ``Field`` based on the value type.
     """
-    class_: Type[Field] = String
+    class_: type[Field] = String
     filters = [Range, Equal, NotEqual, IsNull, IsNotNull]
 
     if isinstance(value, int):
@@ -111,7 +112,7 @@ class DatasetteAPI(Adapter):
         return is_datasette(uri)
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[str, str, str]:
+    def parse_uri(uri: str) -> tuple[str, str, str]:
         server_url, database, table = uri.rsplit("/", 2)
         return server_url, database, table
 
@@ -127,7 +128,7 @@ class DatasetteAPI(Adapter):
 
         self._set_columns()
 
-    def _run_query(self, sql: str) -> Dict[str, Any]:
+    def _run_query(self, sql: str) -> dict[str, Any]:
         """
         Run a query and return the JSON payload.
         """
@@ -135,7 +136,7 @@ class DatasetteAPI(Adapter):
         _logger.info("GET %s", url)
         response = self._session.get(url, params={"sql": sql})
         payload = response.json()
-        return cast(Dict[str, Any], payload)
+        return cast(dict[str, Any], payload)
 
     def _set_columns(self) -> None:
         # get column names first
@@ -152,22 +153,22 @@ class DatasetteAPI(Adapter):
 
         self.columns = {key: get_field(value) for key, value in zip(columns, rows[0])}
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         return self.columns
 
     get_cost = SimpleCostModel(AVERAGE_NUMBER_OF_ROWS)
 
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self) -> dict[str, Any]:
         url = f"{self.server_url}/-/metadata.json"
         response = self._session.get(url)
         payload = response.json()
         metadata = payload["databases"][self.database]["tables"][self.table]
-        return cast(Dict[str, Any], metadata)
+        return cast(dict[str, Any], metadata)
 
     def get_data(
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
         **kwargs: Any,

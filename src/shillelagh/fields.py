@@ -4,8 +4,9 @@ Fields representing columns of different types and capabilities.
 
 import datetime
 import decimal
+from collections.abc import Collection
 from enum import Enum
-from typing import Any, Collection, Generic, Optional, Type, TypeVar, Union, cast
+from typing import Any, Generic, Optional, TypeVar, Union, cast
 
 import dateutil.parser
 from sqlalchemy.dialects.sqlite.base import SQLiteDialect
@@ -13,6 +14,8 @@ from sqlalchemy.sql import literal
 
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.filters import Filter
+
+FilterType = type[Filter]
 
 Internal = TypeVar("Internal")
 
@@ -185,7 +188,7 @@ class Field(Generic[Internal, External]):
 
     def __init__(
         self,
-        filters: Optional[Collection[Type[Filter]]] = None,
+        filters: Optional[Collection[FilterType]] = None,
         order: Order = Order.NONE,
         exact: bool = False,
     ):

@@ -10,18 +10,8 @@ simplify the work of writing new adapters.
 import json
 import logging
 from collections import defaultdict
-from typing import (
-    Any,
-    DefaultDict,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    cast,
-)
+from collections.abc import Iterator
+from typing import Any, DefaultDict, Optional, cast
 
 import apsw
 
@@ -102,7 +92,7 @@ LIMIT_OFFSET_INDEX = -1
 
 # map for converting between Python native types (boolean, datetime, etc.)
 # and types understood by SQLite (integers, strings, etc.)
-type_map: Dict[str, Type[Field]] = {
+type_map: dict[str, type[Field]] = {
     field.type: field  # type: ignore
     for field in [
         Blob,
@@ -120,11 +110,11 @@ type_map: Dict[str, Type[Field]] = {
 
 
 # a row with only SQLite-valid types
-SQLiteRow = Dict[str, SQLiteValidType]
+SQLiteRow = dict[str, SQLiteValidType]
 
 
 def convert_rows_to_sqlite(
-    columns: Dict[str, Field],
+    columns: dict[str, Field],
     rows: Iterator[Row],
 ) -> Iterator[SQLiteRow]:
     """
@@ -147,7 +137,7 @@ def convert_rows_to_sqlite(
 
 
 def convert_rows_from_sqlite(
-    columns: Dict[str, Field],
+    columns: dict[str, Field],
     rows: Iterator[SQLiteRow],
 ) -> Iterator[Row]:
     """
@@ -170,16 +160,16 @@ def convert_rows_from_sqlite(
 
 
 def get_all_bounds(
-    indexes: List[Index],
-    constraintargs: List[Any],
-    columns: Dict[str, Field],
-) -> DefaultDict[str, Set[Tuple[Operator, Any]]]:
+    indexes: list[Index],
+    constraintargs: list[Any],
+    columns: dict[str, Field],
+) -> DefaultDict[str, set[tuple[Operator, Any]]]:
     """
     Convert indexes and constraints to operations on each column.
     """
     column_names = list(columns.keys())
 
-    all_bounds: DefaultDict[str, Set[Tuple[Operator, Any]]] = defaultdict(set)
+    all_bounds: DefaultDict[str, set[tuple[Operator, Any]]] = defaultdict(set)
     for (column_index, sqlite_index_constraint), constraint in zip(
         indexes,
         constraintargs,
@@ -203,9 +193,9 @@ def get_all_bounds(
 
 
 def get_limit_offset(
-    indexes: List[Index],
-    constraintargs: List[Any],
-) -> Tuple[Optional[int], Optional[int]]:
+    indexes: list[Index],
+    constraintargs: list[Any],
+) -> tuple[Optional[int], Optional[int]]:
     """
     Extract limit and offset.
     """
@@ -230,9 +220,9 @@ def get_limit_offset(
 
 
 def get_order(
-    orderbys: List[OrderBy],
-    column_names: List[str],
-) -> List[Tuple[str, RequestedOrder]]:
+    orderbys: list[OrderBy],
+    column_names: list[str],
+) -> list[tuple[str, RequestedOrder]]:
     """
     Return a list of column names and sort order from a SQLite orderbys.
     """
@@ -253,7 +243,7 @@ class VTModule:  # pylint: disable=too-few-public-methods
     the work needed to support new data sources.
     """
 
-    def __init__(self, adapter: Type[Adapter]):
+    def __init__(self, adapter: type[Adapter]):
         self.adapter = adapter
 
     def Create(  # pylint: disable=unused-argument
@@ -263,7 +253,7 @@ class VTModule:  # pylint: disable=too-few-public-methods
         dbname: str,
         tablename: str,
         *args: str,
-    ) -> Tuple[str, "VTTable"]:
+    ) -> tuple[str, "VTTable"]:
         """
         Called when a table is first created on a connection.
         """
@@ -315,9 +305,9 @@ class VTTable:
 
     def _build_index(  # pylint: disable=too-many-locals
         self,
-        constraints: List[Tuple[int, SQLiteConstraint]],
-        orderbys: List[OrderBy],
-    ) -> Tuple[List[Constraint], int, List[Index], List[OrderBy], bool, float]:
+        constraints: list[tuple[int, SQLiteConstraint]],
+        orderbys: list[OrderBy],
+    ) -> tuple[list[Constraint], int, list[Index], list[OrderBy], bool, float]:
         """
         Helper function to build index.
         """
@@ -329,10 +319,10 @@ class VTTable:
         # the index as JSON in ``index_name``
         index_number = 42
 
-        indexes: List[Index] = []
-        constraints_used: List[Constraint] = []
+        indexes: list[Index] = []
+        constraints_used: list[Constraint] = []
         filter_index = 0
-        filtered_columns: List[Tuple[str, Operator]] = []
+        filtered_columns: list[tuple[str, Operator]] = []
         for column_index, sqlite_index_constraint in constraints:
             operator = operator_map.get(sqlite_index_constraint)
 
@@ -364,7 +354,7 @@ class VTTable:
         # is the data being returned in the requested order? if not, SQLite will have
         # to sort it
         orderby_consumed = True
-        orderbys_to_process: List[OrderBy] = []
+        orderbys_to_process: list[OrderBy] = []
         for column_index, descending in orderbys:
             requested_order = Order.DESCENDING if descending else Order.ASCENDING
             column_type = column_types[column_index]
@@ -385,9 +375,9 @@ class VTTable:
 
     def BestIndex(  # pylint: disable=too-many-locals
         self,
-        constraints: List[Tuple[int, SQLiteConstraint]],
-        orderbys: List[OrderBy],
-    ) -> Tuple[List[Constraint], int, str, bool, float]:
+        constraints: list[tuple[int, SQLiteConstraint]],
+        orderbys: list[OrderBy],
+    ) -> tuple[list[Constraint], int, str, bool, float]:
         """
         Build an index for a given set of constraints and order bys.
 
@@ -480,7 +470,7 @@ class VTTable:
 
     Destroy = Disconnect
 
-    def UpdateInsertRow(self, rowid: Optional[int], fields: Tuple[Any, ...]) -> int:
+    def UpdateInsertRow(self, rowid: Optional[int], fields: tuple[Any, ...]) -> int:
         """
         Insert a row with the specified rowid.
         """
@@ -502,7 +492,7 @@ class VTTable:
         self,
         rowid: int,
         newrowid: int,
-        fields: Tuple[Any, ...],
+        fields: tuple[Any, ...],
     ) -> None:
         """
         Change an existing row.
@@ -526,15 +516,15 @@ class VTCursor:
     def __init__(self, adapter: Adapter):
         self.adapter = adapter
 
-        self.data: Iterator[Tuple[Any, ...]]
-        self.current_row: Tuple[Any, ...]
+        self.data: Iterator[tuple[Any, ...]]
+        self.current_row: tuple[Any, ...]
         self.eof = False
 
     def Filter(  # pylint: disable=too-many-locals
         self,
         indexnumber: int,  # pylint: disable=unused-argument
         indexname: str,
-        constraintargs: List[Any],
+        constraintargs: list[Any],
     ) -> None:
         """
         Filter and sort data according to constraints.
@@ -544,11 +534,11 @@ class VTCursor:
         ``bounds`` and ``order``. These are then passed to the ``get_rows`` method of
         the adapter, to filter and sort the data.
         """
-        columns: Dict[str, Field] = self.adapter.get_columns()
-        column_names: List[str] = list(columns.keys())
+        columns: dict[str, Field] = self.adapter.get_columns()
+        column_names: list[str] = list(columns.keys())
         index = json.loads(indexname)
-        indexes: List[Index] = index["indexes"]
-        orderbys: List[OrderBy] = index["orderbys_to_process"]
+        indexes: list[Index] = index["indexes"]
+        orderbys: list[OrderBy] = index["orderbys_to_process"]
 
         # compute bounds for each column
         all_bounds = get_all_bounds(indexes, constraintargs, columns)
@@ -559,7 +549,7 @@ class VTCursor:
         order = get_order(orderbys, column_names)
 
         # limit and offset were introduced in 1.1, and not all adapters support it
-        kwargs: Dict[str, Any] = {}
+        kwargs: dict[str, Any] = {}
         if self.adapter.supports_limit:
             kwargs["limit"] = limit
         if self.adapter.supports_offset:

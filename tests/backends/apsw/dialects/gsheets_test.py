@@ -3,7 +3,7 @@ Test for shillelagh.backends.apsw.dialects.gsheets.
 """
 
 import datetime
-from typing import Any, Dict
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -359,7 +359,7 @@ def test_do_ping(mocker: MockerFixture, requests_mock: Mocker) -> None:
 
 @pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
-def test_types_in_sqlalchemy(adapter_kwargs: Dict[str, Any]) -> None:
+def test_types_in_sqlalchemy(adapter_kwargs: dict[str, Any]) -> None:
     """
     Test that the SQLAlchemy dialect returns types correctly.
 

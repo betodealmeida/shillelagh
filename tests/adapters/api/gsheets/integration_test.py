@@ -8,7 +8,7 @@ Uses a private sheet: https://docs.google.com/spreadsheets/d/
 """
 
 import datetime
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from dateutil.tz import tzoffset
@@ -21,7 +21,7 @@ from shillelagh.backends.multicorn.db import connect as connect_multicorn
 @pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 @pytest.mark.parametrize("sync_mode", [SyncMode.BIDIRECTIONAL, SyncMode.BATCH])
-def test_simple_sheet(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> None:
+def test_simple_sheet(sync_mode: SyncMode, adapter_kwargs: dict[str, Any]) -> None:
     """
     Test queries against the simple sheet.
 
@@ -109,7 +109,7 @@ def test_simple_sheet(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> No
 @pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 @pytest.mark.parametrize("sync_mode", [SyncMode.BIDIRECTIONAL, SyncMode.BATCH])
-def test_2_header_sheet(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> None:
+def test_2_header_sheet(sync_mode: SyncMode, adapter_kwargs: dict[str, Any]) -> None:
     """
     Test a sheet where the column names occupy the first 2 rows.
     """
@@ -191,7 +191,7 @@ def test_2_header_sheet(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> 
 @pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 @pytest.mark.parametrize("sync_mode", [SyncMode.BIDIRECTIONAL, SyncMode.BATCH])
-def test_types_and_nulls(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> None:
+def test_types_and_nulls(sync_mode: SyncMode, adapter_kwargs: dict[str, Any]) -> None:
     """
     Test a sheet with all the supported types, including NULLs.
     """
@@ -484,7 +484,7 @@ def test_types_and_nulls(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) ->
 @pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
 @pytest.mark.parametrize("sync_mode", [SyncMode.BIDIRECTIONAL, SyncMode.BATCH])
-def test_empty_column(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> None:
+def test_empty_column(sync_mode: SyncMode, adapter_kwargs: dict[str, Any]) -> None:
     """
     Test queries against a sheet with an empty column in the middle.
 
@@ -541,7 +541,7 @@ def test_empty_column(sync_mode: SyncMode, adapter_kwargs: Dict[str, Any]) -> No
 
 @pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
-def test_order_by(adapter_kwargs: Dict[str, Any]) -> None:
+def test_order_by(adapter_kwargs: dict[str, Any]) -> None:
     """
     Test that ORDER BY works on multiple columns.
     """
@@ -570,7 +570,7 @@ def test_order_by(adapter_kwargs: Dict[str, Any]) -> None:
 
 @pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
-def test_date_time_formats(adapter_kwargs: Dict[str, Any]) -> None:
+def test_date_time_formats(adapter_kwargs: dict[str, Any]) -> None:
     """
     Test that we can parse and modify timestamps with different formats.
     """
@@ -689,7 +689,7 @@ def test_date_time_formats(adapter_kwargs: Dict[str, Any]) -> None:
 
 @pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
-def test_number_formats(adapter_kwargs: Dict[str, Any]) -> None:
+def test_number_formats(adapter_kwargs: dict[str, Any]) -> None:
     """
     Test reading data from a table with custom number formats.
     """
@@ -711,7 +711,7 @@ def test_number_formats(adapter_kwargs: Dict[str, Any]) -> None:
 
 @pytest.mark.skip("Credentials no longer valid")
 @pytest.mark.slow_integration_test
-def test_weird_symbols(adapter_kwargs: Dict[str, Any]) -> None:
+def test_weird_symbols(adapter_kwargs: dict[str, Any]) -> None:
     """
     Test reading data from a table where the columns have double quotes in their names.
     """

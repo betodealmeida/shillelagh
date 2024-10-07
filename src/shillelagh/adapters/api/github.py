@@ -5,9 +5,10 @@ An adapter for GitHub.
 import json
 import logging
 import urllib.parse
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, TypedDict
+from typing import Any, Callable, Optional, TypedDict
 
 import jsonpath
 
@@ -59,7 +60,7 @@ class Column:
     default: Optional[Filter] = None
 
 
-def participation_processor(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+def participation_processor(payload: dict[str, Any]) -> list[dict[str, Any]]:
     """
     Process participation data.
 
@@ -93,14 +94,14 @@ class EndPointDefinition(TypedDict):
     transform the payload.
     """
 
-    columns: List[Column]
+    columns: list[Column]
     paginated: bool
-    processor: Optional[Callable[[Dict[str, Any]], List[Dict[str, Any]]]]
+    processor: Optional[Callable[[dict[str, Any]], list[dict[str, Any]]]]
 
 
 # a mapping from the column name (eg, ``userid``) to the path in the JSON
 # response (``{"user": {"id": 42}}`` => ``user.id``) together with the field
-TABLES: Dict[str, Dict[str, EndPointDefinition]] = {
+TABLES: dict[str, dict[str, EndPointDefinition]] = {
     "repos": {
         "pulls": {
             "columns": [
@@ -194,7 +195,7 @@ class GitHubAPI(Adapter):
         )
 
     @staticmethod
-    def parse_uri(uri: str) -> Tuple[str, str, str, str]:
+    def parse_uri(uri: str) -> tuple[str, str, str, str]:
         parsed = urllib.parse.urlparse(uri)
         _, base, owner, repo, resource = parsed.path.split("/", 4)
         return (
@@ -204,7 +205,7 @@ class GitHubAPI(Adapter):
             resource,
         )
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         base: str,
         owner: str,
@@ -226,7 +227,7 @@ class GitHubAPI(Adapter):
             expire_after=timedelta(minutes=3),
         )
 
-    def get_columns(self) -> Dict[str, Field]:
+    def get_columns(self) -> dict[str, Field]:
         return {
             column.name: column.field
             for column in TABLES[self.base][self.resource]["columns"]
@@ -234,8 +235,8 @@ class GitHubAPI(Adapter):
 
     def get_data(
         self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
+        bounds: dict[str, Filter],
+        order: list[tuple[str, RequestedOrder]],
         **kwargs: Any,
     ) -> Iterator[Row]:
         # apply default values
@@ -279,7 +280,7 @@ class GitHubAPI(Adapter):
 
     def _get_multiple_resources(
         self,
-        bounds: Dict[str, Filter],
+        bounds: dict[str, Filter],
     ) -> Iterator[Row]:
         """
         Return multiple resources.
@@ -334,7 +335,7 @@ class GitHubAPI(Adapter):
             page += 1
 
 
-def get_value(column: Column, resource: Dict[str, Any]) -> Any:
+def get_value(column: Column, resource: dict[str, Any]) -> Any:
     """
     Extract the value of a column from a resource.
     """

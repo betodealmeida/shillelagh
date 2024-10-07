@@ -41,7 +41,7 @@ def test_create_connect_args() -> None:
             "password": "shillelagh123",
             "host": "localhost",
             "port": 12345,
-            "database": "shillelagh",
+            "dbname": "shillelagh",
         },
     )
 

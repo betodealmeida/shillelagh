@@ -7,20 +7,9 @@ import json
 import marshal
 import math
 import operator
+from collections.abc import Iterator
 from datetime import timedelta
-from typing import (
-    Any,
-    Callable,
-    DefaultDict,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    TypeVar,
-)
+from typing import Any, Callable, DefaultDict, Optional, TypeVar
 
 import apsw
 import requests_cache
@@ -92,7 +81,7 @@ class RowIDManager:
 
     """
 
-    def __init__(self, ranges: List[range]):
+    def __init__(self, ranges: list[range]):
         if not ranges:
             # pylint: disable=broad-exception-raised
             raise Exception("Argument ``ranges`` cannot be empty")
@@ -159,12 +148,12 @@ class RowIDManager:
 
 def analyze(  # pylint: disable=too-many-branches
     data: Iterator[Row],
-) -> Tuple[int, Dict[str, Order], Dict[str, Type[Field]]]:
+) -> tuple[int, dict[str, Order], dict[str, type[Field]]]:
     """
     Compute number of rows, order, and types from a stream of rows.
     """
-    order: Dict[str, Order] = {}
-    types: Dict[str, Type[Field]] = {}
+    order: dict[str, Order] = {}
+    types: dict[str, type[Field]] = {}
 
     previous_row: Row = {}
     row: Row = {}
@@ -292,12 +281,12 @@ def deserialize(value: str) -> Any:
     return marshal.loads(base64.b64decode(unescape_string(value).encode()))
 
 
-def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-branches
-    columns: Dict[str, Field],
-    bounds: Dict[str, Filter],
-    order: List[Tuple[str, RequestedOrder]],
+def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-branches, too-many-positional-arguments
+    columns: dict[str, Field],
+    bounds: dict[str, Filter],
+    order: list[tuple[str, RequestedOrder]],
     table: Optional[str] = None,
-    column_map: Optional[Dict[str, str]] = None,
+    column_map: Optional[dict[str, str]] = None,
     limit: Optional[int] = None,
     offset: Optional[int] = None,
     alias: Optional[str] = None,
@@ -336,7 +325,7 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-
     if conditions:
         sql = f"{sql} WHERE {' AND '.join(conditions)}"
 
-    column_order: List[str] = []
+    column_order: list[str] = []
     for column_name, requested_order in order:
         id_ = column_map[column_name] if column_map else column_name
         if alias:
@@ -353,7 +342,7 @@ def build_sql(  # pylint: disable=too-many-locals, too-many-arguments, too-many-
     return sql
 
 
-def get_conditions(id_: str, field: Field, filter_: Filter) -> List[str]:
+def get_conditions(id_: str, field: Field, filter_: Filter) -> list[str]:
     """
     Build a SQL condition from a column ID and a filter.
     """
@@ -384,8 +373,10 @@ def get_conditions(id_: str, field: Field, filter_: Filter) -> List[str]:
 
 
 def combine_args_kwargs(
-    func: Callable[..., Any], *args: Any, **kwargs: Any
-) -> Tuple[Any, ...]:
+    func: Callable[..., Any],
+    *args: Any,
+    **kwargs: Any,
+) -> tuple[Any, ...]:
     """
     Combine args and kwargs into args.
 
@@ -412,13 +403,13 @@ def is_not_null(column: Any, _: Any) -> bool:
     return column is not None
 
 
-def filter_data(  # pylint: disable=too-many-arguments
+def filter_data(  # pylint: disable=too-many-arguments, too-many-positional-arguments
     data: Iterator[Row],
-    bounds: Dict[str, Filter],
-    order: List[Tuple[str, RequestedOrder]],
+    bounds: dict[str, Filter],
+    order: list[tuple[str, RequestedOrder]],
     limit: Optional[int] = None,
     offset: Optional[int] = None,
-    requested_columns: Optional[Set[str]] = None,
+    requested_columns: Optional[set[str]] = None,
 ) -> Iterator[Row]:
     """
     Apply filtering and sorting to a stream of rows.
@@ -516,8 +507,8 @@ def SimpleCostModel(rows: int, fixed_cost: int = 0):  # pylint: disable=invalid-
 
     def method(
         obj: Any,  # pylint: disable=unused-argument
-        filtered_columns: List[Tuple[str, Operator]],
-        order: List[Tuple[str, RequestedOrder]],
+        filtered_columns: list[tuple[str, Operator]],
+        order: list[tuple[str, RequestedOrder]],
     ) -> int:
         return int(
             fixed_cost
@@ -542,8 +533,8 @@ def NetworkAPICostModel(
 
     def method(
         obj: Any,  # pylint: disable=unused-argument
-        filtered_columns: List[Tuple[str, Operator]],
-        order: List[Tuple[str, RequestedOrder]],  # pylint: disable=unused-argument
+        filtered_columns: list[tuple[str, Operator]],
+        order: list[tuple[str, RequestedOrder]],  # pylint: disable=unused-argument
     ) -> int:
         return fixed_cost + int(download_cost / (len(filtered_columns) + 1))
 
@@ -552,9 +543,9 @@ def NetworkAPICostModel(
 
 def find_adapter(
     uri: str,
-    adapter_kwargs: Dict[str, Any],
-    adapters: List[Type[Adapter]],
-) -> Tuple[Type[Adapter], Tuple[Any, ...], Dict[str, Any]]:
+    adapter_kwargs: dict[str, Any],
+    adapters: list[type[Adapter]],
+) -> tuple[type[Adapter], tuple[Any, ...], dict[str, Any]]:
     """
     Find an adapter that handles a given URI.
 
@@ -623,7 +614,7 @@ def create_namespaced_cache_key(cache_name: str) -> str:
 
 
 def get_session(
-    request_headers: Dict[str, str],
+    request_headers: dict[str, str],
     cache_name: str,
     expire_after: timedelta = CACHE_EXPIRATION,
 ) -> requests_cache.CachedSession:
@@ -645,13 +636,13 @@ def get_session(
 
 
 def get_bounds(
-    columns: Dict[str, Field],
-    all_bounds: DefaultDict[str, Set[Tuple[Operator, Any]]],
-) -> Dict[str, Filter]:
+    columns: dict[str, Field],
+    all_bounds: DefaultDict[str, set[tuple[Operator, Any]]],
+) -> dict[str, Filter]:
     """
     Combine all filters that apply to each column.
     """
-    bounds: Dict[str, Filter] = {}
+    bounds: dict[str, Filter] = {}
     for column_name, operations in all_bounds.items():
         column_type = columns[column_name]
         operators = {operation[0] for operation in operations}

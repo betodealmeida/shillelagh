@@ -5,7 +5,7 @@ A DB API 2.0 wrapper.
 
 import logging
 import re
-from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
+from typing import Any, Optional, Union, cast
 from uuid import uuid4
 
 import psycopg2
@@ -86,8 +86,8 @@ class Cursor(extensions.cursor):  # pylint: disable=too-few-public-methods
     def __init__(
         self,
         *args: Any,
-        adapters: Dict[str, Type[Adapter]],
-        adapter_kwargs: Dict[str, Dict[str, Any]],
+        adapters: dict[str, type[Adapter]],
+        adapter_kwargs: dict[str, dict[str, Any]],
         schema: str,
         **kwargs: Any,
     ):
@@ -101,7 +101,7 @@ class Cursor(extensions.cursor):  # pylint: disable=too-few-public-methods
     def execute(
         self,
         operation: str,
-        parameters: Optional[Tuple[Any, ...]] = None,
+        parameters: Optional[tuple[Any, ...]] = None,
     ) -> Union["Cursor", extensions.cursor]:
         """
         Execute a query, automatically registering FDWs if necessary.
@@ -220,8 +220,8 @@ class CursorFactory:  # pylint: disable=too-few-public-methods
 
     def __init__(
         self,
-        adapters: Dict[str, Type[Adapter]],
-        adapter_kwargs: Dict[str, Dict[str, Any]],
+        adapters: dict[str, type[Adapter]],
+        adapter_kwargs: dict[str, dict[str, Any]],
         schema: str,
     ):
         self.schema = schema
@@ -243,8 +243,8 @@ class CursorFactory:  # pylint: disable=too-few-public-methods
 
 def connect(  # pylint: disable=too-many-arguments
     dsn: Optional[str] = None,
-    adapters: Optional[List[str]] = None,
-    adapter_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+    adapters: Optional[list[str]] = None,
+    adapter_kwargs: Optional[dict[str, dict[str, Any]]] = None,
     schema: str = DEFAULT_SCHEMA,
     **psycopg2_connection_kwargs: Any,
 ) -> extensions.connection:
