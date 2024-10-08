@@ -5,15 +5,11 @@ Changelog
 Next
 ====
 
-Version 1.3.1 - 2024-10-08
-==========================
-
-- Add support for Python 3.12, drop support for 3.8 (#478)
-
-Version 1.3.0 - 2024-09-26
+Version 1.3.0 - 2024-10-08
 ==========================
 
 - New Postgres backend based on multicorn2 (#397)
+- Add support for Python 3.12, drop support for 3.8 (#478)
 
 Version 1.2.28 - 2024-09-11
 ===========================

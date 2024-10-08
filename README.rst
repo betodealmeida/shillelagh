@@ -52,7 +52,14 @@ And a command-line utility:
     $ shillelagh
     sql> SELECT * FROM a_table
 
-There is also an `experimental backend <https://shillelagh.readthedocs.io/en/latest/postgres.html>`_ that uses Postgres with the `Multicorn2 <http://multicorn2.org/>`_ extension:
+There is also an `experimental backend <https://shillelagh.readthedocs.io/en/latest/postgres.html>`_ that uses Postgres with the `Multicorn2 <http://multicorn2.org/>`_ extension. First, install the additional dependencies:
+
+.. code-block:: bash
+
+    $ pip install 'shillelagh[multicorn]'
+    $ pip install 'multicorn @ git+https://github.com/pgsql-io/multicorn2.git@v2.5'
+
+Then run:
 
 .. code-block:: python
 
@@ -65,6 +72,8 @@ There is also an `experimental backend <https://shillelagh.readthedocs.io/en/lat
         port=5432,
         database="examples",
     )
+
+Or:
 
 .. code-block:: python
 
