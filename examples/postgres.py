@@ -8,13 +8,12 @@ the multicorn2 package (not on (PyPI), and the shillelagh package.
 If you want to play with it Shillelagh has a `docker-compose.yml` file that will run
 Postgres with the extension and the Python packages. Just run:
 
-    $ cd postgres/
-    $ docker compose up --build -d
+    $ docker compose -f postgres/docker-compose.yml up
 
 Then you can run this script.
 """
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 # the backend uses psycopg2 under the hood, so any valid connection string for it will
 # work; just replace the scheme with `shillelagh+multicorn2`
@@ -23,9 +22,9 @@ engine = create_engine(
 )
 connection = engine.connect()
 
-SQL = (
+SQL = text(
     'SELECT * FROM "https://docs.google.com/spreadsheets/d/'
-    '1LcWZMsdCl92g7nA-D6qGRqg1T5TiHyuKJUY1u9XAnsk/edit#gid=0"'
+    '1LcWZMsdCl92g7nA-D6qGRqg1T5TiHyuKJUY1u9XAnsk/edit#gid=0"',
 )
 for row in connection.execute(SQL):
     print(row)

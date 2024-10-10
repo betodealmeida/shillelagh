@@ -29,7 +29,8 @@ RUN wget https://github.com/pgsql-io/multicorn2/archive/refs/tags/v2.5.tar.gz &&
 # Create a virtual environment and install dependencies
 RUN python3 -m venv /code/venv && \
     /code/venv/bin/pip install --upgrade pip && \
-    /code/venv/bin/pip install -e '.[all]'
+    /code/venv/bin/pip install -e '.[all]' && \
+    /code/venv/bin/pip install 'multicorn @ git+https://github.com/pgsql-io/multicorn2.git@v2.5'
 
 # Set environment variable for PostgreSQL to use the virtual environment
 ENV PATH="/code/venv/bin:$PATH"
