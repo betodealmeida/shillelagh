@@ -37,6 +37,7 @@ from shillelagh.lib import (
     is_not_null,
     is_null,
     serialize,
+    uncombine_args_kwargs,
     unescape_identifier,
     unescape_string,
     update_order,
@@ -343,18 +344,46 @@ def test_deserialize() -> None:
     assert deserialize("2wEAAAD6Ck8nTWFsbGV5J3M=") == ["O'Malley's"]
 
 
-def test_combine_args_kwargs() -> None:
-    """
-    Test ``combine_args_kwargs``.
-    """
-
-    # pylint: disable=unused-argument, invalid-name
-    def func(a: int = 0, b: str = "test", c: float = 10.0) -> None:
-        pass
-
-    args = ()
-    kwargs = {"b": "TEST"}
-    assert combine_args_kwargs(func, *args, **kwargs) == (0, "TEST", 10.0)
+@pytest.mark.parametrize(
+    ["func_impl", "args", "kwargs", "expected_serialization"],
+    [  # type: ignore
+        (
+            'def func(a: int = 0, b: str = "test", c: float = 10.0) -> None: pass',
+            (),
+            {"b": "TEST"},
+            (0, "TEST", 10.0),
+        ),
+        (
+            'def func(a: int = 0, b: str = "test", c: float = 10.0, **kwargs) -> None: pass',
+            (),
+            {"b": "TEST"},
+            (0, "TEST", 10.0, {}),
+        ),
+        (
+            'def func(a: int = 0, b: str = "test", c: float = 10.0, **kwargs) -> None: pass',
+            (),
+            {"b": "TEST", "meaning_of_life": "42"},
+            (0, "TEST", 10.0, {"meaning_of_life": "42"}),
+        ),
+        (
+            'def func(a: int = 0, b: str = "test", *, c: float = 10.0) -> None: pass',
+            (),
+            {"b": "TEST", "c": 20.0},
+            (0, "TEST", {"c": 20.0}),
+        ),
+    ],
+)
+def test_combine_uncombine_args_kwargs(
+    func_impl: str,
+    args: Tuple[Any],
+    kwargs: Dict[str, Any],
+    expected_serialization: Tuple[Any],
+) -> None:
+    exec(func_impl, (vars := {}))
+    func = vars["func"]
+    assert combine_args_kwargs(func, *args, **kwargs) == expected_serialization
+    args2, kwargs2 = uncombine_args_kwargs(func, *expected_serialization)
+    assert combine_args_kwargs(func, *args2, **kwargs2) == expected_serialization
 
 
 def test_filter_data() -> None:

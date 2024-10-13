@@ -9,7 +9,13 @@ import math
 import operator
 from collections.abc import Iterator
 from datetime import timedelta
-from typing import Any, Callable, DefaultDict, Optional, TypeVar
+from typing import (
+    Any,
+    Callable,
+    DefaultDict,
+    Optional,
+    TypeVar,
+)
 
 import apsw
 import requests_cache
@@ -372,13 +378,21 @@ def get_conditions(id_: str, field: Field, filter_: Filter) -> list[str]:
     raise ProgrammingError(f"Invalid filter: {filter_}")
 
 
+def _has_kwonly_params(sig: inspect.Signature) -> bool:
+    param_kinds = {p.kind for p in sig.parameters.values()}
+    return bool(
+        param_kinds & {inspect.Parameter.KEYWORD_ONLY, inspect.Parameter.VAR_KEYWORD}
+    )
+
+
 def combine_args_kwargs(
     func: Callable[..., Any],
     *args: Any,
     **kwargs: Any,
 ) -> tuple[Any, ...]:
     """
-    Combine args and kwargs into args.
+    Combine args and kwargs into a sequence of positional args. Keep any
+    keyword-only args in the final slot of the tuple.
 
     This is needed because we allow users to pass custom kwargs to adapters,
     but when creating the virtual table we serialize only args.
@@ -386,7 +400,24 @@ def combine_args_kwargs(
     signature = inspect.signature(func)
     bound_args = signature.bind(*args, **kwargs)
     bound_args.apply_defaults()
-    return bound_args.args
+    return bound_args.args + (
+        (bound_args.kwargs,) if _has_kwonly_params(signature) else ()
+    )
+
+
+def uncombine_args_kwargs(
+    func: Callable[..., Any], *combined_args: Any
+) -> tuple[tuple[Any, ...], dict[str, Any]]:
+    """
+    Split combined args back into args and kwargs.
+
+    See ``combine_args_kwargs`` for more info.
+    """
+    signature = inspect.signature(func)
+    if _has_kwonly_params(signature):
+        return combined_args[:-1], combined_args[-1]
+    else:
+        return combined_args, {}
 
 
 def is_null(column: Any, _: Any) -> bool:

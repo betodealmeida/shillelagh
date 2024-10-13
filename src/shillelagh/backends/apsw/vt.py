@@ -32,8 +32,8 @@ from shillelagh.fields import (
     StringDuration,
     StringInteger,
 )
-from shillelagh.filters import Operator
-from shillelagh.lib import best_index_object_available, deserialize, get_bounds
+from shillelagh.filters import Filter, Operator
+from shillelagh.lib import best_index_object_available, deserialize, get_bounds, uncombine_args_kwargs
 from shillelagh.typing import (
     Constraint,
     Index,
@@ -262,7 +262,8 @@ class VTModule:  # pylint: disable=too-few-public-methods
             "Instantiating adapter with deserialized arguments: %s",
             deserialized_args,
         )
-        adapter = self.adapter(*deserialized_args)
+        adapter_args, adapter_kwargs = uncombine_args_kwargs(self.adapter, *deserialized_args)
+        adapter = self.adapter(*adapter_args, **adapter_kwargs)
         table = VTTable(adapter)
         create_table = table.get_create_table(tablename)
         return create_table, table
