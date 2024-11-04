@@ -136,7 +136,7 @@ prompt-toolkit==3.0.48
     # via shillelagh
 psutil==6.0.0
     # via shillelagh
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.10
     # via shillelagh
 pyarrow==18.0.0
     # via shillelagh
