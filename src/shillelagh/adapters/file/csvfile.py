@@ -20,9 +20,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any, Optional, cast
 
-import requests
-
-from shillelagh.adapters.base import Adapter
+from shillelagh.adapters.base import Adapter, current_network_resource
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field
 from shillelagh.filters import (
@@ -35,6 +33,7 @@ from shillelagh.filters import (
     Range,
 )
 from shillelagh.lib import RowIDManager, analyze, filter_data, update_order
+from shillelagh.resources.resource import NetworkResource
 from shillelagh.typing import Maybe, MaybeType, RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
@@ -44,8 +43,6 @@ FILTERING_COST = 1000
 SORTING_COST = 10000
 
 DEFAULT_TIMEOUT = timedelta(minutes=3)
-
-SUPPORTED_PROTOCOLS = {"http", "https"}
 
 
 class RowTracker:
@@ -64,7 +61,7 @@ class RowTracker:
         return self.iterable.__next__()
 
 
-class CSVFile(Adapter):
+class CSVFile(Adapter):  # pylint: disable=too-many-instance-attributes
     r"""
     An adapter for CSV files.
 
@@ -109,7 +106,7 @@ class CSVFile(Adapter):
 
         # remote file
         parsed = urllib.parse.urlparse(uri)
-        if parsed.scheme not in SUPPORTED_PROTOCOLS:
+        if not NetworkResource.is_protocol_supported(parsed.scheme):
             return False
 
         # URLs ending in ``.csv`` are probably CSV files
@@ -120,8 +117,14 @@ class CSVFile(Adapter):
         if fast:
             return Maybe
 
-        response = requests.head(uri, timeout=DEFAULT_TIMEOUT.total_seconds())
-        return "text/csv" in response.headers.get("content-type", "")
+        # create network resource and get content type
+        resource = NetworkResource(uri, timeout=DEFAULT_TIMEOUT.total_seconds())
+        if resource.assert_content_type("text/csv"):
+            current_network_resource.set(resource)
+            return True
+
+        # content type mismatch
+        return False
 
     @staticmethod
     def parse_uri(uri: str) -> tuple[str]:
@@ -136,12 +139,18 @@ class CSVFile(Adapter):
         else:
             self.local = False
 
-            # download CSV file
-            with tempfile.NamedTemporaryFile(delete=False) as output:
-                response = requests.get(
+            network_resource = current_network_resource.get()
+            if not network_resource:
+                self.network_resource = NetworkResource(
                     path_or_uri,
                     timeout=DEFAULT_TIMEOUT.total_seconds(),
                 )
+            else:
+                self.network_resource = network_resource
+
+            # download CSV file from external network resource
+            with tempfile.NamedTemporaryFile(delete=False) as output:
+                response = self.network_resource.get_data()
                 output.write(response.content)
             path = Path(output.name)
 
@@ -273,10 +282,14 @@ class CSVFile(Adapter):
 
     def close(self) -> None:
         """
+        Unset network resource
+
         Garbage collect the file.
 
         This method will get rid of deleted rows in the files.
         """
+        current_network_resource.set(None)
+
         if not self.local:
             try:
                 self.path.unlink()

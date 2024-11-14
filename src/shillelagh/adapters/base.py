@@ -1,6 +1,7 @@
 """Base class for adapters."""
 
 import atexit
+import contextvars
 import inspect
 from collections.abc import Iterator
 from typing import Any, Optional
@@ -8,9 +9,14 @@ from typing import Any, Optional
 from shillelagh.exceptions import NotSupportedError
 from shillelagh.fields import Field, RowID
 from shillelagh.filters import Filter, Operator
+from shillelagh.resources.resource import NetworkResource
 from shillelagh.typing import RequestedOrder, Row
 
 FIXED_COST = 666
+
+current_network_resource = contextvars.ContextVar[Optional[NetworkResource]](
+    "current_network_resource",
+)
 
 
 class Adapter:

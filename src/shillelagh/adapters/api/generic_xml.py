@@ -64,7 +64,7 @@ class GenericXMLAPI(GenericJSONAPI):
         requested_columns: Optional[set[str]] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
-        response = self._session.get(self.uri)
+        response = self.network_resource.get_data()
         payload = response.content.decode("utf-8")
         if not response.ok:
             raise ProgrammingError(f"Error: {payload}")

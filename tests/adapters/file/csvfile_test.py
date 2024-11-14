@@ -12,6 +12,7 @@ from freezegun import freeze_time
 from pyfakefs.fake_filesystem import FakeFilesystem
 from requests_mock.mocker import Mocker
 
+from shillelagh.adapters.base import current_network_resource
 from shillelagh.adapters.file.csvfile import CSVFile, RowTracker
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.apsw.vt import VTModule
@@ -27,6 +28,7 @@ from shillelagh.filters import (
     Range,
 )
 from shillelagh.lib import serialize
+from shillelagh.resources.resource import NetworkResource
 
 CONTENTS = """"index","temperature","site"
 10,15.2,"Diamond_St"
@@ -351,11 +353,39 @@ def test_row_tracker() -> None:
     assert next(row_tracker) == {"col0_": 2}
 
 
-def test_remote_file(fs: FakeFilesystem, requests_mock: Mocker) -> None:
+def test_init_network_resource(requests_mock: Mocker) -> None:
+    """
+    Test network resource init
+    """
+    requests_mock.get("https://example.com/test.csv", text=CONTENTS)
+    requests_mock.head(
+        "https://example.com/test.csv",
+        headers={"Content-type": "text/csv"},
+    )
+
+    adapter = CSVFile("https://example.com/test.csv")
+    assert isinstance(adapter.network_resource, NetworkResource)
+
+    network_resource = NetworkResource(
+        "https://example.com/test.csv",
+    )
+    token = current_network_resource.set(network_resource)
+
+    adapter = CSVFile("https://example.com/test.csv")
+    assert isinstance(adapter.network_resource, NetworkResource)
+
+    current_network_resource.reset(token)
+
+
+def test_remote_file(requests_mock: Mocker) -> None:
     """
     Test reading a remote file via HTTP(S).
     """
     requests_mock.get("https://example.com/test.csv", text=CONTENTS)
+    requests_mock.head(
+        "https://example.com/test.csv",
+        headers={"Content-type": "text/csv"},
+    )
 
     connection = connect(":memory:")
     cursor = connection.cursor()
@@ -425,3 +455,10 @@ def test_supports(fs: FakeFilesystem, requests_mock: Mocker) -> None:
     assert CSVFile.supports("https://example.com/test.csv")
     assert CSVFile.supports("https://example.com/csv/test") is None
     assert CSVFile.supports("https://example.com/csv/test", fast=False)
+
+    requests_mock.head(
+        "https://example.com/csv/test",
+        headers={"Content-type": "xml"},
+    )
+
+    assert not CSVFile.supports("https://example.com/csv/test")

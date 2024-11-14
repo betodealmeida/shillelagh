@@ -13,16 +13,16 @@ import jsonpath
 import prison
 from yarl import URL
 
-from shillelagh.adapters.base import Adapter
+from shillelagh.adapters.base import Adapter, current_network_resource
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field, Order
 from shillelagh.filters import Filter
-from shillelagh.lib import SimpleCostModel, analyze, flatten, get_session
+from shillelagh.lib import SimpleCostModel, analyze, flatten
+from shillelagh.resources.resource import NetworkResource
 from shillelagh.typing import Maybe, RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
 
-SUPPORTED_PROTOCOLS = {"http", "https"}
 AVERAGE_NUMBER_OF_ROWS = 100
 REQUEST_HEADERS_KEY = "_s_headers"
 CACHE_EXPIRATION = timedelta(minutes=3)
@@ -46,7 +46,7 @@ class GenericJSONAPI(Adapter):
     @classmethod
     def supports(cls, uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
         parsed = URL(uri)
-        if parsed.scheme not in SUPPORTED_PROTOCOLS:
+        if not NetworkResource.is_protocol_supported(parsed.scheme):
             return False
         if fast:
             return Maybe
@@ -63,13 +63,20 @@ class GenericJSONAPI(Adapter):
             "cache_expiration",
             CACHE_EXPIRATION.total_seconds(),
         )
-        session = get_session(
-            request_headers,
-            cls.cache_name,
-            timedelta(seconds=cache_expiration),
+
+        # create network resource and get content type
+        resource = NetworkResource(
+            parsed,
+            request_headers=request_headers,
+            cache_name=cls.cache_name,
+            cache_expiration=cache_expiration,
         )
-        response = session.head(str(parsed))
-        return cls.content_type in response.headers.get("content-type", "")
+        if resource.assert_content_type(cls.content_type):
+            current_network_resource.set(resource)
+            return True
+
+        # content type mismatch
+        return False
 
     @classmethod
     def parse_uri(
@@ -101,12 +108,19 @@ class GenericJSONAPI(Adapter):
 
         self.uri = uri
         self.path = path or self.default_path
+        self.request_headers = request_headers
+        self.cache_expiration = cache_expiration
 
-        self._session = get_session(
-            request_headers or {},
-            self.cache_name,
-            timedelta(seconds=cache_expiration),
-        )
+        network_resource = current_network_resource.get()
+        if not network_resource:
+            self.network_resource = NetworkResource(
+                self.uri,
+                request_headers=self.request_headers,
+                cache_name=self.cache_name,
+                cache_expiration=self.cache_expiration,
+            )
+        else:
+            self.network_resource = network_resource
 
         self._set_columns()
 
@@ -138,7 +152,7 @@ class GenericJSONAPI(Adapter):
         requested_columns: Optional[set[str]] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
-        response = self._session.get(self.uri)
+        response = self.network_resource.get_data()
         payload = response.json()
         if not response.ok:
             raise ProgrammingError(f'Error: {payload["error"]["message"]}')
@@ -159,3 +173,9 @@ class GenericJSONAPI(Adapter):
             row["rowid"] = i
             _logger.debug(row)
             yield flatten(row)
+
+    def close(self) -> None:
+        """
+        Unset network resource
+        """
+        current_network_resource.set(None)
