@@ -10,6 +10,7 @@ from shillelagh.exceptions import ProgrammingError
 from shillelagh.resources.sftp import SFTPNetworkResourceImplementation
 
 
+@pytest.mark.slow_integration_test
 def test_get_content_type_real(sftp_resource):
     """
     Test get_content_type() with real SFTP service
@@ -18,6 +19,7 @@ def test_get_content_type_real(sftp_resource):
     assert content_type == "text/csv"
 
 
+@pytest.mark.slow_integration_test
 def test_get_data_real(sftp_resource):
     """
     Test get_data() with real SFTP service
@@ -32,6 +34,7 @@ def test_get_data_real(sftp_resource):
     assert data == expected_data
 
 
+@pytest.mark.slow_integration_test
 def test_get_data_no_file():
     """
     Test get_data() when the file is not found
