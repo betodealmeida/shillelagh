@@ -129,7 +129,7 @@ class PresetWorkspaceAPI(PresetAPI):
         parsed = URL(uri)
         return (
             parsed.scheme in ("http", "https")
-            and parsed.host != "api.app.preset.io"
+            and parsed.host != "api.app.preset.io"  # pylint: disable=comparison-with-callable
             and parsed.host.endswith(".preset.io")
         )
 

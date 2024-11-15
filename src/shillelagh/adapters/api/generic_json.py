@@ -2,8 +2,9 @@
 An adapter for fetching JSON data.
 """
 
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name, unsupported-membership-test
 
+import json
 import logging
 from collections.abc import Iterator
 from datetime import timedelta
@@ -14,7 +15,6 @@ import prison
 from yarl import URL
 
 from shillelagh.adapters.base import Adapter, current_network_resource
-from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Field, Order
 from shillelagh.filters import Filter
 from shillelagh.lib import SimpleCostModel, analyze, flatten
@@ -153,9 +153,7 @@ class GenericJSONAPI(Adapter):
         **kwargs: Any,
     ) -> Iterator[Row]:
         response = self.network_resource.get_data()
-        payload = response.json()
-        if not response.ok:
-            raise ProgrammingError(f'Error: {payload["error"]["message"]}')
+        payload = json.loads(response)
 
         for i, row in enumerate(jsonpath.findall(self.path, payload)):
             if isinstance(row, list):

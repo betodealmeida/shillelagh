@@ -40,7 +40,7 @@ class NetworkResource:
             raise ProgrammingError("Protocol is not supported")
 
         self._resource: NetworkResourceImplementation = _primary_resource.load()(
-            uri,
+            self._uri,
             **kwargs,
         )
 
@@ -61,7 +61,7 @@ class NetworkResource:
         self._content_type = self._resource.get_content_type()
         return content_type in self._content_type
 
-    def get_data(self):
+    def get_data(self) -> bytes:
         """
         Get data from network resource
         """

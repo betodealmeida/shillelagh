@@ -150,8 +150,8 @@ class CSVFile(Adapter):  # pylint: disable=too-many-instance-attributes
 
             # download CSV file from external network resource
             with tempfile.NamedTemporaryFile(delete=False) as output:
-                response = self.network_resource.get_data()
-                output.write(response.content)
+                data = self.network_resource.get_data()
+                output.write(data)
             path = Path(output.name)
 
         self.path = path
@@ -164,11 +164,12 @@ class CSVFile(Adapter):  # pylint: disable=too-many-instance-attributes
                 column_names = next(reader)
             except StopIteration as ex:
                 raise ProgrammingError("The file has no rows") from ex
-            data = (dict(zip(column_names, row)) for row in reader)
+
+            readed_data = (dict(zip(column_names, row)) for row in reader)
 
             # put data in a ``RowTracker``, so we can monitor the last row
             # and keep track of the column order
-            row_tracker = RowTracker(data)
+            row_tracker = RowTracker(readed_data)
 
             # analyze data to determine number of rows, as well as the order
             # and type of each column

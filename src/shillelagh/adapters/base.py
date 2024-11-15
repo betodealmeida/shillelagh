@@ -16,6 +16,7 @@ FIXED_COST = 666
 
 current_network_resource = contextvars.ContextVar[Optional[NetworkResource]](
     "current_network_resource",
+    default=None,
 )
 
 

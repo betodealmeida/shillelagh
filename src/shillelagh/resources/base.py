@@ -23,7 +23,7 @@ class NetworkResourceImplementation:
         raise NotImplementedError
 
     @abstractmethod
-    def get_data(self) -> Any:
+    def get_data(self) -> bytes:
         """Return data from network resource."""
         raise NotImplementedError
 

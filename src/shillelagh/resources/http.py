@@ -3,12 +3,12 @@ Class with implementation network resource for HTTP and HTTPS protocols
 """
 
 from datetime import timedelta
-from typing import Optional
+from typing import Optional, cast
 
 from requests import Session
-from requests_cache import Response
 from yarl import URL
 
+from shillelagh.exceptions import ProgrammingError
 from shillelagh.lib import get_session
 from shillelagh.resources.base import NetworkResourceImplementation
 
@@ -43,5 +43,11 @@ class HTTPNetworkResourceImplementation(NetworkResourceImplementation):
         content_type = str(response.headers.get("content-type", ""))
         return content_type
 
-    def get_data(self) -> Response:
-        return self._session.get(str(self._url))
+    def get_data(self) -> bytes:
+        response = self._session.get(str(self._url))
+        if not response.ok:
+            raise ProgrammingError(
+                f"Error while requesting {self._url.scheme.upper()} resource "
+                f"{str(self._url)}: {response.status_code} {str(response.content)}",
+            )
+        return cast(bytes, response.content)
