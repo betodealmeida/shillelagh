@@ -10,6 +10,7 @@ from typing import Any, Optional
 from defusedxml import ElementTree as DET
 
 from shillelagh.adapters.api.generic_json import GenericJSONAPI
+from shillelagh.adapters.base import current_network_resource
 from shillelagh.filters import Filter
 from shillelagh.lib import flatten
 from shillelagh.typing import RequestedOrder, Row
@@ -78,3 +79,9 @@ class GenericXMLAPI(GenericJSONAPI):
             row["rowid"] = i
             _logger.debug(row)
             yield flatten(row)
+
+    def close(self) -> None:
+        """
+        Unset network resource
+        """
+        current_network_resource.set(None)
