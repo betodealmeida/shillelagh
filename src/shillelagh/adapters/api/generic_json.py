@@ -171,9 +171,3 @@ class GenericJSONAPI(Adapter):
             row["rowid"] = i
             _logger.debug(row)
             yield flatten(row)
-
-    def close(self) -> None:
-        """
-        Unset network resource
-        """
-        current_network_resource.set(None)
