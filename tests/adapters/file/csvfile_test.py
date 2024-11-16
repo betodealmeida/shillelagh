@@ -461,4 +461,4 @@ def test_supports(fs: FakeFilesystem, requests_mock: Mocker) -> None:
         headers={"Content-type": "xml"},
     )
 
-    assert not CSVFile.supports("https://example.com/csv/test")
+    assert not CSVFile.supports("https://example.com/csv/test", fast=False)

@@ -165,11 +165,11 @@ class CSVFile(Adapter):  # pylint: disable=too-many-instance-attributes
             except StopIteration as ex:
                 raise ProgrammingError("The file has no rows") from ex
 
-            readed_data = (dict(zip(column_names, row)) for row in reader)
+            _data = (dict(zip(column_names, row)) for row in reader)
 
             # put data in a ``RowTracker``, so we can monitor the last row
             # and keep track of the column order
-            row_tracker = RowTracker(readed_data)
+            row_tracker = RowTracker(_data)
 
             # analyze data to determine number of rows, as well as the order
             # and type of each column
