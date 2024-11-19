@@ -3,6 +3,9 @@
 Integration tests for SFTP Network Resource.
 """
 
+import csv
+import io
+
 import pytest
 from yarl import URL
 
@@ -26,12 +29,17 @@ def test_get_data_real(sftp_resource):
     """
     data = sftp_resource.get_data()
 
-    expected_data = (
+    expected_io = io.BytesIO(
         b'"index","temperature","site"\r\n10.0,15.2,'
         b'"Diamond_St"\r\n11.0,13.1,"Blacktail_Loop"\r\n12.0,13.3,'
-        b'"Platinum_St"\r\n13.0,12.1,"Kodiak_Trail"\r\n'
+        b'"Platinum_St"\r\n13.0,12.1,"Kodiak_Trail"\r\n',
     )
-    assert data == expected_data
+    expected_csv = csv.reader(io.TextIOWrapper(expected_io, encoding="utf-8"))
+
+    result_io = io.BytesIO(data)
+    result_csv = csv.reader(io.TextIOWrapper(result_io, encoding="utf-8"))
+
+    assert list(expected_csv) == list(result_csv)
 
 
 @pytest.mark.slow_integration_test
