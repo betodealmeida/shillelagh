@@ -16,13 +16,7 @@ if __name__ == "__main__":
     cursor = connection.cursor()
 
     # Credentials from docker/docker-compose.yml
-    USERNAME = "shillelagh"
-    PASSWORD = "shillelagh123"
-    HOST = "localhost"
-    PORT = 2222
-    PATH = "test.csv"
-
-    URL = f"sftp://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{PATH}"
+    URL = "sftp://shillelagh:shillelagh123@localhost:2222/test.csv"
 
     SQL = f'''SELECT * FROM "{URL}"'''
     print(SQL)
