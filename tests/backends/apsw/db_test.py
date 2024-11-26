@@ -245,7 +245,10 @@ def test_check_invalid_syntax() -> None:
     connection = connect(":memory:", isolation_level="IMMEDIATE")
     with pytest.raises(ProgrammingError) as excinfo:
         connection.execute("SELLLLECT 1")
-    assert str(excinfo.value) == 'SQLError: near "SELLLLECT": syntax error'
+    assert (
+        str(excinfo.value) == 'SQLError: near "SELLLLECT": syntax error'
+        or str(excinfo.value) == 'near "SELLLLECT": syntax error'
+    )
 
 
 def test_unsupported_table(registry: AdapterLoader) -> None:
