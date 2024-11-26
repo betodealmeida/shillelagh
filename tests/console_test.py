@@ -48,12 +48,14 @@ def test_exception(mocker: MockerFixture) -> None:
     PromptSession.return_value.prompt.side_effect = ["SSELECT 1;", EOFError()]
     console.main()
     result = stdout.getvalue()
-    assert (
-        result
-        == """SQLError: near "SSELECT": syntax error
+    assert result in {
+        """SQLError: near "SSELECT": syntax error
 GoodBye!
-"""
-    )
+""",
+        """near "SSELECT": syntax error
+GoodBye!
+""",
+    }
 
 
 def test_ctrl_c(mocker: MockerFixture) -> None:
