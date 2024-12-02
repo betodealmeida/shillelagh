@@ -5,7 +5,7 @@ Tests for shillelagh.backends.apsw.db.
 # pylint: disable=protected-access, c-extension-no-member, too-few-public-methods
 
 import datetime
-from typing import Any
+from typing import Any, Optional
 from unittest import mock
 
 import apsw
@@ -14,10 +14,10 @@ from pytest_mock import MockerFixture
 
 from shillelagh.adapters.registry import AdapterLoader, UnsafeAdaptersError
 from shillelagh.backends.apsw.db import (
-    NO_SUCH_TABLE,
     Connection,
     connect,
     convert_binding,
+    get_missing_table,
 )
 from shillelagh.exceptions import NotSupportedError, ProgrammingError
 from shillelagh.fields import Float, String, StringInteger
@@ -209,6 +209,31 @@ def test_execute_with_native_parameters(registry: AdapterLoader) -> None:
     )
     assert cursor.fetchall() == []
     assert cursor.rowcount == 0
+
+
+def test_execute_table_not_created(
+    mocker: MockerFixture,
+    registry: AdapterLoader,
+) -> None:
+    """
+    Test error when table can not be created.
+
+    When that happens, we should raise the exception to prevent an infinite loop.
+    """
+    registry.add("dummy", FakeAdapter)
+
+    connection = connect(":memory:", ["dummy"], isolation_level="IMMEDIATE")
+    cursor = connection.cursor()
+
+    # make `_create_table` a no-op
+    mocker.patch.object(cursor, "_create_table")
+
+    with pytest.raises(ProgrammingError) as excinfo:
+        cursor.execute(
+            'SELECT * FROM "dummy://" WHERE name = ?',
+            (datetime.datetime.now(),),
+        )
+    assert "no such table: dummy://" in str(excinfo.value)
 
 
 def test_check_closed() -> None:
@@ -549,16 +574,16 @@ def test_best_index(mocker: MockerFixture) -> None:
 
 
 @pytest.mark.parametrize(
-    "error,uri",
+    "message,uri",
     [
         ("apsw.SQLError: no such table: dummy://", "dummy://"),
         ("SQLError: no such table: dummy://", "dummy://"),
         ("no such table: dummy://", "dummy://"),
+        ("another error", None),
     ],
 )
-def test_no_such_table_search(error: str, uri: str) -> None:
+def test_get_missing_table(message: str, uri: Optional[str]) -> None:
     """
-    Test ``NO_SUCH_TABLE`` search.
+    Test the "no such table" error message processing.
     """
-    match = NO_SUCH_TABLE.search(error)
-    assert match and match.groupdict() == {"uri": uri}
+    assert get_missing_table(message) == uri
