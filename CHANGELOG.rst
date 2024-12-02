@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.3.3 - 2024-12-01
+==========================
+
+- Fix regular expression for different apsw versions (#495)
+
 Version 1.3.2 - 2024-11-11
 ==========================
 
