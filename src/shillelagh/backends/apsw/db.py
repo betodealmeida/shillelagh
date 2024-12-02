@@ -91,6 +91,18 @@ CURSOR_METHOD = TypeVar("CURSOR_METHOD", bound=Callable[..., Any])
 _logger = logging.getLogger(__name__)
 
 
+def get_missing_table(message: str) -> Optional[str]:
+    """
+    Return the missing table from a message.
+
+    This is used to extract the table name from an APSW error message.
+    """
+    if match := NO_SUCH_TABLE.search(message):
+        return match.groupdict()["uri"]
+
+    return None
+
+
 def check_closed(method: CURSOR_METHOD) -> CURSOR_METHOD:
     """Decorator that checks if a connection or cursor is closed."""
 
@@ -242,6 +254,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         # this is where the magic happens: instead of forcing users to register
         # their virtual tables explicitly, we do it for them when they first try
         # to access them and it fails because the table doesn't exist yet
+        created_tables = set()
         while True:
             try:
                 self._cursor.execute(operation, parameters)
@@ -250,10 +263,13 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
                 break
             except apsw.SQLError as ex:
                 message = ex.args[0]
-                if match := NO_SUCH_TABLE.search(message):
+                if uri := get_missing_table(message):
+                    if uri in created_tables:
+                        raise ProgrammingError(message) from ex
+
                     # create the virtual table
-                    uri = match.groupdict()["uri"]
                     self._create_table(uri)
+                    created_tables.add(uri)
                     continue
 
                 raise ProgrammingError(message) from ex
