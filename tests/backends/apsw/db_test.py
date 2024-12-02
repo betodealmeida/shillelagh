@@ -13,7 +13,12 @@ import pytest
 from pytest_mock import MockerFixture
 
 from shillelagh.adapters.registry import AdapterLoader, UnsafeAdaptersError
-from shillelagh.backends.apsw.db import Connection, connect, convert_binding
+from shillelagh.backends.apsw.db import (
+    NO_SUCH_TABLE,
+    Connection,
+    connect,
+    convert_binding,
+)
 from shillelagh.exceptions import NotSupportedError, ProgrammingError
 from shillelagh.fields import Float, String, StringInteger
 
@@ -541,3 +546,19 @@ def test_best_index(mocker: MockerFixture) -> None:
         "some_adapter",
         VTModule(adapter),
     )
+
+
+@pytest.mark.parametrize(
+    "error,uri",
+    [
+        ("apsw.SQLError: no such table: dummy://", "dummy://"),
+        ("SQLError: no such table: dummy://", "dummy://"),
+        ("no such table: dummy://", "dummy://"),
+    ],
+)
+def test_no_such_table_search(error: str, uri: str) -> None:
+    """
+    Test ``NO_SUCH_TABLE`` search.
+    """
+    match = NO_SUCH_TABLE.search(error)
+    assert match and match.groupdict() == {"uri": uri}

@@ -83,7 +83,7 @@ sqlite_version_info = tuple(
     int(number) for number in apsw.sqlitelibversion().split(".")
 )
 
-NO_SUCH_TABLE = re.compile("(?:SQLError: )?no such table: (?P<uri>.*)")
+NO_SUCH_TABLE = re.compile("no such table: (?P<uri>.*)")
 DEFAULT_SCHEMA = "main"
 
 CURSOR_METHOD = TypeVar("CURSOR_METHOD", bound=Callable[..., Any])
@@ -250,7 +250,7 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
                 break
             except apsw.SQLError as ex:
                 message = ex.args[0]
-                if match := NO_SUCH_TABLE.match(message):
+                if match := NO_SUCH_TABLE.search(message):
                     # create the virtual table
                     uri = match.groupdict()["uri"]
                     self._create_table(uri)
