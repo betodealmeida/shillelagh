@@ -40,15 +40,20 @@ When Shillelagh first runs that query, it will fail, because the table ``s3://bu
 
 If it can find an adapter that handles the table name it will register the virtual table module, create the virtual table, and re-run the query. This way, to the user everything just works.
 
+Network resources
+=================================
+
+In Shillelagh, each file adapter uses "network resources" to get files from network. So if file adapter declare how work with different files types, each network resource declare how get file from network via different protocols. For example, the ``SFTPNetworkResourceImplementation`` declares how to get files from SFTP servers, e.g. you can use ``sftp://login:pass@some.sftp.com/path/to/file.csv`` URI in your query to get a CSV file from SFTP server.
+
 Behind the scenes
 =================
 
-Finding existing adapters
+Finding existing adapters and network resources
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To find existing adapters, Shillelagh relies on `entry points <https://packaging.python.org/en/latest/specifications/entry-points/>`_. The library comes with its own adapters, but 3rd party Python packages can register their own adapters, and Shillelagh will find them. This is how the `airtable-db-api <https://github.com/cancan101/airtable-db-api/blob/218713cf70b026b731f9dc27a4a3a9ed659291cc/setup.py#L108-L110>`_ library does, for example.
+To find existing adapters and network resources, Shillelagh relies on `entry points <https://packaging.python.org/en/latest/specifications/entry-points/>`_. The library comes with its own adapters and network resources, but 3rd party Python packages can register their own adapters and network resources, and Shillelagh will find them. This is how the `airtable-db-api <https://github.com/cancan101/airtable-db-api/blob/218713cf70b026b731f9dc27a4a3a9ed659291cc/setup.py#L108-L110>`_ library does, for example.
 
-It's also possible to register adapters on runtime, using a registry similar to the one used by SQLAlchemy:
+It's also possible to register adapters (but not network resources) on runtime, using a registry similar to the one used by SQLAlchemy:
 
 .. code-block:: python
 
@@ -69,6 +74,17 @@ For example, the ``datasette`` adapter can support potentially any http/https UR
 The second phase happens only if (1) no plugins returned ``True``, and at least one plugin returned ``None``. When that happens Shillelagh will call the ``supports`` method of the adapters that returned ``None``, but this time passing ``fast=False``. Now adapters can perform more expensive operations to determine if they support a given table name or not.
 
 One easy way to understand the process is thinking of ``None`` as "maybe".
+
+Finding the right network resource
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Let's add some definitions before approach:
+
+* ``NetworkResourceImplementation`` class - it's a basic class for each network resource implementation, which encapsulate work with network protocol. All network resources inherit from this class.
+
+* ``NetworkResource`` class - a gateway to use network resources and give abstract internal API to use all network resources implementations.
+
+When Shillelagh found right file adapter, adapter will try to create NetworkResource. NetworkResource will try to get right network resource implementation by protocol used in URI in requested network resource and return self instance to adapter, else exception will raised.
 
 Creating the virtual table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
