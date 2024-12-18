@@ -5,6 +5,9 @@ Changelog
 Next
 ====
 
+Version 1.3.4 - 2024-12-18
+==========================
+
 - Allow disabling certificate validation in GSheets (#500)
 
 Version 1.3.3 - 2024-12-01
