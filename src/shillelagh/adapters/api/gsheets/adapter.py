@@ -8,7 +8,7 @@ import json
 import logging
 import urllib.parse
 from collections.abc import Iterator
-from typing import Any, Optional, cast
+from typing import Any, Optional, Union, cast
 
 import dateutil.tz
 from google.auth.transport.requests import AuthorizedSession
@@ -110,6 +110,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         subject: Optional[str] = None,
         catalog: Optional[dict[str, str]] = None,
         app_default_credentials: bool = False,
+        session_verify: Optional[Union[bool, str]] = None,
     ):
         super().__init__()
         if catalog and uri in catalog:
@@ -123,6 +124,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             subject,
             app_default_credentials,
         )
+        self.session_verify = session_verify
 
         # Local data. When using DML we switch to the Google Sheets API,
         # keeping a local copy of the spreadsheets data so that we can
@@ -200,10 +202,15 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             _logger.warning("Could not determine sheet name!")
 
     def _get_session(self) -> Session:
-        return cast(
+        session = cast(
             Session,
             AuthorizedSession(self.credentials) if self.credentials else Session(),
         )
+
+        if self.session_verify is not None:
+            session.verify = self.session_verify
+
+        return session
 
     def get_metadata(self) -> dict[str, Any]:
         """

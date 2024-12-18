@@ -9,7 +9,7 @@ import logging
 import urllib.parse
 from datetime import timedelta
 from operator import itemgetter
-from typing import Any, Optional, cast
+from typing import Any, Optional, Union, cast
 
 import requests
 from google.auth.transport.requests import AuthorizedSession
@@ -59,7 +59,7 @@ def extract_query(url: URL) -> QueryType:
     return cast(QueryType, parameters)
 
 
-class APSWGSheetsDialect(APSWDialect):
+class APSWGSheetsDialect(APSWDialect):  # pylint: disable=too-many-instance-attributes
     """
     Drop-in replacement for gsheetsdb.
 
@@ -86,6 +86,7 @@ class APSWGSheetsDialect(APSWDialect):
         catalog: Optional[dict[str, str]] = None,
         list_all_sheets: bool = False,
         app_default_credentials: bool = False,
+        session_verify: Optional[Union[bool, str]] = None,
         **kwargs: Any,
     ):
         super().__init__(**kwargs)
@@ -97,6 +98,7 @@ class APSWGSheetsDialect(APSWDialect):
         self.catalog = catalog or {}
         self.list_all_sheets = list_all_sheets
         self.app_default_credentials = app_default_credentials
+        self.session_verify = session_verify
 
     def create_connect_args(self, url: URL) -> tuple[tuple[()], dict[str, Any]]:
         adapter_kwargs: dict[str, Any] = {
@@ -106,6 +108,7 @@ class APSWGSheetsDialect(APSWDialect):
             "subject": self.subject,
             "catalog": self.catalog,
             "app_default_credentials": self.app_default_credentials,
+            "session_verify": self.session_verify,
         }
         # parameters can be overridden via the query in the URL
         adapter_kwargs.update(extract_query(url))
