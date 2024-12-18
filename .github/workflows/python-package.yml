@@ -20,7 +20,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        # 3.11.1 has a bug with pylint: https://github.com/pylint-dev/pylint/issues/10112
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13.0']
 
     steps:
     - uses: actions/checkout@v2

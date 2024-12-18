@@ -16,6 +16,7 @@ import pytest
 import requests
 import requests_mock
 from pytest_mock import MockerFixture
+from sqlalchemy import create_engine, text
 
 from shillelagh.adapters.api.gsheets.adapter import GSheetsAPI
 from shillelagh.backends.apsw.db import connect
@@ -191,7 +192,7 @@ def test_credentials() -> None:
             mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
             mock.call(
-                "CREATE VIRTUAL TABLE \"https://docs.google.com/spreadsheets/d/1\" USING GSheetsAPI('+ihodHRwczovL2RvY3MuZ29vZ2xlLmNvbS9zcHJlYWRzaGVldHMvZC8x', 'Tg==', 'Tg==', '+9oGc2VjcmV02gNYWFgw', '+hB1c2VyQGV4YW1wbGUuY29t', 'Tg==', 'Rg==')",
+                "CREATE VIRTUAL TABLE \"https://docs.google.com/spreadsheets/d/1\" USING GSheetsAPI('+ihodHRwczovL2RvY3MuZ29vZ2xlLmNvbS9zcHJlYWRzaGVldHMvZC8x', 'Tg==', 'Tg==', '+9oGc2VjcmV02gNYWFgw', '+hB1c2VyQGV4YW1wbGUuY29t', 'Tg==', 'Rg==', 'Tg==')",
             ),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
         ],
@@ -224,7 +225,7 @@ def test_credentials() -> None:
             mock.call("BEGIN IMMEDIATE"),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
             mock.call(
-                "CREATE VIRTUAL TABLE \"https://docs.google.com/spreadsheets/d/1\" USING GSheetsAPI('+ihodHRwczovL2RvY3MuZ29vZ2xlLmNvbS9zcHJlYWRzaGVldHMvZC8x', 'Tg==', 'Tg==', 'Tg==', 'Tg==', 'Tg==', 'VA==')",
+                "CREATE VIRTUAL TABLE \"https://docs.google.com/spreadsheets/d/1\" USING GSheetsAPI('+ihodHRwczovL2RvY3MuZ29vZ2xlLmNvbS9zcHJlYWRzaGVldHMvZC8x', 'Tg==', 'Tg==', 'Tg==', 'Tg==', 'Tg==', 'VA==', 'Tg==')",
             ),
             mock.call('SELECT 1 FROM "https://docs.google.com/spreadsheets/d/1"', None),
         ],
@@ -2360,3 +2361,30 @@ def test_get_cost(mocker: MockerFixture) -> None:
         )
         == 3022
     )
+
+
+def test_session_verify(
+    mocker: MockerFixture,
+    simple_sheet_adapter: requests_mock.Adapter,
+) -> None:
+    """
+    Test setting ``verify`` in the session.
+    """
+    session = requests.Session()
+    session.mount("https://", simple_sheet_adapter)
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.adapter.AuthorizedSession",
+        return_value=session,
+    )
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
+        return_value="SECRET",
+    )
+
+    engine = create_engine("gsheets://", session_verify=False)
+    connection = engine.connect()
+
+    sql = '''SELECT * FROM "https://docs.google.com/spreadsheets/d/1/edit#gid=0"'''
+    connection.execute(text(sql))
+
+    assert session.verify is False

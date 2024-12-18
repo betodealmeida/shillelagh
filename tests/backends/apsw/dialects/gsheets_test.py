@@ -39,6 +39,7 @@ def test_gsheets_dialect() -> None:
                     "subject": None,
                     "catalog": {},
                     "app_default_credentials": False,
+                    "session_verify": None,
                 },
             },
             "safe": True,
@@ -63,6 +64,7 @@ def test_gsheets_dialect() -> None:
                     "subject": "user@example.com",
                     "catalog": {},
                     "app_default_credentials": False,
+                    "session_verify": None,
                 },
             },
             "safe": True,
@@ -88,6 +90,7 @@ def test_gsheets_dialect() -> None:
                     "subject": "user@example.com",
                     "catalog": {"public_sheet": "https://example.com/"},
                     "app_default_credentials": False,
+                    "session_verify": None,
                 },
             },
             "safe": True,
@@ -111,6 +114,7 @@ def test_gsheets_dialect() -> None:
                     "subject": None,
                     "catalog": {},
                     "app_default_credentials": True,
+                    "session_verify": None,
                 },
             },
             "safe": True,
@@ -120,6 +124,28 @@ def test_gsheets_dialect() -> None:
 
     mock_dbapi_connection = mock.MagicMock()
     assert dialect.get_schema_names(mock_dbapi_connection) == []
+
+    dialect = APSWGSheetsDialect(session_verify=False)
+    assert dialect.create_connect_args(make_url("gsheets://")) == (
+        (),
+        {
+            "path": ":memory:",
+            "adapters": ["gsheetsapi"],
+            "adapter_kwargs": {
+                "gsheetsapi": {
+                    "access_token": None,
+                    "service_account_file": None,
+                    "service_account_info": None,
+                    "subject": None,
+                    "catalog": {},
+                    "app_default_credentials": False,
+                    "session_verify": False,
+                },
+            },
+            "safe": True,
+            "isolation_level": None,
+        },
+    )
 
 
 def test_get_table_names(mocker: MockerFixture, requests_mock: Mocker) -> None:
