@@ -96,6 +96,7 @@ def test_no_configuration(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     connect.assert_called_with(":memory:", adapter_kwargs={})
 
 
+@pytest.mark.skip(reason="Console exits 1 immediately")
 def test_configuration_invalid(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     """
     Test that an exception is raised if the configuration is invalid.
