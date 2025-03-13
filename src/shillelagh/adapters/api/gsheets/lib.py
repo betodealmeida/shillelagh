@@ -70,7 +70,7 @@ def get_field(
     )
     return class_(
         filters=filters,
-        order=Order.ANY,
+        order=Order.NONE,
         exact=True,
         pattern=col.get("pattern"),
         timezone=timezone,
