@@ -17,17 +17,17 @@ cattrs==24.1.2
     # via requests-cache
 certifi==2024.8.30
     # via requests
-charset-normalizer==3.3.2
+charset-normalizer==3.4.0
     # via requests
 exceptiongroup==1.2.2
     # via cattrs
 greenlet==3.1.1
-    # via shillelagh
+    # via
+    #   shillelagh
+    #   sqlalchemy
 idna==3.10
     # via requests
-importlib-metadata==8.5.0
-    # via shillelagh
-packaging==24.1
+packaging==24.2
     # via shillelagh
 platformdirs==4.3.6
     # via requests-cache
@@ -43,7 +43,7 @@ six==1.16.0
     # via
     #   python-dateutil
     #   url-normalize
-sqlalchemy==2.0.35
+sqlalchemy==2.0.36
     # via shillelagh
 typing-extensions==4.12.2
     # via
@@ -56,5 +56,3 @@ urllib3==2.2.3
     # via
     #   requests
     #   requests-cache
-zipp==3.20.2
-    # via importlib-metadata

@@ -51,4 +51,14 @@ Or, if you're using ``pyenv`` and created a virtual environment called ``shillel
 
     $ make test
 
+If you're going to use debugger (e.g. in PyCharm IDE) you should comment this line in setup.cfg file to let your breakpoints work:
+
+.. code-block:: toml
+
+    [tool:pytest]
+
+    addopts =
+    #    --cov shillelagh --cov-report=term-missing:skip-covered
+        --verbose
+
 Shillelagh has unit and integration tests. Don't worry about integration tests: they require credentials in order to run, so you won't be able to run them locally, and the CI tests will fail when you create your PR.

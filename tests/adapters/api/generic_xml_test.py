@@ -186,4 +186,8 @@ def test_generic_xml(requests_mock: Mocker) -> None:
     )
     with pytest.raises(ProgrammingError) as excinfo:
         list(cursor.execute(sql))
-    assert str(excinfo.value) == "Error: Something went wrong"
+    assert str(excinfo.value) == (
+        "Error while requesting HTTPS resource "
+        "https://api.congress.gov/v3/bill/118?format=Xml&offset=0&limit=2&api_key=SECRET#.//bill: "
+        "500 b'Something went wrong'"
+    )

@@ -10,7 +10,6 @@ from typing import Any, Optional
 from defusedxml import ElementTree as DET
 
 from shillelagh.adapters.api.generic_json import GenericJSONAPI
-from shillelagh.exceptions import ProgrammingError
 from shillelagh.filters import Filter
 from shillelagh.lib import flatten
 from shillelagh.typing import RequestedOrder, Row
@@ -64,10 +63,8 @@ class GenericXMLAPI(GenericJSONAPI):
         requested_columns: Optional[set[str]] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
-        response = self._session.get(self.uri)
-        payload = response.content.decode("utf-8")
-        if not response.ok:
-            raise ProgrammingError(f"Error: {payload}")
+        response = self.network_resource.get_data()
+        payload = response.decode("utf-8")
 
         root = DET.fromstring(payload)
         result = root.findall(self.path)

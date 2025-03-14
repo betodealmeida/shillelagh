@@ -8,7 +8,7 @@ the multicorn2 package (not on (PyPI), and the shillelagh package.
 If you want to play with it Shillelagh has a `docker-compose.yml` file that will run
 Postgres with the extension and the Python packages. Just run:
 
-    $ docker compose -f postgres/docker-compose.yml up
+    $ docker compose -f docker/docker-compose.yml up
 
 Then you can run this script.
 """
