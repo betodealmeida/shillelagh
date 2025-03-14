@@ -18,6 +18,7 @@ from sqlalchemy.pool.base import _ConnectionFairy
 from typing_extensions import TypedDict
 
 from shillelagh.adapters.api.gsheets.lib import get_credentials
+from shillelagh.backends.apsw import db
 from shillelagh.backends.apsw.dialects.base import APSWDialect
 from shillelagh.exceptions import ProgrammingError
 
@@ -76,6 +77,20 @@ class APSWGSheetsDialect(APSWDialect):  # pylint: disable=too-many-instance-attr
     supports_statement_cache = True
 
     name = "gsheets"
+
+    @classmethod
+    def dbapi(cls):  # pylint: disable=method-hidden
+        """
+        Return the DB API module.
+        """
+        return db
+
+    @classmethod
+    def import_dbapi(cls):  # pylint: disable=method-hidden
+        """
+        Return the DB API module.
+        """
+        return db
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
@@ -164,13 +179,26 @@ class APSWGSheetsDialect(APSWDialect):  # pylint: disable=too-many-instance-attr
         """
         table_names = list(self.catalog.keys())
 
-        query = extract_query(connection.url) if hasattr(connection, "url") else {}
+        # Find the Shillelagh connection. When testing this was found in
+        # `connection.connection.connection`, but I'm not sure that's always the case.
+        while True:
+            if hasattr(connection, "_adapter_kwargs"):
+                break
+
+            if not hasattr(connection, "connection"):
+                raise ProgrammingError("No usable connection found")  # pragma: no cover
+
+            connection = connection.connection
+
+        # pylint: disable=protected-access
+        config = connection._adapter_kwargs["gsheetsapi"]
+
         credentials = get_credentials(
-            query.get("access_token", self.access_token),
-            query.get("service_account_file", self.service_account_file),
+            config.get("access_token", self.access_token),
+            config.get("service_account_file", self.service_account_file),
             self.service_account_info,
-            query.get("subject", self.subject),
-            query.get("app_default_credentials", self.app_default_credentials),
+            config.get("subject", self.subject),
+            config.get("app_default_credentials", self.app_default_credentials),
         )
         if not (credentials and self.list_all_sheets):
             return table_names

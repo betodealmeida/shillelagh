@@ -488,3 +488,10 @@ def test_types_in_sqlalchemy(adapter_kwargs: dict[str, Any]) -> None:
             "test",
         ),
     ]
+
+
+def test_import_dbapi() -> None:
+    """
+    Test ``import_dbapi``.
+    """
+    assert APSWGSheetsDialect.import_dbapi() == APSWGSheetsDialect.dbapi()
