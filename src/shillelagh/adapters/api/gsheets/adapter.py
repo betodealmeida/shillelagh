@@ -35,9 +35,9 @@ from shillelagh.exceptions import (
     ProgrammingError,
     UnauthenticatedError,
 )
-from shillelagh.fields import Field, Order
+from shillelagh.fields import Field
 from shillelagh.filters import Filter
-from shillelagh.lib import NetworkAPICostModel, apply_limit_and_offset, build_sql
+from shillelagh.lib import NetworkAPICostModel, build_sql
 from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
@@ -83,8 +83,6 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
     """
 
     safe = True
-    supports_limit = True
-    supports_offset = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
@@ -351,12 +349,11 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         This is called when we switch from the Chart API to the Sheets API. When
         that happens we use a local copy of the spreadsheet values. Clearing the
-        columns ensure that filtering and sorting are performed by the backend,
-        which is probably more efficient.
+        columns ensure that filtering is performed by the backend, which is probably
+        more efficient.
         """
         for field in self.columns.values():
             field.filters = []
-            field.order = Order.NONE
             field.exact = False
 
     def _get_header_rows(self, values: list[list[Any]]) -> int:
@@ -400,8 +397,6 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         self,
         bounds: dict[str, Filter],
         order: list[tuple[str, RequestedOrder]],
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
         """
@@ -432,7 +427,6 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                 }
                 for row in values[headers:]
             )
-            rows = apply_limit_and_offset(rows, limit, offset)
 
         # For ``BIDIRECTIONAL`` mode we continue using the Chart API to
         # retrieve data. This will happen before every DML query.
@@ -441,11 +435,9 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                 sql = build_sql(
                     self.columns,
                     bounds,
-                    order,
+                    [],
                     None,
                     self._column_map,
-                    limit,
-                    offset,
                 )
             except ImpossibleFilterError:
                 return
@@ -461,8 +453,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
                 for row in payload["table"]["rows"]
             )
 
-        for i, row in enumerate(rows):
-            rowid = (offset or 0) + i
+        for rowid, row in enumerate(rows):
             self._row_ids[rowid] = row
             row["rowid"] = rowid
             _logger.debug(row)

@@ -41,27 +41,27 @@ def test_get_field() -> None:
     """
     assert get_field({"type": "string"}, None) == GSheetsString(
         [Range, Equal, NotEqual, Like, IsNull, IsNotNull],
-        Order.ANY,
+        Order.NONE,
         True,
     )
     assert get_field({"type": "number"}, None) == GSheetsNumber(
         [Range, Equal, NotEqual, IsNull, IsNotNull],
-        Order.ANY,
+        Order.NONE,
         True,
     )
     assert get_field({"type": "boolean"}, None) == GSheetsBoolean(
         [Equal, NotEqual, IsNull, IsNotNull],
-        Order.ANY,
+        Order.NONE,
         True,
     )
     assert get_field({"type": "date"}, None) == GSheetsDate(
         [Range, Equal, NotEqual, IsNull, IsNotNull],
-        Order.ANY,
+        Order.NONE,
         True,
     )
     assert get_field({"type": "datetime"}, None) == GSheetsDateTime(
         [Range, Equal, NotEqual, IsNull, IsNotNull],
-        Order.ANY,
+        Order.NONE,
         True,
     )
     timezone = dateutil.tz.gettz("America/Los_Angeles")
@@ -70,14 +70,14 @@ def test_get_field() -> None:
         timezone,
     ) == GSheetsDateTime(
         [Range, Equal, NotEqual, IsNull, IsNotNull],
-        Order.ANY,
+        Order.NONE,
         True,
         "M/d/yyyy H:mm:ss",
         timezone,
     )
     assert get_field({"type": "timeofday"}, None) == GSheetsTime(
         [Range, Equal, NotEqual, IsNull, IsNotNull],
-        Order.ANY,
+        Order.NONE,
         True,
     )
     assert get_field(
@@ -85,13 +85,13 @@ def test_get_field() -> None:
         None,
     ) == GSheetsTime(
         [Range, Equal, NotEqual, IsNull, IsNotNull],
-        Order.ANY,
+        Order.NONE,
         True,
         "h:mm:ss am/pm",
     )
     assert get_field({"type": "invalid"}, None) == GSheetsString(
         [Range, Equal, NotEqual, Like, IsNull, IsNotNull],
-        Order.ANY,
+        Order.NONE,
         True,
     )
     assert get_field(
@@ -104,7 +104,7 @@ def test_get_field() -> None:
         timezone,
     ) == GSheetsDateTime(
         [Range, Equal, NotEqual, IsNull, IsNotNull],
-        Order.ANY,
+        Order.NONE,
         True,
         "M/D/YY h:mm",
         timezone,
