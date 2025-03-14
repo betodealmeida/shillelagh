@@ -5,6 +5,12 @@ Changelog
 Next
 ====
 
+Version 1.3.5 - 2025-03-14
+==========================
+
+- Fix `ORDER BY` in GSheets (#507)
+- Fix authenticated `get_table_names` in GSheets (#508)
+
 Version 1.3.4 - 2024-12-18
 ==========================
 
