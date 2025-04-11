@@ -109,6 +109,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         catalog: Optional[dict[str, str]] = None,
         app_default_credentials: bool = False,
         session_verify: Optional[Union[bool, str]] = None,
+        primary_key: Optional[str] = None,
     ):
         super().__init__()
         if catalog and uri in catalog:
@@ -141,6 +142,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         self._sheet_name: Optional[str] = None
         self._timezone: Optional[datetime.tzinfo] = None
         self._set_metadata(uri)
+        self._primary_key = primary_key
 
         # Determine columns in the sheet.
         self.columns: dict[str, Field] = {}
@@ -547,11 +549,17 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         Return the 0-indexed number of a given row, defined by its values.
         """
         target_row_values = get_values_from_row(row, self._column_map)
+        if self._primary_key:
+            primary_key_index = list(self._column_map.keys()).index(self._primary_key)
         for i, row_values in enumerate(self._get_values()):
-            # pad with empty strings to match size
-            padding = [""] * (len(target_row_values) - len(row_values))
-            if [*row_values, *padding] == target_row_values:
-                return i
+            if self._primary_key:
+                if row_values[primary_key_index] == target_row_values[primary_key_index]:
+                    return i
+            else:
+                # pad with empty strings to match size
+                padding = [""] * (len(target_row_values) - len(row_values))
+                if [*row_values, *padding] == target_row_values:
+                    return i
 
         raise ProgrammingError(f"Could not find row: {row}")
 
