@@ -620,7 +620,7 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
     def update_data(  # pylint: disable=too-many-locals
         self,
         row_id: int,
-        row: Row,
+        new_row: Row,
     ) -> None:
         """
         Update a row in the sheet.
@@ -628,10 +628,10 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         if row_id not in self._row_ids:
             raise ProgrammingError(f"Invalid row to update: {row_id}")
 
-        current_row = self._row_ids[row_id]
-        row_number = self._find_row_number(current_row)
+        current_row_in_sheet = self._row_ids[row_id]
+        row_number = self._find_row_number(current_row_in_sheet)
 
-        row_values = get_values_from_row(row, self._column_map)
+        row_values = get_values_from_row(new_row, self._column_map)
 
         # In these modes we keep a local copy of the data, so we only have to
         # download the full sheet once.
@@ -642,38 +642,45 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
 
         # In these modes we push all changes immediately to the sheet.
         if self._sync_mode in {SyncMode.BIDIRECTIONAL, SyncMode.UNIDIRECTIONAL}:
-            session = self._get_session()
-            range_ = f"{self._sheet_name}!A{row_number + 1}"
-            body = {
-                "range": range_,
-                "majorDimension": "ROWS",
-                "values": [row_values],
-            }
-            url = (
-                "https://sheets.googleapis.com/v4/spreadsheets/"
-                f"{self._spreadsheet_id}/values/{range_}"
-            )
-            params = {"valueInputOption": "USER_ENTERED"}
-
-            # Log the URL. We can't use a prepared request here to extract the URL because
-            # it doesn't work with ``AuthorizedSession``.
-            query_string = urllib.parse.urlencode(params)
-            _logger.info("PUT %s?%s", url, query_string)
-            _logger.debug(body)
-
-            response = session.put(url, json=body, params=params)
-            payload = response.json()
-            _logger.debug(payload)
-            if "error" in payload:
-                raise ProgrammingError(payload["error"]["message"])
+            for column_header, new_cell_value in new_row.items():
+                if new_cell_value != current_row_in_sheet[column_header]:
+                    column_index = self._column_map[column_header]
+                    self.update_single_cell(row_number, column_index, new_cell_value)
+                    print(column_index, new_cell_value)
 
         # the row_id might change on an update
-        new_row_id = row.pop("rowid")
+        new_row_id = new_row.pop("rowid")
         if new_row_id != row_id:
             del self._row_ids[row_id]
-        self._row_ids[new_row_id] = row
+        self._row_ids[new_row_id] = new_row
 
         self.modified = True
+
+    def update_single_cell(self, row_number: int, column_index: str, value):
+        session = self._get_session()
+        range_ = f"{self._sheet_name}!{column_index}{row_number + 1}"
+        body = {
+            "range": range_,
+            "majorDimension": "ROWS",
+            "values": [(value,)],
+        }
+        url = (
+            "https://sheets.googleapis.com/v4/spreadsheets/"
+            f"{self._spreadsheet_id}/values/{range_}"
+        )
+        params = {"valueInputOption": "USER_ENTERED"}
+
+        # Log the URL. We can't use a prepared request here to extract the URL because
+        # it doesn't work with ``AuthorizedSession``.
+        query_string = urllib.parse.urlencode(params)
+        _logger.info("PUT %s?%s", url, query_string)
+        _logger.debug(body)
+
+        response = session.put(url, json=body, params=params)
+        payload = response.json()
+        _logger.debug(payload)
+        if "error" in payload:
+            raise ProgrammingError(payload["error"]["message"])
 
     def close(self) -> None:
         """
