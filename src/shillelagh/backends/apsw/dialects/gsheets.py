@@ -102,6 +102,7 @@ class APSWGSheetsDialect(APSWDialect):  # pylint: disable=too-many-instance-attr
         list_all_sheets: bool = False,
         app_default_credentials: bool = False,
         session_verify: Optional[Union[bool, str]] = None,
+        primary_key: Optional[str] = None,
         **kwargs: Any,
     ):
         super().__init__(**kwargs)
@@ -114,6 +115,7 @@ class APSWGSheetsDialect(APSWDialect):  # pylint: disable=too-many-instance-attr
         self.list_all_sheets = list_all_sheets
         self.app_default_credentials = app_default_credentials
         self.session_verify = session_verify
+        self.primary_key = primary_key
 
     def create_connect_args(self, url: URL) -> tuple[tuple[()], dict[str, Any]]:
         adapter_kwargs: dict[str, Any] = {
@@ -124,6 +126,7 @@ class APSWGSheetsDialect(APSWDialect):  # pylint: disable=too-many-instance-attr
             "catalog": self.catalog,
             "app_default_credentials": self.app_default_credentials,
             "session_verify": self.session_verify,
+            "primary_key": self.primary_key,
         }
         # parameters can be overridden via the query in the URL
         adapter_kwargs.update(extract_query(url))
