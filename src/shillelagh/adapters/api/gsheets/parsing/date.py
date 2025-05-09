@@ -182,7 +182,7 @@ class MMMM(MMM):
         return value.strftime("%B")
 
     def parse(self, value: str, tokens: list[Token]) -> tuple[dict[str, Any], str]:
-        token = re.split(r"\b", value, 2)[1]
+        token = re.split(r"\b", value, maxsplit=2)[1]
         size = len(token)
         month = datetime.strptime(value[:size], "%B").month
         return {"month": month}, value[size:]
@@ -429,7 +429,7 @@ class DDDDPlus(D):
         return value.strftime("%A")
 
     def parse(self, value: str, tokens: list[Token]) -> tuple[dict[str, Any], str]:
-        token = re.split(r"\b", value, 2)[1]
+        token = re.split(r"\b", value, maxsplit=2)[1]
         size = len(token)
         return {"weekday": datetime.strptime(value[:size], "%A").weekday()}, value[
             size:
