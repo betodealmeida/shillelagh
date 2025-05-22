@@ -30,7 +30,6 @@ RequestedOrder = Union[Literal[Order.ASCENDING], Literal[Order.DESCENDING]]
 
 SQLiteValidType = Union[None, int, float, str, bytes]
 
-
 # Cursor description
 Description = Optional[
     list[

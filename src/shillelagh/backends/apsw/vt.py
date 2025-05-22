@@ -15,7 +15,7 @@ from typing import Any, DefaultDict, Optional, cast
 
 import apsw
 
-from shillelagh.adapters.base import Adapter
+from shillelagh.adapters.base import Adapter, current_network_resource
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import (
     Blob,
@@ -467,6 +467,7 @@ class VTTable:
         but VTTable.Destroy() will be called when the table is no longer used.
         """
         self.adapter.close()
+        current_network_resource.set(None)
 
     Destroy = Disconnect
 

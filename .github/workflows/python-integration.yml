@@ -31,19 +31,25 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools
         python -m pip install -r requirements/test.txt
-    - name: Start the Postgres service
+    - name: Start services
       run: |
-        docker compose -f postgres/docker-compose.yml up --build -d
+        docker compose -f docker/docker-compose.yml up --build -d
     - name: Wait for Postgres to become available
       run: |
-        until docker run --network container:postgres-postgres-1 postgres-postgres pg_isready -h postgres -p 5432 -U shillelagh --timeout=90; do sleep 10; done
+        until docker run --network container:docker-postgres-1 docker-postgres pg_isready -h postgres -p 5432 -U shillelagh --timeout=90; do sleep 10; done
+    - name: Wait for FTP to become available
+      run: |
+        until nc -z localhost 2121; do sleep 10; done
+    - name: Wait for SFTP to become available
+      run: |
+        until nc -z localhost 2222; do sleep 10; done
     - name: Test with pytest
       env:
         SHILLELAGH_ADAPTER_KWARGS: ${{ secrets.SHILLELAGH_ADAPTER_KWARGS }}
       run: |
         pytest --cov-fail-under=100 --cov=src/shillelagh -vv tests/ --doctest-modules src/shillelagh --with-integration --with-slow-integration
-    - name: Stop the Postgres service
+    - name: Stop services
       if: always()
       run: |
-        docker logs postgres-postgres-1
-        docker compose -f postgres/docker-compose.yml down
+        docker logs docker-postgres-1
+        docker compose -f docker/docker-compose.yml down

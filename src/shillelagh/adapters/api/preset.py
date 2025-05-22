@@ -8,6 +8,7 @@ import itertools
 import logging
 import re
 from collections.abc import Iterator
+from datetime import timedelta
 from typing import Any, Optional, cast
 
 import jsonpath
@@ -19,7 +20,7 @@ from shillelagh.adapters.api.generic_json import CACHE_EXPIRATION, GenericJSONAP
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
 from shillelagh.filters import Filter
-from shillelagh.lib import analyze, flatten
+from shillelagh.lib import analyze, flatten, get_session
 from shillelagh.typing import RequestedOrder, Row
 
 _logger = logging.getLogger(__name__)
@@ -75,6 +76,13 @@ class PresetAPI(GenericJSONAPI):
 
         jwt_token = get_jwt_token(uri, access_token, access_secret)
         request_headers = {"Authorization": f"Bearer {jwt_token}"}
+
+        self._session = get_session(
+            request_headers,
+            self.cache_name,
+            timedelta(seconds=cache_expiration),
+        )
+
         super().__init__(
             uri,
             path=path,
@@ -121,7 +129,7 @@ class PresetWorkspaceAPI(PresetAPI):
         parsed = URL(uri)
         return (
             parsed.scheme in ("http", "https")
-            and parsed.host != "api.app.preset.io"
+            and parsed.host != "api.app.preset.io"  # pylint: disable=comparison-with-callable
             and parsed.host.endswith(".preset.io")
         )
 
