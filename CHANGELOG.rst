@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- New virtual table with on-the-fly data (#XXX)
+
 Version 1.3.5 - 2025-03-14
 ==========================
 
