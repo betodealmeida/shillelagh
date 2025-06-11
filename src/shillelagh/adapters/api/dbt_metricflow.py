@@ -343,9 +343,8 @@ class DbtMetricFlowAPI(Adapter):
                         self.columns[alias] = column
                         self.dimensions[alias] = dimension["description"]
                         self.grains[alias] = (name, grain.lower())
-                else:
-                    self.columns[name] = column
-                    self.dimensions[name] = dimension["description"]
+                self.columns[name] = column
+                self.dimensions[name] = dimension["description"]
 
         self.columns = dict(sorted(self.columns.items()))
 

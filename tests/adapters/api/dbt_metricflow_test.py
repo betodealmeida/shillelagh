@@ -844,6 +844,7 @@ def test_time_dimension_aliases(mocker: MockerFixture) -> None:
     )
 
     assert adapter.dimensions == {
+        "metric_time": "The metric time",
         "metric_time__day": "The metric time",
         "metric_time__week": "The metric time",
         "metric_time__month": "The metric time",
