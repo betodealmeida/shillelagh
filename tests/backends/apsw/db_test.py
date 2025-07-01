@@ -20,7 +20,7 @@ from shillelagh.backends.apsw.db import (
     get_missing_table,
 )
 from shillelagh.exceptions import NotSupportedError, ProgrammingError
-from shillelagh.fields import Float, String, StringInteger
+from shillelagh.fields import Blob, FastISODateTime, Float, String, StringInteger
 
 from ...fakes import FakeAdapter
 
@@ -587,3 +587,23 @@ def test_get_missing_table(message: str, uri: Optional[str]) -> None:
     Test the "no such table" error message processing.
     """
     assert get_missing_table(message) == uri
+
+
+def test_annotated_alias() -> None:
+    """
+    Test that types can be annotated in the expression alias.
+    """
+    connection = connect(":memory:")
+    cursor = connection.cursor()
+
+    cursor.execute("""SELECT '2025-01-01T00:00:00+00:00' AS date""")
+    assert cursor.fetchone() == ("2025-01-01T00:00:00+00:00",)
+    assert cursor.description == [("date", Blob, None, None, None, None, True)]
+
+    cursor.execute('''SELECT '2025-01-01T00:00:00+00:00' AS "date [TIMESTAMP]"''')
+    assert cursor.fetchone() == (
+        datetime.datetime(2025, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
+    )
+    assert cursor.description == [
+        ("date", FastISODateTime, None, None, None, None, True),
+    ]

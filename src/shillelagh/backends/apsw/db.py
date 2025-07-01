@@ -51,7 +51,7 @@ from shillelagh.types import (
     Timestamp,
     TimestampFromTicks,
 )
-from shillelagh.typing import Description, SQLiteValidType
+from shillelagh.typing import ColumnDescription, Description, SQLiteValidType
 
 __all__ = [
     "DatabaseError",
@@ -352,18 +352,18 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         except apsw.ExecutionCompleteError:
             return self.description
 
-        return [
-            (
-                name,
-                get_type_code(type_name),
-                None,
-                None,
-                None,
-                None,
-                True,
-            )
-            for name, type_name in description
-        ]
+        annotated_alias = re.compile(r"^(\w+)\s*\[(\w+)]$")
+
+        out: list[ColumnDescription] = []
+        for name, type_name in description:
+            if match := annotated_alias.match(name):
+                name = match.group(1)
+                type_name = match.group(2)
+
+            type_code = get_type_code(type_name)
+            out.append((name, type_code, None, None, None, None, True))
+
+        return out
 
     @check_closed
     def executemany(
