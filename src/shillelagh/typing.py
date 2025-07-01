@@ -32,19 +32,16 @@ SQLiteValidType = Union[None, int, float, str, bytes]
 
 
 # Cursor description
-Description = Optional[
-    list[
-        tuple[
-            str,
-            type[Field],
-            Optional[str],
-            Optional[str],
-            Optional[str],
-            Optional[str],
-            Optional[bool],
-        ]
-    ]
+ColumnDescription = tuple[
+    str,
+    type[Field],
+    Optional[str],
+    Optional[str],
+    Optional[str],
+    Optional[str],
+    Optional[bool],
 ]
+Description = Optional[list[ColumnDescription]]
 
 MaybeType = Optional[bool]
 Maybe = None  # pylint: disable=invalid-name

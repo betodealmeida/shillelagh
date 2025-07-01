@@ -5,7 +5,8 @@ Changelog
 Next
 ====
 
-- New virtual table with on-the-fly data (#XXX)
+- New virtual table with on-the-fly data (#514)
+- Types can be specified in the expression alias (#518)
 
 Version 1.3.5 - 2025-03-14
 ==========================
