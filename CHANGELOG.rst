@@ -5,6 +5,9 @@ Changelog
 Next
 ====
 
+Version 1.3.6 - 2025-07-01
+==========================
+
 - New virtual table with on-the-fly data (#514)
 - Types can be specified in the expression alias (#518)
 
