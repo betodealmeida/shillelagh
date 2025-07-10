@@ -425,3 +425,34 @@ def test_supports(fs: FakeFilesystem, requests_mock: Mocker) -> None:
     assert CSVFile.supports("https://example.com/test.csv")
     assert CSVFile.supports("https://example.com/csv/test") is None
     assert CSVFile.supports("https://example.com/csv/test", fast=False)
+
+
+def test_join(fs: FakeFilesystem) -> None:
+    """
+    Regression found with JOINs.
+    """
+    fs.create_file(
+        "users.csv",
+        contents=""""username","country_id"
+"alice",1
+"bob",2
+""",
+    )
+    fs.create_file(
+        "countries.csv",
+        contents=""""id","name"
+1,"Germany"
+2,"Italy"
+""",
+    )
+
+    connection = connect(":memory:", ["csvfile"])
+    cursor = connection.cursor()
+
+    sql = """
+          SELECT u.username, c.name
+          FROM "users.csv" as u join "countries.csv" as c on u.country_id = c.id
+          WHERE c.name = "Italy"
+    """
+    data = list(cursor.execute(sql))
+    assert data == [("bob", "Italy")]

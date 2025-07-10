@@ -419,6 +419,7 @@ class VTTable:
         constraints = [
             (constraint.get("iColumn", -1), constraint["op"])
             for constraint in index_info_dict["aConstraint"]
+            if constraint["usable"]
         ]
         orderbys = [
             (orderby["iColumn"], orderby["desc"])

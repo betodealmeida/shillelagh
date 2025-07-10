@@ -8,3 +8,6 @@ disable =
 
 [TYPECHECK]
 ignored-modules=apsw
+
+[DESIGN]
+max-positional-arguments=6

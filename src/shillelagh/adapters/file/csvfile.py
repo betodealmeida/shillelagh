@@ -99,6 +99,7 @@ class CSVFile(Adapter):
 
     supports_limit = True
     supports_offset = True
+    supports_requested_columns = True
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> MaybeType:
@@ -203,14 +204,18 @@ class CSVFile(Adapter):
 
         return cost
 
-    def get_data(
+    def get_data(  # pylint: disable=too-many-arguments
         self,
         bounds: dict[str, Filter],
         order: list[tuple[str, RequestedOrder]],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
+        requested_columns: Optional[set[str]] = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
+        requested_columns = requested_columns or set(self.columns.keys())
+        requested_columns.add("rowid")
+
         _logger.info("Opening file CSV file %s to load data", self.path)
         with open(self.path, encoding="utf-8") as csvfile:
             reader = csv.reader(csvfile, quoting=csv.QUOTE_NONNUMERIC)
@@ -227,7 +232,14 @@ class CSVFile(Adapter):
             # Filter and sort the data. It would probably be more efficient to simply
             # declare the columns as having no filter and no sort order, and let the
             # backend handle this; but it's nice to have an example of how to do this.
-            for row in filter_data(data, bounds, order, limit, offset):
+            for row in filter_data(
+                data,
+                bounds,
+                order,
+                limit,
+                offset,
+                requested_columns,
+            ):
                 _logger.debug(row)
                 yield row
 
