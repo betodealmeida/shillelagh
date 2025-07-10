@@ -121,10 +121,11 @@ def test_virtual_best_index_object(mocker: MockerFixture) -> None:
     index_info_to_dict = mocker.patch("shillelagh.backends.apsw.vt.index_info_to_dict")
     index_info_to_dict.return_value = {
         "aConstraint": [
-            {"iColumn": 1, "op": apsw.SQLITE_INDEX_CONSTRAINT_EQ},
-            {"iColumn": 2, "op": apsw.SQLITE_INDEX_CONSTRAINT_GT},
-            {"iColumn": 0, "op": apsw.SQLITE_INDEX_CONSTRAINT_LE},
-            {"op": 73},
+            {"iColumn": 1, "op": apsw.SQLITE_INDEX_CONSTRAINT_EQ, "usable": True},
+            {"iColumn": 2, "op": apsw.SQLITE_INDEX_CONSTRAINT_GT, "usable": True},
+            {"iColumn": 0, "op": apsw.SQLITE_INDEX_CONSTRAINT_LE, "usable": True},
+            {"iColumn": 0, "op": apsw.SQLITE_INDEX_CONSTRAINT_GT, "usable": False},
+            {"op": 73, "usable": True},
         ],
         "aOrderBy": [{"iColumn": 1, "desc": False}],
         "colUsed_names": ["age", "pets"],
