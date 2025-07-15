@@ -2,7 +2,7 @@
 SQLAlchemy dialect.
 """
 
-# pylint: disable=abstract-method, no-self-use, unused-argument
+# pylint: disable=abstract-method, unused-argument
 
 from types import ModuleType
 from typing import Any, Optional, TypedDict, cast
@@ -108,16 +108,11 @@ class SQLGlotDialect(DefaultDialect):
         """
         try:
             get_adapter_for_table_name(connection, table_name)
+            return True
         except ProgrammingError:
-            return bool(
-                super().has_table(
-                    connection,
-                    table_name,
-                    schema,
-                    **kwargs,  # pylint: disable=unused-argument
-                ),
-            )
-        return True
+            pass
+
+        return False
 
     def get_table_names(
         self,
@@ -202,7 +197,7 @@ def get_adapter_for_table_name(
     raw_connection = cast(db.Connection, connection.engine.raw_connection())
     adapter, args, kwargs = find_adapter(
         table_name,
-        raw_connection._adapter_kwargs,
-        raw_connection._adapters,
+        raw_connection._adapter_kwargs,  # pylint: disable=protected-access
+        raw_connection._adapters,  # pylint: disable=protected-access
     )
     return adapter(*args, **kwargs)  # type: ignore

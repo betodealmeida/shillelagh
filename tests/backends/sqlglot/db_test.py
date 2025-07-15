@@ -94,6 +94,10 @@ def test_operators(registry: AdapterLoader) -> None:
     """
 
     class FakeAdapterWithExtra(FakeAdapter):
+        """
+        A fake adapter with extra fields.
+        """
+
         active = Boolean()
         last_login = DateTime()
 

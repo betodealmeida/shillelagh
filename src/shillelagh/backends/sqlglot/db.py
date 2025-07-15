@@ -146,7 +146,7 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
 
         # qualify query so we can push down predicates to adapters
         schema = self._get_schema(ast)
-        qualified = qualify_columns(ast, dialect="sqlite", schema=schema)
+        qualified = qualify_columns(ast, schema=schema)
         annotated = annotate_types(qualified, schema=schema)
         tables = self._get_tables(annotated)
 
