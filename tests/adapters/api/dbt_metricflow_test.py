@@ -984,7 +984,7 @@ def test_find_cursor(mocker: MockerFixture) -> None:
     """
     assert find_cursor() is None
 
-    cursor = Cursor(mocker.MagicMock(), [], {})
+    cursor = Cursor([], {})
     assert find_cursor() == cursor
 
     def nested() -> None:

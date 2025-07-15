@@ -66,6 +66,9 @@ __all__ = [
     "Timestamp",
     "TimestampFromTicks",
     "Warning",
+    "apilevel",
+    "threadsafety",
+    "paramstyle",
 ]
 
 apilevel = "2.0"

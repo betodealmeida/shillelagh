@@ -14,7 +14,7 @@ from pytest_mock import MockerFixture
 
 from shillelagh.adapters.registry import AdapterLoader, UnsafeAdaptersError
 from shillelagh.backends.apsw.db import (
-    Connection,
+    APSWConnection,
     connect,
     convert_binding,
     get_missing_table,
@@ -86,7 +86,7 @@ def test_connect_adapter_kwargs(mocker: MockerFixture, registry: AdapterLoader) 
     Test that ``adapter_kwargs`` are passed to the adapter.
     """
     registry.add("dummy", FakeAdapter)
-    connection = mocker.patch("shillelagh.backends.apsw.db.Connection")
+    connection = mocker.patch("shillelagh.backends.apsw.db.APSWConnection")
 
     connect(
         ":memory:",
@@ -136,7 +136,7 @@ def test_connect_safe(mocker: MockerFixture, registry: AdapterLoader) -> None:
     registry.add("two", FakeAdapter2)
     registry.add("three", FakeAdapter3)
     # pylint: disable=invalid-name
-    db_Connection = mocker.patch("shillelagh.backends.apsw.db.Connection")
+    db_Connection = mocker.patch("shillelagh.backends.apsw.db.APSWConnection")
 
     # if we don't specify adapters we should get all
     connect(":memory:")
@@ -246,12 +246,28 @@ def test_check_closed() -> None:
     cursor.close()
     with pytest.raises(ProgrammingError) as excinfo:
         cursor.close()
-    assert str(excinfo.value) == "Cursor already closed"
+    assert str(excinfo.value) == "APSWCursor already closed"
 
     connection.close()
     with pytest.raises(ProgrammingError) as excinfo:
         connection.close()
-    assert str(excinfo.value) == "Connection already closed"
+    assert str(excinfo.value) == "APSWConnection already closed"
+
+
+def test_rollback_on_close(mocker: MockerFixture) -> None:
+    """
+    Test that a rollback is performed on close.
+    """
+    connection = connect(":memory:", isolation_level="IMMEDIATE")
+    cursor = connection.cursor()
+
+    _cursor = mocker.patch.object(cursor, "_cursor")
+    cursor.in_transaction = True
+    cursor.close()
+
+    _cursor.execute.assert_called_with("ROLLBACK")
+    _cursor.close.assert_called()
+    assert cursor.in_transaction is False
 
 
 def test_check_result(registry: AdapterLoader) -> None:
@@ -555,7 +571,7 @@ def test_best_index(mocker: MockerFixture) -> None:
         "shillelagh.backends.apsw.db.best_index_object_available",
         return_value=True,
     )
-    Connection(":memory:", [adapter], {})
+    APSWConnection(":memory:", [adapter], {})
     apsw.Connection().createmodule.assert_called_with(
         "some_adapter",
         VTModule(adapter),
@@ -566,7 +582,7 @@ def test_best_index(mocker: MockerFixture) -> None:
         "shillelagh.backends.apsw.db.best_index_object_available",
         return_value=False,
     )
-    Connection(":memory:", [adapter], {})
+    APSWConnection(":memory:", [adapter], {})
     apsw.Connection().createmodule.assert_called_with(
         "some_adapter",
         VTModule(adapter),

@@ -42,4 +42,5 @@ def registry(mocker: MockerFixture) -> Iterator[AdapterLoader]:
     custom_registry = AdapterLoader()
     mocker.patch("shillelagh.adapters.registry.registry", new=custom_registry)
     mocker.patch("shillelagh.backends.apsw.db.registry", new=custom_registry)
+    mocker.patch("shillelagh.backends.sqlglot.db.registry", new=custom_registry)
     yield custom_registry

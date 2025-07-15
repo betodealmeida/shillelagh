@@ -36,13 +36,14 @@ There is also a `SQLAlchemy <https://www.sqlalchemy.org/>`_ dialect:
 
 .. code-block:: python
 
+    from sqlalchemy import text
     from sqlalchemy.engine import create_engine
 
     engine = create_engine("shillelagh://")
     connection = engine.connect()
 
     query = "SELECT * FROM a_table"
-    for row in connection.execute(query):
+    for row in connection.execute(text(query)):
         print(row)
 
 And a command-line utility:
@@ -50,9 +51,11 @@ And a command-line utility:
 .. code-block:: bash
 
     $ shillelagh
-    sql> SELECT * FROM a_table
+    🍀> SELECT * FROM a_table
 
-There is also an `experimental backend <https://shillelagh.readthedocs.io/en/latest/postgres.html>`_ that uses Postgres with the `Multicorn2 <http://multicorn2.org/>`_ extension. First, install the additional dependencies:
+There is also an `experimental backend <https://shillelagh.readthedocs.io/en/latest/postgres.html>`_ that uses Postgres with the `Multicorn2 <http://multicorn2.org/>`_ extension, and another one using `sqlglot <https://sqlglot.com/sqlglot.html>`_.
+
+To run the Postgres backend, first install the additional dependencies:
 
 .. code-block:: bash
 
@@ -79,6 +82,8 @@ Or:
 
     from sqlalchemy import create_engine
     engine = create_engine("shillelagh+multicorn2://username:password@localhost:5432/examples")
+
+For the sqlglot backend you can use ``shillelagh+sqlglot://`` as the connection string, or import ``connect()`` from ``shillelagh.backends.sqlglot.db``.
 
 Why SQL?
 ========
