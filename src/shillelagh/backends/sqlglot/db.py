@@ -4,14 +4,15 @@ A DB API 2.0 wrapper based on sqlglot.
 """
 
 import logging
-from typing import Any, Optional
+from collections import defaultdict
+from typing import Any, DefaultDict, Optional
 
 import sqlglot
 from sqlglot import exp
 from sqlglot.executor import execute
 from sqlglot.optimizer.annotate_types import annotate_types
 from sqlglot.optimizer.pushdown_predicates import pushdown_predicates
-from sqlglot.optimizer.qualify import qualify
+from sqlglot.optimizer.qualify_columns import qualify_columns
 from sqlglot.optimizer.scope import traverse_scope
 from sqlglot.schema import MappingSchema
 
@@ -37,17 +38,8 @@ from shillelagh.exceptions import (  # nopycln: import; pylint: disable=redefine
     Warning,
 )
 from shillelagh.fields import Boolean, DateTime, Field, Integer, String
-from shillelagh.filters import (
-    Equal,
-    Filter,
-    IsNotNull,
-    IsNull,
-    Like,
-    NotEqual,
-    Operator,
-    Range,
-)
-from shillelagh.lib import find_adapter
+from shillelagh.filters import Operator
+from shillelagh.lib import find_adapter, get_bounds
 from shillelagh.types import (
     BINARY,
     DATETIME,
@@ -146,20 +138,16 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
 
         # run query
         if parameters:
-            ast.replace_placeholders(ast, **parameters)
+            ast = exp.replace_placeholders(ast, parameters)
 
         # qualify query so we can push down predicates to adapters
         schema = self._get_schema(ast)
-        qualified = qualify(ast, dialect="sqlite", schema=schema)
-
-        # annotate query with types
+        qualified = qualify_columns(ast, dialect="sqlite", schema=schema)
         annotated = annotate_types(qualified, schema=schema)
-
-        # build tables for sqlglot
-        tables = self._get_tables(qualified)
+        tables = self._get_tables(annotated)
 
         # and execute query
-        table = execute(qualified, tables=tables)
+        table = execute(annotated, tables=tables)
         self._results = (reader.row for reader in table)
 
         # store description
@@ -256,17 +244,25 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
 
             uri = subquery.alias
             adapter = self._get_adapter_instance(uri)
-            bounds = self._get_bounds(subquery)
-            tables[uri] = list(adapter.get_data(bounds, order=[]))
+            columns = adapter.get_columns()
+            all_bounds = self._get_all_bounds(columns, subquery)
+            bounds = get_bounds(columns, all_bounds)
+            tables[uri] = list(adapter.get_rows(bounds, order=[]))
 
         return tables
 
-    def _get_bounds(self, ast: exp.Subquery) -> dict[str, Filter]:
+    def _get_all_bounds(  # pylint: disable=too-many-branches
+        self,
+        columns: dict[str, Field],
+        ast: exp.Subquery,
+    ) -> DefaultDict[str, set[tuple[Operator, Any]]]:
         """
         Convert predicates to bounds whenever possible.
         """
+        all_bounds: DefaultDict[str, set[tuple[Operator, Any]]] = defaultdict(set)
+
         if "where" not in ast.this.args:
-            return {}
+            return all_bounds
 
         where = ast.this.args["where"]
         where = where.transform(remove_anded_parentheses)
@@ -278,7 +274,6 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
             predicate = predicate.this
         predicates.append(predicate)
 
-        bounds = {}
         for predicate in predicates:
             if self._is_valid_column_predicate(predicate) and isinstance(
                 predicate,
@@ -291,47 +286,59 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
                     exp.LT: (Operator.LT, Operator.GE),
                 }[type(predicate)]
                 if isinstance(predicate.this, exp.Column):
-                    bounds[predicate.this.name] = Range.build(
-                        {(operators[0], predicate.expression.to_py())},
+                    all_bounds[predicate.this.name].add(
+                        (operators[0], predicate.expression.to_py()),
                     )
                 else:
-                    bounds[predicate.expression.name] = Range.build(
-                        {(operators[1], predicate.this.to_py())},
+                    all_bounds[predicate.expression.name].add(
+                        (operators[1], predicate.this.to_py()),
                     )
 
             elif self._is_valid_column_predicate(predicate) and isinstance(
                 predicate,
                 (exp.EQ, exp.NEQ, exp.Like),
             ):
-                filter_ = {
-                    exp.EQ: Equal,
-                    exp.NEQ: NotEqual,
-                    exp.Like: Like,
+                operator = {
+                    exp.EQ: Operator.EQ,
+                    exp.NEQ: Operator.NE,
+                    exp.Like: Operator.LIKE,
                 }[type(predicate)]
                 if isinstance(predicate.this, exp.Column):
-                    bounds[predicate.this.name] = filter_(predicate.expression.to_py())
+                    all_bounds[predicate.this.name].add(
+                        (operator, predicate.expression.to_py()),
+                    )
                 else:
-                    bounds[predicate.expression.name] = filter_(predicate.this.to_py())
+                    all_bounds[predicate.expression.name].add(
+                        (operator, predicate.this.to_py()),
+                    )
             elif isinstance(predicate, exp.Column):
-                bounds[predicate.name] = Equal(True)
+                all_bounds[predicate.name].add((Operator.EQ, True))
             elif isinstance(predicate, exp.Is) and predicate.expression == exp.Null():
-                bounds[predicate.this.name] = IsNull()
+                all_bounds[predicate.this.name].add((Operator.IS_NULL, True))
             elif (
                 isinstance(predicate, exp.Not)
                 and isinstance(predicate.this, exp.Is)
                 and predicate.this.expression == exp.Null()
             ):
-                bounds[predicate.this.name] = IsNotNull()
+                all_bounds[predicate.this.name].add((Operator.IS_NOT_NULL, True))
 
-        return bounds
+        # convert values to types expected by the adapter
+        for column_name, all_operators in all_bounds.items():
+            column_type = columns[column_name]
+            all_bounds[column_name] = {
+                (operator, column_type.format(value))
+                for operator, value in all_operators
+            }
+
+        return all_bounds
 
     def _is_valid_column_predicate(self, predicate: exp.Expression) -> bool:
         return (
             isinstance(predicate.this, exp.Column)
-            and isinstance(predicate.expression, exp.Literal)
+            and not isinstance(predicate.expression, exp.Column)
         ) or (
-            isinstance(predicate.this, exp.Literal)
-            and isinstance(predicate.expression, exp.Column)
+            isinstance(predicate.expression, exp.Column)
+            and not isinstance(predicate.this, exp.Column)
         )
 
 

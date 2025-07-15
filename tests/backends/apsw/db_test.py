@@ -337,7 +337,8 @@ def test_execute_many(registry: AdapterLoader) -> None:
             items,
         )
     assert (
-        str(excinfo.value) == "``executemany`` is not supported, use ``execute`` instead"
+        str(excinfo.value)
+        == "``executemany`` is not supported, use ``execute`` instead"
     )
 
 
