@@ -5,6 +5,9 @@ Changelog
 Next
 ====
 
+Version 1.4.0 - 2025-07-15
+==========================
+
 - Experimental backend using the sqlglot Python executor (#522)
 
 Version 1.3.6 - 2025-07-01
