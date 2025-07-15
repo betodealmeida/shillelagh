@@ -2,10 +2,10 @@
 A simple example showing the CSV adapter.
 """
 
-from shillelagh.backends.apsw.db import connect
+from shillelagh.backends.sqlglot.db import connect
 
 if __name__ == "__main__":
-    connection = connect(":memory:")
+    connection = connect()
     cursor = connection.cursor()
 
     SQL = '''SELECT * FROM "test.csv"'''
