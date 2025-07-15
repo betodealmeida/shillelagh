@@ -11,6 +11,7 @@ Contents
    Adapters <adapters>
    Creating a new adapter <development>
    Postgres backend <postgres>
+   Sqlglot backend <sqlglot>
    License <license>
    Authors <authors>
    Changelog <changelog>

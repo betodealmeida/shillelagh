@@ -147,7 +147,7 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
         # store current SQL in the cursor
         self.operation = operation
         try:
-            ast = sqlglot.parse_one(operation)
+            ast = sqlglot.parse_one(operation, "sqlite")
         except sqlglot.errors.ParseError as exc:
             raise ProgrammingError("Invalid SQL query") from exc
 
