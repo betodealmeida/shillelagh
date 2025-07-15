@@ -251,7 +251,23 @@ def test_check_closed() -> None:
     connection.close()
     with pytest.raises(ProgrammingError) as excinfo:
         connection.close()
-    assert str(excinfo.value) == "Connection already closed"
+    assert str(excinfo.value) == "APSWConnection already closed"
+
+
+def test_rollback_on_close(mocker: MockerFixture) -> None:
+    """
+    Test that a rollback is performed on close.
+    """
+    connection = connect(":memory:", isolation_level="IMMEDIATE")
+    cursor = connection.cursor()
+
+    _cursor = mocker.patch.object(cursor, "_cursor")
+    cursor.in_transaction = True
+    cursor.close()
+
+    _cursor.execute.assert_called_with("ROLLBACK")
+    _cursor.close.assert_called()
+    assert cursor.in_transaction is False
 
 
 def test_check_result(registry: AdapterLoader) -> None:

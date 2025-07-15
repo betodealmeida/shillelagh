@@ -35,6 +35,7 @@ from shillelagh.exceptions import (  # nopycln: import; pylint: disable=redefine
     InterfaceError,
     InternalError,
     OperationalError,
+    ProgrammingError,
     Warning,
 )
 from shillelagh.fields import Boolean, DateTime, Field, Integer, String
@@ -125,7 +126,10 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
 
         # store current SQL in the cursor
         self.operation = operation
-        ast = sqlglot.parse_one(operation)
+        try:
+            ast = sqlglot.parse_one(operation)
+        except sqlglot.errors.ParseError as exc:
+            raise ProgrammingError("Invalid SQL query") from exc
 
         # drop table?
         if uri := self._drop_table_uri(ast):
@@ -138,7 +142,7 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
 
         # run query
         if parameters:
-            ast = exp.replace_placeholders(ast, parameters)
+            ast = exp.replace_placeholders(ast, *parameters)
 
         # qualify query so we can push down predicates to adapters
         schema = self._get_schema(ast)
@@ -147,7 +151,7 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
         tables = self._get_tables(annotated)
 
         # and execute query
-        table = execute(annotated, tables=tables)
+        table = execute(annotated, dialect="sqlite", schema=schema, tables=tables)
         self._results = (reader.row for reader in table)
 
         # store description
@@ -247,7 +251,8 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
             columns = adapter.get_columns()
             all_bounds = self._get_all_bounds(columns, subquery)
             bounds = get_bounds(columns, all_bounds)
-            tables[uri] = list(adapter.get_rows(bounds, order=[]))
+            table = exp.Table(this=exp.Identifier(this=uri, quoted=True))
+            tables[table] = list(adapter.get_rows(bounds, order=[]))
 
         return tables
 
@@ -277,40 +282,20 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
         for predicate in predicates:
             if self._is_valid_column_predicate(predicate) and isinstance(
                 predicate,
-                (exp.GTE, exp.GT, exp.LTE, exp.LT),
-            ):
-                operators = {
-                    exp.GTE: (Operator.GE, Operator.LT),
-                    exp.GT: (Operator.GT, Operator.LE),
-                    exp.LTE: (Operator.LE, Operator.GT),
-                    exp.LT: (Operator.LT, Operator.GE),
-                }[type(predicate)]
-                if isinstance(predicate.this, exp.Column):
-                    all_bounds[predicate.this.name].add(
-                        (operators[0], predicate.expression.to_py()),
-                    )
-                else:
-                    all_bounds[predicate.expression.name].add(
-                        (operators[1], predicate.this.to_py()),
-                    )
-
-            elif self._is_valid_column_predicate(predicate) and isinstance(
-                predicate,
-                (exp.EQ, exp.NEQ, exp.Like),
+                (exp.GTE, exp.GT, exp.LTE, exp.LT, exp.EQ, exp.NEQ, exp.Like),
             ):
                 operator = {
+                    exp.GTE: Operator.GE,
+                    exp.GT: Operator.GT,
+                    exp.LTE: Operator.LE,
+                    exp.LT: Operator.LT,
                     exp.EQ: Operator.EQ,
                     exp.NEQ: Operator.NE,
                     exp.Like: Operator.LIKE,
                 }[type(predicate)]
-                if isinstance(predicate.this, exp.Column):
-                    all_bounds[predicate.this.name].add(
-                        (operator, predicate.expression.to_py()),
-                    )
-                else:
-                    all_bounds[predicate.expression.name].add(
-                        (operator, predicate.this.to_py()),
-                    )
+                all_bounds[predicate.this.name].add(
+                    (operator, predicate.expression.to_py()),
+                )
             elif isinstance(predicate, exp.Column):
                 all_bounds[predicate.name].add((Operator.EQ, True))
             elif isinstance(predicate, exp.Is) and predicate.expression == exp.Null():
@@ -320,25 +305,22 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
                 and isinstance(predicate.this, exp.Is)
                 and predicate.this.expression == exp.Null()
             ):
-                all_bounds[predicate.this.name].add((Operator.IS_NOT_NULL, True))
+                all_bounds[predicate.this.this.name].add((Operator.IS_NOT_NULL, True))
 
         # convert values to types expected by the adapter
-        for column_name, all_operators in all_bounds.items():
+        for column_name, operators in all_bounds.items():
             column_type = columns[column_name]
             all_bounds[column_name] = {
-                (operator, column_type.format(value))
-                for operator, value in all_operators
+                (operator, column_type.format(value)) for operator, value in operators
             }
 
         return all_bounds
 
     def _is_valid_column_predicate(self, predicate: exp.Expression) -> bool:
-        return (
-            isinstance(predicate.this, exp.Column)
-            and not isinstance(predicate.expression, exp.Column)
-        ) or (
-            isinstance(predicate.expression, exp.Column)
-            and not isinstance(predicate.this, exp.Column)
+        # sqlglot moves the column to the left side of the operator
+        return isinstance(predicate.this, exp.Column) and not isinstance(
+            predicate.expression,
+            exp.Column,
         )
 
 
