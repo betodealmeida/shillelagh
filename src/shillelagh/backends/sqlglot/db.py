@@ -151,7 +151,7 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
         tables = self._get_tables(annotated)
 
         # and execute query
-        table = execute(annotated, dialect="sqlite", schema=schema, tables=tables)
+        table = execute(annotated, schema=schema, tables=tables)
         self._results = (reader.row for reader in table)
 
         # store description
