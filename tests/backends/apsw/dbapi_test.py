@@ -68,7 +68,7 @@ def test_cursor() -> None:
     cursor.close()
     with pytest.raises(dbapi.Error) as excinfo:
         cursor.execute("SELECT 1")
-    assert str(excinfo.value) == "Cursor already closed"
+    assert str(excinfo.value) == "APSWCursor already closed"
 
     assert ismethod(cursor.execute)
     assert ismethod(cursor.executemany)

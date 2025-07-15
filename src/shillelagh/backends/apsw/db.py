@@ -4,11 +4,10 @@ A DB API 2.0 wrapper for APSW.
 """
 
 import datetime
-import itertools
 import logging
 import re
 from collections.abc import Iterator
-from functools import partial, wraps
+from functools import partial
 from typing import Any, Callable, Optional, TypeVar, cast
 
 import apsw
@@ -17,6 +16,15 @@ from shillelagh import functions
 from shillelagh.adapters.base import Adapter
 from shillelagh.adapters.registry import registry
 from shillelagh.backends.apsw.vt import VTModule, type_map
+from shillelagh.db import (
+    DEFAULT_SCHEMA,
+    Connection,
+    Cursor,
+    apilevel,
+    check_closed,
+    paramstyle,
+    threadsafety,
+)
 from shillelagh.exceptions import (  # nopycln: import; pylint: disable=redefined-builtin
     DatabaseError,
     DataError,
@@ -61,6 +69,7 @@ __all__ = [
     "InterfaceError",
     "InternalError",
     "OperationalError",
+    "NotSupportedError",
     "BINARY",
     "DATETIME",
     "NUMBER",
@@ -79,15 +88,11 @@ __all__ = [
     "paramstyle",
 ]
 
-apilevel = "2.0"
-threadsafety = 2
-paramstyle = "qmark"
 sqlite_version_info = tuple(
     int(number) for number in apsw.sqlitelibversion().split(".")
 )
 
 NO_SUCH_TABLE = re.compile("no such table: (?P<uri>.*)")
-DEFAULT_SCHEMA = "main"
 
 CURSOR_METHOD = TypeVar("CURSOR_METHOD", bound=Callable[..., Any])
 
@@ -104,30 +109,6 @@ def get_missing_table(message: str) -> Optional[str]:
         return match.groupdict()["uri"]
 
     return None
-
-
-def check_closed(method: CURSOR_METHOD) -> CURSOR_METHOD:
-    """Decorator that checks if a connection or cursor is closed."""
-
-    @wraps(method)
-    def wrapper(self: "Cursor", *args: Any, **kwargs: Any) -> Any:
-        if self.closed:
-            raise ProgrammingError(f"{self.__class__.__name__} already closed")
-        return method(self, *args, **kwargs)
-
-    return cast(CURSOR_METHOD, wrapper)
-
-
-def check_result(method: CURSOR_METHOD) -> CURSOR_METHOD:
-    """Decorator that checks if the cursor has results from ``execute``."""
-
-    @wraps(method)
-    def wrapper(self: "Cursor", *args: Any, **kwargs: Any) -> Any:
-        if self._results is None:  # pylint: disable=protected-access
-            raise ProgrammingError("Called before ``execute``")
-        return method(self, *args, **kwargs)
-
-    return cast(CURSOR_METHOD, wrapper)
 
 
 def get_type_code(type_name: str) -> type[Field]:
@@ -156,7 +137,7 @@ def convert_binding(binding: Any) -> SQLiteValidType:
     return str(binding)
 
 
-class Cursor:  # pylint: disable=too-many-instance-attributes
+class APSWCursor(Cursor):  # pylint: disable=too-many-instance-attributes
     """
     Connection cursor.
     """
@@ -169,30 +150,11 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         isolation_level: Optional[str] = None,
         schema: str = DEFAULT_SCHEMA,
     ):
-        self._cursor = cursor
-        self._adapters = adapters
-        self._adapter_kwargs = adapter_kwargs
+        super().__init__(adapters, adapter_kwargs, schema)
 
+        self._cursor = cursor
         self.in_transaction = False
         self.isolation_level = isolation_level
-
-        self.schema = schema
-
-        # This read/write attribute specifies the number of rows to fetch at a
-        # time with .fetchmany(). It defaults to 1 meaning to fetch a single
-        # row at a time.
-        self.arraysize = 1
-
-        self.closed = False
-
-        # this is updated only after a query
-        self.description: Description = None
-
-        # this is set to an iterator of rows after a successful query
-        self._results: Optional[Iterator[tuple[Any, ...]]] = None
-        self._rowcount = -1
-
-        self.operation: Optional[str] = None
 
         # Approach from: https://github.com/rogerbinns/apsw/issues/160#issuecomment-33927297
         # pylint: disable=unused-argument
@@ -208,35 +170,12 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
 
         self._cursor.setexectrace(exectrace)
 
-    @property  # type: ignore
-    @check_closed
-    def rowcount(self) -> int:
-        """
-        Return the number of rows after a query.
-        """
-        try:
-            results = list(self._results)  # type: ignore
-        except TypeError:
-            return -1
-
-        n = len(results)
-        self._results = iter(results)
-        return max(0, self._rowcount) + n
-
-    @check_closed
-    def close(self) -> None:
-        """
-        Close the cursor.
-        """
-        self._cursor.close()
-        self.closed = True
-
     @check_closed
     def execute(
         self,
         operation: str,
         parameters: Optional[tuple[Any, ...]] = None,
-    ) -> "Cursor":
+    ) -> "APSWCursor":
         """
         Execute a query using the cursor.
         """
@@ -369,90 +308,18 @@ class Cursor:  # pylint: disable=too-many-instance-attributes
         return out
 
     @check_closed
-    def executemany(
-        self,
-        operation: str,
-        seq_of_parameters: Optional[list[tuple[Any, ...]]] = None,
-    ) -> "Cursor":
+    def close(self) -> None:
         """
-        Execute multiple statements.
+        Close the cursor.
 
-        Currently not supported.
+        This will also close the underlying APSW cursor.
         """
-        raise NotSupportedError(
-            "``executemany`` is not supported, use ``execute`` instead",
-        )
+        if self.in_transaction:
+            self._cursor.execute("ROLLBACK")
+            self.in_transaction = False
 
-    @check_result
-    @check_closed
-    def fetchone(self) -> Optional[tuple[Any, ...]]:
-        """
-        Fetch the next row of a query result set, returning a single sequence,
-        or ``None`` when no more data is available.
-        """
-        try:
-            row = self.next()
-        except StopIteration:
-            return None
-
-        self._rowcount = max(0, self._rowcount) + 1
-
-        return row
-
-    @check_result
-    @check_closed
-    def fetchmany(self, size=None) -> list[tuple[Any, ...]]:
-        """
-        Fetch the next set of rows of a query result, returning a sequence of
-        sequences (e.g. a list of tuples). An empty sequence is returned when
-        no more rows are available.
-        """
-        size = size or self.arraysize
-        results = list(itertools.islice(self, size))
-
-        return results
-
-    @check_result
-    @check_closed
-    def fetchall(self) -> list[tuple[Any, ...]]:
-        """
-        Fetch all (remaining) rows of a query result, returning them as a
-        sequence of sequences (e.g. a list of tuples). Note that the cursor's
-        arraysize attribute can affect the performance of this operation.
-        """
-        results = list(self)
-
-        return results
-
-    @check_closed
-    def setinputsizes(self, sizes: int) -> None:
-        """
-        Used before ``execute`` to predefine memory areas for parameters.
-
-        Currently not supported.
-        """
-
-    @check_closed
-    def setoutputsizes(self, sizes: int) -> None:
-        """
-        Set a column buffer size for fetches of large columns.
-
-        Currently not supported.
-        """
-
-    @check_result
-    @check_closed
-    def __iter__(self) -> Iterator[tuple[Any, ...]]:
-        for row in self._results:  # type: ignore
-            self._rowcount = max(0, self._rowcount) + 1
-            yield row
-
-    @check_result
-    @check_closed
-    def __next__(self) -> tuple[Any, ...]:
-        return next(self._results)  # type: ignore
-
-    next = __next__
+        self._cursor.close()
+        super().close()
 
 
 def apsw_version() -> str:
@@ -470,7 +337,9 @@ def apsw_version() -> str:
     return f"{functions.version()} (apsw {apsw.apswversion()})"
 
 
-class Connection:  # pylint: disable=too-many-instance-attributes
+class APSWConnection(
+    Connection[APSWCursor],
+):  # pylint: disable=too-many-instance-attributes
     """Connection."""
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
@@ -483,15 +352,15 @@ class Connection:  # pylint: disable=too-many-instance-attributes
         schema: str = DEFAULT_SCHEMA,
         safe: bool = False,
     ):
+        super().__init__(adapters, adapter_kwargs, schema, safe)
+
         # create underlying APSW connection
         apsw_connection_kwargs = apsw_connection_kwargs or {}
         self._connection = apsw.Connection(path, **apsw_connection_kwargs)
         self.isolation_level = isolation_level
-        self.schema = schema
-        self.safe = safe
 
         # register adapters
-        for adapter in adapters:
+        for adapter in self._adapters:
             if best_index_object_available():
                 self._connection.createmodule(
                     adapter.__name__,
@@ -500,8 +369,6 @@ class Connection:  # pylint: disable=too-many-instance-attributes
                 )
             else:
                 self._connection.createmodule(adapter.__name__, VTModule(adapter))
-        self._adapters = adapters
-        self._adapter_kwargs = adapter_kwargs
 
         # register functions
         available_functions = {
@@ -520,17 +387,6 @@ class Connection:  # pylint: disable=too-many-instance-attributes
         for name, function in available_functions.items():
             self._connection.create_scalar_function(name, function)
 
-        self.closed = False
-        self.cursors: list[Cursor] = []
-
-    @check_closed
-    def close(self) -> None:
-        """Close the connection now."""
-        self.closed = True
-        for cursor in self.cursors:
-            if not cursor.closed:
-                cursor.close()
-
     @check_closed
     def commit(self) -> None:
         """Commit any pending transaction to the database."""
@@ -548,9 +404,9 @@ class Connection:  # pylint: disable=too-many-instance-attributes
                 cursor.in_transaction = False
 
     @check_closed
-    def cursor(self) -> Cursor:
+    def cursor(self) -> APSWCursor:
         """Return a new Cursor Object using the connection."""
-        cursor = Cursor(
+        cursor = APSWCursor(
             self._connection.cursor(),
             self._adapters,
             self._adapter_kwargs,
@@ -561,25 +417,6 @@ class Connection:  # pylint: disable=too-many-instance-attributes
 
         return cursor
 
-    @check_closed
-    def execute(
-        self,
-        operation: str,
-        parameters: Optional[tuple[Any, ...]] = None,
-    ) -> Cursor:
-        """
-        Execute a query on a cursor.
-        """
-        cursor = self.cursor()
-        return cursor.execute(operation, parameters)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc):
-        self.commit()
-        self.close()
-
 
 def connect(  # pylint: disable=too-many-arguments, too-many-positional-arguments
     path: str,
@@ -589,7 +426,7 @@ def connect(  # pylint: disable=too-many-arguments, too-many-positional-argument
     isolation_level: Optional[str] = None,
     apsw_connection_kwargs: Optional[dict[str, Any]] = None,
     schema: str = DEFAULT_SCHEMA,
-) -> Connection:
+) -> APSWConnection:
     """
     Constructor for creating a connection to the database.
     """
@@ -602,7 +439,7 @@ def connect(  # pylint: disable=too-many-arguments, too-many-positional-argument
     }
     adapter_kwargs = {mapping[k]: v for k, v in adapter_kwargs.items() if k in mapping}
 
-    return Connection(
+    return APSWConnection(
         path,
         list(enabled_adapters.values()),
         adapter_kwargs,

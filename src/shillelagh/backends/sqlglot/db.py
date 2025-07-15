@@ -4,7 +4,6 @@ A DB API 2.0 wrapper based on sqlglot.
 """
 
 import logging
-from collections.abc import Iterator
 from typing import Any, Optional
 
 import sqlglot
@@ -19,9 +18,14 @@ from sqlglot.schema import MappingSchema
 from shillelagh.adapters.base import Adapter
 from shillelagh.adapters.registry import registry
 from shillelagh.backends.apsw.db import DEFAULT_SCHEMA
-from shillelagh.backends.apsw.db import Connection as APSWConnection
-from shillelagh.backends.apsw.db import Cursor as APSWCursor
-from shillelagh.backends.apsw.db import apilevel, check_closed, paramstyle, threadsafety
+from shillelagh.db import (
+    Connection,
+    Cursor,
+    apilevel,
+    check_closed,
+    paramstyle,
+    threadsafety,
+)
 from shillelagh.exceptions import (  # nopycln: import; pylint: disable=redefined-builtin
     DatabaseError,
     DataError,
@@ -58,7 +62,6 @@ from shillelagh.types import (
     Timestamp,
     TimestampFromTicks,
 )
-from shillelagh.typing import Description
 
 __all__ = [
     "DatabaseError",
@@ -111,44 +114,17 @@ def remove_anded_parentheses(node: exp.Expression) -> exp.Expression:
     )
 
 
-class Cursor(APSWCursor):  # pylint: disable=too-many-instance-attributes
+class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
     """
     Connection cursor.
     """
-
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-        self,
-        adapters: list[type[Adapter]],
-        adapter_kwargs: dict[str, dict[str, Any]],
-        schema: str = DEFAULT_SCHEMA,
-    ):
-        self._adapters = adapters
-        self._adapter_kwargs = adapter_kwargs
-
-        self.schema = schema
-
-        # This read/write attribute specifies the number of rows to fetch at a
-        # time with .fetchmany(). It defaults to 1 meaning to fetch a single
-        # row at a time.
-        self.arraysize = 1
-
-        self.closed = False
-
-        # this is updated only after a query
-        self.description: Description = None
-
-        # this is set to an iterator of rows after a successful query
-        self._results: Optional[Iterator[tuple[Any, ...]]] = None
-        self._rowcount = -1
-
-        self.operation: Optional[str] = None
 
     @check_closed
     def execute(
         self,
         operation: str,
         parameters: Optional[tuple[Any, ...]] = None,
-    ) -> "Cursor":
+    ) -> "SQLGlotCursor":
         """
         Execute a query using the cursor.
         """
@@ -157,7 +133,6 @@ class Cursor(APSWCursor):  # pylint: disable=too-many-instance-attributes
 
         # store current SQL in the cursor
         self.operation = operation
-
         ast = sqlglot.parse_one(operation)
 
         # drop table?
@@ -167,7 +142,6 @@ class Cursor(APSWCursor):  # pylint: disable=too-many-instance-attributes
             return self
 
         if not isinstance(ast, exp.Select):
-            # we only support SELECT queries
             raise InterfaceError("Only `DROP TABLE` and `SELECT` queries are supported")
 
         # run query
@@ -288,6 +262,9 @@ class Cursor(APSWCursor):  # pylint: disable=too-many-instance-attributes
         return tables
 
     def _get_bounds(self, ast: exp.Subquery) -> dict[str, Filter]:
+        """
+        Convert predicates to bounds whenever possible.
+        """
         if "where" not in ast.this.args:
             return {}
 
@@ -358,37 +335,13 @@ class Cursor(APSWCursor):  # pylint: disable=too-many-instance-attributes
         )
 
 
-class Connection(APSWConnection):  # pylint: disable=too-many-instance-attributes
+class SQLGlotConnection(Connection[SQLGlotCursor]):
     """Connection."""
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-        self,
-        adapters: list[type[Adapter]],
-        adapter_kwargs: dict[str, dict[str, Any]],
-        schema: str = DEFAULT_SCHEMA,
-        safe: bool = False,
-    ):
-        self.schema = schema
-        self.safe = safe
-
-        self._adapters = adapters
-        self._adapter_kwargs = adapter_kwargs
-
-        self.closed = False
-        self.cursors: list[APSWCursor] = []
-
     @check_closed
-    def commit(self) -> None:
-        """Commit any pending transaction to the database."""
-
-    @check_closed
-    def rollback(self) -> None:
-        """Rollback any transactions."""
-
-    @check_closed
-    def cursor(self) -> Cursor:
+    def cursor(self) -> SQLGlotCursor:
         """Return a new Cursor Object using the connection."""
-        cursor = Cursor(self._adapters, self._adapter_kwargs, self.schema)
+        cursor = SQLGlotCursor(self._adapters, self._adapter_kwargs, self.schema)
         self.cursors.append(cursor)
 
         return cursor
@@ -399,7 +352,7 @@ def connect(  # pylint: disable=too-many-arguments, too-many-positional-argument
     adapter_kwargs: Optional[dict[str, dict[str, Any]]] = None,
     safe: bool = False,
     schema: str = DEFAULT_SCHEMA,
-) -> Connection:
+) -> SQLGlotConnection:
     """
     Constructor for creating a connection to the database.
     """
@@ -412,7 +365,7 @@ def connect(  # pylint: disable=too-many-arguments, too-many-positional-argument
     }
     adapter_kwargs = {mapping[k]: v for k, v in adapter_kwargs.items() if k in mapping}
 
-    return Connection(
+    return SQLGlotConnection(
         list(enabled_adapters.values()),
         adapter_kwargs,
         schema,

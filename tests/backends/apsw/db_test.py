@@ -14,7 +14,7 @@ from pytest_mock import MockerFixture
 
 from shillelagh.adapters.registry import AdapterLoader, UnsafeAdaptersError
 from shillelagh.backends.apsw.db import (
-    Connection,
+    APSWConnection,
     connect,
     convert_binding,
     get_missing_table,
@@ -86,7 +86,7 @@ def test_connect_adapter_kwargs(mocker: MockerFixture, registry: AdapterLoader) 
     Test that ``adapter_kwargs`` are passed to the adapter.
     """
     registry.add("dummy", FakeAdapter)
-    connection = mocker.patch("shillelagh.backends.apsw.db.Connection")
+    connection = mocker.patch("shillelagh.backends.apsw.db.APSWConnection")
 
     connect(
         ":memory:",
@@ -136,7 +136,7 @@ def test_connect_safe(mocker: MockerFixture, registry: AdapterLoader) -> None:
     registry.add("two", FakeAdapter2)
     registry.add("three", FakeAdapter3)
     # pylint: disable=invalid-name
-    db_Connection = mocker.patch("shillelagh.backends.apsw.db.Connection")
+    db_Connection = mocker.patch("shillelagh.backends.apsw.db.APSWConnection")
 
     # if we don't specify adapters we should get all
     connect(":memory:")
@@ -246,7 +246,7 @@ def test_check_closed() -> None:
     cursor.close()
     with pytest.raises(ProgrammingError) as excinfo:
         cursor.close()
-    assert str(excinfo.value) == "Cursor already closed"
+    assert str(excinfo.value) == "APSWCursor already closed"
 
     connection.close()
     with pytest.raises(ProgrammingError) as excinfo:
@@ -337,8 +337,7 @@ def test_execute_many(registry: AdapterLoader) -> None:
             items,
         )
     assert (
-        str(excinfo.value)
-        == "``executemany`` is not supported, use ``execute`` instead"
+        str(excinfo.value) == "``executemany`` is not supported, use ``execute`` instead"
     )
 
 
@@ -555,7 +554,7 @@ def test_best_index(mocker: MockerFixture) -> None:
         "shillelagh.backends.apsw.db.best_index_object_available",
         return_value=True,
     )
-    Connection(":memory:", [adapter], {})
+    APSWConnection(":memory:", [adapter], {})
     apsw.Connection().createmodule.assert_called_with(
         "some_adapter",
         VTModule(adapter),
@@ -566,7 +565,7 @@ def test_best_index(mocker: MockerFixture) -> None:
         "shillelagh.backends.apsw.db.best_index_object_available",
         return_value=False,
     )
-    Connection(":memory:", [adapter], {})
+    APSWConnection(":memory:", [adapter], {})
     apsw.Connection().createmodule.assert_called_with(
         "some_adapter",
         VTModule(adapter),
