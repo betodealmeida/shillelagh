@@ -4,11 +4,11 @@
 Postgres backend
 ================
 
-Since version 1.3.0 Shillelagh ships with an experimental backend that uses Postgres instead of SQLite. The backend implements a custom [pyscopg2](https://pypi.org/project/psycopg2/) cursor that automatically registers a foreign data wrapper (FDW) whenever a supported table is accessed. It's based on the [multicorn2](http://multicorn2.org/) extension and Python package.
+Since version 1.3.0 Shillelagh ships with an experimental backend that uses Postgres instead of SQLite. The backend implements a custom `pyscopg2 <https://pypi.org/project/psycopg2/>`_ cursor that automatically registers a foreign data wrapper (FDW) whenever a supported table is accessed. It's based on the `multicorn2 <http://multicorn2.org/>`_ extension and Python package.
 
 To use the backend you need to:
 
-1. Install the [Multicorn2](http://multicorn2.org/) extension.
+1. Install the `Multicorn2 <http://multicorn2.org/>`_ extension.
 2. Install the multicorn2 Python package in the machine running Postgres. Note that this is not the "multicorn" package available on PyPI. You need to download the source and install it manually.
 3. Install Shillelagh in the machine running Postgres.
 
