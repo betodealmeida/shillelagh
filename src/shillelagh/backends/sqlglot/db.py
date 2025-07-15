@@ -3,6 +3,7 @@
 A DB API 2.0 wrapper based on sqlglot.
 """
 
+import datetime
 import logging
 from collections import defaultdict
 from typing import Any, DefaultDict, Optional
@@ -105,6 +106,25 @@ def remove_anded_parentheses(node: exp.Expression) -> exp.Expression:
         if isinstance(node, exp.Paren) and isinstance(node.this, exp.And)
         else node
     )
+
+
+def to_py(ast: exp.Expression) -> Any:
+    """
+    Convert an expression to a Python value.
+    """
+    if isinstance(ast, exp.TimeStrToTime):
+        return datetime.datetime.fromisoformat(ast.this.to_py())
+
+    if isinstance(ast, exp.DateStrToDate):
+        return datetime.date.fromisoformat(ast.this.to_py())
+
+    if (
+        # remove once https://github.com/tobymao/sqlglot/pull/5409 is released
+        hasattr(exp, "DateStrToTime") and isinstance(ast, exp.DateStrToTime)  # pylint: disable=no-member
+    ):
+        return datetime.time.fromisoformat(ast.this.to_py())  # pragma: no cover
+
+    return ast.to_py()
 
 
 class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
@@ -294,7 +314,7 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
                     exp.Like: Operator.LIKE,
                 }[type(predicate)]
                 all_bounds[predicate.this.name].add(
-                    (operator, predicate.expression.to_py()),
+                    (operator, to_py(predicate.expression)),
                 )
             elif isinstance(predicate, exp.Column):
                 all_bounds[predicate.name].add((Operator.EQ, True))

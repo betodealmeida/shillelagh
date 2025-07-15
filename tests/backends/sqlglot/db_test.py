@@ -258,7 +258,22 @@ def test_connect_safe(mocker: MockerFixture, registry: AdapterLoader) -> None:
     assert str(excinfo.value) == "Multiple adapters found with name one"
 
 
-def test_execute_with_native_parameters(registry: AdapterLoader) -> None:
+@pytest.mark.parametrize(
+    "parameter",
+    [
+        datetime.datetime.now().replace(tzinfo=datetime.timezone.utc),
+        datetime.date.today(),
+        # remove once https://github.com/tobymao/sqlglot/pull/5409 is released
+        # datetime.time(12, 0),
+        True,
+        False,
+        None,
+    ],
+)
+def test_execute_with_native_parameters(
+    registry: AdapterLoader,
+    parameter: Any,
+) -> None:
     """
     Test passing native types to the cursor.
     """
@@ -269,7 +284,7 @@ def test_execute_with_native_parameters(registry: AdapterLoader) -> None:
 
     cursor.execute(
         'SELECT * FROM "dummy://" WHERE name = ?',
-        (datetime.datetime.now(),),
+        (parameter,),
     )
     assert cursor.fetchall() == []
     assert cursor.rowcount == 0
