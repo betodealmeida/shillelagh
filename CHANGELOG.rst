@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.4.1 - 2025-07-21
+==========================
+
+- Custom SQLAlchemy dialect for MetricFlow (#525)
+
 Version 1.4.0 - 2025-07-15
 ==========================
 
