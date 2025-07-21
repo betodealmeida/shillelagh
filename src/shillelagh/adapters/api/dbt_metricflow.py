@@ -29,6 +29,7 @@ import re
 import time
 from collections import defaultdict
 from collections.abc import Iterator
+from functools import lru_cache
 from typing import Any, Optional, TypedDict, cast
 from urllib.parse import urlparse
 
@@ -312,6 +313,7 @@ class DbtMetricFlowAPI(Adapter):
 
         return "https://semantic-layer.cloud.getdbt.com/api/graphql"
 
+    @lru_cache(maxsize=1)
     def _set_columns(self) -> None:
         payload = self.client.execute(
             query=LIST_METRICS,
