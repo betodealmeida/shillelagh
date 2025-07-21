@@ -1098,10 +1098,15 @@ def test_get_dimensions_for_metrics(mocker: MockerFixture) -> None:
     }
 
     assert adapter._get_dimensions_for_metrics({"orders"}) == {
+        "customer__customer_name",
+        "customer__customer_type",
+        "customer__first_ordered_at",
+        "customer__last_ordered_at",
+        "location__location_name",
+        "location__opened_at",
+        "metric_time",
+        "order_id__is_drink_order",
         "order_id__is_food_order",
-        "metric_time__day",
-        "metric_time__week",
-        "metric_time__month",
-        "metric_time__year",
-        "metric_time__quarter",
+        "order_id__order_total_dim",
+        "order_id__ordered_at",
     }

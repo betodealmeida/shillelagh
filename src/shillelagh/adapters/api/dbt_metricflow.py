@@ -390,7 +390,9 @@ class DbtMetricFlowAPI(Adapter):
             },
         )
 
-        return {metric["name"] for metric in payload["data"]["metricsForDimensions"]}
+        return {
+            metric["name"] for metric in payload["data"].get("metricsForDimensions", [])
+        }
 
     def _get_dimensions_for_metrics(self, metrics: set[str]) -> set[str]:
         """
@@ -411,12 +413,9 @@ class DbtMetricFlowAPI(Adapter):
         ) in self.grains.items():
             reverse_grain[name].add(alias)
 
-        dimensions: set[str] = set()
-        for dimension in payload["data"]["dimensions"]:
-            if dimension["name"] in self.dimensions:
-                dimensions.add(dimension["name"])
-            elif dimension["name"] in reverse_grain:
-                dimensions.update(reverse_grain[dimension["name"]])
+        dimensions = {"metric_time"}
+        for dimension in payload["data"].get("dimensions", []):
+            dimensions.add(dimension["name"])
 
         return dimensions
 
