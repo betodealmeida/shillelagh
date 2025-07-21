@@ -20,7 +20,16 @@ from shillelagh.exceptions import ProgrammingError
 from shillelagh.lib import find_adapter
 
 
-class SQLAlchemyColumn(TypedDict):
+class ComputedColumn(TypedDict):
+    """
+    A custom type for a computed column in SQLAlchemy.
+    """
+
+    sqltext: str
+    persisted: bool
+
+
+class SQLAlchemyColumn(TypedDict, total=False):
     """
     A custom type for a SQLAlchemy column.
     """
@@ -31,6 +40,8 @@ class SQLAlchemyColumn(TypedDict):
     default: Optional[str]
     autoincrement: str
     primary_key: int
+    comment: Optional[str]
+    computed: Optional[ComputedColumn]
 
 
 class APSWDialect(SQLiteDialect):

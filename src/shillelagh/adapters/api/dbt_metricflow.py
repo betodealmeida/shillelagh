@@ -29,6 +29,7 @@ import re
 import time
 from collections import defaultdict
 from collections.abc import Iterator
+from functools import lru_cache
 from typing import Any, Optional, TypedDict, cast
 from urllib.parse import urlparse
 
@@ -312,6 +313,7 @@ class DbtMetricFlowAPI(Adapter):
 
         return "https://semantic-layer.cloud.getdbt.com/api/graphql"
 
+    @lru_cache(maxsize=1)
     def _set_columns(self) -> None:
         payload = self.client.execute(
             query=LIST_METRICS,
@@ -390,7 +392,9 @@ class DbtMetricFlowAPI(Adapter):
             },
         )
 
-        return {metric["name"] for metric in payload["data"]["metricsForDimensions"]}
+        return {
+            metric["name"] for metric in payload["data"].get("metricsForDimensions", [])
+        }
 
     def _get_dimensions_for_metrics(self, metrics: set[str]) -> set[str]:
         """
@@ -411,12 +415,9 @@ class DbtMetricFlowAPI(Adapter):
         ) in self.grains.items():
             reverse_grain[name].add(alias)
 
-        dimensions: set[str] = set()
-        for dimension in payload["data"]["dimensions"]:
-            if dimension["name"] in self.dimensions:
-                dimensions.add(dimension["name"])
-            elif dimension["name"] in reverse_grain:
-                dimensions.update(reverse_grain[dimension["name"]])
+        dimensions = {"metric_time"}
+        for dimension in payload["data"].get("dimensions", []):
+            dimensions.add(dimension["name"])
 
         return dimensions
 
