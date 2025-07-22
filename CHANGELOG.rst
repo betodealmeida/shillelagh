@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.4.2 - 2025-07-22
+==========================
+
+- Allow passing MetricFlow token outside of URL (#527)
+
 Version 1.4.1 - 2025-07-21
 ==========================
 
