@@ -114,6 +114,15 @@ class MetricFlowDialect(APSWDialect):
 
     supports_statement_cache = True
 
+    def __init__(
+        self,
+        service_token: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(**kwargs)
+
+        self.service_token = service_token
+
     def create_connect_args(self, url: URL) -> tuple[tuple[()], dict[str, Any]]:
         baseurl = (
             f"https://{url.host}/"
@@ -131,7 +140,10 @@ class MetricFlowDialect(APSWDialect):
                 "adapters": ["tablemetricflowapi"],
                 "adapter_kwargs": {
                     "tablemetricflowapi": {
-                        "service_token": url.query["service_token"],
+                        "service_token": url.query.get(
+                            "service_token",
+                            self.service_token,
+                        ),
                         "environment_id": int(url.database),
                         "url": baseurl,
                     },
