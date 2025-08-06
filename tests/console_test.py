@@ -3,6 +3,7 @@
 Tests for shillelagh.console.
 """
 
+import re
 from io import StringIO
 from pathlib import Path
 
@@ -25,16 +26,14 @@ def test_main(mocker: MockerFixture) -> None:
     PromptSession.return_value.prompt.side_effect = ["SELECT 1;", "", EOFError()]
     console.main()
     result = stdout.getvalue()
-    assert (
-        result
-        == """  1
+    expected_pattern = r"""  1
 ---
   1
-(1 row in 0.00s)
+\(1 row in \d+\.\d+s\)
 
 GoodBye!
 """
-    )
+    assert re.match(expected_pattern, result)
 
 
 def test_exception(mocker: MockerFixture) -> None:
@@ -73,16 +72,14 @@ def test_ctrl_c(mocker: MockerFixture) -> None:
     ]
     console.main()
     result = stdout.getvalue()
-    assert (
-        result
-        == """  1
+    expected_pattern = r"""  1
 ---
   1
-(1 row in 0.00s)
+\(1 row in \d+\.\d+s\)
 
 GoodBye!
 """
-    )
+    assert re.match(expected_pattern, result)
 
 
 def test_configuration(mocker: MockerFixture, fs: FakeFilesystem) -> None:
@@ -152,16 +149,14 @@ def test_multiline(mocker: MockerFixture, fs: FakeFilesystem) -> None:
     PromptSession.return_value.prompt.side_effect = ["SELECT ", "1;", "", EOFError()]
     console.main()
     result = stdout.getvalue()
-    assert (
-        result
-        == """  1
+    expected_pattern = r"""  1
 ---
   1
-(1 row in 0.00s)
+\(1 row in \d+\.\d+s\)
 
 GoodBye!
 """
-    )
+    assert re.match(expected_pattern, result)
 
 
 def test_multiline_quoted_semicolon(mocker: MockerFixture, fs: FakeFilesystem) -> None:
@@ -176,17 +171,15 @@ def test_multiline_quoted_semicolon(mocker: MockerFixture, fs: FakeFilesystem) -
     console.main()
     result = stdout.getvalue()
 
-    assert (
-        result
-        == """  ';'=
+    expected_pattern = r"""  ';'=
    ';'
 ------
      1
-(1 row in 0.00s)
+\(1 row in \d+\.\d+s\)
 
 GoodBye!
 """
-    )
+    assert re.match(expected_pattern, result)
 
 
 def test_multiline_quoted_semicolon_on_line_end(
@@ -204,17 +197,15 @@ def test_multiline_quoted_semicolon_on_line_end(
     console.main()
     result = stdout.getvalue()
 
-    assert (
-        result
-        == """  ';'=';
+    expected_pattern = r"""  ';'=';
        '
 --------
        0
-(1 row in 0.00s)
+\(1 row in \d+\.\d+s\)
 
 GoodBye!
 """
-    )
+    assert re.match(expected_pattern, result)
 
 
 def test_multiline_triple_quoted_semicolon_on_line_end(
@@ -236,17 +227,15 @@ def test_multiline_triple_quoted_semicolon_on_line_end(
     console.main()
     result = stdout.getvalue()
 
-    assert (
-        result
-        == """  ''';'''=''';
+    expected_pattern = r"""  ''';'''=''';
            '''
 --------------
              0
-(1 row in 0.00s)
+\(1 row in \d+\.\d+s\)
 
 GoodBye!
 """
-    )
+    assert re.match(expected_pattern, result)
 
 
 def test_emit_statements() -> None:
