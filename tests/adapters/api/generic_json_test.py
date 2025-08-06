@@ -333,6 +333,9 @@ def test_generic_json_string_array(requests_mock: Mocker) -> None:
     """
     Test a query where the JSONPath returns just a string.
     """
+    # for datassette and other probing adapters
+    requests_mock.get(re.compile(".*-/versions.json.*"), status_code=404)
+
     payload = {
         "lastTimestamp": "20240808022653Z",
         "project_count": 243,
