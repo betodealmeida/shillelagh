@@ -3,6 +3,7 @@ Tests for shillelagh.functions.
 """
 
 import json
+import subprocess
 import sys
 
 import apsw
@@ -107,15 +108,22 @@ def test_date_trunc() -> None:
 
 def test_upgrade(mocker: MockerFixture) -> None:
     """
-    Test ``upgrade``.
+    Test ``upgrade`` with uv available.
     """
-    pip = mocker.patch("shillelagh.functions.pip")
+    subprocess_run = mocker.patch("shillelagh.functions.subprocess.run")
+    subprocess_run.return_value = mocker.MagicMock(returncode=0)
     importlib = mocker.patch("shillelagh.functions.importlib")
 
     output = upgrade("1.2.3")
 
-    assert output == "Upgrade to 1.2.3 successful."
-    pip.main.assert_called_with(["install", "shillelagh==1.2.3"])
+    assert output == "Upgrade to 1.2.3 successful using uv."
+    subprocess_run.assert_called_once_with(
+        ["uv", "pip", "install", "shillelagh==1.2.3"],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=300,
+    )
     importlib.reload.assert_called_with(sys.modules["shillelagh"])
 
 
@@ -127,12 +135,110 @@ def test_upgrade_invalid_version() -> None:
     assert output == "Invalid version: 1.2.3 malicious_package=0.1"
 
 
-def test_upgrade_exception(mocker: MockerFixture) -> None:
+def test_upgrade_fallback_to_pip(mocker: MockerFixture) -> None:
     """
-    Test ``upgrade`` with an exception.
+    Test ``upgrade`` falling back to pip when uv is not available.
     """
-    pip = mocker.patch("shillelagh.functions.pip")
-    pip.main.side_effect = Exception("Boom!")
+    subprocess_run = mocker.patch("shillelagh.functions.subprocess.run")
+    # First call (uv) fails with FileNotFoundError
+    # Second call (pip) succeeds
+    subprocess_run.side_effect = [
+        FileNotFoundError("uv not found"),
+        mocker.MagicMock(returncode=0),
+    ]
+    importlib = mocker.patch("shillelagh.functions.importlib")
 
     output = upgrade("1.2.3")
-    assert output == "Upgrade failed: Boom!"
+
+    assert output == "Upgrade to 1.2.3 successful using pip."
+    assert subprocess_run.call_count == 2
+    # Check that pip was called with correct arguments
+    subprocess_run.assert_called_with(
+        [sys.executable, "-m", "pip", "install", "shillelagh==1.2.3"],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=300,
+    )
+    importlib.reload.assert_called_with(sys.modules["shillelagh"])
+
+
+def test_upgrade_all_fail(mocker: MockerFixture) -> None:
+    """
+    Test ``upgrade`` when all package managers fail.
+    """
+    subprocess_run = mocker.patch("shillelagh.functions.subprocess.run")
+    subprocess_run.side_effect = [
+        FileNotFoundError("uv not found"),
+        FileNotFoundError("pip not found"),
+        FileNotFoundError("pipx not found"),
+    ]
+
+    output = upgrade("1.2.3")
+
+    assert "Upgrade failed. Tried:" in output
+    assert "uv: Not found" in output
+    assert "pip: Not found" in output
+    assert "pipx: Not found" in output
+    assert subprocess_run.call_count == 3
+
+
+def test_upgrade_subprocess_error(mocker: MockerFixture) -> None:
+    """
+    Test ``upgrade`` with subprocess errors.
+    """
+    subprocess_run = mocker.patch("shillelagh.functions.subprocess.run")
+
+    # Create a mock CalledProcessError
+    error = subprocess.CalledProcessError(
+        1,
+        ["uv", "pip", "install", "shillelagh==1.2.3"],
+        stderr="Error: Package not found",
+    )
+    subprocess_run.side_effect = [
+        error,
+        FileNotFoundError("pip not found"),
+        FileNotFoundError("pipx not found"),
+    ]
+
+    output = upgrade("1.2.3")
+
+    assert "Upgrade failed. Tried:" in output
+    assert "uv: Error: Package not found" in output
+    assert subprocess_run.call_count == 3
+
+
+def test_upgrade_timeout(mocker: MockerFixture) -> None:
+    """
+    Test ``upgrade`` with subprocess timeout.
+    """
+    subprocess_run = mocker.patch("shillelagh.functions.subprocess.run")
+    subprocess_run.side_effect = [
+        subprocess.TimeoutExpired(["uv", "pip", "install", "shillelagh==1.2.3"], 300),
+        FileNotFoundError("pip not found"),
+        FileNotFoundError("pipx not found"),
+    ]
+
+    output = upgrade("1.2.3")
+
+    assert "Upgrade failed. Tried:" in output
+    assert "uv: Timeout after 5 minutes" in output
+    assert subprocess_run.call_count == 3
+
+
+def test_upgrade_generic_exception(mocker: MockerFixture) -> None:
+    """
+    Test ``upgrade`` with generic exception.
+    """
+    subprocess_run = mocker.patch("shillelagh.functions.subprocess.run")
+    subprocess_run.side_effect = [
+        RuntimeError("Unexpected error"),
+        FileNotFoundError("pip not found"),
+        FileNotFoundError("pipx not found"),
+    ]
+
+    output = upgrade("1.2.3")
+
+    assert "Upgrade failed. Tried:" in output
+    assert "uv: Unexpected error" in output
+    assert subprocess_run.call_count == 3
