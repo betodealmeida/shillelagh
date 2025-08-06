@@ -4,12 +4,12 @@ Custom functions available to the SQL backend.
 
 import importlib
 import json
+import subprocess
 import sys
 import time
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
-import pip
 from packaging.version import InvalidVersion, Version
 
 import shillelagh
@@ -28,16 +28,63 @@ __all__ = ["upgrade", "sleep", "get_metadata", "version", "date_trunc"]
 def upgrade(target_version: str) -> str:
     """
     Upgrade the library to a given version.
+
+    This function attempts to upgrade shillelagh using available package managers.
+    It tries multiple package managers in order: uv, pip, pipx.
     """
     try:
-        pip.main(["install", f"shillelagh=={Version(target_version)}"])
-        importlib.reload(shillelagh)
+        # Validate version format first
+        Version(target_version)
     except InvalidVersion:
         return f"Invalid version: {target_version}"
-    except Exception as ex:  # pylint: disable=broad-except
-        return f"Upgrade failed: {ex}"
 
-    return f"Upgrade to {target_version} successful."
+    package_spec = f"shillelagh=={target_version}"
+
+    # List of package managers to try, in order of preference
+    package_managers = [
+        # uv is fast and modern
+        (["uv", "pip", "install", package_spec], "uv"),
+        # Standard pip
+        ([sys.executable, "-m", "pip", "install", package_spec], "pip"),
+        # pipx for isolated environments
+        (
+            [
+                "pipx",
+                "upgrade",
+                "--pip-args",
+                f"shillelagh=={target_version}",
+                "shillelagh",
+            ],
+            "pipx",
+        ),
+    ]
+
+    errors = []
+    for command, manager_name in package_managers:
+        try:
+            # Try to run the package manager command
+            subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=300,  # 5 minute timeout
+            )
+            # If successful, reload the module
+            importlib.reload(shillelagh)
+            return f"Upgrade to {target_version} successful using {manager_name}."
+        except subprocess.CalledProcessError as e:
+            errors.append(f"{manager_name}: {e.stderr or e.stdout or 'Command failed'}")
+        except FileNotFoundError:
+            errors.append(f"{manager_name}: Not found")
+        except subprocess.TimeoutExpired:
+            errors.append(f"{manager_name}: Timeout after 5 minutes")
+        except Exception as e:  # pylint: disable=broad-except
+            errors.append(f"{manager_name}: {str(e)}")
+
+    # If all package managers failed, return error message
+    error_details = "; ".join(errors)
+    return f"Upgrade failed. Tried: {error_details}"
 
 
 def sleep(seconds: int) -> None:
