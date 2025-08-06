@@ -481,7 +481,15 @@ class VTTable:
         row["rowid"] = rowid
         row = next(convert_rows_from_sqlite(columns, iter([row])))
 
-        return cast(int, self.adapter.insert_row(row))
+        try:
+            result = self.adapter.insert_row(row)
+            # Ensure we always return a valid integer to avoid segfault
+            if result is None:
+                return 0
+            return int(result)
+        except (ValueError, TypeError) as e:
+            _logger.error("Error converting insert result to int: %s", e)
+            return 0
 
     def UpdateDeleteRow(self, rowid: int) -> None:
         """
