@@ -68,7 +68,8 @@ class NglsAPI(Adapter):
         self.get_static_data_table = {
             "intervals": [["hour"], ["day"], ["month"]],
             "abandoned_tags": [["included"], ["excluded"], ["only"]],
-            # Add additional call types provided by First Response solution: AAC ReCall, AAC Notice, monitoringCall
+            # Add additional call types provided by First Response solution:
+            # AAC ReCall, AAC Notice, monitoringCall
             "call_types": [["911"], ["10-digit"], ["admin"], ["consultation"],
                 ["AAC ReCall"], ["AAC Notice"], ["monitoringCall"]],
             "seq_nrs": [[str(x).zfill(4)] for x in range(1, 1001)],
