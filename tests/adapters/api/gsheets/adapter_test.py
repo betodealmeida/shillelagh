@@ -1257,6 +1257,71 @@ def test_insert_data(
     )
 
 
+def test_insert_data_error_handling(
+    mocker: MockerFixture,
+) -> None:
+    """
+    Test ``insert_data`` error handling for edge cases.
+    """
+    # pylint: disable=import-outside-toplevel
+    from unittest.mock import Mock, patch
+
+    from shillelagh.adapters.api.gsheets.types import SyncMode
+
+    mocker.patch(
+        "shillelagh.adapters.api.gsheets.adapter.get_credentials",
+        return_value=None,
+    )
+
+    # Mock the _set_columns method to avoid HTTP calls
+    mocker.patch.object(GSheetsAPI, "_set_columns")
+
+    gsheets_adapter = GSheetsAPI(
+        "https://docs.google.com/spreadsheets/d/test/edit#gid=0",
+    )
+    gsheets_adapter._column_map = {"name": "A", "age": "B"}
+
+    # Set sync mode to BATCH to avoid HTTP calls during insert
+    gsheets_adapter._sync_mode = SyncMode.BATCH
+
+    # Mock methods that would make HTTP calls using mocker instead of direct assignment
+    mock_get_values = Mock(return_value=[["name", "age"]])
+    mock_clear_columns = Mock()
+    mocker.patch.object(gsheets_adapter, "_get_values", mock_get_values)
+    mocker.patch.object(gsheets_adapter, "_clear_columns", mock_clear_columns)
+
+    # Mock the get_values_from_row function to avoid dependencies
+    with patch(
+        "shillelagh.adapters.api.gsheets.adapter.get_values_from_row",
+    ) as mock_get_values_from_row:
+        mock_get_values_from_row.return_value = ["John", "30"]
+
+        # Test 1: Error in max() calculation with invalid keys
+        # Temporarily patch max to raise TypeError to simulate the error condition
+        with patch("builtins.max", side_effect=TypeError("Test error")):
+            gsheets_adapter._row_ids = {0: {"name": "existing"}}
+            row_id = gsheets_adapter.insert_data(
+                {"name": "John", "age": "30", "rowid": None},
+            )
+            assert isinstance(row_id, int)
+            assert row_id == 1  # Should fall back to len(self._row_ids)
+
+        # Test 2: Non-integer row_id that needs conversion
+        row_id2 = gsheets_adapter.insert_data(
+            {"name": "Jane", "age": "25", "rowid": "5"},
+        )
+        assert isinstance(row_id2, int)
+        assert row_id2 == 5
+
+        # Test 3: None row_id conversion
+        gsheets_adapter._row_ids = {}
+        row_id3 = gsheets_adapter.insert_data(
+            {"name": "Bob", "age": "35", "rowid": None},
+        )
+        assert isinstance(row_id3, int)
+        assert row_id3 == 0
+
+
 def test_delete_data(
     mocker: MockerFixture,
     simple_sheet_adapter: requests_mock.Adapter,

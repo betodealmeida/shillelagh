@@ -465,7 +465,16 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
         """
         row_id: Optional[int] = row.pop("rowid")
         if row_id is None:
-            row_id = max(self._row_ids.keys()) + 1 if self._row_ids else 0
+            try:
+                row_id = max(self._row_ids.keys()) + 1 if self._row_ids else 0
+            except (ValueError, TypeError):
+                # Fallback in case of any issues with max calculation
+                row_id = len(self._row_ids)
+
+        # Ensure row_id is always a valid integer
+        if not isinstance(row_id, int):
+            row_id = int(row_id) if row_id is not None else 0
+
         self._row_ids[row_id] = row
 
         row_values = get_values_from_row(row, self._column_map)

@@ -282,6 +282,46 @@ def test_update_insert_row() -> None:
     ]
 
 
+def test_update_insert_row_error_handling() -> None:
+    """
+    Test ``UpdateInsertRow`` error handling for invalid return values.
+    """
+    # pylint: disable=import-outside-toplevel
+    from unittest.mock import Mock, patch
+
+    # Test case 1: adapter returns None
+    adapter_none = Mock()
+    adapter_none.get_columns.return_value = {
+        "age": Mock(),
+        "name": Mock(),
+        "pets": Mock(),
+    }
+    adapter_none.insert_row.return_value = None
+
+    table_none = VTTable(adapter_none)
+
+    with patch("shillelagh.backends.apsw.vt.convert_rows_from_sqlite") as mock_convert:
+        mock_convert.return_value = iter([{"age": 25, "name": "Test", "pets": 0}])
+        new_row_id = table_none.UpdateInsertRow(None, (25, "Test", 0))
+        assert new_row_id == 0  # Should return 0 when adapter returns None
+
+    # Test case 2: adapter returns invalid value that can't be converted to int
+    adapter_invalid = Mock()
+    adapter_invalid.get_columns.return_value = {
+        "age": Mock(),
+        "name": Mock(),
+        "pets": Mock(),
+    }
+    adapter_invalid.insert_row.return_value = "invalid_string"
+
+    table_invalid = VTTable(adapter_invalid)
+
+    with patch("shillelagh.backends.apsw.vt.convert_rows_from_sqlite") as mock_convert:
+        mock_convert.return_value = iter([{"age": 30, "name": "Test2", "pets": 1}])
+        new_row_id = table_invalid.UpdateInsertRow(None, (30, "Test2", 1))
+        assert new_row_id == 0  # Should return 0 when conversion fails
+
+
 def test_update_delete_row() -> None:
     """
     Test ``UpdateDeleteRow``.
