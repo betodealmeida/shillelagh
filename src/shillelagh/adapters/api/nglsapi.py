@@ -71,10 +71,9 @@ class NglsAPI(Adapter):
             # Add additional call types provided by First Response solution:
             # AAC ReCall, AAC Notice, monitoringCall
             # fmt: off
-            "call_types": [["911"], ["10-digit"], ["admin"], ["consultation"],
-                           ["AAC ReCall"], ["AAC Notice"], ["monitoringCall"]],
+            "call_types": [["911"], ["10-digit"], ["admin"], ["consultation"], ["AAC ReCall"], ["AAC Notice"], ["monitoringCall"]],  # pylint: disable=line-too-long
             # fmt: on
-            "seq_nrs": [[str(x).zfill(4)] for x in range(1, 1001)]
+            "seq_nrs": [[str(x).zfill(4)] for x in range(1, 1001)],
         }
 
     def get_columns(self) -> Dict[str, Field]:
