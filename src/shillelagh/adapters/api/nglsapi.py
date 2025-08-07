@@ -65,15 +65,15 @@ class NglsAPI(Adapter):
         super().__init__()
         self.table = table
         self.nglsreports = NglsReports.get_instance(URL.create(url))
-        # fmt: off
-        call_types = [["911"], ["10-digit"], ["admin"], ["consultation"], ["AAC ReCall"], ["AAC Notice"], ["monitoringCall"]]  # pylint: disable=line-too-long
-        # fmt: on
         self.get_static_data_table = {
             "intervals": [["hour"], ["day"], ["month"]],
             "abandoned_tags": [["included"], ["excluded"], ["only"]],
             # Add additional call types provided by First Response solution:
             # AAC ReCall, AAC Notice, monitoringCall
-            "call_types": call_types,
+            # fmt: off
+            "call_types": [["911"], ["10-digit"], ["admin"], ["consultation"],
+                           ["AAC ReCall"], ["AAC Notice"], ["monitoringCall"]],
+            # fmt: on
             "seq_nrs": [[str(x).zfill(4)] for x in range(1, 1001)],
         }
 
