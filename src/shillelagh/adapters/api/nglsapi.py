@@ -65,7 +65,7 @@ class NglsAPI(Adapter):
         super().__init__()
         self.table = table
         self.nglsreports = NglsReports.get_instance(URL.create(url))
-        call_types = [["911"], ["10-digit"], ["admin"], ["consultation"], ["AAC ReCall"], ["AAC Notice"], ["monitoringCall"]] # pylint: line-too-long
+        call_types = [["911"], ["10-digit"], ["admin"], ["consultation"], ["AAC ReCall"], ["AAC Notice"], ["monitoringCall"]] # pylint: line-too-long; fmt: off
         self.get_static_data_table = {
             "intervals": [["hour"], ["day"], ["month"]],
             "abandoned_tags": [["included"], ["excluded"], ["only"]],
