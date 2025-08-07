@@ -70,6 +70,7 @@ class NglsAPI(Adapter):
             "abandoned_tags": [["included"], ["excluded"], ["only"]],
             # Add additional call types provided by First Response solution:
             # AAC ReCall, AAC Notice, monitoringCall
+            # fmt: off
             "call_types": [
                 ["911"],
                 ["10-digit"],
@@ -79,6 +80,7 @@ class NglsAPI(Adapter):
                 ["AAC Notice"],
                 ["monitoringCall"]
             ],
+            # fmt: on
             "seq_nrs": [[str(x).zfill(4)] for x in range(1, 1001)],
         }
 
