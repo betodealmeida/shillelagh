@@ -4,6 +4,7 @@ Custom functions available to the SQL backend.
 
 import importlib
 import json
+import os
 import subprocess
 import sys
 import time
@@ -22,7 +23,7 @@ if sys.version_info < (3, 10):
 else:
     from importlib.metadata import distribution
 
-__all__ = ["upgrade", "sleep", "get_metadata", "version", "date_trunc"]
+__all__ = ["upgrade", "sleep", "get_metadata", "version", "date_trunc", "AIFunction"]
 
 
 def upgrade(target_version: str) -> str:
@@ -210,3 +211,94 @@ def date_trunc(  # pylint: disable=too-many-return-statements
         raise ValueError(f"Unsupported truncation unit: {unit}")
 
     return field.format(truncated)
+
+
+class AIFunction:  # pylint: disable=too-few-public-methods
+    """
+    AI-powered data transformation function.
+
+    This function uses Claude AI to transform data based on natural language prompts.
+    It processes values individually but caches results to avoid redundant API calls.
+
+    Example usage:
+        SELECT AI('Normalize to 3-letter country codes', country) FROM countries;
+        SELECT AI('Extract year from text', date_string) FROM events;
+    """
+
+    def __init__(self) -> None:
+        """Initialize the AI function with caching."""
+        self._cache: dict[tuple[str, str], str] = {}
+
+    def __call__(self, prompt: str, value: Optional[str]) -> Optional[str]:
+        """
+        Transform a value using AI based on the prompt.
+
+        :param prompt: Natural language instruction for transformation
+        :param value: The value to transform
+        :return: Transformed value
+        """
+        if value is None:
+            return None
+
+        str_value = str(value)
+        cache_key = (prompt, str_value)
+
+        # Check cache first
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+
+        # Process this value
+        result = self._process_value(prompt, str_value)
+        self._cache[cache_key] = result
+        return result
+
+    def _process_value(self, prompt: str, value: str) -> str:
+        """Process a single value with AI."""
+        try:
+            # Import here to make it optional
+            import anthropic  # type: ignore  # pylint: disable=import-outside-toplevel
+        except ImportError as ex:
+            raise RuntimeError(
+                "The anthropic package is required for AI function. "
+                "Install it with: pip install anthropic",
+            ) from ex
+
+        # Get API key from environment
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise RuntimeError(
+                "ANTHROPIC_API_KEY environment variable must be set to use AI function",
+            )
+
+        client = anthropic.Anthropic(api_key=api_key)
+
+        # Create prompt for single value
+        full_prompt = f"""{prompt}
+
+Input value: {json.dumps(value)}
+
+Return ONLY a JSON-encoded string with the transformed value, nothing else.
+Do not include any explanation, markdown formatting, or additional text.
+Just return the JSON-encoded result."""
+
+        try:
+            response = client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=1024,
+                messages=[{"role": "user", "content": full_prompt}],
+            )
+
+            # Extract and parse JSON result
+            content: str = response.content[0].text.strip()  # type: ignore[union-attr]
+
+            # Try to parse as JSON
+            try:
+                result = str(json.loads(content))
+                return result
+            except json.JSONDecodeError:
+                # If JSON parsing fails, return the raw content
+                # This handles cases where Claude didn't follow instructions
+                return content
+
+        except Exception as ex:  # pylint: disable=broad-except
+            return f"AI Error: {str(ex)}"

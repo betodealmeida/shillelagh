@@ -13,7 +13,7 @@ from pytest_mock import MockerFixture
 from shillelagh.adapters.registry import AdapterLoader
 from shillelagh.backends.apsw.db import connect
 from shillelagh.exceptions import ProgrammingError
-from shillelagh.functions import date_trunc, get_metadata, upgrade
+from shillelagh.functions import AIFunction, date_trunc, get_metadata, upgrade
 
 from .fakes import FakeAdapter
 
@@ -242,3 +242,229 @@ def test_upgrade_generic_exception(mocker: MockerFixture) -> None:
     assert "Upgrade failed. Tried:" in output
     assert "uv: Unexpected error" in output
     assert subprocess_run.call_count == 3
+
+
+def test_ai_function_basic(mocker: MockerFixture) -> None:
+    """
+    Test the AI function with basic transformation.
+    """
+    ai_func = AIFunction()
+
+    # Mock the anthropic client
+    mock_anthropic = mocker.MagicMock()
+    mock_client = mocker.MagicMock()
+    mock_response = mocker.MagicMock()
+    mock_content = mocker.MagicMock()
+    # Return JSON-encoded value
+    mock_content.text = '"USA"'
+    mock_response.content = [mock_content]
+    mock_client.messages.create.return_value = mock_response
+    mock_anthropic.Anthropic.return_value = mock_client
+
+    mocker.patch.dict("sys.modules", {"anthropic": mock_anthropic})
+    mocker.patch("os.environ.get", return_value="test-api-key")
+
+    # Test processing
+    result = ai_func("Convert to 3-letter codes", "United States")
+    assert result == "USA"
+
+    # Should have called the API once
+    assert mock_client.messages.create.call_count == 1
+
+
+def test_ai_function_caching(mocker: MockerFixture) -> None:
+    """
+    Test that AI function caches results.
+    """
+    ai_func = AIFunction()
+
+    # Mock the anthropic client
+    mock_anthropic = mocker.MagicMock()
+    mock_client = mocker.MagicMock()
+    mock_response = mocker.MagicMock()
+    mock_content = mocker.MagicMock()
+    mock_content.text = '"USA"'
+    mock_response.content = [mock_content]
+    mock_client.messages.create.return_value = mock_response
+    mock_anthropic.Anthropic.return_value = mock_client
+
+    mocker.patch.dict("sys.modules", {"anthropic": mock_anthropic})
+    mocker.patch("os.environ.get", return_value="test-api-key")
+
+    # First call
+    result1 = ai_func("Convert to 3-letter codes", "United States")
+    assert result1 == "USA"
+
+    # Second call with same value - should use cache
+    result2 = ai_func("Convert to 3-letter codes", "United States")
+    assert result2 == "USA"
+
+    # Should have called the API only once
+    assert mock_client.messages.create.call_count == 1
+
+
+def test_ai_function_none_value() -> None:
+    """
+    Test AI function with None value.
+    """
+    ai_func = AIFunction()
+    result = ai_func("Any prompt", None)
+    assert result is None
+
+
+def test_ai_function_no_api_key(mocker: MockerFixture) -> None:
+    """
+    Test AI function without API key.
+    """
+    ai_func = AIFunction()
+    mocker.patch("os.environ.get", return_value=None)
+    mock_anthropic = mocker.MagicMock()
+    mocker.patch.dict("sys.modules", {"anthropic": mock_anthropic})
+
+    with pytest.raises(RuntimeError, match="ANTHROPIC_API_KEY"):
+        ai_func("Test prompt", "test value")
+
+
+def test_ai_function_no_anthropic_package(mocker: MockerFixture) -> None:
+    """
+    Test AI function when anthropic package is not installed.
+    """
+    ai_func = AIFunction()
+
+    # Simulate ImportError
+    def mock_import(name, *_args, **_kwargs):
+        if name == "anthropic":
+            raise ImportError("No module named 'anthropic'")
+        return mocker.DEFAULT
+
+    mocker.patch("builtins.__import__", side_effect=mock_import)
+
+    with pytest.raises(RuntimeError, match="anthropic package is required"):
+        ai_func("Test prompt", "test value")
+
+
+def test_ai_function_json_parsing(mocker: MockerFixture) -> None:
+    """
+    Test that AI function correctly parses JSON responses.
+    """
+    ai_func = AIFunction()
+
+    # Mock the anthropic client
+    mock_anthropic = mocker.MagicMock()
+    mock_client = mocker.MagicMock()
+    mock_response = mocker.MagicMock()
+    mock_content = mocker.MagicMock()
+    # Return a JSON-encoded string with special characters
+    mock_content.text = '"New York, NY"'
+    mock_response.content = [mock_content]
+    mock_client.messages.create.return_value = mock_response
+    mock_anthropic.Anthropic.return_value = mock_client
+
+    mocker.patch.dict("sys.modules", {"anthropic": mock_anthropic})
+    mocker.patch("os.environ.get", return_value="test-api-key")
+
+    # Test processing
+    result = ai_func("Extract the city", "The capital is New York, NY")
+    assert result == "New York, NY"
+
+    # Should have called the API once
+    assert mock_client.messages.create.call_count == 1
+
+
+def test_ai_function_json_fallback(mocker: MockerFixture) -> None:
+    """
+    Test that AI function falls back to raw content if JSON parsing fails.
+    """
+    ai_func = AIFunction()
+
+    # Mock the anthropic client
+    mock_anthropic = mocker.MagicMock()
+    mock_client = mocker.MagicMock()
+    mock_response = mocker.MagicMock()
+    mock_content = mocker.MagicMock()
+    # Return invalid JSON (Claude didn't follow instructions)
+    mock_content.text = "USA (United States of America)"
+    mock_response.content = [mock_content]
+    mock_client.messages.create.return_value = mock_response
+    mock_anthropic.Anthropic.return_value = mock_client
+
+    mocker.patch.dict("sys.modules", {"anthropic": mock_anthropic})
+    mocker.patch("os.environ.get", return_value="test-api-key")
+
+    # Test processing - should return raw content when JSON parsing fails
+    result = ai_func("Convert to 3-letter codes", "United States")
+    assert result == "USA (United States of America)"
+
+    # Should have called the API once
+    assert mock_client.messages.create.call_count == 1
+
+
+def test_ai_function_api_error(mocker: MockerFixture) -> None:
+    """
+    Test that AI function handles API errors gracefully.
+    """
+    ai_func = AIFunction()
+
+    # Mock the anthropic client
+    mock_anthropic = mocker.MagicMock()
+    mock_client = mocker.MagicMock()
+    # Simulate an API error
+    mock_client.messages.create.side_effect = Exception("API rate limit exceeded")
+    mock_anthropic.Anthropic.return_value = mock_client
+
+    mocker.patch.dict("sys.modules", {"anthropic": mock_anthropic})
+    mocker.patch("os.environ.get", return_value="test-api-key")
+
+    # Test processing - should return error message
+    result = ai_func("Convert to 3-letter codes", "United States")
+    assert result == "AI Error: API rate limit exceeded"
+
+    # Should have called the API once
+    assert mock_client.messages.create.call_count == 1
+
+
+def test_ai_function_from_sql(mocker: MockerFixture, registry: AdapterLoader) -> None:
+    """
+    Test calling AI function from SQL.
+    """
+    # Mock the anthropic client
+    mock_anthropic = mocker.MagicMock()
+    mock_client = mocker.MagicMock()
+    mock_response1 = mocker.MagicMock()
+    mock_content1 = mocker.MagicMock()
+    mock_content1.text = '"USA"'
+    mock_response1.content = [mock_content1]
+
+    mock_response2 = mocker.MagicMock()
+    mock_content2 = mocker.MagicMock()
+    mock_content2.text = '"GBR"'
+    mock_response2.content = [mock_content2]
+
+    mock_client.messages.create.side_effect = [mock_response1, mock_response2]
+    mock_anthropic.Anthropic.return_value = mock_client
+
+    mocker.patch.dict("sys.modules", {"anthropic": mock_anthropic})
+    mocker.patch("os.environ.get", return_value="test-api-key")
+
+    registry.add("dummy", FakeAdapter)
+    connection = connect(":memory:", ["dummy"])
+    cursor = connection.cursor()
+
+    # Create a test table
+    cursor.execute(
+        """
+        CREATE TABLE countries (name TEXT)
+        """,
+    )
+    cursor.execute("INSERT INTO countries VALUES ('United States')")
+    cursor.execute("INSERT INTO countries VALUES ('United Kingdom')")
+
+    # Call AI function
+    cursor.execute(
+        "SELECT AI('Convert to 3-letter codes', name) as code FROM countries",
+    )
+    results = cursor.fetchall()
+
+    assert results == [("USA",), ("GBR",)]
+    # Should have been called twice (once per unique value)
+    assert mock_client.messages.create.call_count == 2

@@ -380,6 +380,7 @@ class APSWConnection(
                 adapters,
             ),
             "date_trunc": functions.date_trunc,
+            "ai": functions.AIFunction(),
         }
         if not safe:
             available_functions["upgrade"] = functions.upgrade
