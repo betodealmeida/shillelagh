@@ -5,6 +5,11 @@ Changelog
 Next
 ====
 
+Version 1.4.3 - 2025-10-29
+==========================
+
+- Alternative methods for running ``UPGRADE()`` (#531)
+
 Version 1.4.2 - 2025-07-22
 ==========================
 
