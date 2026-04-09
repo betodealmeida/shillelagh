@@ -8,6 +8,7 @@ from typing import cast
 
 import pytest
 
+from shillelagh.adapters.api.gsheets.exceptions import DateParseError
 from shillelagh.adapters.api.gsheets.parsing.base import LITERAL, Token
 from shillelagh.adapters.api.gsheets.parsing.date import (
     AMPM,
@@ -37,7 +38,7 @@ from shillelagh.adapters.api.gsheets.parsing.date import (
     parse_date_time_pattern,
     tokenize,
 )
-from shillelagh.exceptions import DateParseError, ProgrammingError
+from shillelagh.exceptions import ProgrammingError
 
 classes = [
     H,

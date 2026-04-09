@@ -13,8 +13,9 @@ from datetime import date, datetime, time, timedelta
 from enum import Enum
 from typing import Any, TypeVar, Union
 
+from shillelagh.adapters.api.gsheets.exceptions import DateParseError
 from shillelagh.adapters.api.gsheets.parsing.base import LITERAL, Token, tokenize
-from shillelagh.exceptions import DateParseError, ProgrammingError
+from shillelagh.exceptions import ProgrammingError
 
 DateTime = TypeVar("DateTime", datetime, date, time, timedelta)
 
