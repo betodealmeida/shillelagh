@@ -13,6 +13,7 @@ __all__ = [
     "InternalError",
     "ProgrammingError",
     "NotSupportedError",
+    "DateParseError",
 ]
 
 
@@ -130,4 +131,10 @@ class ImpossibleFilterError(Error):
 class UnauthenticatedError(InterfaceError):
     """
     Custom excepton raised when the user needs to authenticate.
+    """
+
+
+class DateParseError(Error):
+    """
+    Raised when a date/time value cannot be parsed from a given pattern.
     """

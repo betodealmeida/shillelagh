@@ -9,6 +9,7 @@ from typing import cast
 import pytest
 
 from shillelagh.adapters.api.gsheets.parsing.base import LITERAL, Token
+from shillelagh.exceptions import DateParseError
 from shillelagh.adapters.api.gsheets.parsing.date import (
     AMPM,
     AP,
@@ -150,7 +151,7 @@ def test_h_token() -> None:
     tokens = list(tokenize("h:mm:ss", classes))
     assert token.parse("123", tokens) == ({"hour": 12}, "3")
     assert token.parse("303", tokens) == ({"hour": 3}, "03")
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(DateParseError) as excinfo:
         token.parse("invalid", tokens)
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
@@ -220,7 +221,7 @@ def test_m_token() -> None:
     tokens = list(tokenize("h:m:s", classes))
     token = tokens[2]
     assert token.parse("14:15", tokens) == ({"minute": 14}, ":15")
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(DateParseError) as excinfo:
         token.parse("invalid", tokens)
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
@@ -288,10 +289,10 @@ def test_mmmmm_token() -> None:
     tokens = list(tokenize("mmmmm/dd/yyy", classes))
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "N"
     assert token.parse("F 1st", tokens) == ({"month": 2}, " 1st")
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(DateParseError) as excinfo:
         token.parse("Z 1st", tokens)
     assert str(excinfo.value) == "Unable to find month letter: Z"
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(DateParseError) as excinfo:
         token.parse("M 1st", tokens)
     assert str(excinfo.value) == "Unable to parse month letter unambiguously: M"
 
@@ -315,7 +316,7 @@ def test_s_token() -> None:
     assert token.parse("60.123", tokens) == ({"second": 60}, ".123")
     assert token.parse("61.123", tokens) == ({"second": 61}, ".123")
     assert token.parse("62.123", tokens) == ({"second": 6}, "2.123")
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(DateParseError) as excinfo:
         token.parse("invalid", tokens)
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
@@ -370,7 +371,7 @@ def test_hplusduration_token() -> None:
     )
 
     # should never happen
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(DateParseError) as excinfo:
         token.parse("invalid", [])
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
@@ -414,7 +415,7 @@ def test_mplusduration_token() -> None:
     )
 
     # should never happen
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(DateParseError) as excinfo:
         token.parse("invalid", [])
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
@@ -461,7 +462,7 @@ def test_splusduration_token() -> None:
     )
 
     # should never happen
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(DateParseError) as excinfo:
         token.parse("invalid", [])
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
@@ -481,7 +482,7 @@ def test_d_token() -> None:
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "12"
     assert token.format(datetime(2021, 11, 2, 13, 14, 15, 16), tokens) == "2"
     assert token.parse("12/11/21", tokens) == ({"day": 12}, "/11/21")
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(DateParseError) as excinfo:
         token.parse("invalid", tokens)
     assert str(excinfo.value) == "Cannot parse value: invalid"
 
@@ -672,9 +673,10 @@ def test_parse_date_time_pattern() -> None:
         microseconds=123000,
     )
 
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(DateParseError) as excinfo:
         parse_date_time_pattern("60.123", "[ss].000", datetime)
-    assert str(excinfo.value) == "Unsupported format"
+    assert "Could not parse" in str(excinfo.value)
+    assert "[ss].000" in str(excinfo.value)
 
 
 def test_format_date_time_pattern() -> None:
@@ -744,6 +746,19 @@ def test_format_date_time_with_meridiem() -> None:
         )
         == "12:34:56 PM"
     )
+
+
+def test_parse_date_time_pattern_missing_day() -> None:
+    """
+    Test that a pattern without a day component gives a helpful error message.
+
+    This is the case when a Google Sheet has a date column with M/YYYY format
+    (e.g. "1/2024") instead of M/D/YYYY (e.g. "1/1/2024").
+    """
+    with pytest.raises(DateParseError, match="Could not parse") as excinfo:
+        parse_date_time_pattern("1/2024", "m/yyyy", date)
+    assert "1/2024" in str(excinfo.value) or "m/yyyy" in str(excinfo.value)
+    assert "m/yyyy" in str(excinfo.value)
 
 
 def test_infer_column_type() -> None:

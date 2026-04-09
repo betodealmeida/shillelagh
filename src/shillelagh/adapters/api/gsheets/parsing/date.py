@@ -4,7 +4,7 @@ Parse and format Google Sheet date/time patterns.
 https://developers.google.com/sheets/api/guides/formats?hl=en#date_and_time_format_patterns
 """
 
-# pylint: disable=invalid-name, fixme, broad-exception-raised
+# pylint: disable=invalid-name, fixme
 
 import calendar
 import re
@@ -14,6 +14,7 @@ from enum import Enum
 from typing import Any, TypeVar, Union
 
 from shillelagh.adapters.api.gsheets.parsing.base import LITERAL, Token, tokenize
+from shillelagh.exceptions import DateParseError
 
 DateTime = TypeVar("DateTime", datetime, date, time, timedelta)
 
@@ -63,7 +64,7 @@ class H(Token):
     def parse(self, value: str, tokens: list[Token]) -> tuple[dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
         if not match:
-            raise Exception(f"Cannot parse value: {value}")
+            raise DateParseError(f"Cannot parse value: {value}")
         size = len(match.group()) if 0 <= int(match.group()) < 24 else 1
 
         return {"hour": int(value[:size])}, value[size:]
@@ -132,7 +133,7 @@ class M(Token):
     def parse(self, value: str, tokens: list[Token]) -> tuple[dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
         if not match:
-            raise Exception(f"Cannot parse value: {value}")
+            raise DateParseError(f"Cannot parse value: {value}")
         size = len(match.group()) if 1 <= int(match.group()) <= 24 else 1
 
         if self._is_minute(tokens):
@@ -205,9 +206,9 @@ class MMMMM(MMM):
         for i in range(1, 13):
             mapping[calendar.month_name[i][0]].append(i)
         if len(mapping[letter]) == 0:
-            raise Exception(f"Unable to find month letter: {letter}")
+            raise DateParseError(f"Unable to find month letter: {letter}")
         if len(mapping[letter]) > 1:
-            raise Exception(f"Unable to parse month letter unambiguously: {letter}")
+            raise DateParseError(f"Unable to parse month letter unambiguously: {letter}")
 
         return {"month": mapping[letter][0]}, value[1:]
 
@@ -225,7 +226,7 @@ class S(Token):
     def parse(self, value: str, tokens: list[Token]) -> tuple[dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
         if not match:
-            raise Exception(f"Cannot parse value: {value}")
+            raise DateParseError(f"Cannot parse value: {value}")
         # leap seconds can be 60 or even 61
         size = len(match.group()) if 0 <= int(match.group()) <= 61 else 1
 
@@ -313,7 +314,7 @@ class HPlusDuration(DurationToken):
     def parse(self, value: str, tokens: list[Token]) -> tuple[dict[str, Any], str]:
         match = re.match(r"\d+", value)
         if not match:
-            raise Exception(f"Cannot parse value: {value}")
+            raise DateParseError(f"Cannot parse value: {value}")
         size = len(match.group())
         return {"hours": int(value[:size])}, value[size:]
 
@@ -338,7 +339,7 @@ class MPlusDuration(DurationToken):
     def parse(self, value: str, tokens: list[Token]) -> tuple[dict[str, Any], str]:
         match = re.match(r"\d+", value)
         if not match:
-            raise Exception(f"Cannot parse value: {value}")
+            raise DateParseError(f"Cannot parse value: {value}")
         size = len(match.group())
         return {"minutes": int(value[:size])}, value[size:]
 
@@ -367,7 +368,7 @@ class SPlusDuration(DurationToken):
     def parse(self, value: str, tokens: list[Token]) -> tuple[dict[str, Any], str]:
         match = re.match(r"\d+", value)
         if not match:
-            raise Exception(f"Cannot parse value: {value}")
+            raise DateParseError(f"Cannot parse value: {value}")
         size = len(match.group())
         return {"seconds": int(value[:size])}, value[size:]
 
@@ -385,7 +386,7 @@ class D(Token):
     def parse(self, value: str, tokens: list[Token]) -> tuple[dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
         if not match:
-            raise Exception(f"Cannot parse value: {value}")
+            raise DateParseError(f"Cannot parse value: {value}")
         size = len(match.group()) if 1 <= int(match.group()) <= 31 else 1
         return {"day": int(value[:size])}, value[size:]
 
@@ -644,7 +645,9 @@ def parse_date_time_pattern(
     try:
         return class_(**kwargs)
     except TypeError as ex:
-        raise Exception("Unsupported format") from ex
+        raise DateParseError(
+            f"Could not parse '{value}' using pattern '{pattern}': {ex}"
+        ) from ex
 
 
 def format_date_time_pattern(value: DateTime, pattern: str) -> str:
