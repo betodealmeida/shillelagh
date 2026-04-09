@@ -14,7 +14,7 @@ from enum import Enum
 from typing import Any, TypeVar, Union
 
 from shillelagh.adapters.api.gsheets.parsing.base import LITERAL, Token, tokenize
-from shillelagh.exceptions import DateParseError
+from shillelagh.exceptions import DateParseError, ProgrammingError
 
 DateTime = TypeVar("DateTime", datetime, date, time, timedelta)
 
@@ -103,7 +103,7 @@ class M(Token):
             if token is self:
                 break
         else:
-            raise Exception("Token is not present in list of tokens")
+            raise ProgrammingError("Token is not present in list of tokens")
 
         for token in reversed(tokens[:i]):
             if token.__class__.__name__ == "LITERAL":
@@ -128,7 +128,7 @@ class M(Token):
         if isinstance(value, (datetime, date)):
             return str(value.month)
 
-        raise Exception(f"Cannot format value: {value}")
+        raise ProgrammingError(f"Cannot format value: {value}")
 
     def parse(self, value: str, tokens: list[Token]) -> tuple[dict[str, Any], str]:
         match = re.match(r"\d{1,2}", value)
@@ -208,7 +208,9 @@ class MMMMM(MMM):
         if len(mapping[letter]) == 0:
             raise DateParseError(f"Unable to find month letter: {letter}")
         if len(mapping[letter]) > 1:
-            raise DateParseError(f"Unable to parse month letter unambiguously: {letter}")
+            raise DateParseError(
+                f"Unable to parse month letter unambiguously: {letter}",
+            )
 
         return {"month": mapping[letter][0]}, value[1:]
 
@@ -646,7 +648,7 @@ def parse_date_time_pattern(
         return class_(**kwargs)
     except TypeError as ex:
         raise DateParseError(
-            f"Could not parse '{value}' using pattern '{pattern}': {ex}"
+            f"Could not parse '{value}' using pattern '{pattern}': {ex}",
         ) from ex
 
 

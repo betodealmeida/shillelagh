@@ -9,7 +9,6 @@ from typing import cast
 import pytest
 
 from shillelagh.adapters.api.gsheets.parsing.base import LITERAL, Token
-from shillelagh.exceptions import DateParseError
 from shillelagh.adapters.api.gsheets.parsing.date import (
     AMPM,
     AP,
@@ -38,6 +37,7 @@ from shillelagh.adapters.api.gsheets.parsing.date import (
     parse_date_time_pattern,
     tokenize,
 )
+from shillelagh.exceptions import DateParseError, ProgrammingError
 
 classes = [
     H,
@@ -200,7 +200,7 @@ def test_m_token() -> None:
     assert token._is_minute(tokens) is True
 
     tokens = list(tokenize("m/d/y", classes))
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(ProgrammingError) as excinfo:
         token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens)
     assert str(excinfo.value) == "Token is not present in list of tokens"
     token = tokens[0]
@@ -210,7 +210,7 @@ def test_m_token() -> None:
     assert token.format(datetime(2021, 11, 12, 13, 14, 15, 16), tokens) == "14"
     tokens = list(tokenize("m/d/y", classes))
     token = tokens[0]
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(ProgrammingError) as excinfo:
         token.format(time(13, 14, 15, 16), tokens)
     assert str(excinfo.value) == "Cannot format value: 13:14:15.000016"
 
