@@ -5,6 +5,12 @@ Changelog
 Next
 ====
 
+Version 1.4.4 - 2026-04-10
+==========================
+
+- Add sqlalchemy-odata to 3rd-party adapters list (#540)
+- Improve date parsing error messages with value and pattern context (#541)
+
 Version 1.4.3 - 2025-10-29
 ==========================
 
