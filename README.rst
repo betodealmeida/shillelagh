@@ -140,6 +140,7 @@ There are also 3rd-party adapters:
 
 - `Airtable <https://github.com/cancan101/airtable-db-api>`_
 - `GraphQL <https://github.com/cancan101/graphql-db-api>`_
+- `OData v4 <https://github.com/brandonjjon/sqlalchemy-odata>`_
 
 A query can combine data from multiple adapters:
 
