@@ -183,9 +183,16 @@ def get_all_bounds(
         column_name = column_names[column_index]
         column_type = columns[column_name]
 
-        # convert constraint to native Python type, then to DB specific type
-        constraint = type_map[column_type.type]().parse(constraint)
-        value = column_type.format(constraint)
+        value: Any
+        if isinstance(constraint, set) and operator is Operator.EQ:
+            # See also https://rogerbinns.github.io/apsw/vtable.html#apsw.VTCursor.Filter
+            constraint = [type_map[column_type.type]().parse(c) for c in constraint]
+            value = tuple(column_type.format(c) for c in constraint)
+            operator = Operator.IN
+        else:
+            # convert constraint to native Python type, then to DB specific type
+            constraint = type_map[column_type.type]().parse(constraint)
+            value = column_type.format(constraint)
 
         all_bounds[column_name].add((operator, value))
 
@@ -447,6 +454,14 @@ class VTTable:
             if isinstance(constraint, tuple):
                 index_info.set_aConstraintUsage_argvIndex(i, constraint[0] + 1)
                 index_info.set_aConstraintUsage_omit(i, constraint[1])
+                if (
+                    self.adapter.supports_in_statements
+                    and index_info.get_aConstraint_op(i)
+                    == apsw.SQLITE_INDEX_CONSTRAINT_EQ
+                    and index_info.get_aConstraintUsage_in(i)
+                ):
+                    # Explicit request to pass the IN (list) as a set in the constraintargs.
+                    index_info.set_aConstraintUsage_in(i, True)
         index_info.idxNum = index_number
         index_info.idxStr = index_name
         index_info.orderByConsumed = orderby_consumed
