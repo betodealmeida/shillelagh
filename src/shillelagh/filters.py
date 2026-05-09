@@ -23,6 +23,7 @@ class Operator(Enum):
     LIKE = "LIKE"
     LIMIT = "LIMIT"
     OFFSET = "OFFSET"
+    IN = "IN"
 
 
 class Side(Enum):
@@ -426,3 +427,33 @@ class Range(Filter):
             operator = "<=" if self.include_end else "<"
             comparisons.append(f"{operator}{self.end}")
         return ",".join(comparisons)
+
+
+class In(Filter):
+    """
+    Filter for a list of choice items.
+
+    The value is a tuple of items, one of which must match to pass.
+    """
+
+    operators: Set[Operator] = {
+        Operator.IN,
+    }
+
+    def __init__(self, value: Any):
+        self.value = value
+
+    @classmethod
+    def build(cls, operations: Set[Tuple[Operator, Any]]) -> Filter:
+        # we only accept a single value
+        values = {value for operator, value in operations}
+        if len(values) != 1:
+            return Impossible()
+
+        return cls(values.pop())
+
+    def check(self, value: Any) -> bool:
+        return value in self.value
+
+    def __repr__(self) -> str:
+        return f"IN{self.value}"
