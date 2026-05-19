@@ -37,7 +37,9 @@ def test_connect(registry: AdapterLoader) -> None:
     assert cursor.rowcount == -1
 
     cursor.execute(
-        """INSERT INTO "dummy://" (age, name, pets) VALUES (6, 'Billy', 1)""",
+        """
+        INSERT INTO "dummy://" (age, name, pets) VALUES (6, 'Billy', 1)
+        """,
     )
 
     cursor.execute('SELECT * FROM "dummy://"')
@@ -321,7 +323,9 @@ def test_description(registry: AdapterLoader) -> None:
 
     assert cursor.description is None
     cursor.execute(
-        """INSERT INTO "dummy://" (age, name, pets) VALUES (6, 'Billy', 1)""",
+        """
+        INSERT INTO "dummy://" (age, name, pets) VALUES (6, 'Billy', 1)
+        """,
     )
     assert cursor.description is None
 
@@ -349,7 +353,9 @@ def test_execute_many(registry: AdapterLoader) -> None:
     items: list[tuple[Any, ...]] = [(6, "Billy", 1), (7, "Timmy", 2)]
     with pytest.raises(NotSupportedError) as excinfo:
         cursor.executemany(
-            """INSERT INTO "dummy://" (age, name, pets) VALUES (?, ?, ?)""",
+            """
+            INSERT INTO "dummy://" (age, name, pets) VALUES (?, ?, ?)
+            """,
             items,
         )
     assert (

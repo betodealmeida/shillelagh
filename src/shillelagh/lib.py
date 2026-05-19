@@ -1,4 +1,6 @@
-"""Helper functions for Shillelagh."""
+"""
+Helper functions for Shillelagh.
+"""
 
 import base64
 import inspect
@@ -124,7 +126,9 @@ class RowIDManager:
         return row_id
 
     def delete(self, row_id: int) -> None:
-        """Mark a given row ID as deleted."""
+        """
+        Mark a given row ID as deleted.
+        """
         for i, range_ in enumerate(self.ranges):
             if range_.start <= row_id < range_.stop:
                 if range_.start == range_.stop - 1:
@@ -233,22 +237,30 @@ def update_order(
 
 
 def escape_string(value: str) -> str:
-    """Escape single quotes."""
+    """
+    Escape single quotes.
+    """
     return value.replace("'", "''")
 
 
 def unescape_string(value: str) -> str:
-    """Unescape single quotes."""
+    """
+    Unescape single quotes.
+    """
     return value.replace("''", "'")
 
 
 def escape_identifier(value: str) -> str:
-    """Escape double quotes."""
+    """
+    Escape double quotes.
+    """
     return value.replace('"', '""')
 
 
 def unescape_identifier(value: str) -> str:
-    """Unescape double quotes."""
+    """
+    Unescape double quotes.
+    """
     return value.replace('""', '"')
 
 

@@ -37,7 +37,9 @@ External = TypeVar(
 
 
 class Order(Enum):
-    """An enum for different orders a field can have."""
+    """
+    An enum for different orders a field can have.
+    """
 
     # Use ASCENDING/DESCENDING when you have static data with 1+
     # columns pre-sorted. All other columns should have Order.NONE.
@@ -269,7 +271,9 @@ class Field(Generic[Internal, External]):
 
 
 class Integer(Field[int, int]):
-    """An integer."""
+    """
+    An integer.
+    """
 
     type = "INTEGER"
     db_api_type = "NUMBER"
@@ -306,14 +310,18 @@ class RowID(Integer):
 
 
 class Float(Field[float, float]):
-    """A float."""
+    """
+    A float.
+    """
 
     type = "REAL"
     db_api_type = "NUMBER"
 
 
 class String(Field[str, str]):
-    """A string."""
+    """
+    A string.
+    """
 
     type = "TEXT"
     db_api_type = "STRING"
@@ -675,7 +683,9 @@ class StringBlob(Field[str, bytes]):
 
 
 class Boolean(Field[bool, bool]):
-    """A boolean."""
+    """
+    A boolean.
+    """
 
     type = "BOOLEAN"
     db_api_type = "NUMBER"

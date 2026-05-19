@@ -26,7 +26,9 @@ class Operator(Enum):
 
 
 class Side(Enum):
-    """Define the side of an interval endpoint."""
+    """
+    Define the side of an interval endpoint.
+    """
 
     LEFT = "LEFT"
     RIGHT = "RIGHT"

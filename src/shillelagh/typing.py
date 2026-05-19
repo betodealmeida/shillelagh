@@ -1,4 +1,6 @@
-"""Custom types for Shillelagh."""
+"""
+Custom types for Shillelagh.
+"""
 
 from typing import Any, Optional, Union
 

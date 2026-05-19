@@ -340,7 +340,9 @@ def apsw_version() -> str:
 class APSWConnection(
     Connection[APSWCursor],
 ):  # pylint: disable=too-many-instance-attributes
-    """Connection."""
+    """
+    Connection.
+    """
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
@@ -389,7 +391,9 @@ class APSWConnection(
 
     @check_closed
     def commit(self) -> None:
-        """Commit any pending transaction to the database."""
+        """
+        Commit any pending transaction to the database.
+        """
         for cursor in self.cursors:
             if cursor.in_transaction:
                 cursor._cursor.execute("COMMIT")  # pylint: disable=protected-access
@@ -397,7 +401,9 @@ class APSWConnection(
 
     @check_closed
     def rollback(self) -> None:
-        """Rollback any transactions."""
+        """
+        Rollback any transactions.
+        """
         for cursor in self.cursors:
             if cursor.in_transaction:
                 cursor._cursor.execute("ROLLBACK")  # pylint: disable=protected-access
@@ -405,7 +411,9 @@ class APSWConnection(
 
     @check_closed
     def cursor(self) -> APSWCursor:
-        """Return a new Cursor Object using the connection."""
+        """
+        Return a new Cursor Object using the connection.
+        """
         cursor = APSWCursor(
             self._connection.cursor(),
             self._adapters,

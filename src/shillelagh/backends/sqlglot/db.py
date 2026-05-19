@@ -345,11 +345,15 @@ class SQLGlotCursor(Cursor):  # pylint: disable=too-many-instance-attributes
 
 
 class SQLGlotConnection(Connection[SQLGlotCursor]):
-    """Connection."""
+    """
+    Connection.
+    """
 
     @check_closed
     def cursor(self) -> SQLGlotCursor:
-        """Return a new Cursor Object using the connection."""
+        """
+        Return a new Cursor Object using the connection.
+        """
         cursor = SQLGlotCursor(self._adapters, self._adapter_kwargs, self.schema)
         self.cursors.append(cursor)
 

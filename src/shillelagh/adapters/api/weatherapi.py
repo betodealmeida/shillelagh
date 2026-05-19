@@ -121,7 +121,9 @@ class WeatherAPI(Adapter):
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
-        """https://api.weatherapi.com/v1/history.json?key=XXX&q=94158"""
+        """
+        https://api.weatherapi.com/v1/history.json?key=XXX&q=94158
+        """
         parsed = urllib.parse.urlparse(uri)
         query_string = urllib.parse.parse_qs(parsed.query)
         return (

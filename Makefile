@@ -24,3 +24,5 @@ spellcheck:
 
 check:
 	pre-commit run --all-files
+
+pr: check test

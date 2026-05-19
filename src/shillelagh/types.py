@@ -1,4 +1,6 @@
-"""DB API 2.0 types for Shillelagh."""
+"""
+DB API 2.0 types for Shillelagh.
+"""
 
 import datetime
 import inspect
@@ -35,7 +37,9 @@ def Date(  # pylint: disable=invalid-name
     month: int,
     day: int,
 ) -> datetime.date:
-    """Constructs an object holding a date value."""
+    """
+    Constructs an object holding a date value.
+    """
     return datetime.date(year, month, day)
 
 
@@ -44,7 +48,9 @@ def Time(  # pylint: disable=invalid-name
     minute: int,
     second: int,
 ) -> datetime.time:
-    """Constructs an object holding a time value."""
+    """
+    Constructs an object holding a time value.
+    """
     return datetime.time(hour, minute, second, tzinfo=datetime.timezone.utc)
 
 
@@ -56,7 +62,9 @@ def Timestamp(  # pylint: disable=invalid-name, too-many-arguments, too-many-pos
     minute: int,
     second: int,
 ) -> datetime.datetime:
-    """Constructs an object holding a timestamp value."""
+    """
+    Constructs an object holding a timestamp value.
+    """
     return datetime.datetime(
         year,
         month,
@@ -96,5 +104,7 @@ def TimestampFromTicks(ticks: int) -> datetime.datetime:  # pylint: disable=inva
 
 
 def Binary(string: str) -> bytes:  # pylint: disable=invalid-name
-    """constructs an object capable of holding a binary (long) string value."""
+    """
+    constructs an object capable of holding a binary (long) string value.
+    """
     return string.encode()

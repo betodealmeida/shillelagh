@@ -49,7 +49,9 @@ SUPPORTED_PROTOCOLS = {"http", "https"}
 
 
 class RowTracker:
-    """An iterator that keeps track of the last yielded row."""
+    """
+    An iterator that keeps track of the last yielded row.
+    """
 
     def __init__(self, iterable: Iterator[Row]):
         self.iterable = iterable

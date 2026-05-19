@@ -1,4 +1,6 @@
-"""Types for the GSheets adapter."""
+"""
+Types for the GSheets adapter.
+"""
 
 from enum import Enum
 

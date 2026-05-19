@@ -380,7 +380,9 @@ def test_execute_many(registry: AdapterLoader) -> None:
     items: list[tuple[Any, ...]] = [(6, "Billy", 1), (7, "Timmy", 2)]
     with pytest.raises(NotSupportedError) as excinfo:
         cursor.executemany(
-            """INSERT INTO "dummy://" (age, name, pets) VALUES (?, ?, ?)""",
+            """
+            INSERT INTO "dummy://" (age, name, pets) VALUES (?, ?, ?)
+            """,
             items,
         )
     assert (

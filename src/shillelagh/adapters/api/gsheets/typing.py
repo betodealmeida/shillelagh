@@ -1,4 +1,6 @@
-"""Custom types for the GSheets adapter."""
+"""
+Custom types for the GSheets adapter.
+"""
 
 from typing import Any
 

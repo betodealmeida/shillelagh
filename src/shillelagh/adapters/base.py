@@ -1,4 +1,6 @@
-"""Base class for adapters."""
+"""
+Base class for adapters.
+"""
 
 import atexit
 import inspect
@@ -93,11 +95,15 @@ class Adapter:
 
     @staticmethod
     def parse_uri(uri: str) -> tuple[Any, ...]:
-        """Parse table name, and return arguments to instantiate adapter."""
+        """
+        Parse table name, and return arguments to instantiate adapter.
+        """
         raise NotImplementedError("Subclasses must implement ``parse_uri``")
 
     def get_metadata(self) -> dict[str, Any]:
-        """Return any extra metadata about the table."""
+        """
+        Return any extra metadata about the table.
+        """
         return {}
 
     def get_columns(self) -> dict[str, Field]:
@@ -189,7 +195,9 @@ class Adapter:
         return self.insert_data(row)
 
     def delete_data(self, row_id: int) -> None:
-        """Delete a row from the table."""
+        """
+        Delete a row from the table.
+        """
         raise NotSupportedError("Adapter does not support ``DELETE`` statements")
 
     def delete_row(self, row_id: int) -> None:

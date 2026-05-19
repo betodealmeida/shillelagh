@@ -1,4 +1,5 @@
-"""An adapter for the Semantic Layer REST API.
+"""
+An adapter for the Semantic Layer REST API.
 
 Each adapter instance represents a single semantic view exposed by a server
 that speaks the protocol documented in
@@ -27,7 +28,7 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Iterator
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlparse, urlunparse
 
 import requests
@@ -78,6 +79,17 @@ _FLOAT_TYPES = {"halffloat", "float", "double", "float16", "float32", "float64"}
 _STRING_TYPES = {"string", "utf8", "large_string", "large_utf8"}
 
 
+_FIELD_BY_TYPE: dict[str, tuple[type[Field], list[type[Filter]]]] = {
+    **{t: (String, _SCALAR_FILTERS) for t in _STRING_TYPES},
+    **{t: (Integer, _SCALAR_FILTERS) for t in _INTEGER_TYPES},
+    **{t: (Float, _SCALAR_FILTERS) for t in _FLOAT_TYPES},
+    "bool": (Boolean, _NON_SCALAR_FILTERS),
+    "date32": (ISODate, _SCALAR_FILTERS),
+    "date64": (ISODate, _SCALAR_FILTERS),
+    "timestamp": (ISODateTime, _SCALAR_FILTERS),
+}
+
+
 def _field_for(arrow_type: str, exact: bool = True) -> Field:
     """Map a PyArrow type string (eg ``date32[day]``) to a Shillelagh field.
 
@@ -85,23 +97,14 @@ def _field_for(arrow_type: str, exact: bool = True) -> Field:
     the API call — the underlying layer may not implement ``HAVING`` precisely.
     """
     base = arrow_type.split("[", 1)[0]
-    if base in _STRING_TYPES:
-        return String(filters=_SCALAR_FILTERS, order=Order.ANY, exact=exact)
-    if base == "bool":
-        return Boolean(filters=_NON_SCALAR_FILTERS, order=Order.ANY, exact=exact)
-    if base in _INTEGER_TYPES:
-        return Integer(filters=_SCALAR_FILTERS, order=Order.ANY, exact=exact)
-    if base in _FLOAT_TYPES:
-        return Float(filters=_SCALAR_FILTERS, order=Order.ANY, exact=exact)
-    if base in {"date32", "date64"}:
-        return ISODate(filters=_SCALAR_FILTERS, order=Order.ANY, exact=exact)
-    if base == "timestamp":
-        return ISODateTime(filters=_SCALAR_FILTERS, order=Order.ANY, exact=exact)
-    return Unknown(filters=_NON_SCALAR_FILTERS, order=Order.ANY, exact=exact)
+    cls, filters = _FIELD_BY_TYPE.get(base, (Unknown, _NON_SCALAR_FILTERS))
+    return cls(filters=filters, order=Order.ANY, exact=exact)
 
 
 class SemanticAPI(Adapter):
-    """A Shillelagh adapter exposing one semantic view as a virtual table."""
+    """
+    A Shillelagh adapter exposing one semantic view as a virtual table.
+    """
 
     safe = True
     supports_limit = True
@@ -165,7 +168,7 @@ class SemanticAPI(Adapter):
         if response.status_code == 404:
             raise ProgrammingError(response.json().get("detail", response.text))
         response.raise_for_status()
-        return response.json()
+        return cast(dict[str, Any], response.json())
 
     def _load_metadata(self) -> None:
         view = self._post("", {})
@@ -184,16 +187,18 @@ class SemanticAPI(Adapter):
     def get_columns(self) -> dict[str, Field]:
         return self.columns
 
-    def get_data(  # noqa: PLR0913 - mirrors the base signature
+    def get_data(
         self,
         bounds: dict[str, Filter],
         order: list[tuple[str, RequestedOrder]],
-        limit: int | None = None,
-        offset: int | None = None,
-        requested_columns: set[str] | None = None,
         **kwargs: Any,
     ) -> Iterator[Row]:
-        wanted = set(requested_columns) if requested_columns else set(self.columns)
+        limit: int | None = kwargs.get("limit")
+        offset: int | None = kwargs.get("offset")
+        requested_columns: set[str] | None = kwargs.get("requested_columns")
+        wanted = (
+            set(self.columns) if requested_columns is None else set(requested_columns)
+        )
         metrics = [self.metric_ids[name] for name in wanted if name in self.metric_ids]
         dimensions = [
             self.dimension_ids[name] for name in wanted if name in self.dimension_ids
@@ -237,7 +242,7 @@ class SemanticAPI(Adapter):
                 if filter_.start is not None:
                     op = ">=" if filter_.include_start else ">"
                     filters.append(
-                        self._filter(predicate, column_id, op, filter_.start)
+                        self._filter(predicate, column_id, op, filter_.start),
                     )
                 if filter_.end is not None:
                     op = "<=" if filter_.include_end else "<"

@@ -75,7 +75,9 @@ CURSOR_METHOD = TypeVar("CURSOR_METHOD", bound=Callable[..., Any])
 
 
 def check_closed(method: CURSOR_METHOD) -> CURSOR_METHOD:
-    """Decorator that checks if a connection or cursor is closed."""
+    """
+    Decorator that checks if a connection or cursor is closed.
+    """
 
     @wraps(method)
     def wrapper(self: "Cursor", *args: Any, **kwargs: Any) -> Any:
@@ -87,7 +89,9 @@ def check_closed(method: CURSOR_METHOD) -> CURSOR_METHOD:
 
 
 def check_result(method: CURSOR_METHOD) -> CURSOR_METHOD:
-    """Decorator that checks if the cursor has results from ``execute``."""
+    """
+    Decorator that checks if the cursor has results from ``execute``.
+    """
 
     @wraps(method)
     def wrapper(self: "Cursor", *args: Any, **kwargs: Any) -> Any:
@@ -255,7 +259,9 @@ ConnectionCursor = TypeVar("ConnectionCursor", bound=Cursor)
 class Connection(
     Generic[ConnectionCursor],
 ):  # pylint: disable=too-many-instance-attributes
-    """Connection."""
+    """
+    Connection.
+    """
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
@@ -274,7 +280,9 @@ class Connection(
 
     @check_closed
     def close(self) -> None:
-        """Close the connection now."""
+        """
+        Close the connection now.
+        """
         self.closed = True
         for cursor in self.cursors:
             if not cursor.closed:
@@ -282,15 +290,21 @@ class Connection(
 
     @check_closed
     def commit(self) -> None:
-        """Commit any pending transaction to the database."""
+        """
+        Commit any pending transaction to the database.
+        """
 
     @check_closed
     def rollback(self) -> None:
-        """Rollback any transactions."""
+        """
+        Rollback any transactions.
+        """
 
     @check_closed
     def cursor(self) -> ConnectionCursor:
-        """Return a new Cursor Object using the connection."""
+        """
+        Return a new Cursor Object using the connection.
+        """
         raise NotImplementedError(
             "Subclasses must implement the `cursor` method",
         )
