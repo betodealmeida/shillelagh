@@ -38,6 +38,14 @@ class GSheetsField(Field[Internal, External]):
         "M/d/yyyy": "m/d/yyyy",
     }
 
+    # The Google Chart API sometimes types a column as temporal without
+    # returning the optional ``pattern`` describing its format. Temporal
+    # subclasses set this to Google's documented default so that a missing
+    # pattern still parses/formats/quotes values correctly instead of falling
+    # back to ``None`` (which turns valid values -- including filter bounds --
+    # into the literal ``null``). Non-temporal fields leave this as ``None``.
+    default_pattern: Optional[str] = None
+
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         filters: Optional[list[type[Filter]]] = None,
@@ -47,6 +55,8 @@ class GSheetsField(Field[Internal, External]):
         timezone: Optional[datetime.tzinfo] = None,
     ):
         super().__init__(filters, order, exact)
+        if pattern is None:
+            pattern = self.default_pattern
         self.pattern: Optional[str] = (
             self.pattern_substitutions[pattern]
             if pattern in self.pattern_substitutions
@@ -88,6 +98,7 @@ class GSheetsDateTime(GSheetsField[str, datetime.datetime]):
 
     type = "TIMESTAMP"
     db_api_type = "DATETIME"
+    default_pattern = "M/d/yyyy H:mm:ss"
 
     def parse(self, value: Optional[str]) -> Optional[datetime.datetime]:
         # Google Chart API returns ``None`` for a NULL cell, while the Google
@@ -142,6 +153,7 @@ class GSheetsDate(GSheetsField[str, datetime.date]):
 
     type = "DATE"
     db_api_type = "DATETIME"
+    default_pattern = "M/d/yyyy"
 
     def parse(self, value: Optional[str]) -> Optional[datetime.date]:
         # Google Chart API returns ``None`` for a NULL cell, while the Google
@@ -182,6 +194,7 @@ class GSheetsTime(GSheetsField[str, datetime.time]):
 
     type = "TIME"
     db_api_type = "DATETIME"
+    default_pattern = "h:mm:ss am/pm"
 
     def parse(self, value: Optional[str]) -> Optional[datetime.time]:
         """
@@ -218,6 +231,7 @@ class GSheetsDuration(GSheetsField[str, datetime.timedelta]):
 
     type = "DURATION"
     db_api_type = "DATETIME"
+    default_pattern = "[h]:mm:ss"
 
     def parse(self, value: Optional[str]) -> Optional[datetime.timedelta]:
         if self.pattern is None or value is None or value == "":

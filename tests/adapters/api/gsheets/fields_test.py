@@ -163,6 +163,55 @@ def test_GSheetsDuration() -> None:
     )
 
 
+def test_temporal_default_pattern() -> None:
+    """
+    Test that temporal fields fall back to a default pattern.
+
+    The Google Chart API sometimes types a column as temporal without returning
+    the optional ``pattern`` describing its format. In that case the field
+    should fall back to Google's documented default so that non-null values --
+    including filter bounds -- are parsed, formatted, and quoted correctly
+    instead of collapsing to the literal ``null``.
+    """
+    assert GSheetsDateTime().default_pattern == "M/d/yyyy H:mm:ss"
+    assert GSheetsDate().default_pattern == "M/d/yyyy"
+    assert GSheetsTime().default_pattern == "h:mm:ss am/pm"
+    assert GSheetsDuration().default_pattern == "[h]:mm:ss"
+
+    # Non-temporal fields keep the ``None`` default (no substitution applied).
+    assert GSheetsString().default_pattern is None
+
+    # Without a pattern, a non-null value now parses instead of returning ``None``.
+    assert GSheetsDateTime().parse("12/31/2020 12:34:56") == datetime.datetime(
+        2020,
+        12,
+        31,
+        12,
+        34,
+        56,
+    )
+    assert GSheetsDate().parse("12/31/2020") == datetime.date(2020, 12, 31)
+    assert GSheetsTime().parse("12:34:56 AM") == datetime.time(0, 34, 56)
+    assert GSheetsDuration().parse("12:34:56") == datetime.timedelta(
+        hours=12,
+        minutes=34,
+        seconds=56,
+    )
+
+    # ... and is quoted as a valid literal instead of ``null``.
+    assert (
+        GSheetsDateTime().quote("12/31/2020 12:34:56")
+        == "datetime '2020-12-31 12:34:56'"
+    )
+    assert GSheetsDate().quote("12/31/2020") == "date '2020-12-31'"
+    assert GSheetsTime().quote("12:34:56 AM") == "timeofday '00:34:56'"
+    assert GSheetsDuration().quote("12:34:56") == "datetime '1899-12-30 12:34:56'"
+
+    # Genuine NULL / empty values are still quoted as ``null``.
+    assert GSheetsDateTime().quote(None) == "null"
+    assert GSheetsDate().quote("") == "null"
+
+
 def test_GSheetsBoolean() -> None:
     """
     Test ``GSheetsBoolean``.
