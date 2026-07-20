@@ -163,26 +163,15 @@ def test_GSheetsDuration() -> None:
     )
 
 
-def test_temporal_default_pattern() -> None:
+def test_temporal_without_pattern() -> None:
     """
-    Test that temporal fields fall back to a default pattern.
+    Test locale-independent temporal values when GViz omits the pattern.
 
-    The Google Chart API sometimes types a column as temporal without returning
-    the optional ``pattern`` describing its format. In that case the field
-    should fall back to Google's documented default so that non-null values --
-    including filter bounds -- are parsed, formatted, and quoted correctly
-    instead of collapsing to the literal ``null``.
+    Raw GViz values must be used for result parsing, while typed filter bounds
+    are rendered as canonical GViz SQL literals without guessing the sheet's
+    locale-dependent display pattern.
     """
-    assert GSheetsDateTime().default_pattern == "M/d/yyyy H:mm:ss"
-    assert GSheetsDate().default_pattern == "M/d/yyyy"
-    assert GSheetsTime().default_pattern == "h:mm:ss am/pm"
-    assert GSheetsDuration().default_pattern == "[h]:mm:ss"
-
-    # Non-temporal fields keep the ``None`` default (no substitution applied).
-    assert GSheetsString().default_pattern is None
-
-    # Without a pattern, a non-null value now parses instead of returning ``None``.
-    assert GSheetsDateTime().parse("12/31/2020 12:34:56") == datetime.datetime(
+    assert GSheetsDateTime().parse("Date(2020,11,31,12,34,56)") == datetime.datetime(
         2020,
         12,
         31,
@@ -190,22 +179,21 @@ def test_temporal_default_pattern() -> None:
         34,
         56,
     )
-    assert GSheetsDate().parse("12/31/2020") == datetime.date(2020, 12, 31)
-    assert GSheetsTime().parse("12:34:56 AM") == datetime.time(0, 34, 56)
-    assert GSheetsDuration().parse("12:34:56") == datetime.timedelta(
-        hours=12,
-        minutes=34,
-        seconds=56,
-    )
+    assert GSheetsDate().parse("Date(2020,11,31)") == datetime.date(2020, 12, 31)
+    assert GSheetsTime().parse([0, 34, 56, 123]) == datetime.time(0, 34, 56, 123000)
 
     # ... and is quoted as a valid literal instead of ``null``.
-    assert (
-        GSheetsDateTime().quote("12/31/2020 12:34:56")
-        == "datetime '2020-12-31 12:34:56'"
-    )
-    assert GSheetsDate().quote("12/31/2020") == "date '2020-12-31'"
-    assert GSheetsTime().quote("12:34:56 AM") == "timeofday '00:34:56'"
-    assert GSheetsDuration().quote("12:34:56") == "datetime '1899-12-30 12:34:56'"
+    datetime_field = GSheetsDateTime()
+    datetime_value = datetime_field.format(datetime.datetime(2020, 12, 31, 12, 34, 56))
+    assert datetime_field.quote(datetime_value) == "datetime '2020-12-31 12:34:56'"
+
+    date_field = GSheetsDate()
+    date_value = date_field.format(datetime.date(2020, 12, 31))
+    assert date_field.quote(date_value) == "date '2020-12-31'"
+
+    time_field = GSheetsTime()
+    time_value = time_field.format(datetime.time(0, 34, 56))
+    assert time_field.quote(time_value) == "timeofday '00:34:56'"
 
     # Genuine NULL / empty values are still quoted as ``null``.
     assert GSheetsDateTime().quote(None) == "null"
