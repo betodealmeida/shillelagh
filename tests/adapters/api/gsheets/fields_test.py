@@ -185,14 +185,19 @@ def test_temporal_without_pattern() -> None:
     # ... and is quoted as a valid literal instead of ``null``.
     datetime_field = GSheetsDateTime()
     datetime_value = datetime_field.format(datetime.datetime(2020, 12, 31, 12, 34, 56))
+    # format() is shared by filter construction and Sheets API DML; without a
+    # display pattern it emits an unambiguous ISO representation for both.
+    assert datetime_value == "2020-12-31 12:34:56"
     assert datetime_field.quote(datetime_value) == "datetime '2020-12-31 12:34:56'"
 
     date_field = GSheetsDate()
     date_value = date_field.format(datetime.date(2020, 12, 31))
+    assert date_value == "2020-12-31"
     assert date_field.quote(date_value) == "date '2020-12-31'"
 
     time_field = GSheetsTime()
     time_value = time_field.format(datetime.time(0, 34, 56))
+    assert time_value == "00:34:56"
     assert time_field.quote(time_value) == "timeofday '00:34:56'"
 
     # Genuine NULL / empty values are still quoted as ``null``.
