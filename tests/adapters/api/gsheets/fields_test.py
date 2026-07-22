@@ -6,6 +6,7 @@ Tests for shillelagh.adapters.api.gsheets.fields.
 import datetime
 
 import dateutil.tz
+import pytest
 
 from shillelagh.adapters.api.gsheets.fields import (
     GSheetsBoolean,
@@ -15,6 +16,7 @@ from shillelagh.adapters.api.gsheets.fields import (
     GSheetsNumber,
     GSheetsString,
     GSheetsTime,
+    parse_gviz_date,
 )
 from shillelagh.fields import ISODateTime, Order
 
@@ -203,6 +205,12 @@ def test_temporal_without_pattern() -> None:
     # Genuine NULL / empty values are still quoted as ``null``.
     assert GSheetsDateTime().quote(None) == "null"
     assert GSheetsDate().quote("") == "null"
+
+
+def test_invalid_raw_gviz_date() -> None:
+    """Reject malformed raw GViz date values."""
+    with pytest.raises(ValueError, match="Invalid GViz date value: invalid"):
+        parse_gviz_date("invalid")
 
 
 def test_GSheetsBoolean() -> None:
