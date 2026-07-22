@@ -255,7 +255,7 @@ def get_credentials(
 
 def get_value_from_cell(
     cell: Optional[QueryResultsCell],
-    field: Optional[GSheetsField] = None,
+    field: Optional[Field] = None,
 ) -> Any:
     """
     Return the value from cell.

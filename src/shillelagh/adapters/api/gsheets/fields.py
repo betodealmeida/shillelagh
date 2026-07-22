@@ -244,7 +244,7 @@ class GSheetsTime(GSheetsField[str, datetime.time]):
             hour, minute, second, *rest = cast(Sequence[int], value)
             return datetime.time(hour, minute, second, (rest[0] if rest else 0) * 1000)
 
-        return parse_date_time_pattern(value, self.pattern, datetime.time)
+        return parse_date_time_pattern(cast(str, value), self.pattern, datetime.time)
 
     def format(self, value: Optional[datetime.time]) -> str:
         if value is None:

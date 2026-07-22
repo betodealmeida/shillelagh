@@ -33,7 +33,7 @@ from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.adapters.api.gsheets.typing import QueryResultsError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
-from shillelagh.filters import Equal, IsNotNull, IsNull, Like, NotEqual, Range
+from shillelagh.filters import Equal, Filter, IsNotNull, IsNull, Like, NotEqual, Range
 from shillelagh.lib import build_sql
 
 
@@ -119,7 +119,9 @@ def test_patternless_date_field_range_sql() -> None:
     start = field.format(datetime.date(2020, 12, 30))
     end = field.format(datetime.date(2020, 12, 31))
 
-    bounds = {"date": Range(start, end, include_start=True, include_end=True)}
+    bounds: dict[str, Filter] = {
+        "date": Range(start, end, include_start=True, include_end=True),
+    }
     assert build_sql({"date": field}, bounds, []) == (
         "SELECT * WHERE date >= date '2020-12-30' " "AND date <= date '2020-12-31'"
     )
