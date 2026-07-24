@@ -7,6 +7,7 @@ from datetime import timedelta
 
 import pytest
 from pytest_mock import MockerFixture
+from requests.exceptions import RequestException
 from requests_mock.mocker import Mocker
 
 from shillelagh.adapters.api.datasette import (
@@ -364,6 +365,24 @@ def test_datasette_error(mocker: MockerFixture, requests_mock: Mocker) -> None:
     assert str(excinfo.value) == "Error (Invalid SQL): no such table: invalid"
 
 
+def test_supports_unknown_domain(mocker: MockerFixture) -> None:
+    """
+    Test ``supports`` for a domain that is not well known.
+    """
+    mock_is_datasette = mocker.patch(
+        "shillelagh.adapters.api.datasette.is_datasette",
+        return_value=True,
+    )
+
+    # unknown domains are undetermined in fast mode, without a request
+    assert DatasetteAPI.supports("https://example.com/db/table") is None
+    mock_is_datasette.assert_not_called()
+
+    # ...and are probed with a request when ``fast`` is disabled
+    assert DatasetteAPI.supports("https://example.com/db/table", fast=False) is True
+    mock_is_datasette.assert_called_once_with("https://example.com/db/table")
+
+
 @pytest.mark.integration_test
 def test_integration(adapter_kwargs) -> None:
     """
@@ -377,8 +396,13 @@ def test_integration(adapter_kwargs) -> None:
         FROM "https://datasette.io/global-power-plants/global-power-plants"
         WHERE wepp_id = ? AND year_of_capacity_data = ?
     """
-    cursor.execute(sql, ("1009793", 2017))
-    assert cursor.fetchall() == [
+    try:
+        cursor.execute(sql, ("1009793", 2017))
+        rows = cursor.fetchall()
+    except RequestException as ex:
+        pytest.skip(f"demo Datasette unavailable: {ex}")
+
+    assert rows == [
         (
             "AFG",
             "Afghanistan",

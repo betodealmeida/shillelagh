@@ -16,6 +16,7 @@ from dateutil.tz import tzoffset
 from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.backends.apsw.db import connect
 from shillelagh.backends.multicorn.db import connect as connect_multicorn
+from shillelagh.exceptions import UnauthenticatedError
 
 
 @pytest.mark.skip("Credentials no longer valid")
@@ -743,8 +744,13 @@ def test_public_sheet_apsw() -> None:
     connection = connect(":memory:")
     cursor = connection.cursor()
     sql = f"SELECT * FROM {table}"
-    cursor.execute(sql)
-    assert cursor.fetchall() == [
+    try:
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+    except UnauthenticatedError as ex:
+        pytest.skip(f"public sheet unavailable: {ex}")
+
+    assert rows == [
         ("BR", 2),
         ("BR", 4),
         ("ZA", 7),
@@ -774,8 +780,13 @@ def test_public_sheet_multicorn() -> None:
     )
     cursor = connection.cursor()
     sql = f"SELECT * FROM {table}"
-    cursor.execute(sql)
-    assert cursor.fetchall() == [
+    try:
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+    except UnauthenticatedError as ex:
+        pytest.skip(f"public sheet unavailable: {ex}")
+
+    assert rows == [
         ("BR", 2),
         ("BR", 4),
         ("ZA", 7),

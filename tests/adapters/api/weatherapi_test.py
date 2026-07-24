@@ -697,6 +697,9 @@ def test_integration(adapter_kwargs: dict[str, Any]) -> None:
     """
     Full integration test reading from the API.
     """
+    if not adapter_kwargs.get("weatherapi", {}).get("api_key"):
+        pytest.skip("no WeatherAPI credentials configured")
+
     connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
     cursor = connection.cursor()
 
