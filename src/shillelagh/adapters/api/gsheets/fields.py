@@ -26,17 +26,50 @@ TIME_SQL_QUOTE = "%H:%M:%S"
 DURATION_OFFSET = datetime.datetime(1899, 12, 30)
 
 
+def _normalize_pattern(pattern: str) -> str:
+    """
+    Lowercase a date/time pattern outside of its literals.
+
+    The Google Sheets API reports the *default* (non-user-configured) date and
+    datetime formats using an ICU-style pattern with uppercase tokens, e.g.
+    ``M/D/YYYY`` or ``M/d/yyyy H:mm:ss``. The token grammar in
+    ``parsing.date`` is lowercase-only, so these patterns would otherwise fail
+    to parse (or be silently mis-parsed as literals). Literal text is always
+    quoted (``"..."``) or escaped (``\\x``) in patterns returned by the API, so
+    lowercasing everything outside literals is safe and normalizes the
+    uppercase default tokens into ones the parser handles.
+    """
+    result = []
+    i = 0
+    length = len(pattern)
+    while i < length:
+        char = pattern[i]
+        if char == "\\" and i + 1 < length:
+            # escaped literal: keep the backslash and the next char verbatim
+            result.append(pattern[i : i + 2])
+            i += 2
+        elif char == '"':
+            # quoted literal: keep verbatim up to and including the closing quote
+            end = pattern.find('"', i + 1)
+            if end == -1:
+                end = length - 1
+            result.append(pattern[i : end + 1])
+            i = end + 1
+        else:
+            result.append(char.lower())
+            i += 1
+    return "".join(result)
+
+
 class GSheetsField(Field[Internal, External]):
     """
     A base class for GSheets fields.
     """
 
-    # the default formats for date and datetime do not follow the same syntax
-    # as user-configured formats (I suspect it uses ICU instead)
-    pattern_substitutions = {
-        "M/d/yyyy H:mm:ss": "m/d/yyyy h:mm:ss",
-        "M/d/yyyy": "m/d/yyyy",
-    }
+    # Date/time fields set this to normalize the ICU-style pattern reported by
+    # the API (see ``_normalize_pattern``). Number/boolean/string fields keep it
+    # disabled, since e.g. the number format ``General`` must not be lowercased.
+    normalize_pattern_case: bool = False
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
@@ -47,11 +80,9 @@ class GSheetsField(Field[Internal, External]):
         timezone: Optional[datetime.tzinfo] = None,
     ):
         super().__init__(filters, order, exact)
-        self.pattern: Optional[str] = (
-            self.pattern_substitutions[pattern]
-            if pattern in self.pattern_substitutions
-            else pattern
-        )
+        if pattern is not None and self.normalize_pattern_case:
+            pattern = _normalize_pattern(pattern)
+        self.pattern: Optional[str] = pattern
         self.timezone = timezone
 
     def __eq__(self, other: Any) -> bool:
@@ -88,6 +119,7 @@ class GSheetsDateTime(GSheetsField[str, datetime.datetime]):
 
     type = "TIMESTAMP"
     db_api_type = "DATETIME"
+    normalize_pattern_case = True
 
     def parse(self, value: Optional[str]) -> Optional[datetime.datetime]:
         # Google Chart API returns ``None`` for a NULL cell, while the Google
@@ -142,6 +174,7 @@ class GSheetsDate(GSheetsField[str, datetime.date]):
 
     type = "DATE"
     db_api_type = "DATETIME"
+    normalize_pattern_case = True
 
     def parse(self, value: Optional[str]) -> Optional[datetime.date]:
         # Google Chart API returns ``None`` for a NULL cell, while the Google
@@ -182,6 +215,7 @@ class GSheetsTime(GSheetsField[str, datetime.time]):
 
     type = "TIME"
     db_api_type = "DATETIME"
+    normalize_pattern_case = True
 
     def parse(self, value: Optional[str]) -> Optional[datetime.time]:
         """
@@ -218,6 +252,7 @@ class GSheetsDuration(GSheetsField[str, datetime.timedelta]):
 
     type = "DURATION"
     db_api_type = "DATETIME"
+    normalize_pattern_case = True
 
     def parse(self, value: Optional[str]) -> Optional[datetime.timedelta]:
         if self.pattern is None or value is None or value == "":
