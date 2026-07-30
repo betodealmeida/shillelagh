@@ -2,6 +2,7 @@
 Tests for shillelagh.adapters.api.gsheets.lib.
 """
 
+import datetime
 import itertools
 from typing import cast
 
@@ -32,7 +33,8 @@ from shillelagh.adapters.api.gsheets.types import SyncMode
 from shillelagh.adapters.api.gsheets.typing import QueryResultsError
 from shillelagh.exceptions import ProgrammingError
 from shillelagh.fields import Order
-from shillelagh.filters import Equal, IsNotNull, IsNull, Like, NotEqual, Range
+from shillelagh.filters import Equal, Filter, IsNotNull, IsNull, Like, NotEqual, Range
+from shillelagh.lib import build_sql
 
 
 def test_get_field() -> None:
@@ -108,6 +110,20 @@ def test_get_field() -> None:
         True,
         "M/D/YY h:mm",
         timezone,
+    )
+
+
+def test_patternless_date_field_range_sql() -> None:
+    """Pattern-less columns render typed bounds without assuming a locale."""
+    field = get_field({"type": "date"})
+    start = field.format(datetime.date(2020, 12, 30))
+    end = field.format(datetime.date(2020, 12, 31))
+
+    bounds: dict[str, Filter] = {
+        "date": Range(start, end, include_start=True, include_end=True),
+    }
+    assert build_sql({"date": field}, bounds, []) == (
+        "SELECT * WHERE date >= date '2020-12-30' " "AND date <= date '2020-12-31'"
     )
 
 
@@ -366,5 +382,23 @@ def test_get_value_from_cell() -> None:
     assert get_value_from_cell({"v": "test"}) == "test"
     assert get_value_from_cell({"v": 1.0, "f": "1"}) == "1"
     assert get_value_from_cell({"v": True, "f": "TRUE"}) == "TRUE"
+    assert (
+        get_value_from_cell(
+            {"v": "Date(2020,11,31)", "f": "31/12/2020"},
+            GSheetsDate(),
+        )
+        == "Date(2020,11,31)"
+    )
+    assert get_value_from_cell(
+        {"v": [17, 0, 0, 0], "f": "17:00:00"},
+        GSheetsTime(),
+    ) == [17, 0, 0, 0]
+    assert (
+        get_value_from_cell(
+            {"v": "Date(2020,11,31)", "f": "31/12/2020"},
+            GSheetsDate(pattern="dd/mm/yyyy"),
+        )
+        == "31/12/2020"
+    )
     assert get_value_from_cell(None) == ""
     assert get_value_from_cell({"v": None}) == ""

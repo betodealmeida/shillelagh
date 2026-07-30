@@ -3,7 +3,9 @@ Custom fields for the GSheets adapter.
 """
 
 import datetime
-from typing import Any, Optional, Union
+import re
+from collections.abc import Sequence
+from typing import Any, Optional, Union, cast
 
 from shillelagh.adapters.api.gsheets.parsing.date import (
     format_date_time_pattern,
@@ -24,6 +26,31 @@ TIME_SQL_QUOTE = "%H:%M:%S"
 # When filtering a sheet based on a duration we need to convert it into a datetime
 # starting at 1899-12-30, for some reason. That is not documented anywhere, obviously.
 DURATION_OFFSET = datetime.datetime(1899, 12, 30)
+
+GVIZ_DATE_RE = re.compile(r"^Date\((?P<parts>\d+(?:,\d+)*)\)$")
+
+GvizDateValue = Optional[str]
+GvizTimeValue = Optional[Union[str, Sequence[int]]]
+
+
+def parse_gviz_date(value: str) -> datetime.datetime:
+    """Parse the locale-independent raw date value returned by GViz."""
+    match = GVIZ_DATE_RE.match(value)
+    if not match:
+        raise ValueError(f"Invalid GViz date value: {value}")
+
+    parts = [int(part) for part in match.group("parts").split(",")]
+    parts.extend([0] * (7 - len(parts)))
+    year, month, day, hour, minute, second, millisecond = parts
+    return datetime.datetime(
+        year,
+        month + 1,  # GViz months are zero-based.
+        day,
+        hour,
+        minute,
+        second,
+        millisecond * 1000,
+    )
 
 
 class GSheetsField(Field[Internal, External]):
@@ -89,11 +116,15 @@ class GSheetsDateTime(GSheetsField[str, datetime.datetime]):
     type = "TIMESTAMP"
     db_api_type = "DATETIME"
 
-    def parse(self, value: Optional[str]) -> Optional[datetime.datetime]:
+    def parse(self, value: GvizDateValue) -> Optional[datetime.datetime]:
         # Google Chart API returns ``None`` for a NULL cell, while the Google
         # Sheets API returns an empty string
-        if self.pattern is None or value is None or value == "":
+        if value is None or value == "":
             return None
+
+        if self.pattern is None:
+            timestamp = parse_gviz_date(value)
+            return timestamp.replace(tzinfo=self.timezone)
 
         timestamp = parse_date_time_pattern(value, self.pattern, datetime.datetime)
 
@@ -105,7 +136,7 @@ class GSheetsDateTime(GSheetsField[str, datetime.datetime]):
     def format(self, value: Optional[datetime.datetime]) -> str:
         # This method is used only when inserting or updating rows, so we
         # encode NULLs as an empty string to match the Google Sheets API.
-        if self.pattern is None or value is None:
+        if value is None:
             return ""
 
         # Google Sheets does not support timezones in datetime values, so we
@@ -113,11 +144,19 @@ class GSheetsDateTime(GSheetsField[str, datetime.datetime]):
         if self.timezone:
             value = value.astimezone(self.timezone)
 
+        if self.pattern is None:
+            # ISO output is deliberately shared by query-bound rendering and
+            # Sheets API DML. With no effective display pattern/locale from
+            # GViz, it is the only unambiguous string representation available.
+            return value.strftime(DATETIME_SQL_QUOTE)
         return format_date_time_pattern(value, self.pattern)
 
     def quote(self, value: Optional[str]) -> str:
-        if self.pattern is None or value == "" or value is None:
+        if value == "" or value is None:
             return "null"
+
+        if self.pattern is None:
+            return f"datetime '{value}'"
 
         # On SQL queries the timestamp should be prefix by "datetime"
         value = parse_date_time_pattern(
@@ -143,23 +182,32 @@ class GSheetsDate(GSheetsField[str, datetime.date]):
     type = "DATE"
     db_api_type = "DATETIME"
 
-    def parse(self, value: Optional[str]) -> Optional[datetime.date]:
+    def parse(self, value: GvizDateValue) -> Optional[datetime.date]:
         # Google Chart API returns ``None`` for a NULL cell, while the Google
         # Sheets API returns an empty string
-        if self.pattern is None or value is None or value == "":
+        if value is None or value == "":
             return None
+
+        if self.pattern is None:
+            return parse_gviz_date(value).date()
 
         return parse_date_time_pattern(value, self.pattern, datetime.date)
 
     def format(self, value: Optional[datetime.date]) -> str:
-        if self.pattern is None or value is None:
+        if value is None:
             return ""
-
+        if self.pattern is None:
+            # See GSheetsDateTime.format: this value is also sent to the
+            # Sheets API with valueInputOption=USER_ENTERED during DML.
+            return value.strftime(DATE_SQL_QUOTE)
         return format_date_time_pattern(value, self.pattern)
 
     def quote(self, value: Optional[str]) -> str:
-        if self.pattern is None or value == "" or value is None:
+        if value == "" or value is None:
             return "null"
+
+        if self.pattern is None:
+            return f"date '{value}'"
 
         # On SQL queries the timestamp should be prefix by "date"
         value = parse_date_time_pattern(value, self.pattern, datetime.date).strftime(
@@ -183,26 +231,36 @@ class GSheetsTime(GSheetsField[str, datetime.time]):
     type = "TIME"
     db_api_type = "DATETIME"
 
-    def parse(self, value: Optional[str]) -> Optional[datetime.time]:
+    def parse(self, value: GvizTimeValue) -> Optional[datetime.time]:
         """
         Parse time of day as returned from the Google Chart API.
         """
         # Google Chart API returns ``None`` for a NULL cell, while the Google
         # Sheets API returns an empty string
-        if self.pattern is None or value is None or value == "":
+        if value is None or value == "":
             return None
 
-        return parse_date_time_pattern(value, self.pattern, datetime.time)
+        if self.pattern is None:
+            hour, minute, second, *rest = cast(Sequence[int], value)
+            return datetime.time(hour, minute, second, (rest[0] if rest else 0) * 1000)
+
+        return parse_date_time_pattern(cast(str, value), self.pattern, datetime.time)
 
     def format(self, value: Optional[datetime.time]) -> str:
-        if self.pattern is None or value is None:
+        if value is None:
             return ""
-
+        if self.pattern is None:
+            # See GSheetsDateTime.format: this value is also sent to the
+            # Sheets API with valueInputOption=USER_ENTERED during DML.
+            return value.strftime(TIME_SQL_QUOTE)
         return format_date_time_pattern(value, self.pattern)
 
     def quote(self, value: Optional[str]) -> str:
-        if self.pattern is None or value == "" or value is None:
+        if value == "" or value is None:
             return "null"
+
+        if self.pattern is None:
+            return f"timeofday '{value}'"
 
         # On SQL queries the timestamp should be prefix by "timeofday"
         value = parse_date_time_pattern(value, self.pattern, datetime.time).strftime(

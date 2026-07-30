@@ -253,7 +253,10 @@ def get_credentials(
     return None
 
 
-def get_value_from_cell(cell: Optional[QueryResultsCell]) -> Any:
+def get_value_from_cell(
+    cell: Optional[QueryResultsCell],
+    field: Optional[Field] = None,
+) -> Any:
     """
     Return the value from cell.
 
@@ -269,6 +272,14 @@ def get_value_from_cell(cell: Optional[QueryResultsCell]) -> Any:
     """
     if cell is None or cell.get("v") is None:
         return ""
+
+    # Formatted values are locale-dependent. When GViz omits the effective
+    # pattern for a temporal column, use its locale-independent raw value.
+    if (
+        isinstance(field, (GSheetsDate, GSheetsDateTime, GSheetsTime))
+        and field.pattern is None
+    ):
+        return cell["v"]
 
     if "f" in cell:
         return cell["f"]

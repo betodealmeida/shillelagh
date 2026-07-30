@@ -5,6 +5,8 @@ Changelog
 Next
 ====
 
+- Handle temporal Google Sheets columns that omit a formatting pattern (#546)
+
 Version 1.4.4 - 2026-04-10
 ==========================
 

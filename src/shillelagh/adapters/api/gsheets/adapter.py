@@ -446,7 +446,10 @@ class GSheetsAPI(Adapter):  # pylint: disable=too-many-instance-attributes
             cols = payload["table"]["cols"]
             rows = (
                 {
-                    reverse_map[col["id"]]: get_value_from_cell(cell)
+                    reverse_map[col["id"]]: get_value_from_cell(
+                        cell,
+                        self.columns[reverse_map[col["id"]]],
+                    )
                     for col, cell in zip(cols, row["c"])
                     if col["id"] in reverse_map
                 }

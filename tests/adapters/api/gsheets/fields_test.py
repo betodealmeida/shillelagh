@@ -6,6 +6,7 @@ Tests for shillelagh.adapters.api.gsheets.fields.
 import datetime
 
 import dateutil.tz
+import pytest
 
 from shillelagh.adapters.api.gsheets.fields import (
     GSheetsBoolean,
@@ -15,6 +16,7 @@ from shillelagh.adapters.api.gsheets.fields import (
     GSheetsNumber,
     GSheetsString,
     GSheetsTime,
+    parse_gviz_date,
 )
 from shillelagh.fields import ISODateTime, Order
 
@@ -161,6 +163,54 @@ def test_GSheetsDuration() -> None:
         GSheetsDuration(pattern="[h]:mm:ss").quote("12:34:56")
         == "datetime '1899-12-30 12:34:56'"
     )
+
+
+def test_temporal_without_pattern() -> None:
+    """
+    Test locale-independent temporal values when GViz omits the pattern.
+
+    Raw GViz values must be used for result parsing, while typed filter bounds
+    are rendered as canonical GViz SQL literals without guessing the sheet's
+    locale-dependent display pattern.
+    """
+    assert GSheetsDateTime().parse("Date(2020,11,31,12,34,56)") == datetime.datetime(
+        2020,
+        12,
+        31,
+        12,
+        34,
+        56,
+    )
+    assert GSheetsDate().parse("Date(2020,11,31)") == datetime.date(2020, 12, 31)
+    assert GSheetsTime().parse([0, 34, 56, 123]) == datetime.time(0, 34, 56, 123000)
+
+    # ... and is quoted as a valid literal instead of ``null``.
+    datetime_field = GSheetsDateTime()
+    datetime_value = datetime_field.format(datetime.datetime(2020, 12, 31, 12, 34, 56))
+    # format() is shared by filter construction and Sheets API DML; without a
+    # display pattern it emits an unambiguous ISO representation for both.
+    assert datetime_value == "2020-12-31 12:34:56"
+    assert datetime_field.quote(datetime_value) == "datetime '2020-12-31 12:34:56'"
+
+    date_field = GSheetsDate()
+    date_value = date_field.format(datetime.date(2020, 12, 31))
+    assert date_value == "2020-12-31"
+    assert date_field.quote(date_value) == "date '2020-12-31'"
+
+    time_field = GSheetsTime()
+    time_value = time_field.format(datetime.time(0, 34, 56))
+    assert time_value == "00:34:56"
+    assert time_field.quote(time_value) == "timeofday '00:34:56'"
+
+    # Genuine NULL / empty values are still quoted as ``null``.
+    assert GSheetsDateTime().quote(None) == "null"
+    assert GSheetsDate().quote("") == "null"
+
+
+def test_invalid_raw_gviz_date() -> None:
+    """Reject malformed raw GViz date values."""
+    with pytest.raises(ValueError, match="Invalid GViz date value: invalid"):
+        parse_gviz_date("invalid")
 
 
 def test_GSheetsBoolean() -> None:
