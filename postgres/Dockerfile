@@ -18,19 +18,22 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     wget
 
-# Download, build, and install multicorn2
+# Create a virtual environment for the Python dependencies
+RUN python3 -m venv /code/venv && \
+    /code/venv/bin/pip install --upgrade pip
+
+# Download, build, and install multicorn2. Point its Makefile at the venv pip
+# via PIP: the Python package step runs `pip install --upgrade 'pip>=23'`,
+# which fails on postgres:13's system pip (no RECORD metadata to uninstall).
+# The native extension is still built and installed via PGXS.
 RUN wget https://github.com/pgsql-io/multicorn2/archive/refs/tags/v2.5.tar.gz && \
     tar -xvf v2.5.tar.gz && \
     cd multicorn2-2.5 && \
     make && \
-    make install
+    make install PIP=/code/venv/bin/pip
 
-
-# Create a virtual environment and install dependencies
-RUN python3 -m venv /code/venv && \
-    /code/venv/bin/pip install --upgrade pip && \
-    /code/venv/bin/pip install -e '.[all]' && \
-    /code/venv/bin/pip install 'multicorn @ git+https://github.com/pgsql-io/multicorn2.git@v2.5'
+# Install shillelagh and its dependencies into the same virtual environment
+RUN /code/venv/bin/pip install -e '.[all]'
 
 # Set environment variable for PostgreSQL to use the virtual environment
 ENV PATH="/code/venv/bin:$PATH"

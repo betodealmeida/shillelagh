@@ -945,6 +945,9 @@ def test_integration(adapter_kwargs: dict[str, Any]) -> None:
     """
     Full integration test running a query.
     """
+    if not adapter_kwargs.get("dbtmetricflowapi", {}).get("service_token"):
+        pytest.skip("no dbt MetricFlow credentials configured")
+
     connection = connect(":memory:", adapter_kwargs=adapter_kwargs)
     cursor = connection.cursor()
 

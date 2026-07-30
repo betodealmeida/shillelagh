@@ -45,5 +45,6 @@ jobs:
     - name: Stop the Postgres service
       if: always()
       run: |
-        docker logs postgres-postgres-1
+        # Ignore errors so a missing container (e.g. failed build) still runs `down`
+        docker logs postgres-postgres-1 || true
         docker compose -f postgres/docker-compose.yml down
