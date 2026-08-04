@@ -323,7 +323,12 @@ class String(Field[str, str]):
             return "NULL"
         escaped_value = value.replace("'", "''")
         return f"'{escaped_value}'"
-
+    
+    # Support convert for list value return from api to String
+    def format(self, value: Optional[External]) -> Optional[Internal]:
+        if isinstance(value, list):
+            return super().format(", ".join(str(_items) for _items in value))
+        return super().format(value)
 
 class Date(Field[datetime.date, datetime.date]):
     """
