@@ -85,6 +85,50 @@ def test_GSheetsDateTime_timezone() -> None:
     )
 
 
+def test_uppercase_default_pattern() -> None:
+    """
+    Test default formats reported with uppercase ICU-style tokens.
+
+    The Google Sheets API reports the default (non-user-configured) date and
+    datetime formats with uppercase tokens, e.g. ``M/D/YYYY``. These must be
+    normalized to the lowercase grammar understood by the parser. Literal text
+    is quoted in the reported patterns, so it is preserved.
+    """
+    assert GSheetsDate(pattern="M/D/YYYY").parse("12/31/2025") == datetime.date(
+        2025,
+        12,
+        31,
+    )
+    assert GSheetsDate(pattern="M/D/YYYY").parse("3/30/2026") == datetime.date(
+        2026,
+        3,
+        30,
+    )
+    assert GSheetsDate(pattern="YYYY-MM-DD").parse("2016-04-05") == datetime.date(
+        2016,
+        4,
+        5,
+    )
+
+    # quoted literals are preserved while the tokens around them are lowercased
+    assert GSheetsDate(pattern='DD"."MM"."YYYY').parse("31.12.2025") == datetime.date(
+        2025,
+        12,
+        31,
+    )
+
+    # month-vs-minute disambiguation still works with uppercase tokens
+    assert GSheetsDateTime(pattern="M/D/YYYY H:MM:SS").parse(
+        "4/5/2016 16:08:53",
+    ) == datetime.datetime(2016, 4, 5, 16, 8, 53)
+
+    # formatting honours the normalized pattern too
+    assert (
+        GSheetsDate(pattern="M/D/YYYY").format(datetime.date(2025, 12, 31))
+        == "12/31/2025"
+    )
+
+
 def test_GSheetsDate() -> None:
     """
     Test ``GSheetsDate``.
